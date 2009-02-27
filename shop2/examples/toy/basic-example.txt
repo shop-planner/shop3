@@ -1,0 +1,29 @@
+Allegro CL 4.3 [SPARC; R1] (6/10/96 21:24)
+Copyright (C) 1985-1996, Franz Inc., Berkeley, CA, USA.  All Rights Reserved.
+;; Optimization settings: safety 1, space 1, speed 1, debug 2.
+;; For a complete description of all compiler switches given the current
+;; optimization settings evaluate (EXPLAIN-COMPILER-SETTINGS).
+USER(1): (load "shop2")
+; Fast loading ./shop2.fasl
+
+
+SHOP2 2.0 version 1.0 (May 24, 2002)
+Copyright (C) 2002  University of Maryland.
+This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY
+KIND, either express or implied.  This software is distributed under an
+MPL/GPL/LGPL triple license.  For details, see the software source file.
+T
+USER(2): (load "examples/toy/basic-example")
+; Loading examples/toy/basic-example.lisp
+
+Defining domain ...
+Defining problem PROBLEM1 ...
+---------------------------------------------------------------------------
+Problem PROBLEM1 with :WHICH = :FIRST, :VERBOSE = :PLANS
+Totals: Plans Mincost Maxcost Expansions Inferences  CPU time  Real time
+           1     2.0     2.0          4          2     0.000      0.039
+Plans:
+(((!DROP BANJO) (!PICKUP KIWI)))
+
+T
+USER(3): 

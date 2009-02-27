@@ -84,6 +84,15 @@ shop2/examples/protection-test.lisp -text
 shop2/examples/shop2-test.lisp -text
 shop2/examples/test-assign-star.lisp -text
 shop2/examples/test-plan-tree.lisp -text
+shop2/examples/toy/README.txt -text
+shop2/examples/toy/basic-example.lisp -text
+shop2/examples/toy/basic-example.txt -text
+shop2/examples/toy/optimize-example.lisp -text
+shop2/examples/toy/ordering-example.lisp -text
+shop2/examples/toy/sort-example.lisp -text
+shop2/examples/toy/test-force-immediate.lisp -text
+shop2/examples/toy/test-immediate.lisp -text
+shop2/examples/toy/unbound-example.lisp -text
 shop2/examples/tree-binding-problems.lisp -text
 shop2/io/debugging.lisp -text
 shop2/io/input.lisp -text
