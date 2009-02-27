@@ -1,1 +1,37 @@
 * text=auto !eol
+shop2/common/common.lisp -text
+shop2/common/package-common.lisp -text
+shop2/common/state-decls.lisp -text
+shop2/common/state-utils.lisp -text
+shop2/decls.lisp -text
+shop2/docs/README.txt -text
+shop2/docs/shop2.doc -text svneol=unset#unset
+shop2/docs/shop2.pdf -text svneol=unset#unset
+shop2/io/debugging.lisp -text
+shop2/io/input.lisp -text
+shop2/io/output.lisp -text
+shop2/package.lisp -text
+shop2/pddl/pddl.lisp -text
+shop2/planning-engine/protections.lisp -text
+shop2/planning-engine/search.lisp -text
+shop2/planning-engine/task-reductions.lisp -text
+shop2/planning-tree/tree-accessors.lisp -text
+shop2/planning-tree/tree-funs.lisp -text
+shop2/planning-tree/tree-reductions.lisp -text
+shop2/shop-asd.asd -text
+shop2/shop2-common.asd -text
+shop2/shop2-core.asd -text
+shop2/shop2-theorem-prover.asd -text
+shop2/shop2-unifier.asd -text
+shop2/shop2.asd -text
+shop2/shop2.lisp -text
+shop2/test-shop2.asd -text
+shop2/tests/nst-common.lisp -text
+shop2/tests/nst-pddl.lisp -text
+shop2/theorem-prover/decls.lisp -text
+shop2/theorem-prover/package-thpr.lisp -text
+shop2/theorem-prover/theorem-prover.lisp -text
+shop2/unification/package-unifier.lisp -text
+shop2/unification/tracer.lisp -text
+shop2/unification/unify.lisp -text
+shop2/version.lisp -text
