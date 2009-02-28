@@ -55,6 +55,10 @@
 (asdf:oos 'asdf:load-op :asdf-nst)
 (in-package :shop2-asd)
 (load (merge-pathnames "version.lisp" *load-truename*))
+(defconstant +shop-examples-dir+
+             '(:relative "examples"))
+(defun examples-subdir (dirname)
+  (append +shop-examples-dir+ (list dirname)))
 
 (defclass stream-test-mixin ()
   ((result-stream
@@ -112,13 +116,13 @@ shop2."
 (defsystem :test-shop2
     :class nst-testable
     :nst-systems (;; :protection-tests
-		  :shop-blocks
-		  :shop-depots
-		  :shop-logistic
-		  :shop-pddl-tests
-		  :shop-umt)
+                  :shop-blocks
+                  :shop-depots
+                  :shop-logistic
+                  :shop-pddl-tests
+                  :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-		 (:version :nst "1.0"))
+                 (:version :nst "1.0"))
     :version #.cl-user::+shop-version+)
 
 ;;;
@@ -165,7 +169,7 @@ packages have been loaded yet."
     :depends-on (:shop2 (:version :nst "1.0"))
     :in-order-to ((test-op (load-op :protection-tests)))
     :nst-group (:protection-test . protection-test)
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative :up "examples")) *load-truename*)
+    :pathname #.(merge-pathnames (make-pathname :directory +shop-examples-dir+) *load-truename*)
     :serial t
     :components ((:file "protection-test-package")
                  (:file "protection-test")))
@@ -199,7 +203,7 @@ packages have been loaded yet."
     :default-component-class tester-cl-source-file
     :in-order-to ((test-op (load-op :shop-umt))
                   (load-op (compile-op :shop-umt)))
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative :up "examples" "UMT2")) *load-truename*)
+    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "UMT2")) *load-truename*)
     :nst-group (:shop2-user . umt-tests)
     :components ((:file "UMT2")
                  (:file "pfile1" :depends-on ("UMT2"))
@@ -216,7 +220,7 @@ packages have been loaded yet."
     :class nst-testable ;; shop-tester
     :depends-on (:shop-test-helper)
     :default-component-class tester-cl-source-file
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative :up "examples" "blocks")) *load-truename*)
+    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "blocks")) *load-truename*)
     :in-order-to ((test-op (load-op :shop-blocks))
                   (load-op (compile-op :shop-blocks)))
     :nst-group (:shop2-user . blocks-tests)
@@ -235,7 +239,7 @@ packages have been loaded yet."
     :class nst-testable ;; shop-tester
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative :up "examples" "depots")) *load-truename*)
+    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "depots")) *load-truename*)
     :in-order-to ((test-op (load-op :shop-depots))
                   (load-op (compile-op :shop-depots)))
     :nst-group (:shop2-user . depot-tests)
@@ -272,7 +276,7 @@ packages have been loaded yet."
     :class nst-testable ;; shop-tester
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative :up "examples" "logistic")) *load-truename*)
+    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "logistic")) *load-truename*)
     :nst-group (:shop2-user . logistic-tests)
     :components ((:file "logistic")
                  (:file "Log_ran_problems_15" :depends-on ("logistic"))
