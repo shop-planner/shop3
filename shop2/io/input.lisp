@@ -1,19 +1,19 @@
 ;;; -*- Mode: common-lisp; package: shop2; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -22,8 +22,8 @@
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -39,16 +39,16 @@
 ;;; ----------------------------------------------------------------------
 
 ;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
-;;; 
+;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
-;;; 
-;;; Contract No.         FA8650-06-C-7606, 
+;;;
+;;; Contract No.         FA8650-06-C-7606,
 ;;; Contractor Name      Smart Information Flow Technologies, LLC
 ;;;                      d/b/a SIFT, LLC
 ;;; Contractor Address   211 N 1st Street, Suite 300
 ;;;                      Minneapolis, MN 55401
 ;;; Expiration Date      5/2/2011
-;;; 
+;;;
 ;;; The Government's rights to use, modify, reproduce, release,
 ;;; perform, display, or disclose this software are restricted by
 ;;; paragraph (b)(2) of the Rights in Noncommercial Computer Software
@@ -77,11 +77,11 @@
   (warn "MAKE-DOMAIN is an obsolete, deprecated interface.  Please use DEFDOMAIN instead.")
   (when (null items)
     (psetf items name
-	   name (gentemp (symbol-name '#:domain))))
+           name (gentemp (symbol-name '#:domain))))
   ;; name is ignored -- it's there only for compatibility with SHOP 1
   (format t "~%Defining domain ...")
   (let ((domain (make-instance 'domain
-		  :name name)))
+                  :name name)))
     (setq items (append '((:operator (!!inop) () () 0)) items))
     (parse-domain-items domain items)
     (install-domain domain)
@@ -95,7 +95,7 @@
           (branch-counter 0)
           (labelified-axiom (list (car axiom) (cadr axiom)))
           (atail (cddr axiom)))
-          (append labelified-axiom 
+          (append labelified-axiom
               (loop until (null atail) do
                     (incf branch-counter)
                     if (listp (car atail))       ; no label on this branch
@@ -122,11 +122,11 @@
 ;;; effect. [2006/07/31:rpg]
 (defmethod set-variable-property ((domain domain) x)
   (cond ((atom x)
-	 (when (symbolp x)
-	   (cond ((eql (elt (symbol-name x) 0) #\?)
-		  (setf (get x 'variable) t))
-		 ((eql (elt (symbol-name x) 0) #\!)
-		  (setf (get x 'primitive) t)))))
+         (when (symbolp x)
+           (cond ((eql (elt (symbol-name x) 0) #\?)
+                  (setf (get x 'variable) t))
+                 ((eql (elt (symbol-name x) 0) #\!)
+                  (setf (get x 'primitive) t)))))
         ((consp x) (set-variable-property domain (car x))
          (set-variable-property domain (cdr x)))
         (t (error "the domain is malformed"))))
@@ -150,36 +150,36 @@
     ;; in that case, we want to ignore domain-name
     (when extra
       (setf domain-name state
-	    state tasks
-	    tasks extra))
+            state tasks
+            tasks extra))
     (let (type problem-name options)
       (cond ((listp problem-name-etc)
-	     (setf problem-name (pop problem-name-etc)
-		   type (getf problem-name-etc :type))
-	     (remf problem-name-etc :type)
-	     (setf options problem-name-etc)
-	     (when options
-	       (error "Do not yet have logic for handling problem options.")))
-	    (t (setf problem-name problem-name-etc
-		     type 'problem)))
+             (setf problem-name (pop problem-name-etc)
+                   type (getf problem-name-etc :type))
+             (remf problem-name-etc :type)
+             (setf options problem-name-etc)
+             (when options
+               (error "Do not yet have logic for handling problem options.")))
+            (t (setf problem-name problem-name-etc
+                     type 'problem)))
       (unless *make-problem-silently*
-	(format t "~%Defining problem ~s ..." problem-name))
+        (format t "~%Defining problem ~s ..." problem-name))
       (let ((problem-inst (make-instance type
-			    :domain-name domain-name
-			    :name problem-name
-			    )))
-	(apply 'initialize-problem problem-inst :state state
-	       :tasks tasks extras)
-	#+allegro
-	(excl:record-source-file problem-name :type :shop2-problem)
-	problem-inst))))
+                            :domain-name domain-name
+                            :name problem-name
+                            )))
+        (apply 'initialize-problem problem-inst :state state
+               :tasks tasks extras)
+        #+allegro
+        (excl:record-source-file problem-name :type :shop2-problem)
+        problem-inst))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
   (setf *all-problems*
-	(delete (name problem) *all-problems* :key 'name))
+        (delete (name problem) *all-problems* :key 'name))
   (setf *all-problems* (cons problem *all-problems*))
   (setf (slot-value problem 'tasks) (process-task-list tasks)
-	(slot-value problem 'state-atoms) state)
+        (slot-value problem 'state-atoms) state)
   ;; uck --- this won't work any more because we aren't guaranteed to
   ;; have a domain here.  Will move to find-plans... [2007/03/14:rpg]
   ;; (set-variable-property *domain* tasks)
@@ -191,7 +191,7 @@
 
 ;;;(defun delete-problem (problem-name)
 ;;;  (setf (get problem-name :state) nil
-;;;	(get problem-name :tasks) nil)
+;;;     (get problem-name :tasks) nil)
 ;;;  (setf *all-problems* (delete problem-name *all-problems*))
 ;;;  problem-name)
 
@@ -226,65 +226,65 @@
 
 (defmethod process-pre (domain pre)
   "This is the main function that does the pre-processing, it
-looks through the preconditions finding the forall 
+looks through the preconditions finding the forall
  conditions and replacing the variables in that condition."
   (if (atom pre) pre
     (let ((pre1 (car pre)))
       (if (listp pre1)
-	  (cons (process-pre domain  pre1) (process-pre domain  (cdr pre))))
+          (cons (process-pre domain  pre1) (process-pre domain  (cdr pre))))
       (case pre1
-	(or (cons 'or (process-pre domain  (cdr pre))))
-	(imply
-	 (cons 'imply (process-pre domain  (cdr pre))))
-	(:first (cons :first (process-pre domain  (cdr pre))))
-	(forall
-	 (unless (and (listp (second pre)) (every #'(lambda (x) (variablep x)) (second pre)))
-	   (error "The first argument to a FORALL expression should be a LIST of variables in ~S"
-		  pre))
-	 (unless (= (length pre) 4)
-	   (error "Ill-formed FORALL expression: ~s" pre))
-	 (multiple-value-bind (alist vlist) (get-alist (second pre))
-	   `(forall ,vlist 
-		 ,(process-pre domain  (apply-substitution (third pre) alist))
-		 ,(process-pre domain  (apply-substitution (fourth pre) alist)))))
-	(otherwise pre)))))
+        (or (cons 'or (process-pre domain  (cdr pre))))
+        (imply
+         (cons 'imply (process-pre domain  (cdr pre))))
+        (:first (cons :first (process-pre domain  (cdr pre))))
+        (forall
+         (unless (and (listp (second pre)) (every #'(lambda (x) (variablep x)) (second pre)))
+           (error "The first argument to a FORALL expression should be a LIST of variables in ~S"
+                  pre))
+         (unless (= (length pre) 4)
+           (error "Ill-formed FORALL expression: ~s" pre))
+         (multiple-value-bind (alist vlist) (get-alist (second pre))
+           `(forall ,vlist
+                 ,(process-pre domain  (apply-substitution (third pre) alist))
+                 ,(process-pre domain  (apply-substitution (fourth pre) alist)))))
+        (otherwise pre)))))
 
-;;; this function pre-processes the methods, replace every 
+;;; this function pre-processes the methods, replace every
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also regularizes the methdods in old SHOP format.
 (defmethod process-method ((domain domain) method)
   (let ((method-head (cadr method))
-	(answer nil)
-	(tail nil)
-	(branch-counter 0)
-	(method-name nil)
-	clause first-of-clause)
+        (answer nil)
+        (tail nil)
+        (branch-counter 0)
+        (method-name nil)
+        clause first-of-clause)
     (setq method-name (car method-head))
     (setq answer (list (car method) method-head))
     (setq tail (cddr method))
-    (append answer 
+    (append answer
             (loop until (null tail)
-		  do (incf branch-counter)
+                  do (incf branch-counter)
                   when (and (not (null (car tail))) (symbolp (car tail)))
-		    append (list (pop tail))       ; skip over a label
-                  else append (list (gensym (format nil "~A~D--" 
-						    method-name branch-counter)))
+                    append (list (pop tail))       ; skip over a label
+                  else append (list (gensym (format nil "~A~D--"
+                                                    method-name branch-counter)))
                   append (list  (process-pre domain  (pop tail))
-                                ;; check to see if there is a quote or 
+                                ;; check to see if there is a quote or
                                 ;; backquote in the front of this list (SHOP1
                                 ;; or SHOP2 syntax) and process accordingly
-                                (progn 
+                                (progn
                                   (setq clause (pop tail)
                                         first-of-clause (car clause))
                                   (cond ((or (eq first-of-clause 'quote)
                                              (eq first-of-clause *back-quote-name*))
-                                         ;; this next bit of strangeness is to take the quote 
+                                         ;; this next bit of strangeness is to take the quote
                                          ;; off the front of the task list,
                                          ;; decompose the task list, then slap the quote back on
-					 (list first-of-clause (process-task-list (cadr clause))))
-					((search-tree 'call clause)
-					 (list 'simple-backquote (process-task-list clause)))
-					(t (list 'quote (process-task-list clause))))))))))
+                                         (list first-of-clause (process-task-list (cadr clause))))
+                                        ((search-tree 'call clause)
+                                         (list 'simple-backquote (process-task-list clause)))
+                                        (t (list 'quote (process-task-list clause))))))))))
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
 ;;; but only runs once per method definition.
@@ -300,38 +300,38 @@ looks through the preconditions finding the forall
 ;;; perhaps the form should be searched for an instance of "call"; if found, put "backquote" on the
 ;;; front and modify the backquote function to handle "call" like comma.
 
-;;; this function pre-process the operator, replace every 
+;;; this function pre-process the operator, replace every
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also addresses the issue of different
 ;;; syntaxes of operators in different versions of SHOP.
 (defmethod process-operator ((domain domain) operator)
   (let ((lopt (length operator)))
     (cond ((= lopt 4)             ; a SHOP 1 operator, no cost specified
-	   (make-operator :head (second operator)
-			  :preconditions nil
-			  :deletions (process-pre domain  (third operator))
-			  :additions (process-pre domain  (fourth operator))
-			  :cost-fun 1.0))
-	  ;; a SHOP 1 operator, with cost specified
-	  ((and (= lopt 5) (numberp (fifth operator)))
-	   (make-operator :head (second operator)
-			  :preconditions nil
-			  :deletions (process-pre domain  (third operator))
-			  :additions (process-pre domain  (fourth operator))
-			  :cost-fun (process-pre domain  (fifth operator))))
-	  ((= lopt 5)             ; a SHOP 2 operator, no cost specified
-	   (make-operator :head (second operator)
-			  :preconditions (process-pre domain  (third operator))
-			  :deletions (process-pre domain  (fourth operator))
-			  :additions (process-pre domain  (fifth operator))
-			  :cost-fun 1.0))
-	  ((= lopt 6)             ; a SHOP 2 operator, with cost specified
-	   (make-operator :head (second operator)
-			  :preconditions (process-pre domain  (third operator))
-			  :deletions (process-pre domain  (fourth operator))
-			  :additions (process-pre domain  (fifth operator))
-			  :cost-fun (process-pre domain  (sixth operator))))
-	  (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
+           (make-operator :head (second operator)
+                          :preconditions nil
+                          :deletions (process-pre domain  (third operator))
+                          :additions (process-pre domain  (fourth operator))
+                          :cost-fun 1.0))
+          ;; a SHOP 1 operator, with cost specified
+          ((and (= lopt 5) (numberp (fifth operator)))
+           (make-operator :head (second operator)
+                          :preconditions nil
+                          :deletions (process-pre domain  (third operator))
+                          :additions (process-pre domain  (fourth operator))
+                          :cost-fun (process-pre domain  (fifth operator))))
+          ((= lopt 5)             ; a SHOP 2 operator, no cost specified
+           (make-operator :head (second operator)
+                          :preconditions (process-pre domain  (third operator))
+                          :deletions (process-pre domain  (fourth operator))
+                          :additions (process-pre domain  (fifth operator))
+                          :cost-fun 1.0))
+          ((= lopt 6)             ; a SHOP 2 operator, with cost specified
+           (make-operator :head (second operator)
+                          :preconditions (process-pre domain  (third operator))
+                          :deletions (process-pre domain  (fourth operator))
+                          :additions (process-pre domain  (fifth operator))
+                          :cost-fun (process-pre domain  (sixth operator))))
+          (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
 
 (defun process-task-list (tasks)
   (cond
@@ -371,7 +371,7 @@ looks through the preconditions finding the forall
 ;;; DOMAIN manipulation functions --- these should probably be moved
 ;;; out into a file of their own at some point. [2006/07/24:rpg]
 ;;;---------------------------------------------------------------------------
-
+(defvar *defdomain-verbose* t)
 (defmacro defdomain (name-and-options items)
   ;; note that we are copying name-and-options because we destructively modify
   ;; it later (or at least destructively modify the options list which might
@@ -390,7 +390,8 @@ looks through the preconditions finding the forall
     (remf options :redefine-ok)
     (remf options :noset)
     `(progn
-       (format t "~%Defining domain ...")
+       (when *defdomain-verbose*
+         (format t "~%Defining domain ~a..." ',name))
        (let ((domain (apply #'make-instance ',type
                        :name ',name
                        ',options

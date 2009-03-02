@@ -136,6 +136,7 @@
              #:defdomain
              #:set-domain
              #:find-domain
+             #:*defdomain-verbose*
 
              ;; default planner search setting --- should be replaced
              ;; by subclassing a planner object later.
