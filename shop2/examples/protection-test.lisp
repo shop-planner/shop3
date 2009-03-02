@@ -79,12 +79,12 @@
 		    (shop::operator shop::*domain* ',opname)
 		    ,protections 0 nil)))
 
-(nst:def-value-check (:failed () (retval))
+(nst:def-value-check (:failed () (retval &rest args))
     `(if (eq retval 'fail)
 	 (sift.nst::make-check-result)
 	 (sift.nst:emit-failure)))
 
-(nst:def-value-check (:unfailed () (retval))
+(nst:def-value-check (:unfailed () (retval &rest args))
     `(if (eq retval 'fail)
 	 (sift.nst:emit-failure)
 	 (sift.nst::make-check-result)))
