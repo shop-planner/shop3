@@ -86,7 +86,7 @@ to which test output should be written."))
 (defmethod perform :around ((o stream-test-mixin) (c nst-testable))
   "Bind the output stream to the result stream."
   (flet ((verbose ()
-           (intern (symbol-name '#:*verbose-output*) :sift.nst)))
+           (intern (symbol-name '#:*nst-verbosity*) :sift.nst)))
     (let (( cl-user::*nst-default-report-stream* (result-stream o)))
       (format cl-user::*nst-default-report-stream* "~&Running test on system: ~A~%"
               (component-name c))
