@@ -7,13 +7,13 @@
     `(cond
        ((null plan-list) (nst::make-check-result))
        (t (nst:emit-failure
-	   "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
-	   (length plan-list) plan-list))))
+	   :format "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
+	   :args (list (length plan-list) plan-list)))))
 
 (nst:def-value-check (:found-plan () (plan-list runtime))
     `(declare (ignorable runtime))
     `(cond
-       ((null plan-list) (nst:emit-failure "No plans generated"))
+       ((null plan-list) (nst:emit-failure :format "No plans generated"))
        (t (nst::make-check-result))))
 
 (defun remove-plan-costs (plan-and-costs)
@@ -32,7 +32,8 @@ costs.  This function just throws away the costs."
   `(let ((plan (remove-plan-costs (first plan-list))))
      (cond
       ((equal ',target-plan plan)  (nst::make-check-result))
-      (t  (nst:emit-failure "Unexpected plan ~s" plan)))))
+      (t  (nst:emit-failure :format "Unexpected plan ~s"
+			    :args (list plan))))))
 
 (nst:def-check-alias (:plan-problem criterion)
   `(:apply find-plans ,criterion))
