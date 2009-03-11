@@ -448,17 +448,18 @@ Otherwise it returns FAIL."
        (list L)))))
 
 ;;; look inside the L, replace first t1 with the top-level tasks of t2
-(defun replace-task-top-list (L t1 t2)
+(defun replace-task-top-list (L t1 t2) ;;t2 is reduction, L is top-tasks
   (append (remove t1 L :count 1 :test #'equal) (get-top-tasks t2)))
 
 ;;; look inside the ML, replace first t1 with the top-level
 ;;; tasks of t2, also, this function will replace t1 in the
-;;; main task-list with t2
+;;; main task-list with t2  (t2 is the reduction)
 (defun replace-task-main-list (ML t1 t2)
   (let (answer temp temp-found found)
     (if (or (null t1) (null ML))
       (return-from replace-task-main-list (values ML nil))
       (if (equal ML t1)
+       ;; if t1 is last task, just return reduction as list
         (return-from replace-task-main-list (values t2 t))))
     (ecase (car ML)
       (:unordered
@@ -505,6 +506,7 @@ Otherwise it returns FAIL."
     (delete-task-main-list tempML TASK nil)
 
     (unless (car L1)
+     ;;;If top-task list is empty just return results of find-next-main-list
       (setq L1 (cdr L1)))
     (return-from delete-task-top-list (values L1 tempML))))
 
@@ -523,7 +525,8 @@ Otherwise it returns FAIL."
           (copy-task-tree (rest tt))))))
 
 ;;; this function will find the list of children that
-;;; decend from task directly
+;;; decend from task directly - by "children" it refers to tasks that must be 
+;;; completed next.  Only really applicable in an ordered list
 (defun find-next-main-list (task L)
   (if (null L)
     (return-from find-next-main-list (values nil nil t))
@@ -561,7 +564,9 @@ Otherwise it returns FAIL."
            (progn
              (multiple-value-setq (answer found goNext) (find-next-main-list task (second L)))
              (if found
+		 ;; if matching task is found in (second L)
                (if goNext
+		   ;; if (second L) only contains that task
                  (if (<= (list-length L) 2)
                    ;; need to getNext child
                    (return-from find-next-main-list (values answer found t))
@@ -594,9 +599,11 @@ Otherwise it returns FAIL."
                  (setf sub-task (car templist))
                  (setq current-deleted (delete-task-main-list sub-task TASK deleted))
                  (setq deleted (if (or deleted current-deleted) t nil))
+		 ;;;If task was deleted or detected in recursive call, deleted = true
                  (if (or (<= (list-length sub-task) 1)
                          (eq current-deleted :task))
-                   ;; remove sub-task from L
+                   ;;If sub-task is not actually a task, 
+		   ;;OR if it was found a layer down, remove sub-task from L
                    (setf (car templist) (second templist)
                          (cdr templist) (cddr templist))
                    (setf templist (cdr templist)))))
@@ -612,9 +619,11 @@ Otherwise it returns FAIL."
          (setf sub-task (car templist))
          (setq current-deleted (delete-task-main-list sub-task TASK deleted))
          (setq deleted (if (or deleted current-deleted) t nil))
+	 ;;If task was deleted or detected in recursive call, deleted = true
          (if (or (<= (list-length sub-task) 1)
                          (eq current-deleted :task))
-           ;; remove sub-task from L
+           ;; remove sub-task from L if sub-task is not a task OR 
+	   ;; if task was found one layer down (recursive call returned :task)
            (setf (car templist) (second templist)
                  (cdr templist) (cddr templist)))
          (if (and (> (list-length L) 1)
