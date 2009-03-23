@@ -1,19 +1,19 @@
 ;;; -*- Mode: common-lisp; package: shop2; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -22,8 +22,8 @@
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -39,16 +39,16 @@
 ;;; ----------------------------------------------------------------------
 
 ;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
-;;; 
+;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
-;;; 
-;;; Contract No.         FA8650-06-C-7606, 
+;;;
+;;; Contract No.         FA8650-06-C-7606,
 ;;; Contractor Name      Smart Information Flow Technologies, LLC
 ;;;                      d/b/a SIFT, LLC
 ;;; Contractor Address   211 N 1st Street, Suite 300
 ;;;                      Minneapolis, MN 55401
 ;;; Expiration Date      5/2/2011
-;;; 
+;;;
 ;;; The Government's rights to use, modify, reproduce, release,
 ;;; perform, display, or disclose this software are restricted by
 ;;; paragraph (b)(2) of the Rights in Noncommercial Computer Software
@@ -67,17 +67,17 @@
 ;;; ------------------------------------------------------------------------
 
 (defstruct (operator :named (:type list))
-  "This structure definition was added in order to make the 
+  "This structure definition was added in order to make the
 access to operator attributes self-documenting.  Later, the list
 structure could be removed, and a true struct could be used instead."
-  (head nil :type list)			;this is the operator expression itself...
+  (head nil :type list)                 ;this is the operator expression itself...
   preconditions
   deletions
   additions
   (cost-fun nil))
 
 (defmethod apply-operator ((domain domain) state task-body operator protections depth
-			     in-unifier)
+                             in-unifier)
   "If OPERATOR is applicable to TASK in STATE, then APPLY-OPERATOR returns
 five values:
 1.  the operator as applied, with all bindings;
@@ -99,44 +99,44 @@ Otherwise it returns FAIL."
     ;; added rudimentary arity-checking...
     (unless (= (length task-body) (length head))
       (cerror "Continue (operator application will fail)"
-	      "Arity of operator in the plan library, ~D~%~T~S~%does not match task, ~D~%~T~S"
-	      (length head)
-	      head
-	      (length task-body)
-	      task-body))
+              "Arity of operator in the plan library, ~D~%~T~S~%does not match task, ~D~%~T~S"
+              (length head)
+              head
+              (length task-body)
+              task-body))
 
     ;; new tracing facility for debugging
     (when *traced-tasks*
       (when (member (first head) *traced-tasks*)
-	(break "Applying operator for ~A~%~S" (first head) task-body)))
+        (break "Applying operator for ~A~%~S" (first head) task-body)))
 
     (setq operator-unifier (unify head (apply-substitution task-body in-unifier)))
-    
+
     (cond
      ((eql operator-unifier 'fail) (values 'fail protections 0))
      (t
       (setf operator-unifier
-	    (compose-substitutions operator-unifier in-unifier))
+            (compose-substitutions operator-unifier in-unifier))
       ;; first check the preconditions, if any
       (when preconditions
-	(setq pre (apply-substitution preconditions operator-unifier))
-	(setq pu (shopthpr:find-satisfiers pre state t 0 :domain domain))
-	(unless pu
-	  (trace-print :operators (first head) state
-		       "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
-		       depth
-		       (first head)
-		       (apply-substitution task-body unifier)
-		       pre
-		       )
-	  (return-from apply-operator (values 'fail preconditions 0))))
+        (setq pre (apply-substitution preconditions operator-unifier))
+        (setq pu (shopthpr:find-satisfiers pre state t 0 :domain domain))
+        (unless pu
+          (trace-print :operators (first head) state
+                       "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
+                       depth
+                       (first head)
+                       (apply-substitution task-body unifier)
+                       pre
+                       )
+          (return-from apply-operator (values 'fail preconditions 0))))
       (setq unifier (compose-substitutions operator-unifier (car pu)))
       (setq dels-subbed (apply-substitution deletions unifier))
       (setq adds-subbed (apply-substitution additions unifier))
       (setq head-subbed (apply-substitution head unifier))
       ;; added this to update the tree [2003/06/25:rpg]
       ;(setq *current-tree* (apply-substitution *current-tree* unifier))
-					;(format t "~%Sat to explain: ~s" (apply-substitution preconditions unifier))
+                                        ;(format t "~%Sat to explain: ~s" (apply-substitution preconditions unifier))
 
       ;; at this point UNIFIER is bound to the results of unifying
       ;; TASK-BODY with the operator's head and then retrieving
@@ -145,119 +145,124 @@ Otherwise it returns FAIL."
       ;; bindings from add and delete lists should not be plugged
       ;; in. [2004/01/20:rpg]
       (when *explanation*
-	  (setq head-subbed `(,@(cons (first head-subbed)
-				      (mapcar #'list
-					      (rest (second operator))
-					      (rest head-subbed)))
-				:explanation
-				,(shopthpr:explain-satisfier
-				  (apply-substitution preconditions unifier)
-				  state))))
+          (setq head-subbed `(,@(cons (first head-subbed)
+                                      (mapcar #'list
+                                              (rest (second operator))
+                                              (rest head-subbed)))
+                                :explanation
+                                ,(shopthpr:explain-satisfier
+                                  (apply-substitution preconditions unifier)
+                                  state))))
       (trace-print :operators (first head) state
-		   "~2%Depth ~s, applying operator ~s~%      task ~s~%       del ~s~%       add ~s"
-		   depth
-		   (first head)
-		   (apply-substitution task-body unifier)
-		   dels-subbed
-		   adds-subbed)
+                   "~2%Depth ~s, applying operator ~s~%      task ~s~%       del ~s~%       add ~s"
+                   depth
+                   (first head)
+                   (apply-substitution task-body unifier)
+                   dels-subbed
+                   adds-subbed)
       (setq cost-value
-	(eval (apply-substitution
-	       (operator-cost-fun standardized-operator) unifier)))
+        (eval (apply-substitution
+               (operator-cost-fun standardized-operator) unifier)))
       (setq cost-number (if (numberp cost-value) cost-value 1))
       ;; process DELETE list
       (dolist (d dels-subbed)
-	(unless (eql 'fail d)
-	  (if (eql (car d) 'forall)
-	      (let ((bounds (third d)) (dels (fourth d)) mgu2 tempd)
-		(setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
-						     :domain domain))
-		(dolist (m2 mgu2)
-		  (setq tempd (apply-substitution dels m2))
-		  (dolist (d1 tempd)
-		    (setq tempdel
-		      (shop-union (list d1) tempdel :test #'equal)))))
-	    (setq tempdel (shop-union (list d) tempdel :test #'equal)))))
+        (unless (eql 'fail d)
+          (if (eql (car d) 'forall)
+              (let ((bounds (third d)) (dels (fourth d)) mgu2 tempd)
+                (setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
+                                                     :domain domain))
+                (dolist (m2 mgu2)
+                  (setq tempd (apply-substitution dels m2))
+                  (dolist (d1 tempd)
+                    (setq tempdel
+                      (shop-union (list d1) tempdel :test #'equal)))))
+            (setq tempdel (shop-union (list d) tempdel :test #'equal)))))
       ;; process ADD list
       (dolist (a adds-subbed)
-	(unless (eql 'fail a)
-	  (if (eql (car a) 'forall)
-	      (let ((bounds (third a)) (adds (fourth a)) mgu2 tempa)
-		(setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
-						     :domain domain))
-		(dolist (m2 mgu2)
-		  (setq tempa (apply-substitution adds m2))
-		  (dolist (a1 tempa)
-		    (setq tempadd
-		      (shop-union (list a1) tempadd :test #'equal)))))
-	    (setq tempadd (shop-union (list a) tempadd :test #'equal)))))
+        (unless (eql 'fail a)
+          (if (eql (car a) 'forall)
+              (let ((bounds (third a)) (adds (fourth a)) mgu2 tempa)
+                (setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
+                                                     :domain domain))
+                (dolist (m2 mgu2)
+                  (setq tempa (apply-substitution adds m2))
+                  (dolist (a1 tempa)
+                    (setq tempadd
+                      (shop-union (list a1) tempadd :test #'equal)))))
+            (setq tempadd (shop-union (list a) tempadd :test #'equal)))))
 
-      (setq protections1 protections)               
+      (setq protections1 protections)
       (setq statetag (tag-state state))
       ;; process PROTECTIONS generated by this operator
       (dolist (d tempdel)
-	(if (eql (car d) :protection)
-	    (setq protections1 
-	      (delete-protection 
-	       protections1 (second d) depth (first head) state))
-	  (delete-atom-from-state d state depth (first head))))
+        (if (eql (car d) :protection)
+            (setq protections1
+              (delete-protection
+               protections1 (second d) depth (first head) state))
+          (delete-atom-from-state d state depth (first head))))
 
       (dolist (a tempadd)
-	(unless (eql (car a) :protection)
-	  ;; added this error-checking.  I can't think of a case where
-	  ;; it's ok to add a non-ground literal to the
-	  ;; state. [2004/02/17:rpg]
-	  ;; the above check should probably be moved to
-	  ;; add-atom-to-state... [2008/02/07:rpg
-	  (unless (groundp a)
-		 (error "Attempting to add non-ground literal ~S to state."
-			a))
-	  (add-atom-to-state a state depth (first head))))
+        (unless (eql (car a) :protection)
+          ;; added this error-checking.  I can't think of a case where
+          ;; it's ok to add a non-ground literal to the
+          ;; state. [2004/02/17:rpg]
+          ;; the above check should probably be moved to
+          ;; add-atom-to-state... [2008/02/07:rpg
+          (unless (groundp a)
+                 (error "Attempting to add non-ground literal ~S to state."
+                        a))
+          (add-atom-to-state a state depth (first head))))
 
-      (if (protection-ok state protections1 head) 
-	  (setq protections protections1)
-	(progn
-	  (retract-state-changes state statetag)
-	  (return-from apply-operator (values 'fail 'fail protections 0))))
+      (if (protection-ok state protections1 head)
+          (setq protections protections1)
+        (progn
+          (retract-state-changes state statetag)
+          (return-from apply-operator (values 'fail 'fail protections 0))))
 
       (dolist (a tempadd)
-	(when (eql (first a) :protection)
-	  (unless (find-satisfiers (list (second a)) state t 0 :domain domain)
-	    (error "Adding a protection ~A that is violated in state." a))
-	  (setq protections 
-	    (add-protection protections (second a) 
-			    depth (first head) state))))
+        (when (eql (first a) :protection)
+          (unless (find-satisfiers (list (second a)) state t 0 :domain domain)
+            (error "Adding a protection ~A that is violated in state." a))
+          (setq protections
+            (add-protection protections (second a)
+                            depth (first head) state))))
 
       (trace-print :operators operator state "~&Operator successfully applied.")
 
-      (values head-subbed statetag 
-	      protections cost-number
-	      unifier)))))
+      (values head-subbed statetag
+              protections cost-number
+              unifier)))))
+
+(defun well-formed-listp (l)
+  (null (cdr (last l))))
 
 
 ;;; If METHOD is applicable to TASK in STATE, then APPLY-METHOD returns the
 ;;; resulting list of reductions.  Otherwise it returns NIL.
 (defmethod apply-method ((domain domain) state task-body method protections depth
-			   in-unifier)
-  (declare (ignore protections))  ; do we really want to ignore protections?
-  (let ((standardized-method (standardize method))  
+                         in-unifier)
+  (declare (ignore protections))        ; do we really want to ignore protections?
+  (let ((standardized-method (standardize method))
         task-unifier state-unifiers pre tail)
 
-    (unless (= (length (second standardized-method))
-	       (length task-body))
+    (when (and (well-formed-listp (second standardized-method))
+               (well-formed-listp task-body))
+      (unless (= (length (second standardized-method))
+                 (length task-body))
       (error "Arity mismatch between task to plan and method:~%Task: ~S~%Method header: ~S"
-	     task-body (second standardized-method)))
+             task-body (second standardized-method))))
 
     ;; see if the standardized-method's head unifies with TASK-BODY
     (setq task-unifier (unify (second standardized-method)
-			      (apply-substitution task-body in-unifier)))
+                              (apply-substitution task-body in-unifier)))
     (when *traced-tasks*
       (when (member (first task-body) *traced-tasks*)
-	(break "Attempting to apply a method for ~A:~%~S"
-	       (first task-body) task-body)))
+        (break "Attempting to apply a method for ~A:~%~S"
+               (first task-body) task-body)))
 
     (unless (eql task-unifier 'fail)
       (setq task-unifier (compose-substitutions in-unifier task-unifier))
-      ;; STANDARDIZED-METHOD's CDDR is a list 
+      ;; STANDARDIZED-METHOD's CDDR is a list
       ;; (label_1 pre_1 d_1 label_2 pre_2 d_2 ...) which acts like an
       ;; if-then-else: we look for the first true pre_i, and then evaluate d_i
       (do* ((body (cddr standardized-method) (cdddr body)))
@@ -267,43 +272,43 @@ Otherwise it returns FAIL."
         (setq pre (apply-substitution (second body) task-unifier))
         (setq tail (apply-substitution (third body) task-unifier))
 
-	;; check for tracing
-	(when *traced-methods*
-	  (when (member (first body) *traced-methods*)
-	    (break "Attempting to apply method ~A" (first body))))
+        ;; check for tracing
+        (when *traced-methods*
+          (when (member (first body) *traced-methods*)
+            (break "Attempting to apply method ~A" (first body))))
 
-	(trace-print :methods (first body) state
+        (trace-print :methods (first body) state
                            "~2%Depth ~s, trying method ~s~%      for task ~s~%"
                            depth
                            (first body)
                            task-body)
-        
+
         ;; find all matches to the current state
         (setq state-unifiers (shopthpr:find-satisfiers pre state nil 0
-						       :domain domain))
+                                                       :domain domain))
 
         (if state-unifiers
             (let* ((answers-with-duplicates
                     (mapcan
                      #'(lambda (unifier)
-			 (let ((unifier (compose-substitutions (copy-tree unifier) task-unifier)))
-			   (mapcar
-			    #'(lambda (reduction)
-				(cons 
-				 (cons (first body) reduction)
-				 ;;keep the unifier around a bit longer...
-				 ;; [2003/06/25:rpg]
-				 unifier))
-			    (force-immediate-reduction 
-			     (eval (apply-substitution tail unifier))))))
+                         (let ((unifier (compose-substitutions (copy-tree unifier) task-unifier)))
+                           (mapcar
+                            #'(lambda (reduction)
+                                (cons
+                                 (cons (first body) reduction)
+                                 ;;keep the unifier around a bit longer...
+                                 ;; [2003/06/25:rpg]
+                                 unifier))
+                            (force-immediate-reduction
+                             (eval (apply-substitution tail unifier))))))
                      state-unifiers))
- 		   (answers-and-unifiers
- 		    (remove-duplicates answers-with-duplicates
- 				       ;; added this to ignore the unifiers....
- 				       :key #'car
- 				       :test #'equal :from-end t))
- 		   (answers (mapcar #'car answers-and-unifiers))
- 		   (unifiers (mapcar #'cdr answers-and-unifiers)))
+                   (answers-and-unifiers
+                    (remove-duplicates answers-with-duplicates
+                                       ;; added this to ignore the unifiers....
+                                       :key #'car
+                                       :test #'equal :from-end t))
+                   (answers (mapcar #'car answers-and-unifiers))
+                   (unifiers (mapcar #'cdr answers-and-unifiers)))
               (trace-print :methods (first body) state
                            "~2%Depth ~s, applicable method ~s~%      task ~s~%reductions ~s"
                            depth
@@ -369,7 +374,7 @@ Otherwise it returns FAIL."
     (mapcar #'(lambda (unordered-result)
     (cons :unordered unordered-result))
       (force-immediate-unordered (rest reduction))))))
-  
+
 (defun already-immediate-p (reduction)
   (cond
    ((null reduction) nil)
@@ -405,9 +410,9 @@ Otherwise it returns FAIL."
 
 
 (defun internal-operator-p (operator-name)
-  (if (symbolp operator-name) 
+  (if (symbolp operator-name)
       (let ((name (symbol-name operator-name)))
-        (and 
+        (and
          (>= (length name) 2)
          (equal (elt name 0) #\!)
          (equal (elt name 1) #\!)))
@@ -525,7 +530,7 @@ Otherwise it returns FAIL."
           (copy-task-tree (rest tt))))))
 
 ;;; this function will find the list of children that
-;;; decend from task directly - by "children" it refers to tasks that must be 
+;;; decend from task directly - by "children" it refers to tasks that must be
 ;;; completed next.  Only really applicable in an ordered list
 (defun find-next-main-list (task L)
   (if (null L)
@@ -564,9 +569,9 @@ Otherwise it returns FAIL."
            (progn
              (multiple-value-setq (answer found goNext) (find-next-main-list task (second L)))
              (if found
-		 ;; if matching task is found in (second L)
+                 ;; if matching task is found in (second L)
                (if goNext
-		   ;; if (second L) only contains that task
+                   ;; if (second L) only contains that task
                  (if (<= (list-length L) 2)
                    ;; need to getNext child
                    (return-from find-next-main-list (values answer found t))
@@ -599,11 +604,11 @@ Otherwise it returns FAIL."
                  (setf sub-task (car templist))
                  (setq current-deleted (delete-task-main-list sub-task TASK deleted))
                  (setq deleted (if (or deleted current-deleted) t nil))
-		 ;;;If task was deleted or detected in recursive call, deleted = true
+                 ;;;If task was deleted or detected in recursive call, deleted = true
                  (if (or (<= (list-length sub-task) 1)
                          (eq current-deleted :task))
-                   ;;If sub-task is not actually a task, 
-		   ;;OR if it was found a layer down, remove sub-task from L
+                   ;;If sub-task is not actually a task,
+                   ;;OR if it was found a layer down, remove sub-task from L
                    (setf (car templist) (second templist)
                          (cdr templist) (cddr templist))
                    (setf templist (cdr templist)))))
@@ -619,11 +624,11 @@ Otherwise it returns FAIL."
          (setf sub-task (car templist))
          (setq current-deleted (delete-task-main-list sub-task TASK deleted))
          (setq deleted (if (or deleted current-deleted) t nil))
-	 ;;If task was deleted or detected in recursive call, deleted = true
+         ;;If task was deleted or detected in recursive call, deleted = true
          (if (or (<= (list-length sub-task) 1)
                          (eq current-deleted :task))
-           ;; remove sub-task from L if sub-task is not a task OR 
-	   ;; if task was found one layer down (recursive call returned :task)
+           ;; remove sub-task from L if sub-task is not a task OR
+           ;; if task was found one layer down (recursive call returned :task)
            (setf (car templist) (second templist)
                  (cdr templist) (cddr templist)))
          (if (and (> (list-length L) 1)
