@@ -115,7 +115,7 @@ shop2."
 
 (defsystem :test-shop2
     :class nst-testable
-    :nst-systems (;; :protection-tests
+    :nst-systems (:protection-tests
                   :shop-blocks
                   :shop-depots
                   :shop-logistic
