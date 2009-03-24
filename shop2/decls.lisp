@@ -395,9 +395,13 @@ the actions in the partial plan before doing the actual SEEK-PLANS-NULL..."))
                    Recursively calls the task-decomposition routine to decompose the subtasks. In the LTML context,
                    What should it do with the OUTPUTS and/or the RESULTS of that method? (TBD) "))
 
-(defgeneric apply-method (domain state task-body method protections depth in-unifier)
-  (:documentation "Applies the LTML method and returns a decomposition of the TASK. In LTML context,
-                   what should it do with the OUTPUTS and/or the RESULTS of that method? (TBD) "))
+(defgeneric apply-method (domain state task method protections depth in-unifier)
+  (:documentation "If METHOD is applicable to TASK in STATE, then APPLY-METHOD returns the
+resulting list of reductions.  Otherwise it returns NIL.
+   PROTECTIONS are to be passed down the stack and checked whenever we apply an operator
+in the context of applying the METHOD.
+   DEPTH is used for tracing.
+   IN-UNIFIER will be applied to the TASK when applying the method."))
 
 (defgeneric problem->state (domain problem)
   (:documentation "Translate PROBLEM into a list of arguments to make-initial-state.
@@ -449,9 +453,3 @@ of SHOP2 extensions to extend or override the normal problem-building.")
 
 (defun find-problem (name)
   (find name *all-problems* :key #'name))
-
-
-
-
-
-
