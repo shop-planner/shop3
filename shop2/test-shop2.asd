@@ -116,13 +116,14 @@ shop2."
 (defsystem :test-shop2
     :class nst-testable
     :nst-systems (:protection-tests
+                  :arity-tests
                   :shop-blocks
                   :shop-depots
                   :shop-logistic
                   :shop-pddl-tests
                   :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-                 (:version :nst "1.0"))
+                 (:version :nst "1"))
     :version #.cl-user::+shop-version+)
 
 ;;;
@@ -143,7 +144,7 @@ packages have been loaded yet."
                                   (find-package package)))))))
 
 (defsystem :shop-test-helper
-    :depends-on (:shop2 (:version :nst "1.0"))
+    :depends-on (:shop2 (:version :nst "1"))
     :default-component-class tester-cl-source-file
     :in-order-to ((load-op (compile-op :shop-test-helper)))
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative  "tests")) *load-truename*)
@@ -154,7 +155,7 @@ packages have been loaded yet."
 ;;;
 (defsystem :shop-pddl-tests
     :class nst-testable ;; shop-tester
-    :depends-on (:shop2 (:version :nst "1.0"))
+    :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :shop-pddl-tests)))
     :nst-groups ((:shop2 . pddl-tests)
                  (:shop2 . add-del-tests)
@@ -166,13 +167,24 @@ packages have been loaded yet."
 
 (defsystem :protection-tests
     :class nst-testable ;; shop-tester
-    :depends-on (:shop2 (:version :nst "1.0"))
+    :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :protection-tests)))
     :nst-group (:protection-test . protection-test)
     :pathname #.(merge-pathnames (make-pathname :directory +shop-examples-dir+) *load-truename*)
     :serial t
     :components ((:file "protection-test-package")
                  (:file "protection-test")))
+
+(defsystem :arity-tests
+    :class nst-testable
+    :depends-on (:shop2 (:version :nst "1"))
+    :in-order-to ((test-op (load-op :arity-tests)))
+    :nst-group (:arity-test . arity-test)
+    :pathname "tests/"
+    :serial t
+    :components ((:file "at-package")
+                 (:file "arity-tests")))
+
 
 
 ;;;; handle SBCL's strict notion of the way DEFCONSTANT should work. [2006/05/16:rpg]

@@ -38,7 +38,7 @@
 (in-package :protection-test)
 
 (defun init-protections-domain ()
-  (defdomain protection-test-domain
+  (defdomain (protection-test-domain :noset t)
     (
      (:operator (!positive-op)
                 ()                      ;no preconditions
@@ -70,15 +70,15 @@
     (init-protections-domain)))
 
 (def-fixtures empty-state ()
-   (s (shop::make-initial-state shop::*domain*
+   (s (shop::make-initial-state setup
                                 :list nil)))
 
 (defmacro apply-op (opname &key protections)
   `(locally
-    (declare (special shop::*domain* s))
-    (apply-operator shop::*domain* s
+    (declare (special setup s))
+    (apply-operator setup s
                     '( ,opname )
-                    (shop::operator shop::*domain* ',opname)
+                    (shop::operator setup ',opname)
                     ,protections 0 nil)))
 
 (nst:def-value-check (:failed () (retval &rest args))
@@ -127,17 +127,17 @@
       (apply-op !positive-op)
       (multiple-value-bind (op tag protections)
           (apply-op !add-protect)
-        (declare (ignore op tag) (special shop::*domain* s))
-        (apply-operator shop::*domain* s '(!negative-op)
-                        (shop::operator shop::*domain* '!negative-op)
+        (declare (ignore op tag) (special setup s))
+        (apply-operator setup s '(!negative-op)
+                        (shop::operator setup '!negative-op)
                         protections 0 nil))))
   (def-check  (neg-protection-effective :fixtures (empty-state))
       (:failed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special shop::*domain* s))
-      (apply-operator shop::*domain* s '(!positive-op)
-                      (shop::operator shop::*domain* '!negative-op)
+      (declare (ignore op tag) (special setup s))
+      (apply-operator setup s '(!positive-op)
+                      (shop::operator setup '!negative-op)
                       protections 0 nil)))
 
   ;; items number four and five
@@ -147,7 +147,7 @@
       (apply-op !positive-op)
       (multiple-value-bind (op tag protections)
           (apply-op !add-protect)
-        (declare (ignore op tag) (special shop::*domain* s))
+        (declare (ignore op tag) (special setup s))
         (multiple-value-bind (op tag protections)
             (apply-op !remove-protect :protections protections)
           (declare (ignore op tag))
@@ -157,7 +157,7 @@
     (progn
       (multiple-value-bind (op tag protections)
           (apply-op !add-neg-protect)
-        (declare (ignore op tag) (special shop::*domain* s))
+        (declare (ignore op tag) (special setup s))
         (multiple-value-bind (op tag protections)
             (apply-op !remove-neg-protect :protections protections)
           (declare (ignore op tag))
@@ -170,7 +170,7 @@
       (apply-op !positive-op)
       (multiple-value-bind (op tag protections)
           (apply-op !add-protect)
-        (declare (ignore op tag) (special shop::*domain* s))
+        (declare (ignore op tag) (special setup s))
         (multiple-value-bind (op tag protections)
             (apply-op !add-protect :protections protections)
           (declare (ignore op tag))
@@ -184,7 +184,7 @@
       (apply-op !positive-op)
       (multiple-value-bind (op tag protections)
           (apply-op !add-protect)
-        (declare (ignore op tag) (special shop::*domain* s))
+        (declare (ignore op tag) (special setup s))
         (multiple-value-bind (op tag protections)
             (apply-op !add-protect :protections protections)
           (declare (ignore op tag))
@@ -199,7 +199,7 @@
       (:failed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special shop::*domain* s))
+      (declare (ignore op tag) (special setup s))
       (multiple-value-bind (op tag protections)
           (apply-op !add-neg-protect :protections protections)
         (declare (ignore op tag))
@@ -211,7 +211,7 @@
       (:unfailed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special shop::*domain* s))
+      (declare (ignore op tag) (special setup s))
       (multiple-value-bind (op tag protections)
           (apply-op !add-neg-protect :protections protections)
         (declare (ignore op tag))
