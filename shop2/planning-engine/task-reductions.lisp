@@ -97,13 +97,14 @@ Otherwise it returns FAIL."
          cost-value cost-number)
 
     ;; added rudimentary arity-checking...
-    (unless (= (length task-body) (length head))
+    (when (and (well-formed-listp head)
+               (well-formed-listp task-body))
+      (unless
+          (= (length task-body) (length head))
       (cerror "Continue (operator application will fail)"
-              "Arity of operator in the plan library, ~D~%~T~S~%does not match task, ~D~%~T~S"
-              (length head)
-              head
-              (length task-body)
-              task-body))
+              'task-arity-mismatch
+              :task task-body :library-task head
+              :library-entry operator)))
 
     ;; new tracing facility for debugging
     (when *traced-tasks*
@@ -249,8 +250,10 @@ Otherwise it returns FAIL."
                (well-formed-listp task-body))
       (unless (= (length (second standardized-method))
                  (length task-body))
-      (error "Arity mismatch between task to plan and method:~%Task: ~S~%Method header: ~S"
-             task-body (second standardized-method))))
+      (error 'task-arity-mismatch
+             :task task-body
+             :library-task (second standardized-method)
+             :library-entry method)))
 
     ;; see if the standardized-method's head unifies with TASK-BODY
     (setq task-unifier (unify (second standardized-method)

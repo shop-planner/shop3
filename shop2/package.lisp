@@ -127,6 +127,8 @@
              #:delete-problem
              #:def-problem-set
              #:make-problem-set
+             #:*make-problem-silently*
+
              #:find-plans
              #:do-problems
              #:shop-trace
@@ -204,6 +206,7 @@
 
              ;; conditions
              #:no-method-for-task
+             #:task-arity-mismatch
 
              ;; things you might want to use in your domain definitions
              #:variablep

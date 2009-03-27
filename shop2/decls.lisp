@@ -219,6 +219,14 @@ will consult the user even in these cases.")
   (:documentation "An object representing a SHOP2 domain.")
   )
 
+(defmethod print-object ((obj domain) str)
+  (print-unreadable-object (obj str :type t)
+    (handler-case
+        (when (domain-name obj)
+          (format str "~a" (domain-name obj)))
+      ;; don't have the print-method cough an error if the domain has no name. [2009/03/26:rpg]
+      (unbound-slot () nil))))
+
 ;;;---------------------------------------------------------------------------
 ;;; PROBLEMS
 ;;;---------------------------------------------------------------------------
@@ -453,3 +461,50 @@ of SHOP2 extensions to extend or override the normal problem-building.")
 
 (defun find-problem (name)
   (find name *all-problems* :key #'name))
+
+
+;;;---------------------------------------------------------------------------
+;;; Conditions
+;;;---------------------------------------------------------------------------
+(define-condition shop-condition ()
+  ()
+  (:documentation "A condition that should be added to all conditions defined in SHOP2.")
+  )
+
+(define-condition shop-error (shop-condition error)
+  ()
+  (:documentation "A convenient superclass for SHOP error conditions."))
+
+(define-condition task-arity-mismatch (shop-error)
+  (
+   (task
+    :initarg :task
+    :reader task-arity-mismatch-task
+    )
+   (library-task
+    :initarg :library-task
+    :reader task-arity-mismatch-library-task
+    )
+   (library-entry
+    :initarg :library-entry
+    :reader task-arity-mismatch-library-entry
+    )
+   )
+  (:documentation "An error representing the case where the LIBRARY-ENTRY has a way of performing
+LIBRARY-TASK whose arity does not match that of TASK, although the
+task keyword of TASK and LIBRARY-TASK are the same.")
+  (:report report-task-arity-mismatch))
+
+(defun report-task-arity-mismatch (condition stream)
+  (with-slots (task library-task) condition
+    (format stream "Arity mismatch between task to plan and task in library:~%Task: ~S~%Task in library: ~S"
+            task library-task)))
+
+(define-condition no-method-for-task (shop-error)
+  ((task-name
+    :initarg :task-name
+    ))
+  (:report report-no-method))
+
+(defun report-no-method (x str)
+  (format str "No method definition for task ~A" (slot-value x 'task-name)))
