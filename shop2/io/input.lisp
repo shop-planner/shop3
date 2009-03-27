@@ -402,7 +402,10 @@ looks through the preconditions finding the forall
          (parse-domain-items domain ',items)
          (install-domain domain ,redefine-ok)
          (unless ,noset
-           (setf *domain* domain))))))
+           (setf *domain* domain))
+         ;; previous addition of noset changed the behavior of defdomain to make
+         ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
+         domain))))
 
 (defmethod install-domain ((domain domain) &optional redefine-ok)
   (when (get (domain-name domain) :domain)
