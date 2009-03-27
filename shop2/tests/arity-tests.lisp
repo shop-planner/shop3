@@ -23,6 +23,12 @@
          (:method (method ?x ?y)
                   ()
                   ((!positive-op)))
+         (:method (metamethod . ?args)
+            ()
+            (method . ?args))
+         (:method (metamethodop . ?args)
+            ()
+            (!has-an-arg . ?args))
          (:operator (!positive-op)
                     ()                  ;no preconditions
                     ()
@@ -31,6 +37,10 @@
                     ()                  ;no preconditions
                     ((prop))
                     ())
+         (:operator (!has-an-arg ?x)
+                    ()
+                    ()
+                    ((prop)))
          (:operator (!add-protect)
                     ()
                     ()
@@ -64,6 +74,30 @@
      (make-problem 'arity-mismatch
                    '() '(method bar)))))
 
+(def-fixtures good-problem-op (:uses arity-domain)
+  (foo
+   (let (( shop2::*make-problem-silently* t ))
+     (make-problem 'arity-match-op
+                   '() '(!has-an-arg foo)))))
+
+(def-fixtures bad-problem-op (:uses arity-domain)
+  (bar
+   (let (( shop2::*make-problem-silently* t ))
+     (make-problem 'arity-mismatch-op
+                   '() '(!has-an-arg)))))
+
+(def-fixtures good-rest-problem-1 ()
+  (baz
+   (let (( shop2::*make-problem-silently* t ))
+     (make-problem 'meta
+                   '() '(metamethod foo bar)))))
+
+(def-fixtures good-rest-problem-2 ()
+  (baz
+   (let (( shop2::*make-problem-silently* t ))
+     (make-problem 'meta-op
+                   '() '(metamethodop foo)))))
+
 (def-value-check (failed () (retval &rest args))
     `(if (eq retval 'fail)
          (sift.nst::make-check-result)
@@ -79,6 +113,14 @@
       (unfailed) (nth-value 0 (find-plans 'arity-match :verbose 0 :domain dom)))
   (def-check  (method-arity-mismatch :fixtures (good-problem))
       (:err :type shop2:task-arity-mismatch) (nth-value 0 (find-plans 'arity-mismatch :domain dom :verbose 0)))
+  (def-check  (op-arity-match :fixtures (good-problem-op))
+      (unfailed) (nth-value 0 (find-plans 'arity-match-op :verbose 0 :domain dom)))
+  (def-check  (op-arity-mismatch :fixtures (bad-problem-op))
+      (:err :type shop2:task-arity-mismatch) (nth-value 0 (find-plans 'arity-mismatch-op :domain dom :verbose 0)))
+  (def-check  (method-rest-match :fixtures (good-rest-problem-1))
+      (unfailed) (nth-value 0 (find-plans 'meta :verbose 0 :domain dom)))
+  (def-check  (op-rest-match :fixtures (good-rest-problem-2))
+      (unfailed) (nth-value 0 (find-plans 'meta-op :verbose 0 :domain dom)))
   )
 
 
