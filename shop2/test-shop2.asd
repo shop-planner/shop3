@@ -180,7 +180,10 @@ packages have been loaded yet."
     :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :arity-tests)))
     :nst-group (:arity-test . arity-test)
-    :pathname "tests/"
+    :pathname #.(merge-pathnames (make-pathname :directory '(:relative "tests")
+                                                :name nil :type nil)
+                                 *load-truename*)
+
     :serial t
     :components ((:file "at-package")
                  (:file "arity-tests")))
