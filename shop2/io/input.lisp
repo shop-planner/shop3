@@ -60,6 +60,10 @@
 
 
 (in-package :shop2)
+
+(defvar *silent* nil
+  "Set to t to suppress output messages")
+
 ;;; ------------------------------------------------------------------------
 ;;; Functions for creating and manipulating planning domains and problems
 ;;; ------------------------------------------------------------------------
@@ -79,7 +83,8 @@
     (psetf items name
            name (gentemp (symbol-name '#:domain))))
   ;; name is ignored -- it's there only for compatibility with SHOP 1
-  (format t "~%Defining domain ...")
+  (unless *silent*
+    (format t "~%Defining domain ..."))
   (let ((domain (make-instance 'domain
                   :name name)))
     (setq items (append '((:operator (!!inop) () () 0)) items))
@@ -163,7 +168,8 @@
             (t (setf problem-name problem-name-etc
                      type 'problem)))
       (unless *make-problem-silently*
-        (format t "~%Defining problem ~s ..." problem-name))
+        (unless *silent*
+          (format t "~%Defining problem ~s ..." problem-name)))
       (let ((problem-inst (make-instance type
                             :domain-name domain-name
                             :name problem-name
@@ -206,14 +212,16 @@
 ;;; More specifically, it puts PROBLEM-SET onto PROBLEM-NAME's
 ;;; property list under the indicators :STATE, :TASKS, and :DOMAIN
 (defun make-problem-set (list-name problem-list)
-  (format t "~%Defining problem set ~s ..." list-name)
+  (unless *silent*
+    (format t "~%Defining problem set ~s ..." list-name))
   (setf (get list-name :problems) problem-list))
 
 ;;; Get the list of problems for the problem set named NAME
 (defun get-problems (name &key print)
   (let ((answer (get name :problems 'fail)))
     (cond ((eq answer 'fail) (error "No problem list for the name ~s" name))
-          (print (format t "~%~s" answer)))
+          (unless *silent*
+            (format t "~%~s" answer)))
     answer))
 
 ;;; DO-PROBLEMS runs FIND-PLANS on each problem in PROBLEMS, which may be
@@ -364,7 +372,8 @@ looks through the preconditions finding the forall
 
 (defmacro def-problem-set (list-name problem-list)
   `(progn
-    (format t "~%Defining problem set ~s ..." ',list-name)
+     (unless *silent*
+       (format t "~%Defining problem set ~s ..." ',list-name))
     (setf (get ',list-name :problems) ',problem-list)))
 
 ;;;---------------------------------------------------------------------------
@@ -390,8 +399,9 @@ looks through the preconditions finding the forall
     (remf options :redefine-ok)
     (remf options :noset)
     `(progn
-       (when *defdomain-verbose*
-         (format t "~%Defining domain ~a..." ',name))
+       (unless *silent*
+         (when *defdomain-verbose*
+         (format t "~%Defining domain ~a..." ',name)))
        (let ((domain (apply #'make-instance ',type
                        :name ',name
                        ',options
