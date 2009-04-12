@@ -61,8 +61,10 @@
 
 (in-package :shop2)
 
-(defvar *silent* nil
-  "Set to t to suppress output messages")
+(defvar *define-silently* nil
+  "Set to a non-nil value to suppress output messages printed when SHOP2 model components
+\(domains, etc.\) are defined.  When this value is NIL, SHOP2 defaults to printing
+messages when it is asked to define components.")
 
 ;;; ------------------------------------------------------------------------
 ;;; Functions for creating and manipulating planning domains and problems
@@ -83,7 +85,7 @@
     (psetf items name
            name (gentemp (symbol-name '#:domain))))
   ;; name is ignored -- it's there only for compatibility with SHOP 1
-  (unless *silent*
+  (unless *define-silently*
     (format t "~%Defining domain ..."))
   (let ((domain (make-instance 'domain
                   :name name)))
@@ -168,7 +170,7 @@
             (t (setf problem-name problem-name-etc
                      type 'problem)))
       (unless *make-problem-silently*
-        (unless *silent*
+        (unless *define-silently*
           (format t "~%Defining problem ~s ..." problem-name)))
       (let ((problem-inst (make-instance type
                             :domain-name domain-name
@@ -212,7 +214,7 @@
 ;;; More specifically, it puts PROBLEM-SET onto PROBLEM-NAME's
 ;;; property list under the indicators :STATE, :TASKS, and :DOMAIN
 (defun make-problem-set (list-name problem-list)
-  (unless *silent*
+  (unless *define-silently*
     (format t "~%Defining problem set ~s ..." list-name))
   (setf (get list-name :problems) problem-list))
 
@@ -220,7 +222,7 @@
 (defun get-problems (name &key print)
   (let ((answer (get name :problems 'fail)))
     (cond ((eq answer 'fail) (error "No problem list for the name ~s" name))
-          (unless *silent*
+          (unless *define-silently*
             (format t "~%~s" answer)))
     answer))
 
@@ -372,7 +374,7 @@ looks through the preconditions finding the forall
 
 (defmacro def-problem-set (list-name problem-list)
   `(progn
-     (unless *silent*
+     (unless *define-silently*
        (format t "~%Defining problem set ~s ..." ',list-name))
     (setf (get ',list-name :problems) ',problem-list)))
 
@@ -399,7 +401,7 @@ looks through the preconditions finding the forall
     (remf options :redefine-ok)
     (remf options :noset)
     `(progn
-       (unless *silent*
+       (unless *define-silently*
          (when *defdomain-verbose*
          (format t "~%Defining domain ~a..." ',name)))
        (let ((domain (apply #'make-instance ',type

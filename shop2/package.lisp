@@ -79,6 +79,9 @@
              #:*domain* #:*current-state* #:*inferences* #:*external-access*
              #:*attribution-list* #:*state-encoding*
 
+             ;; quash some default definition messages
+             #:*define-silently*
+
              #:state-candidate-atoms-for-goal #:state-atoms
              #:state-all-atoms-for-predicate
              #:copy-state
