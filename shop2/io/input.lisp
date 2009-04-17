@@ -124,9 +124,6 @@ messages when it is asked to define components.")
           ((= lax 3) nil)
           (t (and (atom (car ax)) (listp (cadr ax)) (rest-shop2-axiom-p (cddr ax)))))))
 
-;;; rewrote the funky boolean under the (atom x) branch to use WHEN
-;;; and COND to make it clear it's a conditional, executed for
-;;; effect. [2006/07/31:rpg]
 (defmethod set-variable-property ((domain domain) x)
   (cond ((symbolp x)
          (cond ((eql (elt (symbol-name x) 0) #\?)
