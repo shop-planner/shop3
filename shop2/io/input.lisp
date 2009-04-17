@@ -218,11 +218,11 @@ messages when it is asked to define components.")
     (format t "~%Defining problem set ~s ..." list-name))
   (setf (get list-name :problems) problem-list))
 
-;;; Get the list of problems for the problem set named NAME
 (defun get-problems (name &key print)
+  "Get the list of problems for the problem set named NAME"
   (let ((answer (get name :problems 'fail)))
     (when (eq answer 'fail) (error "No problem list for the name ~s" name))
-    (unless *define-silently*
+    (unless print
       (format t "~%~s" answer))
     answer))
 
