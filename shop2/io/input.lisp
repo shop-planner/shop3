@@ -222,7 +222,7 @@ messages when it is asked to define components.")
   "Get the list of problems for the problem set named NAME"
   (let ((answer (get name :problems 'fail)))
     (when (eq answer 'fail) (error "No problem list for the name ~s" name))
-    (unless print
+    (when print
       (format t "~%~s" answer))
     answer))
 
