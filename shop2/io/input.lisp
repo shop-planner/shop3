@@ -128,15 +128,15 @@ messages when it is asked to define components.")
 ;;; and COND to make it clear it's a conditional, executed for
 ;;; effect. [2006/07/31:rpg]
 (defmethod set-variable-property ((domain domain) x)
-  (cond ((atom x)
-         (when (symbolp x)
-           (cond ((eql (elt (symbol-name x) 0) #\?)
-                  (setf (get x 'variable) t))
-                 ((eql (elt (symbol-name x) 0) #\!)
-                  (setf (get x 'primitive) t)))))
-        ((consp x) (set-variable-property domain (car x))
-         (set-variable-property domain (cdr x)))
-        (t (error "the domain is malformed"))))
+  (cond ((symbolp x)
+         (cond ((eql (elt (symbol-name x) 0) #\?)
+                (setf (get x 'variable) t))
+               ((eql (elt (symbol-name x) 0) #\!)
+                (setf (get x 'primitive) t))))
+        ((atom x) t)
+        ((consp x)
+         (set-variable-property domain (car x))
+         (set-variable-property domain (cdr x)))))
 
 ;;; MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
 ;;; by putting STATE and TASK onto PROBLEM-NAME's
