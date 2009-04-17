@@ -221,9 +221,9 @@ messages when it is asked to define components.")
 ;;; Get the list of problems for the problem set named NAME
 (defun get-problems (name &key print)
   (let ((answer (get name :problems 'fail)))
-    (cond ((eq answer 'fail) (error "No problem list for the name ~s" name))
-          (unless *define-silently*
-            (format t "~%~s" answer)))
+    (when (eq answer 'fail) (error "No problem list for the name ~s" name))
+    (unless *define-silently*
+      (format t "~%~s" answer))
     answer))
 
 ;;; DO-PROBLEMS runs FIND-PLANS on each problem in PROBLEMS, which may be
