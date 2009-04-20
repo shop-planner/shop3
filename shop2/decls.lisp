@@ -271,7 +271,8 @@ defined for TASK-NAME in DOMAIN."))
 (defgeneric set-variable-property (domain x)
   (:documentation
    "Record facts about X being a variable, operator, or
-other special symbol.  Done for side-effects."))
+other special symbol.  Done for side-effects.  Returns nothing 
+of interest (ie, t)."))
 
 (defgeneric install-domain (domain &optional redefine-ok)
   (:documentation "Record DOMAIN for later retrieval.
