@@ -113,8 +113,10 @@ shop2."
 
 (defvar cl-user::*nst-default-report-stream*)
 
+(defclass shop-nst-testable (nst-testable) ())
+
 (defsystem :test-shop2
-    :class nst-testable
+    :class shop-nst-testable
     :nst-systems (:protection-tests
                   :arity-tests
                   :shop-blocks
@@ -124,7 +126,8 @@ shop2."
                   :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
                  (:version :nst "1"))
-    :version #.cl-user::+shop-version+)
+    :version #.cl-user::+shop-version+
+    :components ((:file "silent-shop-test")))
 
 ;;;
 ;;; NST infrastructure for all unit tests.
@@ -154,7 +157,7 @@ packages have been loaded yet."
 ;;; First test application --- PDDL tests.
 ;;;
 (defsystem :shop-pddl-tests
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :shop-pddl-tests)))
     :nst-groups ((:shop2 . pddl-tests)
@@ -166,7 +169,7 @@ packages have been loaded yet."
     :components ((:file "nst-pddl")))
 
 (defsystem :protection-tests
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :protection-tests)))
     :nst-group (:protection-test . protection-test)
@@ -176,7 +179,7 @@ packages have been loaded yet."
                  (:file "protection-test")))
 
 (defsystem :arity-tests
-    :class nst-testable
+    :class shop-nst-testable
     :depends-on (:shop2 (:version :nst "1"))
     :in-order-to ((test-op (load-op :arity-tests)))
     :nst-group (:arity-test . arity-test)
@@ -213,7 +216,7 @@ packages have been loaded yet."
 ;;;
 
 (defsystem :shop-umt
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :depends-on (:shop-test-helper)
     :default-component-class tester-cl-source-file
     :in-order-to ((test-op (load-op :shop-umt))
@@ -232,7 +235,7 @@ packages have been loaded yet."
 ;;; Third test application --- blocksworld.
 ;;;
 (defsystem :shop-blocks
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :depends-on (:shop-test-helper)
     :default-component-class tester-cl-source-file
     :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "blocks")) *load-truename*)
@@ -251,7 +254,7 @@ packages have been loaded yet."
 ;;;
 
 (defsystem :shop-depots
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
     :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "depots")) *load-truename*)
@@ -288,7 +291,7 @@ packages have been loaded yet."
 ;;;
 
 (defsystem :shop-logistic
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
     :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "logistic")) *load-truename*)
@@ -318,7 +321,7 @@ packages have been loaded yet."
 
 #|
 (defsystem :shop-semweb
-    :class nst-testable ;; shop-tester
+    :class shop-nst-testable
     :depends-on (:shop-test-helper)
     :default-component-class tester-cl-source-file
     :in-order-to ((test-op (load-op :shop-semweb))

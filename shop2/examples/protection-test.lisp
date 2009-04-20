@@ -223,6 +223,3 @@
             (declare (ignore op tag))
             (apply-op !positive-op :protections protections))))))
   )
-
-
-

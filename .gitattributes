@@ -111,6 +111,7 @@ shop2/shop2-theorem-prover.asd -text
 shop2/shop2-unifier.asd -text
 shop2/shop2.asd -text
 shop2/shop2.lisp -text
+shop2/silent-shop-test.lisp -text
 shop2/test-shop2.asd -text
 shop2/tests/arity-tests.lisp -text
 shop2/tests/at-package.lisp -text
