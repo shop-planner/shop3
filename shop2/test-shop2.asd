@@ -307,7 +307,16 @@ packages have been loaded yet."
                  (:file "Log_ran_problems_50" :depends-on ("logistic"))
                  (:file "Log_ran_problems_55" :depends-on ("logistic"))
                  (:file "Log_ran_problems_60" :depends-on ("logistic"))
-                 (:file "nst-logistic")
+                 (:file "nst-logistic" :depends-on ("Log_ran_problems_15"
+                                                    "Log_ran_problems_20"
+                                                    "Log_ran_problems_25"
+                                                    "Log_ran_problems_30"
+                                                    "Log_ran_problems_35"
+                                                    "Log_ran_problems_40"
+                                                    "Log_ran_problems_45"
+                                                    "Log_ran_problems_50"
+                                                    "Log_ran_problems_55"
+                                                    "Log_ran_problems_60"))
                  )
     :in-order-to ((test-op (load-op :shop-logistic))
                   (load-op (compile-op :shop-logistic))))
