@@ -548,7 +548,7 @@ goal1 along with all of the other formulas in remaining."
             (if just1 (return-from do-conjunct new-answers))
             (setq answers (shop-union new-answers answers :test #'equal))))))
     ;; Next, look for ways to prove GOAL1 from the *axioms*
-    (dolist (r (gethash (car goal1) (domain-axioms domain)))
+    (dolist (r (axioms domain (car goal1)))
       (let ((standardized-r (standardize r)))
         (unless (eql (setq mgu1 (unify goal1 (second standardized-r)))
 		     (shop-fail))
@@ -822,3 +822,52 @@ goal1 along with all of the other formulas in remaining."
     t)
    (t nil)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; debug output
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun print-axioms (&optional name (domain *domain*))
+  (if name
+    (progn (format t "Axioms for name ~S are:" name)
+           (mapcar #'(lambda (x) (format t "~2%  ~s" x))
+                   (axioms domain name)))
+    (maphash #'(lambda (k defs)
+                 (format t "~2%Axioms for goal ~S are:" k)
+                 (dolist (ad defs)
+                   (format t "~2%  ~S" ad)))
+             (domain-axioms domain))))
+
+(defun print-belief-state-readably (belief-state &optional (stream t))
+  
+  (let ((props-as-strings (sort
+			   (mapcar #'(lambda (prop) (format nil "~s" prop))
+				   (shop2.common::state-atoms belief-state))
+			   #'string<)))
+;;;    (macroexpand '(iter (for prop-string in props-as-strings)
+;;;		   (for prev previous prop-string)
+;;;		   (unless (and prev
+;;;			    (first-word-equal prev prop-string))
+;;;		     (format stream "~%"))
+;;;		   (format stream "~a~%" prop-string))
+;;; then query-replace #: symbols
+    (let* ((list1 nil) (prop-string nil) (prev nil) (POST-SAVE-prop-string-2 nil))
+      (block nil
+	(tagbody
+	  (progn (setq list1 props-as-strings) (setq prev nil) (setq POST-SAVE-prop-string-2 nil))
+	 loop-top-nil
+	  (progn (progn (setq prev POST-SAVE-prop-string-2)) (if (endp list1) (go loop-end-nil))
+		 (setq prop-string (car list1)) (setq list1 (cdr list1))
+		 (progn (setq POST-SAVE-prop-string-2 prop-string))
+		 (if (not (and prev (first-word-equal prev prop-string))) (progn nil (format stream "~%")))
+		 (format stream "~a~%" prop-string))
+	  (progn)
+	  (go loop-top-nil)
+	 loop-end-nil
+	  (progn))
+	nil))))
+
+;; easy, but poss inefficient
+(defun first-word-equal (string1 string2)
+  (string-equal
+   (subseq string1 0 (position #\Space string1))
+   (subseq string2 0 (position #\Space string2))))
