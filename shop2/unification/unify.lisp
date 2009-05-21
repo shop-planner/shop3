@@ -362,6 +362,17 @@ variables, with new names."
 		  binding)))
 	  bindings))
 
+(defmethod set-variable-property ((domain t) x)
+  (cond ((symbolp x)
+         (cond ((eql (elt (symbol-name x) 0) #\?)
+                (setf (get x 'variable) t))
+               ((eql (elt (symbol-name x) 0) #\!)
+                (setf (get x 'primitive) t))))
+        ((atom x) t)
+        ((consp x)
+         (set-variable-property domain (car x))
+         (set-variable-property domain (cdr x)))))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; This function is called only inside process-pre, where it is
