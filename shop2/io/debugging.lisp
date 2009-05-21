@@ -168,17 +168,6 @@
           (warn "don't know how to delete ~S from shop-trace items: ignoring."
                 item)))))
 
-(defun print-axioms (&optional name (domain *domain*))
-  (if name
-    (progn (format t "Axioms for name ~S are:" name)
-           (mapcar #'(lambda (x) (format t "~2%  ~s" x))
-                   (axioms domain name)))
-    (maphash #'(lambda (k defs)
-                 (format t "~2%Axioms for goal ~S are:" k)
-                 (dolist (ad defs)
-                   (format t "~2%  ~S" ad)))
-             (domain-axioms domain))))
-
 (defun print-methods (&optional name (domain *domain*))
   (if name
     (progn (format t "Methods for name ~S are:" name)
@@ -211,4 +200,3 @@
           (operator-deletions operator)
           (operator-additions operator)
           (operator-cost-fun operator)))
-
