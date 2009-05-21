@@ -65,12 +65,24 @@
     (:export #:trace-print
 	     #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
 
+	     ;; the unifier interface
 	     #:unify-fail #:unify-p
 	     #:unify #:standardize #:fail
 	     #:apply-substitution #:compose-substitutions
 	     #:fix-uninterned-bindings #:binding-list-value
 	     #:make-binding-list #:make-binding
+	     #:binding-var #:binding-val
 	     #:variablep #:groundp
+	     #:set-variable-property
+	     #:variable-gensym
+	     
+	     ;; [mpelican:20090520.2111CDT] This is a bit of a hack, but set-variable-property
+	     ;; also sets primitive property which is only of interest to planner.  
+	     ;; primitivep which checks the primitive property lives in the shop2 package.
+	     ;; So, we export this symbol for the planner's benefit.
+	     #:primitive
+	     
+	     ;; utilities used internally by shop
 	     #:shop-union
 	     #:get-alist
 
