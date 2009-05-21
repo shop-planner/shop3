@@ -124,17 +124,6 @@ messages when it is asked to define components.")
           ((= lax 3) nil)
           (t (and (atom (car ax)) (listp (cadr ax)) (rest-shop2-axiom-p (cddr ax)))))))
 
-(defmethod set-variable-property ((domain domain) x)
-  (cond ((symbolp x)
-         (cond ((eql (elt (symbol-name x) 0) #\?)
-                (setf (get x 'variable) t))
-               ((eql (elt (symbol-name x) 0) #\!)
-                (setf (get x 'primitive) t))))
-        ((atom x) t)
-        ((consp x)
-         (set-variable-property domain (car x))
-         (set-variable-property domain (cdr x)))))
-
 ;;; MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
 ;;; by putting STATE and TASK onto PROBLEM-NAME's
 ;;; property list under the indicators :STATE and :TASKS.
