@@ -2,7 +2,7 @@
 
 (in-package :shop2-user)
 
-(nst:def-value-check (:no-plan () (plan-list runtime))
+(nst:def-values-criterion (:no-plan () (plan-list runtime))
     `(declare (ignorable runtime))
     `(cond
        ((null plan-list) (nst::make-check-result))
@@ -10,7 +10,7 @@
            :format "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
            :args (list (length plan-list) plan-list)))))
 
-(nst:def-value-check (:found-plan () (plan-list runtime))
+(nst:def-values-criterion (:found-plan () (plan-list runtime))
     `(declare (ignorable runtime))
     `(cond
        ((null plan-list) (nst:emit-failure :format "No plans generated"))
@@ -26,7 +26,7 @@ costs.  This function just throws away the costs."
         collect operator
         do (setf planlist rest)))
 
-(nst:def-value-check (:correct-plan (target-plan)
+(nst:def-values-criterion (:correct-plan (target-plan)
                                     (plan-list runtime))
   `(declare (ignorable runtime))
   `(let ((plan (remove-plan-costs (first plan-list))))
@@ -38,13 +38,13 @@ costs.  This function just throws away the costs."
 (defun plan-quietly (problem &rest args)
   (apply #'find-plans problem :which :first :verbose 0 args))
 
-(nst:def-check-alias (:plan-problem criterion)
+(nst:def-criterion-alias (:plan-problem criterion)
   `(:apply plan-quietly ,criterion))
 
-(nst:def-check-alias (:primary-result-plan target-plan)
+(nst:def-criterion-alias (:primary-result-plan target-plan)
     `(:plan-problem (:all :found-plan
                           (:correct-plan ,target-plan))))
 
-(nst:def-check-alias (:no-result-plans)
+(nst:def-criterion-alias (:no-result-plans)
     `(:plan-problem :no-plan))
 
