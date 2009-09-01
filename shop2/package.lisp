@@ -131,6 +131,7 @@
              #:def-problem-set
              #:make-problem-set
              #:*make-problem-silently*
+             #:find-problem
 
              #:find-plans
              #:do-problems
