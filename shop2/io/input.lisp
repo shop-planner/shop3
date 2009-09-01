@@ -157,7 +157,7 @@ messages when it is asked to define components.")
                      type 'problem)))
       (unless *make-problem-silently*
         (unless *define-silently*
-          (format t "~%Defining problem ~s ..." problem-name)))
+          (format t "~%Defining problem ~s ...~%" problem-name)))
       (let ((problem-inst (make-instance type
                             :domain-name domain-name
                             :name problem-name
