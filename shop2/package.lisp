@@ -105,6 +105,9 @@
              #:variablep #:groundp
              #:extract-variables #:shop-union
              #:get-alist
+
+             ;; defined lisp type
+             #:shop-variable
              ;; end of shop-unifier stuff
 
 
