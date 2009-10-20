@@ -67,6 +67,7 @@
              #:domain
              #:domain-name
              #:name
+             #:state
 
              #:*current-state* #:*inferences* #:*external-access*
              #:*attribution-list* #:*state-encoding*
