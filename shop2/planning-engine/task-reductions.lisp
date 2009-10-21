@@ -87,7 +87,8 @@ five values:
 5.  unifier.
 This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."
-  (let* ((standardized-operator (standardize operator))
+  (let* ((*domain* domain)
+         (standardized-operator (standardize operator))
          (head (operator-head standardized-operator))
          (preconditions (operator-preconditions standardized-operator))
          (deletions (operator-deletions standardized-operator))
