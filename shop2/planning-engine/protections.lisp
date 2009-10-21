@@ -17,19 +17,19 @@
 
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -38,8 +38,8 @@
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -58,12 +58,11 @@
 
 (in-package :shop2)
 
-;;; if the state has everything that the protections list has, then 
+;;; if the state has everything that the protections list has, then
 ;;; return true, else return nil
 (defun protection-ok (state protections head)
   (dolist (p protections)
-    (unless (shopthpr:find-satisfiers
-	     (car p) state t)
+    (unless (shopthpr:find-satisfiers (car p) state t)
       (trace-print
        :operators (first head) state
        "~%Backtracking because operator ~s~%  violated the protected condition ~s"
@@ -83,7 +82,7 @@
                         "~2%Depth ~s, incrementing protection count to ~s~%      atom ~s~%  operator ~s"
                         depth 1 protect operator)
            (setq protections (cons (list protect 1) protections)))
-          (t 
+          (t
            (setq protections (remove p protections))
            (setq p (cons (car p) (list (+ 1 (car (cdr p))))))
            (trace-print :protections (car protect) state
@@ -101,11 +100,11 @@
       (trace-print :protections (car protect) state
                    "~2%Depth ~s, protection count not decremented since it is already 0~%      atom ~s~%  operator ~s"
                    depth protect operator)
-    (progn 
+    (progn
       (setq protections (remove p protections))
       (if (eql 1 (car (cdr p)))
         protections
-        (progn 
+        (progn
           (setq p (cons (car p) (list (- (car (cdr p)) 1))))
           (trace-print :protections (car protect) state
                         "~2%Depth ~s, decrementing protection count to ~s~%      atom ~s~%  operator ~s"
