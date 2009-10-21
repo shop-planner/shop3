@@ -87,8 +87,7 @@ five values:
 5.  unifier.
 This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."
-  (let* ((*domain* domain)
-         (standardized-operator (standardize operator))
+  (let* ((standardized-operator (standardize operator))
          (head (operator-head standardized-operator))
          (preconditions (operator-preconditions standardized-operator))
          (deletions (operator-deletions standardized-operator))
@@ -215,7 +214,8 @@ Otherwise it returns FAIL."
                         a))
           (add-atom-to-state a state depth (first head))))
 
-      (if (protection-ok state protections1 head)
+      (if (let ((*domain* domain))
+            (protection-ok state protections1 head))
           (setq protections protections1)
         (progn
           (retract-state-changes state statetag)

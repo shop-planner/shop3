@@ -94,6 +94,7 @@ shop2/examples/toy/test-force-immediate.lisp -text
 shop2/examples/toy/test-immediate.lisp -text
 shop2/examples/toy/unbound-example.lisp -text
 shop2/examples/tree-binding-problems.lisp -text
+shop2/find-uses.bash -text
 shop2/io/debugging.lisp -text
 shop2/io/output.lisp -text
 shop2/package.lisp -text
