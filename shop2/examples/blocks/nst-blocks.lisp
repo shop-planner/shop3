@@ -5,7 +5,7 @@
    (define-blocks-domain)))
 
 (nst:def-test-group blocks-tests (blocks-domain)
-  (nst:def-check plan100
+  (nst:def-test plan100
       (:primary-result-plan
        ((!ASSERT ((GOAL (CLEAR B100)) (GOAL (ON B100 B92))
 		  (GOAL (ON-TABLE B92)) (GOAL (CLEAR B99))
@@ -392,7 +392,7 @@
 	(!PICKUP B83) (!STACK B83 B64) (!ASSERT ((DONT-MOVE B83)))
 	(!REMOVE ((STACK-ON-BLOCK B83 B64)))))
     'bw_ran_100_1)
-  (nst:def-check plan200 (:primary-result-plan ((!ASSERT
+  (nst:def-test plan200 (:primary-result-plan ((!ASSERT
 	 ((GOAL (CLEAR B197)) (GOAL (ON B197 B192)) (GOAL (ON-TABLE B192)) (GOAL (CLEAR B200)) (GOAL (ON B200 B198)) (GOAL (ON B198 B170))
 			      (GOAL (ON-TABLE B170)) (GOAL (CLEAR B161)) (GOAL (ON-TABLE B161)) (GOAL (CLEAR B182)) (GOAL (ON B182 B169)) (GOAL (ON B169 B159))
 			      (GOAL (ON B159 B142)) (GOAL (ON B142 B134)) (GOAL (ON-TABLE B134)) (GOAL (CLEAR B177)) (GOAL (ON B177 B153)) (GOAL (ON B153 B147))
@@ -659,7 +659,7 @@
 	(!ASSERT ((STACK-ON-BLOCK B181 B180))) (!PICKUP B181) (!STACK B181 B180) (!ASSERT ((DONT-MOVE B181))) (!REMOVE ((STACK-ON-BLOCK B181 B180)))
 	(!ASSERT ((STACK-ON-BLOCK B199 B181))) (!PICKUP B199) (!STACK B199 B181) (!ASSERT ((DONT-MOVE B199))) (!REMOVE ((STACK-ON-BLOCK B199 B181)))))
     'bw_ran_200_1)
-  (nst:def-check plan300
+  (nst:def-test plan300
       (:primary-result-plan
        ((!ASSERT
 	 ((GOAL (CLEAR B299)) (GOAL (ON B299 B297)) (GOAL (ON B297 B281)) (GOAL (ON-TABLE B281)) (GOAL (CLEAR B271)) (GOAL (ON B271 B268)) (GOAL (ON B268 B267))
