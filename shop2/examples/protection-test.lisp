@@ -97,33 +97,33 @@
 
 (def-test-group protection-test (protections-domain)
   ;; item number one
-  (def-check  (can-apply-pos-op :fixtures (empty-state))
+  (def-test  (can-apply-pos-op :fixtures (empty-state))
       (:unfailed) (apply-op !positive-op))
-  (def-check  (can-apply-neg-op :fixtures (empty-state))
+  (def-test  (can-apply-neg-op :fixtures (empty-state))
       (:unfailed) (apply-op !negative-op))
   ;; item number two
-  (def-check  (can-apply-add-protect :fixtures (empty-state))
+  (def-test  (can-apply-add-protect :fixtures (empty-state))
       (:unfailed)
     (progn (apply-op !positive-op)
            (apply-op !add-protect)))
-  (def-check  (can-apply-remove-protect :fixtures (empty-state))
+  (def-test  (can-apply-remove-protect :fixtures (empty-state))
       (:unfailed) (apply-op !remove-protect))
-  (def-check  (can-apply-add-neg-protect :fixtures (empty-state))
+  (def-test  (can-apply-add-neg-protect :fixtures (empty-state))
       (:unfailed) (apply-op !add-neg-protect))
-  (def-check  (can-apply-remove-neg-protect :fixtures (empty-state))
+  (def-test  (can-apply-remove-neg-protect :fixtures (empty-state))
       (:unfailed) (apply-op !remove-neg-protect))
 
   ;; check protections before adding
-  (def-check  (protection-init-check :fixtures (empty-state))
+  (def-test  (protection-init-check :fixtures (empty-state))
       (:err) (apply-op !add-protect))
-  (def-check  (protection-init-check-neg :fixtures (empty-state))
+  (def-test  (protection-init-check-neg :fixtures (empty-state))
       (:err)
     (progn
       (apply-op !positive-op)
       (apply-op !add-neg-protect)))
 
   ;; item number three
-  (def-check  (protection-effective :fixtures (empty-state))
+  (def-test  (protection-effective :fixtures (empty-state))
       (:failed)
     (progn
       (apply-op !positive-op)
@@ -133,7 +133,7 @@
         (apply-operator setup s '(!negative-op)
                         (shop::operator setup '!negative-op)
                         protections 0 nil))))
-  (def-check  (neg-protection-effective :fixtures (empty-state))
+  (def-test  (neg-protection-effective :fixtures (empty-state))
       (:failed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
@@ -143,7 +143,7 @@
                       protections 0 nil)))
 
   ;; items number four and five
-  (def-check  (protection-add-and-remove :fixtures (empty-state))
+  (def-test  (protection-add-and-remove :fixtures (empty-state))
       (:unfailed)
     (progn
       (apply-op !positive-op)
@@ -154,7 +154,7 @@
             (apply-op !remove-protect :protections protections)
           (declare (ignore op tag))
           (apply-op !negative-op :protections protections)))))
-  (def-check  (neg-protection-add-and-remove :fixtures (empty-state))
+  (def-test  (neg-protection-add-and-remove :fixtures (empty-state))
       (:unfailed)
     (progn
       (multiple-value-bind (op tag protections)
@@ -166,7 +166,7 @@
           (apply-op !positive-op :protections protections)))))
 
   ;; item number six --- protection arithmetic
-  (def-check  (protection-arithmetic-positive :fixtures (empty-state))
+  (def-test  (protection-arithmetic-positive :fixtures (empty-state))
       (:failed)
     (progn
       (apply-op !positive-op)
@@ -180,7 +180,7 @@
               (apply-op !remove-protect :protections protections)
             (declare (ignore op tag))
             (apply-op !negative-op :protections protections))))))
-  (def-check  (protection-arithmetic-positive-2 :fixtures (empty-state))
+  (def-test  (protection-arithmetic-positive-2 :fixtures (empty-state))
       (:unfailed)
     (progn
       (apply-op !positive-op)
@@ -197,7 +197,7 @@
                 (apply-op !remove-protect :protections protections)
               (declare (ignore op tag))
               (apply-op !negative-op :protections protections)))))))
-  (def-check  (protection-arithmentic-neg-1 :fixtures (empty-state))
+  (def-test  (protection-arithmentic-neg-1 :fixtures (empty-state))
       (:failed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
@@ -209,7 +209,7 @@
             (apply-op !remove-neg-protect :protections protections)
           (declare (ignore op tag))
           (apply-op !positive-op :protections protections)))))
-  (def-check  (protection-arithmentic-neg-2 :fixtures (empty-state))
+  (def-test  (protection-arithmentic-neg-2 :fixtures (empty-state))
       (:unfailed)
     (multiple-value-bind (op tag protections)
         (apply-op !add-neg-protect)
