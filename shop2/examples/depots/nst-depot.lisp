@@ -6,7 +6,7 @@
 
 
 (nst:def-test-group depot-tests (depot-domain)
-  (nst:def-check depot-1
+  (nst:def-test depot-1
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE19 PALLET5)) (GOAL (ON CRATE18 PALLET25))
@@ -210,7 +210,7 @@
        (!UNLOAD HOIST27 CRATE0 TRUCK5 DISTRIBUTOR1)
        (!DROP HOIST27 CRATE0 PALLET11 DISTRIBUTOR1)))
     'PFILE1)
-  (nst:def-check depot-2
+  (nst:def-test depot-2
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE37 CRATE8)) (GOAL (ON CRATE36 CRATE33))
@@ -585,7 +585,7 @@
        (!UNLOAD HOIST13 CRATE16 TRUCK5 DISTRIBUTOR3)
        (!DROP HOIST13 CRATE16 CRATE18 DISTRIBUTOR3)))
     'PFILE2)
-  (nst:def-check depot-3
+  (nst:def-test depot-3
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE58 CRATE48)) (GOAL (ON CRATE57 CRATE32))
@@ -1142,7 +1142,7 @@
        (!UNLOAD HOIST12 CRATE6 TRUCK5 DISTRIBUTOR2)
        (!DROP HOIST12 CRATE6 PALLET29 DISTRIBUTOR2)))
     'PFILE3)
-  (nst:def-check depot-4
+  (nst:def-test depot-4
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE79 CRATE54)) (GOAL (ON CRATE78 PALLET10))
@@ -1877,7 +1877,7 @@
        (!DRIVE TRUCK3 DEPOT8 DEPOT0) (!UNLOAD HOIST0 CRATE33 TRUCK3 DEPOT0)
        (!DROP HOIST0 CRATE33 CRATE74 DEPOT0)))
     'PFILE4)
-  (nst:def-check depot-5
+  (nst:def-test depot-5
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE99 CRATE26)) (GOAL (ON CRATE98 CRATE5))
@@ -2752,7 +2752,7 @@
        (!UNLOAD HOIST12 CRATE14 TRUCK5 DISTRIBUTOR2)
        (!DROP HOIST12 CRATE14 CRATE76 DISTRIBUTOR2)))
     'PFILE5)
-  (nst:def-check depot-6
+  (nst:def-test depot-6
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE149 CRATE135)) (GOAL (ON CRATE148 CRATE15))
@@ -4112,7 +4112,7 @@
        (!UNLOAD HOIST21 CRATE102 TRUCK5 DISTRIBUTOR4)
        (!DROP HOIST21 CRATE102 CRATE27 DISTRIBUTOR4)))
     'PFILE6)
-  (nst:def-check depot-7
+  (nst:def-test depot-7
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE39 CRATE6)) (GOAL (ON CRATE38 PALLET17))
@@ -4482,7 +4482,7 @@
        (!UNLOAD HOIST12 CRATE37 TRUCK5 DISTRIBUTOR2)
        (!DROP HOIST12 CRATE37 CRATE10 DISTRIBUTOR2)))
     'PFILE7)
-  (nst:def-check depot-8
+  (nst:def-test depot-8
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE39 CRATE7)) (GOAL (ON CRATE38 CRATE28))
@@ -4837,7 +4837,7 @@
        (!UNLOAD HOIST12 CRATE31 TRUCK4 DISTRIBUTOR2)
        (!DROP HOIST12 CRATE31 PALLET20 DISTRIBUTOR2)))
     'PFILE8)
-  (nst:def-check depot-9
+  (nst:def-test depot-9
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE39 PALLET19)) (GOAL (ON CRATE38 CRATE6))
@@ -5199,7 +5199,7 @@
        (!DRIVE TRUCK2 DEPOT7 DEPOT8) (!UNLOAD HOIST8 CRATE33 TRUCK2 DEPOT8)
        (!DROP HOIST8 CRATE33 CRATE16 DEPOT8)))
     'PFILE9)
-  (nst:def-check depot-10
+  (nst:def-test depot-10
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE39 CRATE19)) (GOAL (ON CRATE38 CRATE15))
@@ -5532,7 +5532,7 @@
        (!DRIVE TRUCK3 DISTRIBUTOR0 DEPOT1) (!UNLOAD HOIST1 CRATE2 TRUCK3 DEPOT1)
        (!DROP HOIST1 CRATE2 CRATE27 DEPOT1)))
     'PFILE10)
-  (nst:def-check depot-11
+  (nst:def-test depot-11
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE59 CRATE11)) (GOAL (ON CRATE58 PALLET1))
@@ -6010,7 +6010,7 @@
        (!DRIVE TRUCK1 DISTRIBUTOR0 DEPOT0) (!UNLOAD HOIST0 CRATE39 TRUCK1 DEPOT0)
        (!DROP HOIST0 CRATE39 CRATE30 DEPOT0)))
     'PFILE11)
-  (nst:def-check depot-12
+  (nst:def-test depot-12
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE79 CRATE24)) (GOAL (ON CRATE78 CRATE28))
@@ -6638,7 +6638,7 @@
        (!UNLOAD HOIST2 CRATE45 TRUCK3 DEPOT2)
        (!DROP HOIST2 CRATE45 CRATE70 DEPOT2)))
     'PFILE12)
-  (nst:def-check depot-13
+  (nst:def-test depot-13
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE59 CRATE21)) (GOAL (ON CRATE58 CRATE10))
@@ -7156,7 +7156,7 @@
        (!UNLOAD HOIST4 CRATE5 TRUCK3 DISTRIBUTOR1)
        (!DROP HOIST4 CRATE5 CRATE22 DISTRIBUTOR1)))
     'PFILE13)
-  (nst:def-check depot-14
+  (nst:def-test depot-14
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE79 CRATE47)) (GOAL (ON CRATE78 CRATE67))
@@ -7812,7 +7812,7 @@
        (!DRIVE TRUCK0 DISTRIBUTOR1 DEPOT2) (!UNLOAD HOIST2 CRATE78 TRUCK0 DEPOT2)
        (!DROP HOIST2 CRATE78 CRATE67 DEPOT2)))
     'PFILE14)
-  (nst:def-check depot-15
+  (nst:def-test depot-15
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE99 CRATE37)) (GOAL (ON CRATE98 CRATE41))
@@ -8678,7 +8678,7 @@
        (!UNLOAD HOIST8 CRATE49 TRUCK0 DEPOT0)
        (!DROP HOIST8 CRATE49 CRATE44 DEPOT0)))
     'PFILE15)
-  (nst:def-check depot-16
+  (nst:def-test depot-16
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE79 CRATE40)) (GOAL (ON CRATE78 CRATE4))
@@ -9548,7 +9548,7 @@
        (!!REMOVE ((UNLOAD-STACK CRATE6 CRATE18 TRUCK3)))
        (!UNLOAD HOIST0 CRATE6 TRUCK3 DEPOT0) (!DROP HOIST0 CRATE6 CRATE18 DEPOT0)))
     'PFILE16)
-  (nst:def-check depot-17
+  (nst:def-test depot-17
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE99 CRATE11)) (GOAL (ON CRATE97 PALLET26))
@@ -10590,7 +10590,7 @@
        (!DRIVE TRUCK3 DISTRIBUTOR0 DEPOT0) (!UNLOAD HOIST5 CRATE15 TRUCK3 DEPOT0)
        (!DROP HOIST5 CRATE15 CRATE51 DEPOT0)))
     'PFILE17)
-  (nst:def-check depot-18
+  (nst:def-test depot-18
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE119 CRATE80)) (GOAL (ON CRATE118 PALLET8))
@@ -11923,7 +11923,7 @@
        (!DRIVE TRUCK3 DISTRIBUTOR0 DEPOT0) (!UNLOAD HOIST5 CRATE9 TRUCK3 DEPOT0)
        (!DROP HOIST5 CRATE9 PALLET9 DEPOT0)))
     'PFILE18)
-  (nst:def-check depot-19
+  (nst:def-test depot-19
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE79 PALLET29)) (GOAL (ON CRATE78 PALLET27))
@@ -12651,7 +12651,7 @@
        (!DRIVE TRUCK4 DISTRIBUTOR0 DEPOT5) (!UNLOAD HOIST5 CRATE66 TRUCK4 DEPOT5)
        (!DROP HOIST5 CRATE66 CRATE65 DEPOT5)))
     'PFILE19)
-  (nst:def-check depot-20
+  (nst:def-test depot-20
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE99 CRATE30)) (GOAL (ON CRATE97 CRATE59))
@@ -13554,7 +13554,7 @@
        (!UNLOAD HOIST17 CRATE45 TRUCK8 DISTRIBUTOR7)
        (!DROP HOIST17 CRATE45 CRATE14 DISTRIBUTOR7)))
     'PFILE20)
-  (nst:def-check depot-21
+  (nst:def-test depot-21
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE149 CRATE15)) (GOAL (ON CRATE148 PALLET25))
@@ -14899,7 +14899,7 @@
        (!DRIVE TRUCK9 DISTRIBUTOR8 DEPOT5) (!UNLOAD HOIST25 CRATE50 TRUCK9 DEPOT5)
        (!DROP HOIST25 CRATE50 CRATE92 DEPOT5)))
     'PFILE21)
-  (nst:def-check depot-22
+  (nst:def-test depot-22
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (ON CRATE199 CRATE137)) (GOAL (ON CRATE198 CRATE189))
