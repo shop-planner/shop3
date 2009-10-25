@@ -5,7 +5,7 @@
    (define-umt-domain)))
 
 (nst:def-test-group umt-tests (umt-domain)
-  (nst:def-check umt-1
+  (nst:def-test umt-1
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (CLEAR)) (GOAL (DELIVERED PACKAGE2 LOCATION5))
@@ -45,7 +45,7 @@
        (!DELIVER PACKAGE0 LOCATION1) (!DISCONNECT-CHUTE TRUCK0)
 	(!DELIVER PACKAGE1 LOCATION4) (!CLEAN-DOMAIN)))
     'UMT.PFILE1)
-  (nst:def-check umt-2
+  (nst:def-test umt-2
       (:primary-result-plan 
        ((!!ASSERT
 	((GOAL (CLEAR)) (GOAL (DELIVERED PACKAGE2 LOCATION5))
@@ -68,5 +68,5 @@
        (!UNLOAD-CARS PACKAGE2 TRUCK4 LOCATION5) (!RAISE-RAMP TRUCK4)
 	(!DELIVER PACKAGE2 LOCATION5) (!CLEAN-DOMAIN)))
     'UMT.PFILE2)
-  (nst:def-check umt-3 :no-result-plans 'UMT.PFILE3))
+  (nst:def-test umt-3 :no-result-plans 'UMT.PFILE3))
 

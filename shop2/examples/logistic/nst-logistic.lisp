@@ -5,7 +5,7 @@
    (logistics-domain)))
 
 (nst:def-test-group logistic-tests (logistics-domain)
-  (nst:def-check log-ran-15-1
+  (nst:def-test log-ran-15-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                              (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-3)
                              (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
@@ -132,7 +132,7 @@
                              (!UNLOAD-TRUCK PACKAGE9 TRUCK4-1 LOC4-2)))
     'LOG-RAN-15-1)
 
-  (nst:def-check log-ran-15-10
+  (nst:def-test log-ran-15-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -259,7 +259,7 @@
 
 (nst:def-test-group logistic-tests-1a (logistics-domain)
 
-  (nst:def-check log-ran-15-2
+  (nst:def-test log-ran-15-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                 (!ADD-PROTECTION (TRUCK-AT TRUCK8-1 LOC8-1))
@@ -372,7 +372,7 @@
                 (!UNLOAD-TRUCK PACKAGE12 TRUCK1-1 LOC1-3)))
     'LOG-RAN-15-2)
 
-  (nst:def-check log-ran-15-3
+  (nst:def-test log-ran-15-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
@@ -497,7 +497,7 @@
                 (!UNLOAD-TRUCK PACKAGE15 TRUCK7-1 LOC7-2)))
     'LOG-RAN-15-3)
 
-  (nst:def-check log-ran-15-4
+  (nst:def-test log-ran-15-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
@@ -593,7 +593,7 @@
 
 (nst:def-test-group logistic-tests-1b (logistics-domain)
 
-  (nst:def-check log-ran-15-5
+  (nst:def-test log-ran-15-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-2 LOC1-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
@@ -704,7 +704,7 @@
                 (!UNLOAD-TRUCK PACKAGE2 TRUCK2-1 LOC2-2)))
     'LOG-RAN-15-5)
 
-  (nst:def-check log-ran-15-6
+  (nst:def-test log-ran-15-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -804,7 +804,7 @@
                 (!UNLOAD-TRUCK PACKAGE10 TRUCK5-1 LOC5-2)))
     'LOG-RAN-15-6)
 
-  (nst:def-check log-ran-15-7
+  (nst:def-test log-ran-15-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
@@ -941,7 +941,7 @@
 
 (nst:def-test-group logistic-tests-1c (logistics-domain)
 
-  (nst:def-check log-ran-15-8
+  (nst:def-test log-ran-15-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK2-1 LOC2-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
@@ -1050,7 +1050,7 @@
                 (!UNLOAD-TRUCK PACKAGE14 TRUCK8-1 LOC8-2)))
     'LOG-RAN-15-8)
 
-  (nst:def-check log-ran-15-9
+  (nst:def-test log-ran-15-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
@@ -1172,7 +1172,7 @@
                 (!UNLOAD-TRUCK PACKAGE15 TRUCK5-1 LOC5-2)))
     'LOG-RAN-15-9)
 
-  (nst:def-check log-ran-20-1
+  (nst:def-test log-ran-20-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-3 LOC1-2)
@@ -1346,7 +1346,7 @@
 
 (nst:def-test-group logistic-tests-1d (logistics-domain)
 
-  (nst:def-check log-ran-20-10
+  (nst:def-test log-ran-20-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2)
                 (!ADD-PROTECTION (TRUCK-AT TRUCK8-1 LOC8-2))
@@ -1524,7 +1524,7 @@
                 (!UNLOAD-TRUCK PACKAGE13 TRUCK2-1 LOC2-2)))
     'LOG-RAN-20-10)
 
-  (nst:def-check log-ran-20-2
+  (nst:def-test log-ran-20-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
@@ -1714,7 +1714,7 @@
                 (!UNLOAD-TRUCK PACKAGE6 TRUCK6-1 LOC6-2)))
     'LOG-RAN-20-2)
 
-  (nst:def-check log-ran-20-3
+  (nst:def-test log-ran-20-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-3 LOC8-2)
@@ -1887,7 +1887,7 @@
 
 (nst:def-test-group logistic-tests-1e (logistics-domain)
 
-  (nst:def-check log-ran-20-4
+  (nst:def-test log-ran-20-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-2)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2) (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-2)
@@ -2043,7 +2043,7 @@
                 (!UNLOAD-TRUCK PACKAGE20 TRUCK8-1 LOC8-3)))
     'LOG-RAN-20-4)
 
-  (nst:def-check log-ran-20-5
+  (nst:def-test log-ran-20-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
@@ -2232,7 +2232,7 @@
                 (!UNLOAD-TRUCK PACKAGE18 TRUCK7-1 LOC7-2)))
     'LOG-RAN-20-5)
 
-  (nst:def-check log-ran-20-6
+  (nst:def-test log-ran-20-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-2 LOC7-3)
@@ -2421,7 +2421,7 @@
 
 (nst:def-test-group logistic-tests-1f (logistics-domain)
 
-  (nst:def-check log-ran-20-7
+  (nst:def-test log-ran-20-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
@@ -2598,7 +2598,7 @@
                 (!UNLOAD-AIRPLANE PACKAGE13 PLANE1 LOC9-1)))
     'LOG-RAN-20-7)
 
-  (nst:def-check log-ran-20-8
+  (nst:def-test log-ran-20-8
       (:primary-result-plan ((!ADD-PROTECTION (TRUCK-AT TRUCK6-1 LOC6-1))
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-1) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -2772,7 +2772,7 @@
                 (!UNLOAD-TRUCK PACKAGE13 TRUCK6-1 LOC6-3)))
     'LOG-RAN-20-8)
 
-  (nst:def-check log-ran-20-9
+  (nst:def-test log-ran-20-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -2948,7 +2948,7 @@
 
 (nst:def-test-group logistic-tests-1g (logistics-domain)
 
-  (nst:def-check log-ran-25-1
+  (nst:def-test log-ran-25-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -3181,7 +3181,7 @@
                 (!UNLOAD-TRUCK PACKAGE24 TRUCK6-1 LOC6-2)))
     'LOG-RAN-25-1)
 
-  (nst:def-check log-ran-25-10
+  (nst:def-test log-ran-25-10
       (:primary-result-plan ((!ADD-PROTECTION (TRUCK-AT TRUCK11-1 LOC11-1))
                 (!LOAD-TRUCK PACKAGE1 TRUCK11-1 LOC11-1)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3)
@@ -3395,7 +3395,7 @@
                 (!UNLOAD-TRUCK PACKAGE24 TRUCK6-1 LOC6-3)))
     'LOG-RAN-25-10)
 
-  (nst:def-check log-ran-25-2
+  (nst:def-test log-ran-25-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
@@ -3618,7 +3618,7 @@
 
 (nst:def-test-group logistic-tests-1h (logistics-domain)
 
-  (nst:def-check log-ran-25-3
+  (nst:def-test log-ran-25-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -3843,7 +3843,7 @@
                 (!UNLOAD-TRUCK PACKAGE9 TRUCK11-1 LOC11-2)))
     'LOG-RAN-25-3)
 
-  (nst:def-check log-ran-25-4
+  (nst:def-test log-ran-25-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -4050,7 +4050,7 @@
                 (!UNLOAD-TRUCK PACKAGE25 TRUCK1-1 LOC1-2)))
     'LOG-RAN-25-4)
 
-  (nst:def-check log-ran-25-5
+  (nst:def-test log-ran-25-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
@@ -4293,7 +4293,7 @@
 
 (nst:def-test-group logistic-tests-1i (logistics-domain)
 
-  (nst:def-check log-ran-25-6
+  (nst:def-test log-ran-25-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-2)
@@ -4524,7 +4524,7 @@
                 (!UNLOAD-TRUCK PACKAGE18 TRUCK9-1 LOC9-2)))
     'LOG-RAN-25-6)
 
-  (nst:def-check log-ran-25-7
+  (nst:def-test log-ran-25-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3) (!LOAD-TRUCK PACKAGE3 TRUCK4-1 LOC4-3)
@@ -4758,7 +4758,7 @@
                 (!UNLOAD-TRUCK PACKAGE10 TRUCK2-1 LOC2-2)))
     'LOG-RAN-25-7)
 
-  (nst:def-check log-ran-25-8
+  (nst:def-test log-ran-25-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-2 LOC9-3)
@@ -4974,7 +4974,7 @@
 
 (nst:def-test-group logistic-tests-1j (logistics-domain)
 
-  (nst:def-check log-ran-25-9
+  (nst:def-test log-ran-25-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
@@ -5200,7 +5200,7 @@
                 (!UNLOAD-TRUCK PACKAGE21 TRUCK2-1 LOC2-3)))
     'LOG-RAN-25-9)
 
-  (nst:def-check log-ran-30-1
+  (nst:def-test log-ran-30-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2)
@@ -5466,7 +5466,7 @@
                 (!UNLOAD-AIRPLANE PACKAGE24 PLANE2 LOC3-1)))
     'LOG-RAN-30-1)
 
-  (nst:def-check log-ran-30-10
+  (nst:def-test log-ran-30-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK13-1 LOC13-2)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE4 TRUCK3-1 LOC3-3)
@@ -5723,7 +5723,7 @@
 
 (nst:def-test-group logistic-tests-1k (logistics-domain)
 
-  (nst:def-check log-ran-30-2
+  (nst:def-test log-ran-30-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -5954,7 +5954,7 @@
                 (!UNLOAD-TRUCK PACKAGE17 TRUCK8-1 LOC8-2)))
     'LOG-RAN-30-2)
 
-  (nst:def-check log-ran-30-3
+  (nst:def-test log-ran-30-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
                 (!LOAD-TRUCK PACKAGE5 TRUCK11-1 LOC11-2)
                 (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2) (!LOAD-TRUCK PACKAGE6 TRUCK8-1 LOC8-2)
@@ -6215,7 +6215,7 @@
                 (!UNLOAD-TRUCK PACKAGE27 TRUCK9-1 LOC9-3)))
     'LOG-RAN-30-3)
 
-  (nst:def-check log-ran-30-4
+  (nst:def-test log-ran-30-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                 (!LOAD-TRUCK PACKAGE5 TRUCK9-1 LOC9-2)
@@ -6469,7 +6469,7 @@
 
 (nst:def-test-group logistic-tests-2 (logistics-domain)
 
-  (nst:def-check log-ran-30-5
+  (nst:def-test log-ran-30-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -6754,7 +6754,7 @@
                 (!UNLOAD-TRUCK PACKAGE23 TRUCK11-1 LOC11-2)))
     'LOG-RAN-30-5)
 
-  (nst:def-check log-ran-30-6
+  (nst:def-test log-ran-30-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-2 LOC5-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -7030,7 +7030,7 @@
                 (!UNLOAD-TRUCK PACKAGE27 TRUCK9-1 LOC9-2)))
     'LOG-RAN-30-6)
 
-  (nst:def-check log-ran-30-7
+  (nst:def-test log-ran-30-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-3)
@@ -7260,7 +7260,7 @@
     'LOG-RAN-30-7))
 
 (nst:def-test-group logistic-tests-3 (logistics-domain)
-  (nst:def-check log-ran-30-8
+  (nst:def-test log-ran-30-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -7539,7 +7539,7 @@
                 (!UNLOAD-TRUCK PACKAGE26 TRUCK12-1 LOC12-2)))
     'LOG-RAN-30-8)
 
-  (nst:def-check log-ran-30-9
+  (nst:def-test log-ran-30-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-2)
@@ -7812,7 +7812,7 @@
                 (!UNLOAD-TRUCK PACKAGE24 TRUCK4-1 LOC4-3)))
     'LOG-RAN-30-9)
 
-  (nst:def-check log-ran-35-1
+  (nst:def-test log-ran-35-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -8123,7 +8123,7 @@
                 (!UNLOAD-TRUCK PACKAGE30 TRUCK8-1 LOC8-3)))
     'LOG-RAN-35-1)
 
-  (nst:def-check log-ran-35-10
+  (nst:def-test log-ran-35-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-3)
                 (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
@@ -8442,7 +8442,7 @@
     'LOG-RAN-35-10))
 
 (nst:def-test-group logistic-tests-4 (logistics-domain)
-  (nst:def-check log-ran-35-2
+  (nst:def-test log-ran-35-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK8-1 LOC8-2)
@@ -8776,7 +8776,7 @@
                 (!UNLOAD-TRUCK PACKAGE31 TRUCK14-1 LOC14-2)))
     'LOG-RAN-35-2)
 
-  (nst:def-check log-ran-35-3
+  (nst:def-test log-ran-35-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!ADD-PROTECTION (TRUCK-AT TRUCK12-1 LOC12-3))
@@ -9101,7 +9101,7 @@
                 (!UNLOAD-TRUCK PACKAGE30 TRUCK18-1 LOC18-3)))
     'LOG-RAN-35-3)
 
-  (nst:def-check log-ran-35-4
+  (nst:def-test log-ran-35-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2) (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-2)
@@ -9443,7 +9443,7 @@
                 (!UNLOAD-TRUCK PACKAGE35 TRUCK8-1 LOC8-2)))
     'LOG-RAN-35-4)
 
-  (nst:def-check log-ran-35-5
+  (nst:def-test log-ran-35-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2)
@@ -9765,7 +9765,7 @@
                 (!UNLOAD-TRUCK PACKAGE27 TRUCK16-1 LOC16-3)))
     'LOG-RAN-35-5)
 
-  (nst:def-check log-ran-35-6
+  (nst:def-test log-ran-35-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-3)
@@ -10074,7 +10074,7 @@
     'LOG-RAN-35-6))
 
 (nst:def-test-group logistic-tests-5 (logistics-domain)
-  (nst:def-check log-ran-35-7
+  (nst:def-test log-ran-35-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK18-1 LOC18-3)
                 (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3) (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3)
@@ -10386,7 +10386,7 @@
                 (!UNLOAD-TRUCK PACKAGE22 TRUCK3-1 LOC3-2)))
     'LOG-RAN-35-7)
 
-  (nst:def-check log-ran-35-8
+  (nst:def-test log-ran-35-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
@@ -10727,7 +10727,7 @@
                 (!UNLOAD-TRUCK PACKAGE33 TRUCK5-1 LOC5-2)))
     'LOG-RAN-35-8)
 
-  (nst:def-check log-ran-35-9
+  (nst:def-test log-ran-35-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK8-1 LOC8-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
@@ -11035,7 +11035,7 @@
                 (!UNLOAD-TRUCK PACKAGE35 TRUCK9-1 LOC9-3)))
     'LOG-RAN-35-9)
 
-  (nst:def-check log-ran-40-1
+  (nst:def-test log-ran-40-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3)
@@ -11422,7 +11422,7 @@
     'LOG-RAN-40-1))
 
 (nst:def-test-group logistic-tests-6 (logistics-domain)
-  (nst:def-check log-ran-40-10
+  (nst:def-test log-ran-40-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK19-1 LOC19-1 LOC19-2)
@@ -11777,7 +11777,7 @@
                 (!UNLOAD-TRUCK PACKAGE24 TRUCK8-1 LOC8-3)))
     'LOG-RAN-40-10)
 
-  (nst:def-check log-ran-40-2
+  (nst:def-test log-ran-40-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
@@ -12141,7 +12141,7 @@
                 (!UNLOAD-TRUCK PACKAGE40 TRUCK12-1 LOC12-2)))
     'LOG-RAN-40-2)
 
-  (nst:def-check log-ran-40-3
+  (nst:def-test log-ran-40-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
@@ -12505,7 +12505,7 @@
                 (!UNLOAD-TRUCK PACKAGE35 TRUCK4-1 LOC4-3)))
     'LOG-RAN-40-3)
 
-  (nst:def-check log-ran-40-4
+  (nst:def-test log-ran-40-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK16-1 LOC16-1 LOC16-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK16-1 LOC16-2)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2)
@@ -12832,7 +12832,7 @@
     'LOG-RAN-40-4))
 
 (nst:def-test-group logistic-tests-7 (logistics-domain)
-  (nst:def-check log-ran-40-5
+  (nst:def-test log-ran-40-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -13203,7 +13203,7 @@
                 (!UNLOAD-TRUCK PACKAGE33 TRUCK6-1 LOC6-3)))
     'LOG-RAN-40-5)
 
-  (nst:def-check log-ran-40-6
+  (nst:def-test log-ran-40-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK20-1 LOC20-2)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
@@ -13524,7 +13524,7 @@
                 (!UNLOAD-TRUCK PACKAGE25 TRUCK8-1 LOC8-3)))
     'LOG-RAN-40-6)
 
-  (nst:def-check log-ran-40-7
+  (nst:def-test log-ran-40-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3) (!LOAD-TRUCK PACKAGE2 TRUCK2-1 LOC2-3)
@@ -13892,7 +13892,7 @@
                 (!UNLOAD-TRUCK PACKAGE21 TRUCK3-1 LOC3-2)))
     'LOG-RAN-40-7)
 
-  (nst:def-check log-ran-40-8
+  (nst:def-test log-ran-40-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
@@ -14263,7 +14263,7 @@
     'LOG-RAN-40-8))
 
 (nst:def-test-group logistic-tests-8 (logistics-domain)
-  (nst:def-check log-ran-40-9
+  (nst:def-test log-ran-40-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
@@ -14593,7 +14593,7 @@
                 (!UNLOAD-TRUCK PACKAGE34 TRUCK5-1 LOC5-2)))
     'LOG-RAN-40-9)
 
-  (nst:def-check log-ran-45-1
+  (nst:def-test log-ran-45-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-3)
@@ -14999,7 +14999,7 @@
                 (!UNLOAD-TRUCK PACKAGE41 TRUCK20-1 LOC20-3)))
     'LOG-RAN-45-1)
 
-  (nst:def-check log-ran-45-10
+  (nst:def-test log-ran-45-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-2)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
@@ -15414,7 +15414,7 @@
                 (!UNLOAD-TRUCK PACKAGE24 TRUCK3-1 LOC3-3)))
     'LOG-RAN-45-10)
 
-  (nst:def-check log-ran-45-2
+  (nst:def-test log-ran-45-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
@@ -15819,7 +15819,7 @@
     'LOG-RAN-45-2))
 
 (nst:def-test-group logistic-tests-9 (logistics-domain)
-  (nst:def-check log-ran-45-3
+  (nst:def-test log-ran-45-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-3)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-2)
@@ -16210,7 +16210,7 @@
                 (!UNLOAD-TRUCK PACKAGE20 TRUCK11-1 LOC11-2)))
     'LOG-RAN-45-3)
 
-  (nst:def-check log-ran-45-4
+  (nst:def-test log-ran-45-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-3)
                 (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2) (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2)
@@ -16610,7 +16610,7 @@
     'LOG-RAN-45-4))
 
 (nst:def-test-group logistic-tests-9a (logistics-domain)
-  (nst:def-check log-ran-45-5
+  (nst:def-test log-ran-45-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-2)
                 (!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-3)
@@ -17017,7 +17017,7 @@
                 (!UNLOAD-TRUCK PACKAGE43 TRUCK23-1 LOC23-3)))
     'LOG-RAN-45-5)
 
-  (nst:def-check log-ran-45-6
+  (nst:def-test log-ran-45-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-2)
                 (!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
@@ -17435,7 +17435,7 @@
 
 (nst:def-test-group logistic-tests-10 (logistics-domain)
 
-  (nst:def-check log-ran-45-7
+  (nst:def-test log-ran-45-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-3)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-2)
@@ -17836,7 +17836,7 @@
                 (!UNLOAD-TRUCK PACKAGE30 TRUCK5-1 LOC5-3)))
     'LOG-RAN-45-7)
 
-  (nst:def-check log-ran-45-8
+  (nst:def-test log-ran-45-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-3)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2)
@@ -18243,7 +18243,7 @@
 (nst:def-test-group logistic-tests-10a (logistics-domain)
 
 
-  (nst:def-check log-ran-45-9
+  (nst:def-test log-ran-45-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
@@ -18683,7 +18683,7 @@
                 (!UNLOAD-TRUCK PACKAGE16 TRUCK2-1 LOC2-2)))
     'LOG-RAN-45-9)
 
-  (nst:def-check log-ran-50-1
+  (nst:def-test log-ran-50-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK10-1 LOC10-2)
                 (!DRIVE-TRUCK TRUCK24-1 LOC24-1 LOC24-3)
@@ -19141,7 +19141,7 @@
 
 (nst:def-test-group logistic-tests-11 (logistics-domain)
 
-  (nst:def-check log-ran-50-10
+  (nst:def-test log-ran-50-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-3)
@@ -19614,7 +19614,7 @@
                 (!UNLOAD-TRUCK PACKAGE46 TRUCK24-1 LOC24-3)))
     'LOG-RAN-50-10)
 
-  (nst:def-check log-ran-50-2
+  (nst:def-test log-ran-50-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
@@ -20081,7 +20081,7 @@
 (nst:def-test-group logistic-tests-11a (logistics-domain)
 
 
-  (nst:def-check log-ran-50-3
+  (nst:def-test log-ran-50-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK24-1 LOC24-1 LOC24-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK24-1 LOC24-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
@@ -20577,7 +20577,7 @@
                 (!UNLOAD-TRUCK PACKAGE42 TRUCK25-1 LOC25-2)))
     'LOG-RAN-50-3)
 
-  (nst:def-check log-ran-50-4
+  (nst:def-test log-ran-50-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-3)
@@ -21052,7 +21052,7 @@
 
 (nst:def-test-group logistic-tests-12 (logistics-domain)
 
-  (nst:def-check log-ran-50-5
+  (nst:def-test log-ran-50-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK12-1 LOC12-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
@@ -21513,7 +21513,7 @@
                 (!UNLOAD-TRUCK PACKAGE49 TRUCK22-1 LOC22-2)))
     'LOG-RAN-50-5)
 
-  (nst:def-check log-ran-50-6
+  (nst:def-test log-ran-50-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK14-1 LOC14-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
@@ -21981,7 +21981,7 @@
 (nst:def-test-group logistic-tests-12a (logistics-domain)
 
 
-  (nst:def-check log-ran-50-7
+  (nst:def-test log-ran-50-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-3)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -22465,7 +22465,7 @@
                 (!UNLOAD-TRUCK PACKAGE33 TRUCK10-1 LOC10-3)))
     'LOG-RAN-50-7)
 
-  (nst:def-check log-ran-50-8
+  (nst:def-test log-ran-50-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-3)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -22900,7 +22900,7 @@
 
 (nst:def-test-group logistic-tests-13 (logistics-domain)
 
-  (nst:def-check log-ran-50-9
+  (nst:def-test log-ran-50-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK19-1 LOC19-1 LOC19-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK19-1 LOC19-3)
                 (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2) (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-2)
@@ -23354,7 +23354,7 @@
                 (!UNLOAD-TRUCK PACKAGE45 TRUCK15-1 LOC15-2)))
     'LOG-RAN-50-9)
 
-  (nst:def-check log-ran-55-1
+  (nst:def-test log-ran-55-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK28-1 LOC28-2)
                 (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-3)
@@ -23873,7 +23873,7 @@
 (nst:def-test-group logistic-tests-13a (logistics-domain)
 
 
-  (nst:def-check log-ran-55-10
+  (nst:def-test log-ran-55-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK10-1 LOC10-3)
                 (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2) (!LOAD-TRUCK PACKAGE4 TRUCK6-1 LOC6-2)
@@ -24401,7 +24401,7 @@
                 (!UNLOAD-TRUCK PACKAGE46 TRUCK4-1 LOC4-3)))
     'LOG-RAN-55-10)
 
-  (nst:def-check log-ran-55-2
+  (nst:def-test log-ran-55-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
@@ -24896,7 +24896,7 @@
 
 (nst:def-test-group logistic-tests-14 (logistics-domain)
 
-  (nst:def-check log-ran-55-3
+  (nst:def-test log-ran-55-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
@@ -25398,7 +25398,7 @@
                 (!UNLOAD-TRUCK PACKAGE52 TRUCK10-1 LOC10-3)))
     'LOG-RAN-55-3)
 
-  (nst:def-check log-ran-55-4
+  (nst:def-test log-ran-55-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2)
                 (!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
@@ -25868,7 +25868,7 @@
 (nst:def-test-group logistic-tests-14a (logistics-domain)
 
 
-  (nst:def-check log-ran-55-5
+  (nst:def-test log-ran-55-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-3)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-3)
@@ -26413,7 +26413,7 @@
                 (!UNLOAD-TRUCK PACKAGE47 TRUCK5-1 LOC5-2)))
     'LOG-RAN-55-5)
 
-  (nst:def-check log-ran-55-6
+  (nst:def-test log-ran-55-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK11-1 LOC11-2)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3)
@@ -26937,7 +26937,7 @@
 
 (nst:def-test-group logistic-tests-15 (logistics-domain)
 
-  (nst:def-check log-ran-55-7
+  (nst:def-test log-ran-55-7
       (:primary-result-plan ((!ADD-PROTECTION (TRUCK-AT TRUCK13-1 LOC13-1))
                 (!LOAD-TRUCK PACKAGE1 TRUCK13-1 LOC13-1)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-2)
@@ -27422,7 +27422,7 @@
                 (!UNLOAD-TRUCK PACKAGE34 TRUCK11-1 LOC11-3)))
     'LOG-RAN-55-7)
 
-  (nst:def-check log-ran-55-8
+  (nst:def-test log-ran-55-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK10-1 LOC10-2)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3)
@@ -27945,7 +27945,7 @@
 (nst:def-test-group logistic-tests-15a (logistics-domain)
 
 
-  (nst:def-check log-ran-55-9
+  (nst:def-test log-ran-55-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK26-1 LOC26-1 LOC26-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK26-1 LOC26-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
@@ -28445,7 +28445,7 @@
                 (!UNLOAD-TRUCK PACKAGE32 TRUCK9-1 LOC9-2)))
     'LOG-RAN-55-9)
 
-  (nst:def-check log-ran-60-1
+  (nst:def-test log-ran-60-1
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -28947,7 +28947,7 @@
 
 (nst:def-test-group logistic-tests-16 (logistics-domain)
 
-  (nst:def-check log-ran-60-10
+  (nst:def-test log-ran-60-10
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
@@ -29508,7 +29508,7 @@
                 (!UNLOAD-TRUCK PACKAGE52 TRUCK5-1 LOC5-3)))
     'LOG-RAN-60-10)
 
-  (nst:def-check log-ran-60-2
+  (nst:def-test log-ran-60-2
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK20-1 LOC20-2)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-2)
@@ -30050,7 +30050,7 @@
 (nst:def-test-group logistic-tests-16a (logistics-domain)
 
 
-  (nst:def-check log-ran-60-3
+  (nst:def-test log-ran-60-3
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK25-1 LOC25-1 LOC25-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK25-1 LOC25-3)
                 (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2) (!LOAD-TRUCK PACKAGE7 TRUCK8-1 LOC8-2)
@@ -30608,7 +30608,7 @@
                 (!UNLOAD-TRUCK PACKAGE50 TRUCK26-1 LOC26-3)))
     'LOG-RAN-60-3)
 
-  (nst:def-check log-ran-60-4
+  (nst:def-test log-ran-60-4
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-3)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -31166,7 +31166,7 @@
 
 (nst:def-test-group logistic-tests-17 (logistics-domain)
 
-  (nst:def-check log-ran-60-5
+  (nst:def-test log-ran-60-5
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-2)
@@ -31682,7 +31682,7 @@
                 (!UNLOAD-TRUCK PACKAGE56 TRUCK24-1 LOC24-3)))
     'LOG-RAN-60-5)
 
-  (nst:def-check log-ran-60-6
+  (nst:def-test log-ran-60-6
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-2)
                 (!DRIVE-TRUCK TRUCK29-1 LOC29-1 LOC29-3)
@@ -32275,7 +32275,7 @@
 (nst:def-test-group logistic-tests-17a (logistics-domain)
 
 
-  (nst:def-check log-ran-60-7
+  (nst:def-test log-ran-60-7
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                 (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
@@ -32851,7 +32851,7 @@
                 (!UNLOAD-TRUCK PACKAGE58 TRUCK2-1 LOC2-2)))
     'LOG-RAN-60-7)
 
-  (nst:def-check log-ran-60-8
+  (nst:def-test log-ran-60-8
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-2)
@@ -33417,7 +33417,7 @@
     'LOG-RAN-60-8))
 
 (nst:def-test-group logistic-tests-18 (logistics-domain)
-  (nst:def-check log-ran-60-9
+  (nst:def-test log-ran-60-9
       (:primary-result-plan ((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-3)
