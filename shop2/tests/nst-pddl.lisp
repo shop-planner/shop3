@@ -82,29 +82,29 @@
 
 (nst:def-test-group pddl-tests ()
 
-  (nst:def-check (check-head :fixtures (simple-pddl-actions
+  (nst:def-test (check-head :fixtures (simple-pddl-actions
                                         action-test-fixtures))
       (:equal '(drive ?v ?from ?to ?fbefore ?fafter))
     (pddl-action-head action))
 
-  (nst:def-check (check-precondition :fixtures (simple-pddl-actions
+  (nst:def-test (check-precondition :fixtures (simple-pddl-actions
                                                 action-test-fixtures))
       (:equal '(and (at ?v ?from) (accessible ?v ?from ?to)
                     (fuel ?v ?fbefore) (next ?fbefore ?fafter)))
     (pddl-action-precondition action))
 
-  (nst:def-check (check-effect :fixtures (simple-pddl-actions
+  (nst:def-test (check-effect :fixtures (simple-pddl-actions
                                           action-test-fixtures))
       (:equal '(and (not (at ?v ?from)) (at ?v ?to)
                     (not (fuel ?v ?fbefore)) (fuel ?v ?fafter)))
     (pddl-action-effect action))
 
-  (nst:def-check (check-cost-fun :fixtures (simple-pddl-actions
+  (nst:def-test (check-cost-fun :fixtures (simple-pddl-actions
                                             action-test-fixtures))
       (:eql 1.0)
     (pddl-action-cost-fun action))
 
-  (nst:def-check defdomain-single-action
+  (nst:def-test defdomain-single-action
       (:progn (defdomain (#.(gentemp (symbol-name '#:domain))
                           :type simple-pddl-domain
                           :redefine-ok t)
@@ -138,7 +138,7 @@
 
   ;;; NB the two forms differ in the initial state.
 
-  (nst:def-check (pddl-action-test :fixtures (add-del-fixtures))
+  (nst:def-test (pddl-action-test :fixtures (add-del-fixtures))
       (:equal '((AT ROBOT NEW-YORK)))
     (let ((*state-encoding* :list))
       (declare (special *state-encoding*))
@@ -149,7 +149,7 @@
                       nil 0 nil)
         (state-atoms state))))
 
-  (nst:def-check (pddl-action-failed-precond-test
+  (nst:def-test (pddl-action-failed-precond-test
                   :fixtures (add-del-fixtures))
       (:symbol fail)
     (let ((*state-encoding* :list))
@@ -183,7 +183,7 @@
 
 (nst:def-test-group quantified-preconditions
     (quantified-preconditions-fixtures)
-  (nst:def-check simplest
+  (nst:def-test simplest
       (:equal '(forall (?s)
                 (:of-type segment ?s)
                 (imply
@@ -193,7 +193,7 @@
                  (not (occupied ?s)))))
     (pddl-action-precondition act))
 
-  (nst:def-check with-others
+  (nst:def-test with-others
       (:equal '(and
                 (has-type ?a ?t)
                 (is-moving ?a)
@@ -230,7 +230,7 @@
                            (not (= ?s ?s1)))
                           (not (occupied ?s)))))))))
 
-  (nst:def-check multiple-variables
+  (nst:def-test multiple-variables
       (:equal '(forall (?s ?a2)
                 (and
                  (:of-type segment ?s)
@@ -253,7 +253,7 @@
                                            (not (= ?s ?s1)))
                                           (not (at ?a2 ?s))))))))
 
-  (nst:def-check existential
+  (nst:def-test existential
       (:equal '(and
                 (has-type ?a ?t)
                 (is-moving ?a)
@@ -340,7 +340,7 @@
         (p1 nil)))
 
 (nst:def-test-group simple-when ()
-  (nst:def-check (simple-when-no :fixtures (simple-when-fixtures))
+  (nst:def-test (simple-when-no :fixtures (simple-when-fixtures))
       (:equal '((AT ROBOT NEW-YORK)))
     (let ((*state-encoding* :list))
       (declare (special *state-encoding*))
@@ -351,7 +351,7 @@
                       nil 0 nil)
         (state-atoms state))))
 
-  (nst:def-check (simple-when-yes :fixtures (simple-when-fixtures))
+  (nst:def-test (simple-when-yes :fixtures (simple-when-fixtures))
       (:equal '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
                 (CARRYING CARGO)))
     (let ((*state-encoding* :list))
@@ -382,7 +382,7 @@
 
 (nst:def-test-group quantified-when (quantified-when-fixtures)
 
-  (nst:def-check check-state-making
+  (nst:def-test check-state-making
       (:equal '((at bag1 new-jersey)
                 (at bag2 new-jersey)
                 (at bag3 new-jersey)
@@ -400,7 +400,7 @@
                                  (:of-type luggage bag3)))))
         (sort (state-atoms state) 'prop-sorter))))
 
-  (nst:def-check check-antecedent-unsatisfied
+  (nst:def-test check-antecedent-unsatisfied
       (:equal '((at bag1 new-jersey)
                 (at bag2 new-jersey)
                 (at bag3 new-jersey)
@@ -422,7 +422,7 @@
                       nil 0 nil)
         (sort (state-atoms state) 'prop-sorter))))
 
-  (nst:def-check check-antecedent-satisfied
+  (nst:def-test check-antecedent-satisfied
       (:equal '((at bag1 new-york)
                 (at bag2 new-jersey)
                 (at bag3 new-jersey)
@@ -446,7 +446,7 @@
                       nil 0 nil)
         (sort (state-atoms state) 'prop-sorter))))
 
-  (nst:def-check check-antecedent-multiply-satisfied
+  (nst:def-test check-antecedent-multiply-satisfied
       (:equal '((at bag1 new-york)
                 (at bag2 new-jersey)
                 (at bag3 new-york)
