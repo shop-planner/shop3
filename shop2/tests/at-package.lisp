@@ -3,6 +3,6 @@
   (:use #:common-lisp #:shop2)
   (:import-from #:nst
                 #:def-fixtures
-                #:def-value-check
-                #:def-check
+                #:def-values-criterion
+                #:def-test
                 #:def-test-group))

@@ -98,12 +98,12 @@
      (make-problem 'meta-op
                    '() '(metamethodop foo)))))
 
-(def-value-check (failed () (retval &rest args))
+(nst:def-values-criterion (failed () (retval &rest args))
     `(if (eq retval 'fail)
          (sift.nst::make-check-result)
          (sift.nst:emit-failure)))
 
-(def-value-check (unfailed () (retval &rest args) :declare ((ignore args)))
+(nst:def-values-criterion (unfailed () (retval &rest args) :declare ((ignore args)))
     `(if (eq retval 'fail)
          (sift.nst:emit-failure)
          (sift.nst::make-check-result)))
