@@ -63,27 +63,29 @@
     (:nicknames :shopthpr :shop.theorem-prover)
     (:use :common-lisp :shop2.common :shop2.unifier)
     (:export #:trace-print
-	     #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
-     
-	     #:def-logical-keyword
-	     
-	     ;; the unifier interface
-	     #:unify-fail #:unify-p
-	     #:unify #:standardize #:fail
-	     #:apply-substitution #:compose-substitutions
-	     #:fix-uninterned-bindings #:binding-list-value
-	     #:make-binding-list #:make-binding
-	     #:binding-var #:binding-val
-	     #:variablep #:groundp
-	     #:set-variable-property
-	     #:variable-gensym
-	     
-	     ;; theorem-prover interface
-	     #:explain-satisfier #:find-satisfiers #:extract-variables
-	     #:print-belief-state-readably
-	     #:print-axioms
-	     
-	     ;; expression syntax
+             #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
+             #:*state*
+             #:*domain*
+
+             #:def-logical-keyword
+
+             ;; the unifier interface
+             #:unify-fail #:unify-p
+             #:unify #:standardize #:fail
+             #:apply-substitution #:compose-substitutions
+             #:fix-uninterned-bindings #:binding-list-value
+             #:make-binding-list #:make-binding
+             #:binding-var #:binding-val
+             #:variablep #:groundp
+             #:set-variable-property
+             #:variable-gensym
+
+             ;; theorem-prover interface
+             #:explain-satisfier #:find-satisfiers #:extract-variables
+             #:print-belief-state-readably
+             #:print-axioms
+
+             ;; expression syntax
              #:call #:imply #:forall #:exists #:assign #:enforce
              #:assign*                  ; possibly non-canonical
                                         ; addition
@@ -92,8 +94,11 @@
              ;; hook routine that will later be exported through shop2 package
              #:external-access-hook
 
-	     #:*domain*
              #:thpr-domain #:domain-axioms
              #:axioms
-	     #:default-state-type
+             #:default-state-type
+
+             ;; exceptions
+             #:instantiation-error
+             #:theorem-prover-condition
              ))

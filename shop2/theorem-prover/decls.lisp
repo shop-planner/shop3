@@ -62,6 +62,13 @@
 
 (defvar *domain* nil)
 
+(defvar *state*)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (documentation '*state* 'variable)
+        "This special variable should be bound to the current
+state inside FIND-SATISFIERS, qv., giving axioms access to the
+state data structure."))
+
 (defgeneric axioms (thpr-domain predicate)
   (:documentation "Return a list of all the SHOP2
 axioms for PREDICATE in THPR-DOMAIN."))
@@ -90,3 +97,29 @@ axioms for PREDICATE in THPR-DOMAIN."))
    )
   (:documentation "An object representing a SHOP2 theorem prover domain.")
   )
+
+(defclass theorem-prover-condition ()
+     ()
+  (:documentation "This mixin class should be added to any condition raised by
+the theorem-prover, in order to allow handlers to distinguish such conditions.
+It provides no additional behavior or slots, so that it can be mixed into
+warnings, errors, etc.")
+  )
+
+(define-condition instantiation-error (error theorem-prover-condition)
+  ((predicate
+    :initarg :predicate
+    :reader predicate
+    )
+   (argno
+    :initarg :argno
+    :reader argno
+    )
+   )
+  (:report (lambda (condition stream)
+             (format stream "Predicate ~a used with " (predicate condition))
+             (if (slot-boundp condition 'argno)
+                 (format stream "~dth argument " (argno condition))
+                 (format stream "some argument(s) "))
+             (format stream "incorrectly instantiated."))))
+
