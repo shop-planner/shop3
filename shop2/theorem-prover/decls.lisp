@@ -98,7 +98,7 @@ axioms for PREDICATE in THPR-DOMAIN."))
   (:documentation "An object representing a SHOP2 theorem prover domain.")
   )
 
-(defclass theorem-prover-condition ()
+(define-condition theorem-prover-condition ()
      ()
   (:documentation "This mixin class should be added to any condition raised by
 the theorem-prover, in order to allow handlers to distinguish such conditions.
