@@ -216,12 +216,14 @@ Defines methods for REAL-SEEK-SATISFIERS-FOR and LOGICAL-KEYWORDP."
              name domain-supp-p domain))
 
     `(eval-when (:compile-toplevel :load-toplevel :execute)
+       #-sbcl
        (let ((old-doc (documentation ',name :shop-connective)))
          (when (and old-doc
                     (not (string-equal old-doc ,documentation)))
            (cerror "Continue and redefine ~a"
                    "The documentation string for connective ~a is changing.  This may indicate multiple (inconsistent) definitions for it as a logical connective"
                    ',name))
+         #-sbcl
          (setf (documentation ',name :shop-connective)
                ,documentation))
        (defmethod real-seek-satisfiers-for (,domain-specializer
