@@ -389,7 +389,7 @@ looks through the preconditions finding the forall
     `(progn
        (unless *define-silently*
          (when *defdomain-verbose*
-         (format t "~%Defining domain ~a..." ',name)))
+         (format t "~%Defining domain ~a...~%" ',name)))
        (let ((domain (apply #'make-instance ',type
                        :name ',name
                        ',options
