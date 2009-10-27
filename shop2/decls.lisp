@@ -271,7 +271,7 @@ defined for TASK-NAME in DOMAIN."))
 (defgeneric set-variable-property (domain x)
   (:documentation
    "Record facts about X being a variable, operator, or
-other special symbol.  Done for side-effects.  Returns nothing 
+other special symbol.  Done for side-effects.  Returns nothing
 of interest (ie, t)."))
 
 (defgeneric install-domain (domain &optional redefine-ok)
@@ -290,7 +290,10 @@ Returns no value; operates by side effects on DOMAIN."))
   (:documentation "Process all the items in ITEMS.  These will be
 methods, operators, axioms, and whatever special items domain
 subclasses may require.
-Returns no value; operates by side effects on DOMAIN."))
+  Returns no value; operates by side effects on DOMAIN.
+  For example, in one case we define a method on this for a
+particular class of domain that adds to the set of items
+for the domain a list of standard axioms."))
 
 (defgeneric parse-domain-item (domain item-keyword item)
   (:documentation "The default method for parse-domain-items
