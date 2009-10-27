@@ -63,7 +63,7 @@
     :serial t
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative "theorem-prover"))
                                  *load-truename*)
-    :depends-on ("shop2-common" "shop2-unifier")
+    :depends-on ("shop2-common" "shop2-unifier" "shop-asd")
     :version #.cl-user::+shop-version+
     :components ((:file "package-thpr")
                  (:file "decls")

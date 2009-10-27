@@ -53,7 +53,6 @@
 
 (asdf:oos 'asdf:load-op :shop-asd)
 (in-package :shop2-asd)
-(load (merge-pathnames "version.lisp" *load-truename*))
 
 ;;;
 ;;; The main system.
@@ -62,7 +61,8 @@
     :serial t
     :default-component-class cl-file-with-defconstants
     :depends-on ((:version "shop2-common" #.cl-user::+shop-version+)
-                        (:version "shop2-theorem-prover" #.cl-user::+shop-version+))
+                 (:version "shop2-theorem-prover" #.cl-user::+shop-version+)
+                 "shop-asd")
     :version #.cl-user::+shop-version+
     :in-order-to ((test-op (test-op :test-shop2)))
     :components  (
@@ -70,18 +70,18 @@
        (:file "decls")
 
        (:module io
-		:components ((:file "input")
-			            (:file "output")
-			            (:file "debugging")))
+                :components ((:file "input")
+                                    (:file "output")
+                                    (:file "debugging")))
        (:module pddl
-		:components ((:file "pddl")))
+                :components ((:file "pddl")))
        (:module search
-		:pathname "planning-engine/"
-		:components ((:file "protections")
-			             (:file "task-reductions")
-			             (:file "search")))
+                :pathname "planning-engine/"
+                :components ((:file "protections")
+                                     (:file "task-reductions")
+                                     (:file "search")))
        (:module tree
-		:pathname "planning-tree/"
-		:components ((:file "tree-accessors")
-			             (:file "tree-reductions")))
+                :pathname "planning-tree/"
+                :components ((:file "tree-accessors")
+                                     (:file "tree-reductions")))
        (:file "shop2")))

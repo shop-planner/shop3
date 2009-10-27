@@ -57,12 +57,12 @@
 ;;; markings.
 (defpackage :shop2-unifier-asd (:use :common-lisp :asdf))
 (in-package :shop2-unifier-asd)
-(load (merge-pathnames "version.lisp" *load-truename*))
 
 (defsystem :shop2-unifier
     :serial t
         :pathname #.(merge-pathnames (make-pathname :directory '(:relative "unification"))
                                  *load-truename*)
+        :depends-on ("shop-asd")
     :version #.cl-user::+shop-version+
     :components ((:file "package-unifier")
                  (:file "tracer")

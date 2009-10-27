@@ -58,7 +58,7 @@
 (defsystem :shop2-core
     :serial t
     :version #.cl-user::+shop-version+
-    :depends-on (:shop2-theorem-prover)
+    :depends-on (:shop2-theorem-prover :shop-asd)
     :components ((:file "package")
                  (:file "decls")
                  (:file "shop2")
