@@ -57,7 +57,8 @@
 ;;; markings.
 (defpackage :shop2-thpr-asd (:use :common-lisp :asdf))
 (in-package :shop2-thpr-asd)
-(load (merge-pathnames "version.lisp"*load-truename*))
+
+(asdf:oos 'asdf:load-op "shop-asd")
 
 (defsystem :shop2-theorem-prover
     :serial t
