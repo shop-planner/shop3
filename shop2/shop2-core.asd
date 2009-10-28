@@ -53,7 +53,6 @@
 
 (defpackage :shop2-core-asd (:use :common-lisp :asdf))
 (in-package :shop2-core-asd)
-(merge-pathnames "version.lisp" *load-truename*)
 
 (defsystem :shop2-core
     :serial t
