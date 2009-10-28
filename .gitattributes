@@ -124,4 +124,3 @@ shop2/theorem-prover/theorem-prover.lisp -text
 shop2/unification/package-unifier.lisp -text
 shop2/unification/tracer.lisp -text
 shop2/unification/unify.lisp -text
-shop2/version.lisp -text
