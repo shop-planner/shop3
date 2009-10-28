@@ -54,7 +54,7 @@
 (asdf:oos 'asdf:load-op :shop-asd)
 (asdf:oos 'asdf:load-op :asdf-nst)
 (in-package :shop2-asd)
-(load (merge-pathnames "version.lisp" *load-truename*))
+
 (defconstant +shop-examples-dir+
              '(:relative "examples"))
 (defun examples-subdir (dirname)
