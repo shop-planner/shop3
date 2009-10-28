@@ -107,7 +107,6 @@ shop2/planning-tree/tree-funs.lisp -text
 shop2/planning-tree/tree-reductions.lisp -text
 shop2/shop-asd.asd -text
 shop2/shop2-common.asd -text
-shop2/shop2-core.asd -text
 shop2/shop2-theorem-prover.asd -text
 shop2/shop2-unifier.asd -text
 shop2/shop2.asd -text
