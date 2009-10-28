@@ -61,8 +61,7 @@
     :serial t
     :default-component-class cl-file-with-defconstants
     :depends-on ((:version "shop2-common" #.cl-user::+shop-version+)
-                 (:version "shop2-theorem-prover" #.cl-user::+shop-version+)
-                 "shop-asd")
+                 (:version "shop2-theorem-prover" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :in-order-to ((test-op (test-op :test-shop2)))
     :components  (

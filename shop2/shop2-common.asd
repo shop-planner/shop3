@@ -58,13 +58,14 @@
 (defpackage :shop2-common-asd (:use :common-lisp :asdf))
 (in-package :shop2-common-asd)
 ;; (load (merge-pathnames "version.lisp" *load-truename*))
+(asdf:oos 'asdf:load-op '#:shop-asd)
 
 (defsystem :shop2-common
     :serial t
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative "common"))
                                  *load-truename*)
     :version #.cl-user::+shop-version+
-    :depends-on (:shop2-unifier :shop-asd)
+    :depends-on (:shop2-unifier)
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")

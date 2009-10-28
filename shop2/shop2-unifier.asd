@@ -58,6 +58,8 @@
 (defpackage :shop2-unifier-asd (:use :common-lisp :asdf))
 (in-package :shop2-unifier-asd)
 
+(asdf:oos 'asdf:load-op '#:shop-asd)
+
 (defsystem :shop2-unifier
     :serial t
         :pathname #.(merge-pathnames (make-pathname :directory '(:relative "unification"))
