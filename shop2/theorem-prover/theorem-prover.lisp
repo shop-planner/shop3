@@ -338,16 +338,15 @@ in the goal, so we ignore the extra reference."
 (defun incorporate-unifiers (unifiers remaining just-one
                                       state bindings domain newlevel)
   (let (answers)
-  (loop for unifier in unifiers do
-    (let ((new-answers
-           (seek-satisfiers (apply-substitution remaining unifier)
-                            state (apply-substitution bindings unifier)
-                            newlevel just-one :domain domain)))
-      (when new-answers
-        (when just-one (return-from incorporate-unifiers new-answers))
-        (setf answers (shop-union new-answers answers :test #'equal)))))
-
-  (values answers)))
+    (dolist (unifier unifiers)
+      (let ((new-answers
+             (seek-satisfiers (apply-substitution remaining unifier)
+                              state (apply-substitution bindings unifier)
+                              newlevel just-one :domain domain)))
+        (when new-answers
+          (when just-one (return-from incorporate-unifiers new-answers))
+          (setf answers (shop-union new-answers answers :test #'equal)))))
+    answers))
 
 (defun standard-satisfiers-for-not (domain arguments other-goals
                                     state bindings newlevel just1)

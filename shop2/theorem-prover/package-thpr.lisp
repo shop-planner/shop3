@@ -100,5 +100,6 @@
 
              ;; exceptions
              #:instantiation-error
+             #:bad-argument
              #:theorem-prover-condition
              ))

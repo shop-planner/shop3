@@ -123,3 +123,25 @@ warnings, errors, etc.")
                  (format stream "some argument(s) "))
              (format stream "incorrectly instantiated."))))
 
+(define-condition bad-argument (error theorem-prover-condition)
+  ((predicate
+    :initarg :predicate
+    :reader predicate
+    )
+   (argno
+    :initarg :argno
+    :reader argno
+    )
+   (comment
+    :initarg :comment
+    :reader comment
+    ))
+  (:report (lambda (condition stream)
+             (format stream "Predicate ~a used with " (predicate condition))
+             (if (slot-boundp condition 'argno)
+                 (format stream "~dth argument " (argno condition))
+               (format stream "some argument(s) "))
+             (format stream "incorrect.")
+             (when (slot-boundp condition 'comment)
+               (format stream "  ~a" (comment condition))))))
+
