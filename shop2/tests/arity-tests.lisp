@@ -100,13 +100,13 @@
 
 (nst:def-values-criterion (failed () (retval &rest args))
     `(if (eq retval 'fail)
-         (sift.nst::make-check-result)
+         (sift.nst:emit-success)
          (sift.nst:emit-failure)))
 
 (nst:def-values-criterion (unfailed () (retval &rest args) :declare ((ignore args)))
     `(if (eq retval 'fail)
          (sift.nst:emit-failure)
-         (sift.nst::make-check-result)))
+         (sift.nst:emit-success)))
 
 (def-test-group arity-test (arity-domain)
   (def-test  (method-arity-match :fixtures (good-problem))
