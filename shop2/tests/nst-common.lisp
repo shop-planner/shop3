@@ -31,7 +31,7 @@ costs.  This function just throws away the costs."
   `(declare (ignorable runtime))
   `(let ((plan (remove-plan-costs (first plan-list))))
      (cond
-      ((equal ',target-plan plan)  (nst::make-check-result))
+      ((equal ',target-plan plan)  (nst:emit-success))
       (t  (nst:emit-failure :format "Unexpected plan ~s"
                             :args (list plan))))))
 
