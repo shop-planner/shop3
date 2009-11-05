@@ -5,7 +5,7 @@
 (nst:def-values-criterion (:no-plan () (plan-list runtime))
     `(declare (ignorable runtime))
     `(cond
-       ((null plan-list) (nst::make-check-result))
+       ((null plan-list) (sift.nst:emit-success))
        (t (nst:emit-failure
            :format "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
            :args (list (length plan-list) plan-list)))))
@@ -14,7 +14,7 @@
     `(declare (ignorable runtime))
     `(cond
        ((null plan-list) (nst:emit-failure :format "No plans generated"))
-       (t (nst::make-check-result))))
+       (t (nst:emit-success))))
 
 (defun remove-plan-costs (plan-and-costs)
   "The SHOP2 plans come with the operators interspersed with their
