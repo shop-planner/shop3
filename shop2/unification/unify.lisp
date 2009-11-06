@@ -60,6 +60,12 @@
 
 (in-package :shop2.unifier)
 
+(defgeneric set-variable-property (domain x)
+  (:documentation
+   "Record facts about X being a variable, operator, or
+other special symbol.  Done for side-effects.  Returns nothing
+of interest (ie, t)."))
+
 ;;;(defstruct constraint
 ;;;  "Variables can be bound to constraints, which will be handled specially in
 ;;;unification and substitution."

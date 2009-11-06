@@ -268,12 +268,6 @@ methods for TASK-NAME in DOMAIN."))
   (:documentation "Return the SHOP2 operator (if any)
 defined for TASK-NAME in DOMAIN."))
 
-(defgeneric set-variable-property (domain x)
-  (:documentation
-   "Record facts about X being a variable, operator, or
-other special symbol.  Done for side-effects.  Returns nothing
-of interest (ie, t)."))
-
 (defgeneric install-domain (domain &optional redefine-ok)
   (:documentation "Record DOMAIN for later retrieval.
 Currently records the domain on the prop-list of the domain's name.

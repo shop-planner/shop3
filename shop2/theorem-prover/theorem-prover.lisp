@@ -238,37 +238,19 @@ Defines methods for REAL-SEEK-SATISFIERS-FOR and LOGICAL-KEYWORDP."
          t)
        )))
 
-(defgeneric logical-keywordp (symbol domain)
-  (:documentation "Return true if the planning domain should interpret
-symbol as a semantically meaningful logical connective, as opposed to
-an atomic predicate name.
 
-IT IS STRONGLY RECOMMENDED that defmethod should NOT be used with this
-function!  Instead, please use the def-logical-keyword macro.")
-
-  (:method (symbol domain)
-     (declare (ignorable domain symbol))
-     nil))
 
 ;;;(defun logical-keywordp (sym)
 ;;;  (member sym '(and or not eval call assign assign*
 ;;;             imply forall sort-by)))
 
-(defgeneric real-seek-satisfiers-for
-    (domain goal-head goal other-goals state bindings level just1)
-  (:documentation "Define how a semantically meaningful logical
-connective should be interpreted in the given domain.
-
-IT IS STRONGLY RECOMMENDED that defmethod should NOT be used with this
-function!  Instead, please use the def-logical-keyword macro.")
-
-  (:method (domain goal-head goal other-goals
-                   state bindings level just1)
+(defmethod real-seek-satisfiers-for (domain goal-head goal other-goals
+                                     state bindings level just1)
      "The default method catches the non-keyword case: goal is an
 atomic predicate, so try to satisfy it.  The goal-head is intact
 in the goal, so we ignore the extra reference."
      (declare (ignorable goal-head))
-     (do-conjunct domain goal other-goals state bindings level just1)))
+     (do-conjunct domain goal other-goals state bindings level just1))
 
 (def-logical-keyword (not domain)
   (:satisfier-method (goal other-goals state bindings level just1)

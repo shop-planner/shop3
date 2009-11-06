@@ -73,6 +73,34 @@ state data structure."))
   (:documentation "Return a list of all the SHOP2
 axioms for PREDICATE in THPR-DOMAIN."))
 
+;;;---------------------------------------------------------------------------
+;;; Defgenerics for functions used to tailor the theorem-prover
+;;;---------------------------------------------------------------------------
+(defgeneric real-seek-satisfiers-for
+    (domain goal-head goal other-goals state bindings level just1)
+  (:documentation "Define how a semantically meaningful logical
+connective should be interpreted in the given domain.
+
+IT IS STRONGLY RECOMMENDED that defmethod should NOT be used with this
+function!  Instead, please use the def-logical-keyword macro."))
+
+(defgeneric logical-keywordp (symbol domain)
+  (:documentation "Return true if the planning domain should interpret
+symbol as a semantically meaningful logical connective, as opposed to
+an atomic predicate name.
+
+IT IS STRONGLY RECOMMENDED that defmethod should NOT be used with this
+function!  Instead, please use the def-logical-keyword macro.")
+
+  (:method (symbol domain)
+     (declare (ignorable domain symbol))
+     nil))
+
+;;;---------------------------------------------------------------------------
+;;; end of defgenerics
+;;;---------------------------------------------------------------------------
+
+
 (defclass has-axioms-mixin ()
      ((axioms
        :initarg :axioms
