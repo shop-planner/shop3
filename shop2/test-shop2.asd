@@ -125,7 +125,7 @@ shop2."
                   :shop-pddl-tests
                   :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-                 (:version :nst "1"))
+                 (:version :nst "1.2"))
     :version #.cl-user::+shop-version+
     :components ((:file "silent-shop-test")))
 
@@ -147,7 +147,7 @@ packages have been loaded yet."
                                   (find-package package)))))))
 
 (defsystem :shop-test-helper
-    :depends-on (:shop2 (:version :nst "1"))
+    :depends-on (:shop2 (:version :nst "1.2"))
     :default-component-class tester-cl-source-file
     :in-order-to ((load-op (compile-op :shop-test-helper)))
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative  "tests")) *load-truename*)
@@ -158,7 +158,7 @@ packages have been loaded yet."
 ;;;
 (defsystem :shop-pddl-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1"))
+    :depends-on (:shop2 (:version :nst "1.2"))
     :in-order-to ((test-op (load-op :shop-pddl-tests)))
     :nst-groups ((:shop2 . pddl-tests)
                  (:shop2 . add-del-tests)
@@ -170,7 +170,7 @@ packages have been loaded yet."
 
 (defsystem :protection-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1"))
+    :depends-on (:shop2 (:version :nst "1.2"))
     :in-order-to ((test-op (load-op :protection-tests)))
     :nst-group (:protection-test . protection-test)
     :pathname #.(merge-pathnames (make-pathname :directory +shop-examples-dir+) *load-truename*)
@@ -180,7 +180,7 @@ packages have been loaded yet."
 
 (defsystem :arity-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1"))
+    :depends-on (:shop2 (:version :nst "1.2"))
     :in-order-to ((test-op (load-op :arity-tests)))
     :nst-group (:arity-test . arity-test)
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative "tests")
