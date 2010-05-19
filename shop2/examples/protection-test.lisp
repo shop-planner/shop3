@@ -81,17 +81,17 @@
                     (shop::operator setup ',opname)
                     ,protections 0 nil)))
 
-(nst:def-values-criterion (:failed () (retval &rest args)
-                                   :declare ((ignore args)))
-    `(if (eq retval 'fail)
-         (sift.nst:emit-success)
-         (sift.nst:emit-failure)))
+(nst:def-criterion (:failed () (retval &rest args))
+ (declare (ignore args))
+ (if (eq retval 'fail)
+     (sift.nst:emit-success)
+     (sift.nst:emit-failure)))
 
-(nst:def-values-criterion (:unfailed () (retval &rest args)
-                                    :declare ((ignore args)))
-    `(if (eq retval 'fail)
-         (sift.nst:emit-failure)
-         (sift.nst:emit-success)))
+(nst:def-criterion (:unfailed () (retval &rest args))
+  (declare (ignore args))
+  (if (eq retval 'fail)
+      (sift.nst:emit-failure :format "Expected planning to succeed, but it failed.")
+      (sift.nst:emit-success)))
 
 
 
