@@ -249,38 +249,42 @@ looks through the preconditions finding the forall
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also regularizes the methdods in old SHOP format.
 (defmethod process-method ((domain domain) method)
-  (let ((method-head (cadr method))
-        (answer nil)
-        (tail nil)
-        (branch-counter 0)
-        (method-name nil)
-        clause first-of-clause)
-    (setq method-name (car method-head))
-    (setq answer (list (car method) method-head))
-    (setq tail (cddr method))
-    (append answer
-            (loop until (null tail)
-                  do (incf branch-counter)
-                  when (and (not (null (car tail))) (symbolp (car tail)))
-                    append (list (pop tail))       ; skip over a label
-                  else append (list (gensym (format nil "~A~D--"
-                                                    method-name branch-counter)))
-                  append (list  (process-pre domain  (pop tail))
-                                ;; check to see if there is a quote or
-                                ;; backquote in the front of this list (SHOP1
-                                ;; or SHOP2 syntax) and process accordingly
-                                (progn
-                                  (setq clause (pop tail)
-                                        first-of-clause (car clause))
-                                  (cond ((or (eq first-of-clause 'quote)
-                                             (eq first-of-clause *back-quote-name*))
-                                         ;; this next bit of strangeness is to take the quote
-                                         ;; off the front of the task list,
-                                         ;; decompose the task list, then slap the quote back on
-                                         (list first-of-clause (process-task-list (cadr clause))))
-                                        ((search-tree 'call clause)
-                                         (list 'simple-backquote (process-task-list clause)))
-                                        (t (list 'quote (process-task-list clause))))))))))
+  (let* ((method-head (second method))
+         (method-name (car method-head)))
+    (flet ((massage-task-net (clause)
+             ;; this is a bunch of stuff for processing the task net which
+             ;; I am sorry to say I don't fully understand.  I don't know
+             ;; why this is quoted, honestly. [2010/05/19:rpg]
+             (let ((first-of-clause (first clause)))
+               (cond
+                ;; check to see if there is a quote or
+                ;; backquote in the front of this list (SHOP1
+                ;; or SHOP2 syntax) and process accordingly
+                ((or (eq first-of-clause 'quote)
+                     (eq first-of-clause *back-quote-name*))
+                 ;; this next bit of strangeness is to take the quote
+                 ;; off the front of the task list,
+                 ;; decompose the task list, then slap the quote back on
+                 `(,first-of-clause ,(process-task-list (second clause))))
+                ((search-tree 'call clause)
+                 `(simple-backquote ,(process-task-list clause)))
+                (t
+                 `(quote ,(process-task-list clause)))))))
+      ;; answer will be (:method <head> ...)
+      `(,(first method)
+        ,method-head
+        ,@(loop with tail = (cddr method)
+              for branch-counter from 0
+              until (null tail)
+                    ;; find or make a method label
+              if (and (car tail) (symbolp (car tail)))
+                collect (pop tail)
+              else
+                collect (gensym (format nil "~A~D--"
+                                          method-name branch-counter))
+              ;; collect the preconditions
+              collect (process-pre domain (pop tail))
+              collect (massage-task-net (pop tail)))))))
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
 ;;; but only runs once per method definition.
@@ -351,6 +355,10 @@ looks through the preconditions finding the forall
 ;;;---------------------------------------------------------------------------
 #+allegro (excl::define-simple-parser defproblem second :shop2-problem)
 (defmacro defproblem (problem-name &rest args)
+  "\(DEFPROBLEM <name> <state> <tasks>\)
+For backward compatibility, will support also
+   \(DEFPROBLEM <name> <domain-name> <state> <tasks>\)
+but <domain-name> will be ignored."
   ;; ARGS normally are state tasks
   ;; if extra arg is given, then the args are problem-name, domain-name, state,
   ;; and tasks respectively. in that case, we want to ignore domain-name
