@@ -125,7 +125,7 @@ shop2."
                   :shop-pddl-tests
                   :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-                 (:version :nst "1.2"))
+                 nst)
     :version #.cl-user::+shop-version+
     :components ((:file "silent-shop-test")))
 
@@ -147,7 +147,7 @@ packages have been loaded yet."
                                   (find-package package)))))))
 
 (defsystem :shop-test-helper
-    :depends-on (:shop2 (:version :nst "1.2"))
+    :depends-on (:shop2 nst)
     :default-component-class tester-cl-source-file
     :in-order-to ((load-op (compile-op :shop-test-helper)))
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative  "tests")) *load-truename*)
@@ -158,7 +158,7 @@ packages have been loaded yet."
 ;;;
 (defsystem :shop-pddl-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1.2"))
+    :depends-on (:shop2 nst)
     :in-order-to ((test-op (load-op :shop-pddl-tests)))
     :nst-groups ((:shop2 . pddl-tests)
                  (:shop2 . add-del-tests)
@@ -170,7 +170,7 @@ packages have been loaded yet."
 
 (defsystem :protection-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1.2"))
+    :depends-on (:shop2 nst)
     :in-order-to ((test-op (load-op :protection-tests)))
     :nst-group (:protection-test . protection-test)
     :pathname #.(merge-pathnames (make-pathname :directory +shop-examples-dir+) *load-truename*)
@@ -178,20 +178,21 @@ packages have been loaded yet."
     :components ((:file "protection-test-package")
                  (:file "protection-test")))
 
+;;; this should be renamed to something like "internal-tests".  I added the io-tests here;
+;;; I don't have the energy to proliferate files & packages [2010/05/19:rpg]
 (defsystem :arity-tests
     :class shop-nst-testable
-    :depends-on (:shop2 (:version :nst "1.2"))
+    :depends-on (:shop2 nst)
     :in-order-to ((test-op (load-op :arity-tests)))
-    :nst-group (:arity-test . arity-test)
+    :nst-groups ((:arity-test . arity-test)
+                 (:arity-test . method-tests))
     :pathname #.(merge-pathnames (make-pathname :directory '(:relative "tests")
                                                 :name nil :type nil)
                                  *load-truename*)
 
-    :serial t
     :components ((:file "at-package")
-                 (:file "arity-tests")))
-
-
+                 (:file "arity-tests" :depends-on ("at-package"))
+                 (:file "io-tests" :depends-on ("at-package"))))
 
 ;;;; handle SBCL's strict notion of the way DEFCONSTANT should work. [2006/05/16:rpg]
 ;;;#+sbcl

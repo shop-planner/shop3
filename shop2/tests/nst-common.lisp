@@ -2,19 +2,19 @@
 
 (in-package :shop2-user)
 
-(nst:def-values-criterion (:no-plan () (plan-list runtime))
-    `(declare (ignorable runtime))
-    `(cond
-       ((null plan-list) (sift.nst:emit-success))
-       (t (nst:emit-failure
-           :format "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
-           :args (list (length plan-list) plan-list)))))
+(nst:def-criterion (:no-plan () (plan-list runtime))
+  (declare (ignorable runtime))
+  (cond
+    ((null plan-list) (sift.nst:emit-success))
+    (t (nst:emit-failure
+        :format "~@<Expected no plans but found ~d:~{~_ ~s~}~:>"
+        :args (list (length plan-list) plan-list)))))
 
-(nst:def-values-criterion (:found-plan () (plan-list runtime))
-    `(declare (ignorable runtime))
-    `(cond
-       ((null plan-list) (nst:emit-failure :format "No plans generated"))
-       (t (nst:emit-success))))
+(nst:def-criterion (:found-plan () (plan-list runtime))
+    (declare (ignorable runtime))
+    (cond
+      ((null plan-list) (nst:emit-failure :format "No plans generated"))
+      (t (nst:emit-success))))
 
 (defun remove-plan-costs (plan-and-costs)
   "The SHOP2 plans come with the operators interspersed with their
@@ -26,12 +26,12 @@ costs.  This function just throws away the costs."
         collect operator
         do (setf planlist rest)))
 
-(nst:def-values-criterion (:correct-plan (target-plan)
-                                    (plan-list runtime))
-  `(declare (ignorable runtime))
-  `(let ((plan (remove-plan-costs (first plan-list))))
+(nst:def-criterion (:correct-plan (target-plan)
+                                  (plan-list runtime))
+  (declare (ignorable runtime))
+  (let ((plan (remove-plan-costs (first plan-list))))
      (cond
-      ((equal ',target-plan plan)  (nst:emit-success))
+      ((equal target-plan plan)  (nst:emit-success))
       (t  (nst:emit-failure :format "Unexpected plan ~s"
                             :args (list plan))))))
 
