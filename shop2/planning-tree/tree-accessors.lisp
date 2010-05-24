@@ -1,25 +1,25 @@
 ;;; -*- Mode: common-lisp; package: shop; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; This code developed by Robert P. Goldman.
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -35,16 +35,16 @@
 ;;; ----------------------------------------------------------------------
 
 ;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
-;;; 
+;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
-;;; 
-;;; Contract No.         FA8650-06-C-7606, 
+;;;
+;;; Contract No.         FA8650-06-C-7606,
 ;;; Contractor Name      Smart Information Flow Technologies, LLC
 ;;;                      d/b/a SIFT, LLC
 ;;; Contractor Address   211 N 1st Street, Suite 300
 ;;;                      Minneapolis, MN 55401
 ;;; Expiration Date      5/2/2011
-;;; 
+;;;
 ;;; The Government's rights to use, modify, reproduce, release,
 ;;; perform, display, or disclose this software are restricted by
 ;;; paragraph (b)(2) of the Rights in Noncommercial Computer Software
@@ -56,7 +56,7 @@
 (in-package :shop)
 
 (defun complex-node-p (tree-node)
-  "Is TREE-NODE a representation of a complex node (i.e., not an operator) in 
+  "Is TREE-NODE a representation of a complex node (i.e., not an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (listp (first tree-node)))
 
@@ -78,19 +78,19 @@ Returns its children."
   (cons task children))
 
 (defun remove-internal-operators (complex-node)
-  "Returns a new complex-node like the original, but with any 
+  "Returns a new complex-node like the original, but with any
 children that are internal operators (primitive nodes) removed."
   (assert (complex-node-p complex-node))
   (make-complex-node (tree-node-task complex-node)
-		     (loop for child in (complex-node-children complex-node)
-			 if (complex-node-p child)
-			 collect child
-			 else unless (internal-operator-p
-				      (tree-node-task-name child))
-			 collect child)))
+                     (loop for child in (complex-node-children complex-node)
+                         if (complex-node-p child)
+                         collect child
+                         else unless (internal-operator-p
+                                      (tree-node-task-name child))
+                         collect child)))
 
 (defun primitive-node-p (tree-node)
-    "Is TREE-NODE a representation of a primitive node (i.e., an operator) in 
+    "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (and (= (length tree-node) 3)
        (numberp (first tree-node))))
@@ -102,8 +102,8 @@ Returns the corresponding TASK s-expression."
 
 (defun tree-node-task (tree-node)
   (cond ((primitive-node-p tree-node) (primitive-node-task tree-node))
-	((complex-node-p tree-node)   (complex-node-task tree-node))
-	(t (error "Not a valid SHOP2 tree node."))))
+        ((complex-node-p tree-node)   (complex-node-task tree-node))
+        (t (error "Not a valid SHOP2 tree node."))))
 
 (defun tree-node-task-name (tree-node)
   (task-name (tree-node-task tree-node)))
@@ -122,14 +122,14 @@ Returns the corresponding TASK s-expression."
   "Return a complex node whose TASK (first element)
 satisfies FUN."
   (labels ((list-iter (lst)
-	     (unless (null lst)
-	       (or (node-iter (first lst))
-		   (list-iter (cdr lst)))))
-	   (node-iter (node)
-	     (when (complex-node-p node)
-;;	       (format t "Complex node head: ~S~%" (first node))
-	       (if (funcall fun (first node)) node
-		   (list-iter (cdr node))))))
+             (unless (null lst)
+               (or (node-iter (first lst))
+                   (list-iter (cdr lst)))))
+           (node-iter (node)
+             (when (complex-node-p node)
+;;             (format t "Complex node head: ~S~%" (first node))
+               (if (funcall fun (first node)) node
+                   (list-iter (cdr node))))))
     ;; top level i
     (list-iter tree)))
 
@@ -137,15 +137,15 @@ satisfies FUN."
   "Return a complex node whose TASK (first element)
 satisfies FUN."
   (labels ((list-iter (lst acc)
-	     (if (null lst)
-		 acc
-		 (let ((new (node-iter (first lst))))
-		   (reverse (list-iter (cdr lst) (append new acc))))))
-	   (node-iter (node)
-	     (when (complex-node-p node)
-;;	       (format t "Complex node head: ~S~%" (first node))
-	       (let ((new (when (funcall fun (first node)) (list node))))
-		 (list-iter (cdr node) new)))))
+             (if (null lst)
+                 acc
+                 (let ((new (node-iter (first lst))))
+                   (reverse (list-iter (cdr lst) (append new acc))))))
+           (node-iter (node)
+             (when (complex-node-p node)
+;;             (format t "Complex node head: ~S~%" (first node))
+               (let ((new (when (funcall fun (first node)) (list node))))
+                 (list-iter (cdr node) new)))))
     ;; top level i
     (list-iter tree nil)))
 
