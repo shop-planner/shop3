@@ -376,6 +376,7 @@ but <domain-name> will be ignored."
 ;;; DOMAIN manipulation functions --- these should probably be moved
 ;;; out into a file of their own at some point. [2006/07/24:rpg]
 ;;;---------------------------------------------------------------------------
+#+allegro (excl::define-simple-parser defdomain second :shop2-domain)
 (defvar *defdomain-verbose* t)
 (defmacro defdomain (name-and-options items)
   ;; note that we are copying name-and-options because we destructively modify
@@ -398,6 +399,7 @@ but <domain-name> will be ignored."
        (unless *define-silently*
          (when *defdomain-verbose*
          (format t "~%Defining domain ~a...~%" ',name)))
+       #+allegro (excl:record-source-file ',name :type :shop2-domain)
        (let ((domain (apply #'make-instance ',type
                        :name ',name
                        ',options
