@@ -584,13 +584,13 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
                    &key (domain *domain*) (which *which*) (verbose *verbose*)
-                        (gc *gc*) (pp *pp*) 
+                        (gc *gc*) (pp *pp*)
                         (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
                         (time-limit *time-limit*) (explanation *explanation*)
                         (depth-cutoff *depth-cutoff*)
-			;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
-			(state *state-encoding* state-supplied-p)
-			(state-type nil state-type-supplied-p)
+                        ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
+                        (state *state-encoding* state-supplied-p)
+                        (state-type nil state-type-supplied-p)
                         hand-steer leashed
                         )
   "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
@@ -613,9 +613,17 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         3 or :LONG-PLANS - print the stats and plans, including all operator
              costs and all operators (even those whose names start with \"!!\")
      :GC says whether to do a garbage collection before calling SEEK-PLANS
-     :PLAN-TREE indicates whether or not to return a plan tree."
+     :PLAN-TREE indicates whether or not to return a plan tree.
+  RETURN VALUES:
+     PLANS FOUND --- a list of plans.  Each plan is a list that alternates a
+                     between instantiated operators and costs
+     RUN TIME --- floating point value in seconds
+       /if/ the PLAN-TREE keyword argument is supplied, there will be two
+       additional return values:
+     PLAN-TREES --- a list of plan trees, whose form is specified elsewhere.
+     FINAL-STATES --- a list of final state structures, one per plan."
   (declare (ignore state))
-  
+
   (when state-supplied-p
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
 
@@ -634,7 +642,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
             nil))
          (*internal-time-tag* (gensym))
          (*print-pretty* pp)
-	 ;; [mpelican:20090226.1825CST] obsolete, please use state-type arg or default-state-type slot in domain class
+         ;; [mpelican:20090226.1825CST] obsolete, please use state-type arg or default-state-type slot in domain class
          (*state-encoding* :obsolete-state-encoding-variable)
          (*plan-tree* plan-tree) (*subtask-parents* nil) (*operator-tasks* nil)
          (*optimize-cost* optimize-cost)
@@ -646,11 +654,11 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*explanation* explanation) (*attribution-list* nil)
          (*external-access* (fboundp 'external-access-hook))
          (*trace-query* (fboundp 'trace-query-hook))
-         (state (apply 'make-initial-state domain 
-		       (if state-type-supplied-p
-			   state-type
-			 (default-state-type domain))
-		       (problem->state domain problem)))
+         (state (apply 'make-initial-state domain
+                       (if state-type-supplied-p
+                           state-type
+                         (default-state-type domain))
+                       (problem->state domain problem)))
          (tasks (get-tasks problem))
          *optimal-cost*
          (*verbose* verbose)
@@ -750,7 +758,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
     (setq total-run-time (- (get-internal-run-time) *start-run-time*)
           total-real-time (- (get-internal-real-time) *start-real-time*))
-    
+
     (print-stats-header "Totals:")
     (print-stats "" *plans-found* total-expansions total-inferences
                  total-run-time total-real-time)
