@@ -81,6 +81,7 @@
              #:variable-gensym
 
              ;; theorem-prover interface
+             #:query
              #:explain-satisfier #:find-satisfiers #:extract-variables
              #:print-belief-state-readably
              #:print-axioms

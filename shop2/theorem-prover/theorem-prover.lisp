@@ -76,6 +76,13 @@
          (real-seek-satisfiers ,d ,goals ,state
                                ,bindings ,level ,just1)))))
 
+(defun query (goals state &key just-one (domain *domain*))
+  "More convenient top-level alternative to FIND-SATISFIERS.
+Manages optional arguments and ensures that the variable property
+is properly set in GOALS."
+  (set-variable-property domain goals)
+  (find-satisfiers goals state just-one 0 :domain domain))
+
 ;;; FIND-SATISFIERS returns a list of all satisfiers of GOALS in AXIOMS
 (defun find-satisfiers (goals state &optional just-one (level 0)
                         &key (domain *domain*))
