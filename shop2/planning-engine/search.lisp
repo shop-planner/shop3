@@ -78,7 +78,7 @@
 ;;; Seek-plans has been broken down into the following lower level
 ;;; functions, below: seek-plans-task, seek-plans-primitive,
 ;;;                   seek-plans-nonprimitive, seek-plans-null
-
+(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans ((domain domain) state tasks top-tasks partial-plan partial-plan-cost
                          depth which-plans protections
                          unifier)
@@ -160,7 +160,7 @@
                               "~2%Depth ~s, backtracking from task ~s"
                               depth
                               task1)
-                        (backtrack "Task ~S failed" task1))))))))
+                        (backtrack "Task ~S failed" task1)))))))))
 
 (defun choose-immediate-task (immediate-tasks unifier)
   "Which of the set of IMMEDIATE-TASKS should SHOP2 work on
@@ -201,6 +201,7 @@ of SHOP2."
                 (nth input task-list)
                 (user-choose-task task-list immediate)))))))
 
+(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-task (domain task1 state tasks top-tasks partial-plan
                               partial-plan-cost depth which-plans
                               protections
@@ -223,7 +224,7 @@ of SHOP2."
                                  partial-plan partial-plan-cost depth
                                  which-plans protections
                                  unifier
-                                 ))))
+                                 )))))
 
 ;;; so we can use etypecase in seek-plans-primitive
 (deftype operator ()
@@ -231,6 +232,7 @@ of SHOP2."
 (deftype pddl-action ()
   '(satisfies pddl-action-p))
 
+(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-primitive ((domain domain) task1 task-name task-body state tasks top-tasks
                                  partial-plan partial-plan-cost depth which-plans protections unifier)
 ;;; I commented out the following two lines since we are getting the domain object from the first parameter right now
@@ -279,8 +281,9 @@ of SHOP2."
                       new-cost (1+ depth) which-plans protections
                       operator-unifier))
         (retract-state-changes state tag)
-        nil))))
+        nil)))))
 
+(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-nonprimitive ((domain domain) task1 task-name task-body state tasks
                                       top-tasks partial-plan partial-plan-cost
                                       depth which-plans protections
@@ -315,7 +318,7 @@ of SHOP2."
                         u1)
                 when (and *plans-found* (eq which-plans :first)
                                         (not (optimize-continue-p which-plans)))
-                  do (return-from seek-plans-nonprimitive nil)))))))
+                  do (return-from seek-plans-nonprimitive nil))))))))
 
 ;;; Called when there are no top level tasks to run
 (defmethod seek-plans-null ((domain domain) state which-plans partial-plan partial-plan-cost depth unifier)
