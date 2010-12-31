@@ -6,7 +6,7 @@ LDIR=src/umd/cs/javalisp/
 
 .SUFFIXES: .java .class
 
-all: $(LDIR)ProcessOutputThread.class $(LDIR)Javalisp.class $(DIR)LogicalAtom.class $(DIR)State.class $(DIR)TaskAtom.class $(DIR)TaskNode.class $(DIR)Shop.class
+all: bin $(LDIR)ProcessOutputThread.class $(LDIR)Javalisp.class $(DIR)LogicalAtom.class $(DIR)State.class $(DIR)TaskAtom.class $(DIR)TaskNode.class $(DIR)Shop.class
 
 .java.class: bin
 	$(JAVAC) -d $(BIN) -classpath $(BIN) $*.java
