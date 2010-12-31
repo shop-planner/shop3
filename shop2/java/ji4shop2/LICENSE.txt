@@ -1,0 +1,5 @@
+The Java Interface for SHOP2 is an extension to the SHOP2 software
+system.  It is covered by the same copyright and licensing terms that
+SHOP2 is.  See the comment at the top of the "shop2.lisp" file for
+details.
+

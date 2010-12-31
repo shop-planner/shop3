@@ -1,0 +1,18 @@
+# Example configuration file for the Java Interface to SHOP2.  You
+# will need to customize this file to interact correctly with Lisp.
+
+# The command to invoke the Lisp interpretter, e.g., /usr/bin/alisp or 
+# c:\clisp\clisp.bat
+LISP=/usr/imports/bin/alisp
+
+# A command-line argument to load a file in Lisp.  For Allegro Lisp,
+# this is "-L".  For LispWorks this is "-init".  For CLISP it's "-i".
+# For other Lisp environments, see your manual.
+LISPLOADARG=-L
+
+# Location of SHOP2.  This can be the complete path and file name of
+# the shop2.lisp file.  Alternatively, you may omit the .lisp
+# extension; in this case many Lisp environments will automatically
+# load a compiled version of SHOP2 if one is available.  See your Lisp
+# manual for more details.
+SHOP2FILE=../shop2

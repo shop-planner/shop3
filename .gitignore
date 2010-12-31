@@ -1,0 +1,10 @@
+shop2/*.fasl
+shop2/*.ps
+shop2/Makefile
+shop2/allegro-8.0a-linux-x86
+shop2/allegro-8.1a-linux-x86
+shop2/bin
+shop2/doc
+shop2/java/shop2gui/bin
+shop2/java/shop2gui/doc
+shop2/sbcl-1.0.7-linux-x86
