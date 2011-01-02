@@ -145,6 +145,12 @@ shop2/java/ji4shop2/src/umd/cs/shop2/TaskNode.java -text
 shop2/java/ji4shop2/src/umd/cs/shop2/jshop2.lisp -text
 shop2/java/ji4shop2/tojava.txt -text
 shop2/java/ji4shop2/tolisp.txt -text
+shop2/java/shop2gui/src/Main.java -text
+shop2/java/shop2gui/src/MyQuery.java -text
+shop2/java/shop2gui/src/SHOP2GUI.java -text
+shop2/java/shop2gui/src/extraFile.lisp -text
+shop2/java/shop2gui/src/readme -text
+shop2/java/shop2gui/src/shop2.lisp -text
 shop2/package.lisp -text
 shop2/pddl/pddl.lisp -text
 shop2/planning-engine/protections.lisp -text
