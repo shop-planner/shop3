@@ -34,6 +34,9 @@
                ((airplane-at ?airplane ?airport-from))
                ((airplane-at ?airplane ?airport-to)))
 
+    ;; I could do similar scripting for every operator  to do PPT demo
+    ;; on-the-fly as we generate the plan or I could have this operator
+    ;; to dump the state at the end. will look into both. [2011/03/23:uk]
     (:operator (!put-unit ?unit ?coordx ?coordy)
 	 ((eval (excl:run-shell-command "osascript examples/obtw/putunit.scpt")))
 	 () ())
