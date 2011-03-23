@@ -37,13 +37,13 @@
     ;; I could do similar scripting for every operator  to do PPT demo
     ;; on-the-fly as we generate the plan or I could have this operator
     ;; to dump the state at the end. will look into both. [2011/03/23:uk]
-    (:operator (!put-unit ?unit ?coordx ?coordy)
-	 ((eval (excl:run-shell-command "osascript examples/obtw/putunit.scpt")))
+    (:operator (!put-unit ?unit ?left ?top ?width ?height)
+	 ((eval (excl:run-shell-command (format nil "~a ~d ~d ~d ~d" "osascript examples/obtw/putunit.scpt" '?left '?top '?width '?height))))
 	 () ())
 
   (:method (conduct-cordon-search ?x ?y) 
        ()
-       ((!put-unit unit1 100 100) 
+       ((!put-unit unit1 100 100 20 20) 
 	    (cordon-element) (search-element) (reserve-element)))
 
   ;; I would ignore this and instead of raising a failure in SHOP2, I'd put an OBTW on the PPT
