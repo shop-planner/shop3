@@ -79,6 +79,8 @@ shop2/examples/logistic/nst-logistic.lisp -text
 shop2/examples/logistic/plans.lisp -text
 shop2/examples/logistic/run.lisp -text
 shop2/examples/logistic/shop-logistic.asd -text
+shop2/examples/obtw/basic-example.lisp -text
+shop2/examples/obtw/putunit.scpt -text
 shop2/examples/protection-test-package.lisp -text
 shop2/examples/protection-test.lisp -text
 shop2/examples/shop2-test.lisp -text
