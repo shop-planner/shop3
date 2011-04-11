@@ -69,7 +69,7 @@
    (setup
     (init-protections-domain)))
 
-(def-fixtures empty-state ()
+(def-fixtures empty-state (:assumes (setup))
    (s (shop::make-initial-state setup
                                 :list nil)))
 
@@ -157,9 +157,10 @@
   (def-test  (neg-protection-add-and-remove :fixtures (empty-state))
       (:unfailed)
     (progn
+;;      (format t "~&State S is: ~s~%" s)
       (multiple-value-bind (op tag protections)
           (apply-op !add-neg-protect)
-        (declare (ignore op tag) (special setup s))
+        (declare (ignore op tag))
         (multiple-value-bind (op tag protections)
             (apply-op !remove-neg-protect :protections protections)
           (declare (ignore op tag))
