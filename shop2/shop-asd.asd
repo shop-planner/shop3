@@ -54,9 +54,12 @@
 (defpackage :shop2-asd
     (:use :common-lisp :asdf)
     (:shadow #:defconstant)
-    #+(or allegro sbcl)
+    #+(or allegro sbcl ccl)
     (:import-from #+allegro aclmop     #+sbcl sb-mop
+                  #+ccl ccl
                   #:class-direct-superclasses)
+    #-(or allegro sbcl ccl)
+    (error "Don't know how to find CLASS-DIRECT-SUPERCLASSES in this lisp.")
     )
 (in-package :shop2-asd)
 
