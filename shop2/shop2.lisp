@@ -628,10 +628,11 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
 
   ;; I'm not sure what the MCL function is...
-  #+(or :MCL :allegro :sbcl)(when gc #+allegro (excl:gc t)
+  #+(or :ccl :allegro :sbcl)(when gc #+allegro (excl:gc t)
                                   #+sbcl (sb-ext:gc)
+                                  #+ccl (ccl:gc)
                                   #+mcl (error "Need the name of the MCL gc function here."))
-  #-(or :MCL :allegro :sbcl)
+  #-(or :cCL :allegro :sbcl)
   (when gc (cerror "Just continue, skip GC."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*start-run-time* (get-internal-run-time))
