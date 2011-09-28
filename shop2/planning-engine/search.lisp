@@ -449,8 +449,8 @@ Non-destructive."
   "The SHOP2 plans come with the operators interspersed with their costs.
 This function just throws away the costs."
   (loop with planlist = plan-and-costs
-        while planlist
         for (operator cost . rest) = planlist
+        while planlist
         do (assert (numberp cost))
         collect operator
         do (setf planlist rest)))
