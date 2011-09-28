@@ -626,13 +626,13 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
   (when state-supplied-p
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
-
-  ;; I'm not sure what the MCL function is...
-  #+(or :ccl :allegro :sbcl)(when gc #+allegro (excl:gc t)
-                                  #+sbcl (sb-ext:gc)
-                                  #+ccl (ccl:gc)
-                                  #+mcl (error "Need the name of the MCL gc function here."))
-  #-(or :cCL :allegro :sbcl)
+  ;;; should add a dependency on TRIVIAL-GARBAGE to get rid of this... [2011/09/28:rpg]
+  #+(or :ccl :allegro :sbcl clisp)
+  (when gc #+allegro (excl:gc t)
+        #+sbcl (sb-ext:gc)
+        #+ccl (ccl:gc)
+        #+clisp (ext:gc))
+  #-(or :cCL :allegro :sbcl clisp)
   (when gc (cerror "Just continue, skip GC."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*start-run-time* (get-internal-run-time))
