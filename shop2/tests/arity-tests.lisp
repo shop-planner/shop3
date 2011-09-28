@@ -62,25 +62,25 @@
    (dom
     (init-domain)))
 
-(def-fixtures good-problem (:uses arity-domain)
+(def-fixtures good-problem (:special arity-domain)
   (foo
    (let (( shop2::*make-problem-silently* t ))
      (make-problem 'arity-match
                    '() '(method foo bar)))))
 
-(def-fixtures bad-problem (:uses arity-domain)
+(def-fixtures bad-problem (:special arity-domain)
   (bar
    (let (( shop2::*make-problem-silently* t ))
      (make-problem 'arity-mismatch
                    '() '(method bar)))))
 
-(def-fixtures good-problem-op (:uses arity-domain)
+(def-fixtures good-problem-op (:special arity-domain)
   (foo
    (let (( shop2::*make-problem-silently* t ))
      (make-problem 'arity-match-op
                    '() '(!has-an-arg foo)))))
 
-(def-fixtures bad-problem-op (:uses arity-domain)
+(def-fixtures bad-problem-op (:special arity-domain)
   (bar
    (let (( shop2::*make-problem-silently* t ))
      (make-problem 'arity-mismatch-op
@@ -101,8 +101,8 @@
 (nst:def-criterion (failed () (retval &rest args))
   (declare (ignore args))
   (if (eq retval 'fail)
-      (sift.nst:emit-success)
-      (sift.nst:emit-failure)))
+      (sift.nst:make-success-report)
+      (sift.nst:make-failure-report)))
 
 (nst:def-criterion-alias (unfailed)
     '(:not failed))

@@ -125,7 +125,7 @@ shop2."
                   :shop-pddl-tests
                   :shop-umt)
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-                 (:version nst "3"))
+                 (:version "nst" "4"))
     :version #.cl-user::+shop-version+
     :components ((:file "silent-shop-test")))
 

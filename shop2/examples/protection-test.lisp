@@ -69,7 +69,7 @@
    (setup
     (init-protections-domain)))
 
-(def-fixtures empty-state (:assumes (setup))
+(def-fixtures empty-state (:special (setup))
    (s (shop::make-initial-state setup
                                 :list nil)))
 
@@ -84,14 +84,14 @@
 (nst:def-criterion (:failed () (retval &rest args))
  (declare (ignore args))
  (if (eq retval 'fail)
-     (sift.nst:emit-success)
-     (sift.nst:emit-failure)))
+     (sift.nst:make-success-report)
+     (sift.nst:make-failure-report)))
 
 (nst:def-criterion (:unfailed () (retval &rest args))
   (declare (ignore args))
   (if (eq retval 'fail)
-      (sift.nst:emit-failure :format "Expected planning to succeed, but it failed.")
-      (sift.nst:emit-success)))
+      (sift.nst:make-failure-report :format "Expected planning to succeed, but it failed.")
+      (sift.nst:make-success-report)))
 
 
 
