@@ -54,7 +54,7 @@
 (defpackage :shop2-asd
     (:use :common-lisp :asdf)
     (:shadow #:defconstant)
-    #+(or allegro sbcl ccl)
+    #+(or allegro sbcl ccl clisp)
     (:import-from #+allegro aclmop     #+sbcl sb-mop
                   #+ccl ccl #+clisp clos
                   #:class-direct-superclasses)
