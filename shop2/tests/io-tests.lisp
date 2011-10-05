@@ -62,7 +62,7 @@
                 placeholder
                 (:FIRST (CLEAR ?X) (NOT (DONT-MOVE ?X)) (GOAL (ON ?X ?Y)) (NOT (STACK-ON-BLOCK ?X ?Y)) (DONT-MOVE ?Y) (CLEAR ?Y))
                 '(:ORDERED (:TASK !ASSERT ((STACK-ON-BLOCK ?X ?Y))) (:TASK FIND-MOVABLE))
-                placeholder NIL '(:ORDERED (:TASK SHOP2::!!INOP))))
+                placeholder NIL '(:ORDERED (:TASK shop2::!!INOP))))
     (let ((meth-def (shop2::process-method *domain* meth)))
       ;; replace all the gensyms
       (subst-if 'placeholder
