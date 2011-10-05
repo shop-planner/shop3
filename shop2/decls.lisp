@@ -186,11 +186,11 @@ will consult the user even in these cases.")
 ;;; A simple macro to add an item on to the end of a list.
 (defmacro push-last (item list)
   `(setf ,list
-   (if (null ,list)
-       (list ,item)
-     (progn
-       (setf (cdr (last ,list)) (list ,item))
-       ,list))))
+         (if (null ,list)
+             (list ,item)
+             (progn
+               (setf (cdr (last ,list)) (list ,item))
+               ,list))))
 
 #+sbcl
 (defmacro defconstant (name value &optional doc)
