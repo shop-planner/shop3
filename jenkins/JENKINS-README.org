@@ -1,0 +1,26 @@
+* Running NST's jenkins script
+To run a local version of NST's jenkins script, mimic the
+=cadillac-jm.sh= and =beast-jm.sh= scripts.
+ - Always define environment variables =NST_DIR= and =CLOSER_MOP_DIR=
+   to where you have NST and Closer-to-MOP (respectively) stored.
+ - The script looks for environment variables which indicate either:
+   - The absolute path of Lisp platforms' executables.
+   - That a particular platform should not be tested.
+ - The variables which give pathnames to executables are:
+   - NST_ALLEGRO_MIXEDCASE, for Allegro Common Lisp in "modern"
+     mixed-case mode.
+   - NST_ALLEGRO_UPCASE, for Allegro Common Lisp in classic
+     case-insensitive, upper-case mode.
+   - NST_ALLEGRO_MIXEDCASE8, for Allegro Common Lisp in "modern"
+     mixed-case mode, limited to 8-bit characters.
+   - NST_ALLEGRO_UPCASE8, for Allegro Common Lisp in classic
+     case-insensitive, upper-case mode, limited to 8-bit characters.
+   - NST_SBCL_UPCASE, for Steel Bank Common Lisp.
+   - NST_CLISP_UPCASE, for GNU Clisp in classic case-insensitive,
+     upper-case mode.
+   - NST_CLISP_MIXEDCASE, for GNU Clisp in "modern" mixed-case mode,
+     limited to 8-bit characters.
+   - NST_CCL_UPCASE, for Clozure Common Lisp
+ - The variables which indicate that a platform should be skipped are
+   the above with SKIP_ prefixed.
+ - End the wrapper script with a call to =./jenkins.perl=.

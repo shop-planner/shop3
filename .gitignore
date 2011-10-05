@@ -1,3 +1,5 @@
+jenkins/log
+jenkins/shopdir.lisp
 shop2/*.fasl
 shop2/*.ps
 shop2/Makefile

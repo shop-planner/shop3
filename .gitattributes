@@ -1,4 +1,12 @@
 * text=auto !eol
+jenkins/JENKINS-README.org -text
+jenkins/beast-jm.bash -text
+jenkins/cadillac-jm.bash -text
+jenkins/jenkins.perl -text
+jenkins/path-init.lisp -text
+jenkins/quit.lisp -text
+jenkins/require-asdf.lisp -text
+jenkins/test-shop.lisp -text
 shop2/common/common.lisp -text
 shop2/common/package-common.lisp -text
 shop2/common/state-decls.lisp -text
