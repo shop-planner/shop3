@@ -117,13 +117,14 @@ shop2."
 
 (defsystem :test-shop2
     :class shop-nst-testable
-    :nst-systems (:protection-tests
+    :nst-systems (;; :protection-tests
                   :arity-tests
-                  :shop-blocks
-                  :shop-depots
-                  :shop-logistic
-                  :shop-pddl-tests
-                  :shop-umt)
+                  ;; :shop-blocks
+                  ;; :shop-depots
+                  ;; :shop-logistic
+                  ;; :shop-pddl-tests
+                  ;; :shop-umt
+                  )
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
                  (:version "nst" "4"))
     :version #.cl-user::+shop-version+
