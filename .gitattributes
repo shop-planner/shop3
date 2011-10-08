@@ -2,6 +2,7 @@
 jenkins/JENKINS-README.org -text
 jenkins/beast-jm.bash -text
 jenkins/cadillac-jm.bash -text
+jenkins/full-test-suite.asd -text
 jenkins/jenkins.perl -text
 jenkins/path-init.lisp -text
 jenkins/quit.lisp -text

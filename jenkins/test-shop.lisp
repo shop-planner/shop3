@@ -1,1 +1,1 @@
-(asdf:oos 'asdf:test-op :shop2)
+(asdf:oos 'asdf:test-op :full-test-suite)
