@@ -56,5 +56,11 @@
 
 (defsystem :full-test-suite
     :class shop2-asd::shop-nst-testable
-    :nst-systems (:arity-tests)
+    :nst-systems (:protection-tests
+                  :arity-tests
+                  :shop-blocks
+                  :shop-depots
+                  :shop-logistic
+                  :shop-pddl-tests
+                  :shop-umt)
     :error-when-nst t)
