@@ -79,14 +79,14 @@ my @lisps = ({
              {
               tag => 'SHOP_CLISP_UPCASE',
               name => "CLISP uppercase",
-              leadArgs => [ "-m", "250M", "-on-error", "exit", "-x" ],
+              leadArgs => [ "-m", "1000M", "-on-error", "exit", "-x" ],
               fileArgsLead => [ "-i" ],
               trailArgs => [ "-i", "quit.lisp" ]
              },
              {
               tag => 'SHOP_CLISP_MIXEDCASE',
               name => "CLISP mixed-case",
-              leadArgs => [ "-m", "250M",
+              leadArgs => [ "-m", "1000M",
                             "-modern", "-on-error", "exit", "-x" ],
               fileArgsLead => [ "-i" ],
               trailArgs => [ "-i", "quit.lisp" ]
