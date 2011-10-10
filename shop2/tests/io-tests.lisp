@@ -55,14 +55,14 @@
       (setf (nth 2 meth-def) 'placeholder)
       meth-def))
   (def-test (compound-method-parse :fixtures (complex-method-def))
-      (:equal '(:METHOD (FIND-MOVABLE)
+      (:equal '(:method (find-movable)
                 placeholder
-                (:FIRST (CLEAR ?X) (NOT (DONT-MOVE ?X)) (GOAL (ON-TABLE ?X)) (NOT (PUT-ON-TABLE ?X)))
-                '(:ORDERED (:TASK !ASSERT ((PUT-ON-TABLE ?X))) (:TASK FIND-MOVABLE))
+                (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
+                '(:ordered (:task !assert ((put-on-table ?x))) (:task find-movable))
                 placeholder
-                (:FIRST (CLEAR ?X) (NOT (DONT-MOVE ?X)) (GOAL (ON ?X ?Y)) (NOT (STACK-ON-BLOCK ?X ?Y)) (DONT-MOVE ?Y) (CLEAR ?Y))
-                '(:ORDERED (:TASK !ASSERT ((STACK-ON-BLOCK ?X ?Y))) (:TASK FIND-MOVABLE))
-                placeholder NIL '(:ORDERED (:TASK shop2::!!INOP))))
+                (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
+                '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
+                placeholder nil '(:ordered (:task shop2::!!inop))))
     (let ((meth-def (shop2::process-method *domain* meth)))
       ;; replace all the gensyms
       (subst-if 'placeholder
