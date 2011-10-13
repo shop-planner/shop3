@@ -2,7 +2,7 @@
 package shop_jenkins;
 use Carp qw ( verbose );
 use strict;
-use FindLib;
+use FindBin;
 use lib $FindBin::Bin;
 use BeastPaths;
 use FullMultiplatform;
