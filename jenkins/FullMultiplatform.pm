@@ -2,11 +2,9 @@
 package FullMultiplatform;
 use strict;
 use Carp;
+use lib "$ENV{NST_DIR}/jenkins";
 use NSTjenkins::Master;
 our @ISA = ("NSTjenkins::Master");
-
-use FindBin;
-use lib ( $FindBin::Bin );
 
 use ShopTestRunBase;
 use NSTjenkins::TestRun;

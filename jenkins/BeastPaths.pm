@@ -3,7 +3,7 @@ package BeastPaths;
 use strict;
 use Carp;
 
-use lib "$ENV{NST_DIR}/jenkins/NSTjenkins";
+use lib "$ENV{NST_DIR}/jenkins";
 use NSTjenkins::CCL;
 use NSTjenkins::Allegro;
 use NSTjenkins::SBCL;
