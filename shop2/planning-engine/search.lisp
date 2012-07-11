@@ -394,7 +394,10 @@ of SHOP2."
 
 (defun store-plan! (plan state unifier)
   (push-last plan *plans-found*)
-  (push-last (copy-state state) *states-found*)
+  ;; we only return the states when *plan-tree* is true, so don't
+  ;; bother recording the states, otherwise [2012/07/11:rpg]
+  (when *plan-tree*
+    (push-last (copy-state state) *states-found*))
   (push-last unifier *unifiers-found*))
 
 ;;; helpers for SEEK-PLANS-NULL [2005/01/07:rpg]
