@@ -179,7 +179,7 @@ shop2/tests/arity-tests.lisp -text
 shop2/tests/at-package.lisp -text
 shop2/tests/io-tests.lisp -text
 shop2/tests/nst-common.lisp -text
-shop2/tests/nst-pddl.lisp -text
+shop2/tests/pddl-tests.lisp -text
 shop2/theorem-prover/decls.lisp -text
 shop2/theorem-prover/package-thpr.lisp -text
 shop2/theorem-prover/theorem-prover.lisp -text

@@ -65,55 +65,46 @@
                 ((:protection (not (prop))))
                 ()))))
 
-(def-fixtures protections-domain ()
-   (setup
-    (init-protections-domain)))
+(def-fixture protections-domain ()
+    (let ((setup (init-protections-domain)))
+      (&body)))
+  
 
-(def-fixtures empty-state (:special (setup))
-   (s (shop::make-initial-state setup
+(def-fixture empty-state ()
+    (let ((s (shop::make-initial-state setup
                                 :list nil)))
+      (&body)))
 
 (defmacro apply-op (opname &key protections)
-  `(locally
-    (declare (special setup s))
-    (apply-operator setup s
+  `(apply-operator setup s
                     '( ,opname )
                     (shop::operator setup ',opname)
-                    ,protections 0 nil)))
+                    ,protections 0 nil))
 
-(nst:def-criterion (:failed () (retval &rest args))
- (declare (ignore args))
- (if (eq retval 'fail)
-     (sift.nst:make-success-report)
-     (sift.nst:make-failure-report)))
+(defmacro failed (body)
+  `(with-fixture empty-state ()
+     (fiveam:is (eq ,body 'fail))))
 
-(nst:def-criterion (:unfailed () (retval &rest args))
-  (declare (ignore args))
-  (if (eq retval 'fail)
-      (sift.nst:make-failure-report :format "Expected planning to succeed, but it failed.")
-      (sift.nst:make-success-report)))
+(defmacro unfailed (body)
+  `(with-fixture empty-state ()
+     (fiveam:is (not (eq ,body 'fail)))))
 
+(test protection-test
+  (with-fixture protections-domain ()
+    ;; item number one
+    (unfailed (apply-op !positive-op))
+    (unfailed (apply-op !negative-op))
+    ;; item number two
+    (unfailed 
+     (progn (apply-op !positive-op)
+            (apply-op !add-protect)))
+    (unfailed (apply-op !remove-protect))
+    (unfailed
+     (apply-op !add-neg-protect))
+    (unfailed (apply-op !remove-neg-protect))
 
-
-(def-test-group protection-test (protections-domain)
-  ;; item number one
-  (def-test  (can-apply-pos-op :fixtures (empty-state))
-      (:unfailed) (apply-op !positive-op))
-  (def-test  (can-apply-neg-op :fixtures (empty-state))
-      (:unfailed) (apply-op !negative-op))
-  ;; item number two
-  (def-test  (can-apply-add-protect :fixtures (empty-state))
-      (:unfailed)
-    (progn (apply-op !positive-op)
-           (apply-op !add-protect)))
-  (def-test  (can-apply-remove-protect :fixtures (empty-state))
-      (:unfailed) (apply-op !remove-protect))
-  (def-test  (can-apply-add-neg-protect :fixtures (empty-state))
-      (:unfailed) (apply-op !add-neg-protect))
-  (def-test  (can-apply-remove-neg-protect :fixtures (empty-state))
-      (:unfailed) (apply-op !remove-neg-protect))
-
-  ;; check protections before adding
+    ;; check protections before adding
+    #|
   (def-test  (protection-init-check :fixtures (empty-state))
       (:err) (apply-op !add-protect))
   (def-test  (protection-init-check-neg :fixtures (empty-state))
@@ -121,108 +112,101 @@
     (progn
       (apply-op !positive-op)
       (apply-op !add-neg-protect)))
+|#
 
-  ;; item number three
-  (def-test  (protection-effective :fixtures (empty-state))
-      (:failed)
-    (progn
-      (apply-op !positive-op)
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-protect)
-        (declare (ignore op tag) (special setup s))
-        (apply-operator setup s '(!negative-op)
-                        (shop::operator setup '!negative-op)
-                        protections 0 nil))))
-  (def-test  (neg-protection-effective :fixtures (empty-state))
-      (:failed)
-    (multiple-value-bind (op tag protections)
-        (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special setup s))
-      (apply-operator setup s '(!positive-op)
-                      (shop::operator setup '!negative-op)
-                      protections 0 nil)))
+    ;; item number three
+    (failed
+     (progn
+       (apply-op !positive-op)
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-protect)
+         (declare (ignore op tag))
+         (apply-operator setup s '(!negative-op)
+                         (shop::operator setup '!negative-op)
+                         protections 0 nil))))
+    (failed
+     (multiple-value-bind (op tag protections)
+         (apply-op !add-neg-protect)
+       (declare (ignore op tag))
+       (apply-operator setup s '(!positive-op)
+                       (shop::operator setup '!negative-op)
+                       protections 0 nil)))
 
-  ;; items number four and five
-  (def-test  (protection-add-and-remove :fixtures (empty-state))
-      (:unfailed)
-    (progn
-      (apply-op !positive-op)
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-protect)
-        (declare (ignore op tag) (special setup s))
-        (multiple-value-bind (op tag protections)
-            (apply-op !remove-protect :protections protections)
-          (declare (ignore op tag))
-          (apply-op !negative-op :protections protections)))))
-  (def-test  (neg-protection-add-and-remove :fixtures (empty-state))
-      (:unfailed)
-    (progn
-;;      (format t "~&State S is: ~s~%" s)
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-neg-protect)
-        (declare (ignore op tag))
-        (multiple-value-bind (op tag protections)
-            (apply-op !remove-neg-protect :protections protections)
-          (declare (ignore op tag))
-          (apply-op !positive-op :protections protections)))))
+    ;; items number four and five
+    (unfailed
+     (progn
+       (apply-op !positive-op)
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-protect)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !remove-protect :protections protections)
+           (declare (ignore op tag))
+           (apply-op !negative-op :protections protections)))))
+    (unfailed
+     (progn
+       ;;      (format t "~&State S is: ~s~%" s)
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-neg-protect)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !remove-neg-protect :protections protections)
+           (declare (ignore op tag))
+           (apply-op !positive-op :protections protections)))))
 
-  ;; item number six --- protection arithmetic
-  (def-test  (protection-arithmetic-positive :fixtures (empty-state))
-      (:failed)
-    (progn
-      (apply-op !positive-op)
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-protect)
-        (declare (ignore op tag) (special setup s))
-        (multiple-value-bind (op tag protections)
-            (apply-op !add-protect :protections protections)
-          (declare (ignore op tag))
-          (multiple-value-bind (op tag protections)
-              (apply-op !remove-protect :protections protections)
-            (declare (ignore op tag))
-            (apply-op !negative-op :protections protections))))))
-  (def-test  (protection-arithmetic-positive-2 :fixtures (empty-state))
-      (:unfailed)
-    (progn
-      (apply-op !positive-op)
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-protect)
-        (declare (ignore op tag) (special setup s))
-        (multiple-value-bind (op tag protections)
-            (apply-op !add-protect :protections protections)
-          (declare (ignore op tag))
-          (multiple-value-bind (op tag protections)
-              (apply-op !remove-protect :protections protections)
-            (declare (ignore op tag))
-            (multiple-value-bind (op tag protections)
-                (apply-op !remove-protect :protections protections)
-              (declare (ignore op tag))
-              (apply-op !negative-op :protections protections)))))))
-  (def-test  (protection-arithmetic-neg-1 :fixtures (empty-state))
-      (:failed)
-    (multiple-value-bind (op tag protections)
-        (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special setup s))
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-neg-protect :protections protections)
-        (declare (ignore op tag))
-        (multiple-value-bind (op tag protections)
-            (apply-op !remove-neg-protect :protections protections)
-          (declare (ignore op tag))
-          (apply-op !positive-op :protections protections)))))
-  (def-test  (protection-arithmetic-neg-2 :fixtures (empty-state))
-      (:unfailed)
-    (multiple-value-bind (op tag protections)
-        (apply-op !add-neg-protect)
-      (declare (ignore op tag) (special setup s))
-      (multiple-value-bind (op tag protections)
-          (apply-op !add-neg-protect :protections protections)
-        (declare (ignore op tag))
-        (multiple-value-bind (op tag protections)
-            (apply-op !remove-neg-protect :protections protections)
-          (declare (ignore op tag))
-          (multiple-value-bind (op tag protections)
-              (apply-op !remove-neg-protect :protections protections)
-            (declare (ignore op tag))
-            (apply-op !positive-op :protections protections))))))
-  )
+    ;; item number six --- protection arithmetic
+    (failed
+     (progn
+       (apply-op !positive-op)
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-protect)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !add-protect :protections protections)
+           (declare (ignore op tag))
+           (multiple-value-bind (op tag protections)
+               (apply-op !remove-protect :protections protections)
+             (declare (ignore op tag))
+             (apply-op !negative-op :protections protections))))))
+    (unfailed
+     (progn
+       (apply-op !positive-op)
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-protect)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !add-protect :protections protections)
+           (declare (ignore op tag))
+           (multiple-value-bind (op tag protections)
+               (apply-op !remove-protect :protections protections)
+             (declare (ignore op tag))
+             (multiple-value-bind (op tag protections)
+                 (apply-op !remove-protect :protections protections)
+               (declare (ignore op tag))
+               (apply-op !negative-op :protections protections)))))))
+    (failed
+     (multiple-value-bind (op tag protections)
+         (apply-op !add-neg-protect)
+       (declare (ignore op tag))
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-neg-protect :protections protections)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !remove-neg-protect :protections protections)
+           (declare (ignore op tag))
+           (apply-op !positive-op :protections protections)))))
+    (unfailed
+     (multiple-value-bind (op tag protections)
+         (apply-op !add-neg-protect)
+       (declare (ignore op tag))
+       (multiple-value-bind (op tag protections)
+           (apply-op !add-neg-protect :protections protections)
+         (declare (ignore op tag))
+         (multiple-value-bind (op tag protections)
+             (apply-op !remove-neg-protect :protections protections)
+           (declare (ignore op tag))
+           (multiple-value-bind (op tag protections)
+               (apply-op !remove-neg-protect :protections protections)
+             (declare (ignore op tag))
+             (apply-op !positive-op :protections protections))))))))
+

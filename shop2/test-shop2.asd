@@ -51,8 +51,9 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(asdf:oos 'asdf:load-op :shop-asd)
-(asdf:oos 'asdf:load-op :asdf-nst)
+(asdf:load-system "shop-asd")
+(asdf:load-system "asdf-nst")
+(asdf:load-system "fiveam-asdf")
 (in-package :shop2-asd)
 
 (defconstant +shop-examples-dir+
@@ -116,13 +117,14 @@ shop2."
 (defclass shop-nst-testable (nst-testable) ())
 
 (defsystem :test-shop2
+    :in-order-to ((test-op (test-op "shop-pddl-tests"))
+                  (test-op (test-op "shop-protection-tests")))
     :class shop-nst-testable
-    :nst-systems (:protection-tests
-                  :arity-tests
+    :nst-systems (:arity-tests
                   :shop-blocks
                   :shop-depots
                   :shop-logistic
-                  :shop-pddl-tests
+                  ;; :shop-pddl-tests
                   :shop-umt
                   )
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
@@ -151,30 +153,24 @@ packages have been loaded yet."
     :depends-on (:shop2 nst)
     :default-component-class tester-cl-source-file
     :in-order-to ((load-op (compile-op :shop-test-helper)))
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative  "tests")) *load-truename*)
+    :pathname "tests/"
     :components ((:file "nst-common")))
 
 ;;;
 ;;; First test application --- PDDL tests.
 ;;;
 (defsystem :shop-pddl-tests
-    :class shop-nst-testable
-    :depends-on (:shop2 nst)
-    :in-order-to ((test-op (load-op :shop-pddl-tests)))
-    :nst-groups ((:shop2 . pddl-tests)
-                 (:shop2 . add-del-tests)
-                 (:shop2 . quantified-preconditions)
-                 (:shop2 . simple-when)
-                 (:shop2 . quantified-when))
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative "tests")) *load-truename*)
-    :components ((:file "nst-pddl")))
+    :class fiveam-tester-system
+    :depends-on (:shop2)
+    :test-names ((pddl-tests . :shop2))
+    :pathname "tests/"
+    :components ((:file "pddl-tests")))
 
-(defsystem :protection-tests
-    :class shop-nst-testable
-    :depends-on (:shop2 nst)
-    :in-order-to ((test-op (load-op :protection-tests)))
-    :nst-group (:protection-test . protection-test)
-    :pathname #.(merge-pathnames (make-pathname :directory +shop-examples-dir+) *load-truename*)
+(defsystem :shop-protection-tests
+    :class fiveam-tester-system
+    :depends-on (:shop2)
+    :test-names ((protection-test . :protection-test))
+    :pathname "examples/"
     :serial t
     :components ((:file "protection-test-package")
                  (:file "protection-test")))
@@ -187,10 +183,7 @@ packages have been loaded yet."
     :in-order-to ((test-op (load-op :arity-tests)))
     :nst-groups ((:arity-test . arity-test)
                  (:arity-test . method-tests))
-    :pathname #.(merge-pathnames (make-pathname :directory '(:relative "tests")
-                                                :name nil :type nil)
-                                 *load-truename*)
-
+    :pathname "tests/"
     :components ((:file "at-package")
                  (:file "arity-tests" :depends-on ("at-package"))
                  (:file "io-tests" :depends-on ("at-package"))))
