@@ -252,13 +252,11 @@ packages have been loaded yet."
 ;;;
 
 (defsystem :shop-depots
-    :class shop-nst-testable
+    :class shop-fiveam-tester
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
-    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "depots")) *load-truename*)
-    :in-order-to ((test-op (load-op :shop-depots))
-                  (load-op (compile-op :shop-depots)))
-    :nst-group (:shop2-user . depot-tests)
+    :pathname "examples/depots/"
+    :test-names ((depot-tests . :shop2-user))
     :components ((:file "depots")
                  (:file "pfile1" :depends-on ("depots"))
                  (:file "pfile2" :depends-on ("depots"))
@@ -282,7 +280,7 @@ packages have been loaded yet."
                  (:file "pfile20" :depends-on ("depots"))
                  (:file "pfile21" :depends-on ("depots"))
                  (:file "pfile22" :depends-on ("depots"))
-                 (:file "nst-depot")))
+                 (:file "tests")))
 
 ;;;
 ;;; Fifth test application --- logistics.

@@ -33,7 +33,6 @@ shop2/examples/blocks/problem100.lisp -text
 shop2/examples/blocks/problem200.lisp -text
 shop2/examples/blocks/problem300.lisp -text
 shop2/examples/depots/depots.lisp -text
-shop2/examples/depots/nst-depot.lisp -text
 shop2/examples/depots/pfile1.lisp -text
 shop2/examples/depots/pfile10.lisp -text
 shop2/examples/depots/pfile11.lisp -text
@@ -57,8 +56,8 @@ shop2/examples/depots/pfile7.lisp -text
 shop2/examples/depots/pfile8.lisp -text
 shop2/examples/depots/pfile9.lisp -text
 shop2/examples/depots/plans.lisp -text
-shop2/examples/depots/shop-depots.asd -text
 shop2/examples/depots/solve.lisp -text
+shop2/examples/depots/tests.lisp -text
 shop2/examples/logistic/Log_ran_problems_15.lisp -text
 shop2/examples/logistic/Log_ran_problems_20.lisp -text
 shop2/examples/logistic/Log_ran_problems_25.lisp -text
