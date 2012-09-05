@@ -124,14 +124,15 @@ shop2."
 (defsystem :test-shop2
     :in-order-to ((test-op (test-op "shop-pddl-tests"))
                   (test-op (test-op "shop-protection-tests"))
-                  (test-op (test-op "shop-internal-tests")))
+                  (test-op (test-op "shop-internal-tests"))
+                  (test-op (test-op "shop-umt")))
     :class shop-nst-testable
     :nst-systems (
                   :shop-blocks
                   :shop-depots
                   :shop-logistic
                   ;; :shop-pddl-tests
-                  :shop-umt
+                  ;; :shop-umt
                   )
     :depends-on ((:version "shop2" #.cl-user::+shop-version+)
                  (:version "nst" "4"))
@@ -213,21 +214,36 @@ packages have been loaded yet."
 ;;; Second test application --- SHOP-UMT domain tests.
 ;;;
 
+;;;(defsystem :shop-umt
+;;;    :class shop-nst-testable
+;;;    :depends-on (:shop-test-helper)
+;;;    :default-component-class tester-cl-source-file
+;;;    :in-order-to ((test-op (load-op :shop-umt))
+;;;                  (load-op (compile-op :shop-umt)))
+;;;    :pathname "examples/UMT2/"
+;;;    :nst-group (:shop2-user . umt-tests)
+;;;    :components ((:file "UMT2")
+;;;                 (:file "pfile1" :depends-on ("UMT2"))
+;;;                 (:file "pfile2" :depends-on ("UMT2"))
+;;;                 ;; interestingly, pfile3 does not seem solvable.
+;;;                 ;; Haven't checked to see why [2006/05/10:rpg]
+;;;                 (:file "pfile3" :depends-on ("UMT2"))
+;;;                 (:file "nst-umt" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
+
+;;; FIXME: put these tests in a separate package...
 (defsystem :shop-umt
-    :class shop-nst-testable
-    :depends-on (:shop-test-helper)
+    :class shop-fiveam-tester
+    :depends-on (:shop2 :shop-test-helper)
     :default-component-class tester-cl-source-file
-    :in-order-to ((test-op (load-op :shop-umt))
-                  (load-op (compile-op :shop-umt)))
-    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "UMT2")) *load-truename*)
-    :nst-group (:shop2-user . umt-tests)
+    :pathname "examples/UMT2/"
+    :test-names ((umt-tests . :shop2-user))
     :components ((:file "UMT2")
                  (:file "pfile1" :depends-on ("UMT2"))
                  (:file "pfile2" :depends-on ("UMT2"))
                  ;; interestingly, pfile3 does not seem solvable.
                  ;; Haven't checked to see why [2006/05/10:rpg]
                  (:file "pfile3" :depends-on ("UMT2"))
-                 (:file "nst-umt" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
+                 (:file "umt-tests" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
 
 ;;;
 ;;; Third test application --- blocksworld.

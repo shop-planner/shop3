@@ -24,7 +24,7 @@ shop2/examples/UMT2/pfile1.lisp -text
 shop2/examples/UMT2/pfile2.lisp -text
 shop2/examples/UMT2/pfile3.lisp -text
 shop2/examples/UMT2/plans.lisp -text
-shop2/examples/UMT2/shop-umt.asd -text
+shop2/examples/UMT2/umt-tests.lisp -text
 shop2/examples/apply-operator-bug.lisp -text
 shop2/examples/axiom-else-bug.lisp -text
 shop2/examples/blocks/block2.lisp -text
