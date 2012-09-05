@@ -214,22 +214,6 @@ packages have been loaded yet."
 ;;; Second test application --- SHOP-UMT domain tests.
 ;;;
 
-;;;(defsystem :shop-umt
-;;;    :class shop-nst-testable
-;;;    :depends-on (:shop-test-helper)
-;;;    :default-component-class tester-cl-source-file
-;;;    :in-order-to ((test-op (load-op :shop-umt))
-;;;                  (load-op (compile-op :shop-umt)))
-;;;    :pathname "examples/UMT2/"
-;;;    :nst-group (:shop2-user . umt-tests)
-;;;    :components ((:file "UMT2")
-;;;                 (:file "pfile1" :depends-on ("UMT2"))
-;;;                 (:file "pfile2" :depends-on ("UMT2"))
-;;;                 ;; interestingly, pfile3 does not seem solvable.
-;;;                 ;; Haven't checked to see why [2006/05/10:rpg]
-;;;                 (:file "pfile3" :depends-on ("UMT2"))
-;;;                 (:file "nst-umt" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
-
 ;;; FIXME: put these tests in a separate package...
 (defsystem :shop-umt
     :class shop-fiveam-tester
@@ -305,48 +289,11 @@ packages have been loaded yet."
 ;;;
 
 (defsystem :shop-logistic
-    :class shop-nst-testable
+    :class shop-fiveam-tester
     :default-component-class tester-cl-source-file
     :depends-on (:shop-test-helper)
-    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "logistic")) *load-truename*)
-    :nst-groups ((:shop2-user . logistic-tests)
-                 (:shop2-user . logistic-tests-1a)
-                 (:shop2-user . logistic-tests-1b)
-                 (:shop2-user . logistic-tests-1c)
-                 (:shop2-user . logistic-tests-1d)
-                 (:shop2-user . logistic-tests-1e)
-                 (:shop2-user . logistic-tests-1f)
-                 (:shop2-user . logistic-tests-1g)
-                 (:shop2-user . logistic-tests-1h)
-                 (:shop2-user . logistic-tests-1i)
-                 (:shop2-user . logistic-tests-1j)
-                 (:shop2-user . logistic-tests-1k)
-                 (:shop2-user . logistic-tests-2)
-                 (:shop2-user . logistic-tests-3)
-                 (:shop2-user . logistic-tests-4)
-                 (:shop2-user . logistic-tests-5)
-                 (:shop2-user . logistic-tests-6)
-                 (:shop2-user . logistic-tests-7)
-                 (:shop2-user . logistic-tests-8)
-                 (:shop2-user . logistic-tests-9)
-                 (:shop2-user . logistic-tests-9a)
-                 (:shop2-user . logistic-tests-10)
-                 (:shop2-user . logistic-tests-10a)
-                 (:shop2-user . logistic-tests-11)
-                 (:shop2-user . logistic-tests-11a)
-                 (:shop2-user . logistic-tests-12)
-                 (:shop2-user . logistic-tests-12a)
-                 (:shop2-user . logistic-tests-13)
-                 (:shop2-user . logistic-tests-13a)
-                 (:shop2-user . logistic-tests-14)
-                 (:shop2-user . logistic-tests-14a)
-                 (:shop2-user . logistic-tests-15)
-                 (:shop2-user . logistic-tests-15a)
-                 (:shop2-user . logistic-tests-16)
-                 (:shop2-user . logistic-tests-16a)
-                 (:shop2-user . logistic-tests-17)
-                 (:shop2-user . logistic-tests-17a)
-                 (:shop2-user . logistic-tests-18))
+    :pathname "examples/logistic/"
+    :test-names ((logistics-tests . :shop2-user))
     :components ((:file "logistic")
                  (:file "Log_ran_problems_15" :depends-on ("logistic"))
                  (:file "Log_ran_problems_20" :depends-on ("logistic"))
@@ -358,7 +305,7 @@ packages have been loaded yet."
                  (:file "Log_ran_problems_50" :depends-on ("logistic"))
                  (:file "Log_ran_problems_55" :depends-on ("logistic"))
                  (:file "Log_ran_problems_60" :depends-on ("logistic"))
-                 (:file "nst-logistic" :depends-on ("Log_ran_problems_15"
+                 (:file "tests" :depends-on ("Log_ran_problems_15"
                                                     "Log_ran_problems_20"
                                                     "Log_ran_problems_25"
                                                     "Log_ran_problems_30"
@@ -368,9 +315,7 @@ packages have been loaded yet."
                                                     "Log_ran_problems_50"
                                                     "Log_ran_problems_55"
                                                     "Log_ran_problems_60"))
-                 )
-    :in-order-to ((test-op (load-op :shop-logistic))
-                  (load-op (compile-op :shop-logistic))))
+                 ))
 
 ;;; make sure we don't do this only once...
 
