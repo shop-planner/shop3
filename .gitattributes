@@ -32,6 +32,7 @@ shop2/examples/blocks/nst-blocks.lisp -text
 shop2/examples/blocks/problem100.lisp -text
 shop2/examples/blocks/problem200.lisp -text
 shop2/examples/blocks/problem300.lisp -text
+shop2/examples/blocks/tests.lisp -text
 shop2/examples/depots/depots.lisp -text
 shop2/examples/depots/pfile1.lisp -text
 shop2/examples/depots/pfile10.lisp -text
@@ -175,8 +176,8 @@ shop2/silent-shop-test.lisp -text
 shop2/test-shop2.asd -text
 shop2/tests/arity-tests.lisp -text
 shop2/tests/at-package.lisp -text
+shop2/tests/common.lisp -text
 shop2/tests/io-tests.lisp -text
-shop2/tests/nst-common.lisp -text
 shop2/tests/pddl-tests.lisp -text
 shop2/theorem-prover/decls.lisp -text
 shop2/theorem-prover/package-thpr.lisp -text

@@ -55,34 +55,6 @@
 (asdf:load-system "fiveam-asdf")
 (in-package :shop2-asd)
 
-(defconstant +shop-examples-dir+
-             '(:relative "examples"))
-(defun examples-subdir (dirname)
-  (append +shop-examples-dir+ (list dirname)))
-
-(defclass stream-test-mixin ()
-  ((result-stream
-    :initarg :result-stream
-    :reader result-stream
-    :initform t
-    :documentation "Stream to which output should be written."
-    )
-   (verbose
-    :initform nil
-    :initarg :verbose
-    :reader verbose
-    )
-   )
-  (:documentation "A mixin that can be added to the test-op that includes a stream
-to which test output should be written."))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (member (find-class 'stream-test-mixin)
-                  (class-direct-superclasses (find-class 'asdf:test-op)))
-    (reinitialize-instance (find-class 'asdf:test-op)
-                      :direct-superclasses (cons (find-class 'shop2-asd::stream-test-mixin)
-                                                 (class-direct-superclasses (find-class 'asdf:test-op))))))
-
 (defclass tester-cl-source-file ( cl-file-with-defconstants )
   ()
   (:documentation "Special class that will have to recompile no matter
@@ -100,64 +72,6 @@ shop2."
      ()
   (:documentation "Mixin that adds silent functioning of SHOP2."))
 
-(defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
-
-(defsystem :test-shop2
-    :in-order-to ((test-op (test-op "shop-pddl-tests"))
-                  (test-op (test-op "shop-protection-tests"))
-                  (test-op (test-op "shop-internal-tests"))
-                  (test-op (test-op "shop-umt"))
-                  (test-op (test-op "shop-depots"))
-                  (test-op (test-op "shop-logistic"))
-                  (test-op (test-op "shop-blocks"))
-                  )
-    :depends-on ((:version "shop2" #.cl-user::+shop-version+))
-    :version #.cl-user::+shop-version+
-    :components ((:file "silent-shop-test")))
-
-
-(defsystem :shop-test-helper
-    :depends-on (:shop2)
-    :default-component-class tester-cl-source-file
-    :pathname "tests/"
-    :components ((:file "common")))
-
-;;;
-;;; First test application --- PDDL tests.
-;;;
-(defsystem :shop-pddl-tests
-    :class shop-fiveam-tester
-    :depends-on (:shop2)
-    :test-names ((pddl-tests . :shop2))
-    :pathname "tests/"
-    :components ((:file "pddl-tests")))
-
-(defsystem :shop-protection-tests
-    :class shop-fiveam-tester
-    :depends-on (:shop2)
-    :test-names ((protection-test . :protection-test))
-    :pathname "examples/"
-    :serial t
-    :components ((:file "protection-test-package")
-                 (:file "protection-test")))
-
-(defsystem :shop-internal-tests
-    :class shop-fiveam-tester
-    :depends-on (:shop2)
-    :test-names ((arity-test . :arity-test)
-                 (method-tests . :arity-test))
-    :pathname "tests/"
-    :components ((:file "at-package")
-                 (:file "arity-tests" :depends-on ("at-package"))
-                 (:file "io-tests" :depends-on ("at-package"))))
-
-;;;; handle SBCL's strict notion of the way DEFCONSTANT should work. [2006/05/16:rpg]
-;;;#+sbcl
-;;;(defmethod traverse ((op operation) (c shop-tester))
-;;;  (handler-bind ((sb-ext:defconstant-uneql
-;;;                  #'(lambda (c)
-;;;                      (continue c))))
-;;;    (call-next-method)))
 
 
 #+sbcl
@@ -168,109 +82,107 @@ shop2."
                          (continue c))))
     (call-next-method)))
 
+(defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
-;;;
-;;; Second test application --- SHOP-UMT domain tests.
-;;;
-
-;;; FIXME: put these tests in a separate package...
-(defsystem :shop-umt
+(defsystem :test-shop2
     :class shop-fiveam-tester
-    :depends-on (:shop2 :shop-test-helper)
-    :default-component-class tester-cl-source-file
-    :pathname "examples/UMT2/"
-    :test-names ((umt-tests . :shop2-user))
-    :components ((:file "UMT2")
-                 (:file "pfile1" :depends-on ("UMT2"))
-                 (:file "pfile2" :depends-on ("UMT2"))
-                 ;; interestingly, pfile3 does not seem solvable.
-                 ;; Haven't checked to see why [2006/05/10:rpg]
-                 (:file "pfile3" :depends-on ("UMT2"))
-                 (:file "umt-tests" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
-
-;;;
-;;; Third test application --- blocksworld.
-;;;
-(defsystem :shop-blocks
-    :class shop-fiveam-tester
-    :depends-on (:shop-test-helper)
-    :default-component-class tester-cl-source-file
-    :pathname "examples/blocks"
-    :test-names ((blocks-tests . :shop2-user))
-    :components ((:file "block2")
-                 (:file "problem100" :depends-on ("block2"))
-                 (:file "problem200" :depends-on ("block2"))
-                 (:file "problem300" :depends-on ("block2"))
-                 (:file "tests"
-                        :depends-on ("problem100" "problem200" "problem300"))))
-
-;;;
-;;; Four test application --- depots.
-;;;
-
-(defsystem :shop-depots
-    :class shop-fiveam-tester
-    :default-component-class tester-cl-source-file
-    :depends-on (:shop-test-helper)
-    :pathname "examples/depots/"
-    :test-names ((depot-tests . :shop2-user))
-    :components ((:file "depots")
-                 (:file "pfile1" :depends-on ("depots"))
-                 (:file "pfile2" :depends-on ("depots"))
-                 (:file "pfile3" :depends-on ("depots"))
-                 (:file "pfile4" :depends-on ("depots"))
-                 (:file "pfile5" :depends-on ("depots"))
-                 (:file "pfile6" :depends-on ("depots"))
-                 (:file "pfile7" :depends-on ("depots"))
-                 (:file "pfile8" :depends-on ("depots"))
-                 (:file "pfile9" :depends-on ("depots"))
-                 (:file "pfile10" :depends-on ("depots"))
-                 (:file "pfile11" :depends-on ("depots"))
-                 (:file "pfile12" :depends-on ("depots"))
-                 (:file "pfile13" :depends-on ("depots"))
-                 (:file "pfile14" :depends-on ("depots"))
-                 (:file "pfile15" :depends-on ("depots"))
-                 (:file "pfile16" :depends-on ("depots"))
-                 (:file "pfile17" :depends-on ("depots"))
-                 (:file "pfile18" :depends-on ("depots"))
-                 (:file "pfile19" :depends-on ("depots"))
-                 (:file "pfile20" :depends-on ("depots"))
-                 (:file "pfile21" :depends-on ("depots"))
-                 (:file "pfile22" :depends-on ("depots"))
-                 (:file "tests")))
-
-;;;
-;;; Fifth test application --- logistics.
-;;;
-
-(defsystem :shop-logistic
-    :class shop-fiveam-tester
-    :default-component-class tester-cl-source-file
-    :depends-on (:shop-test-helper)
-    :pathname "examples/logistic/"
-    :test-names ((logistics-tests . :shop2-user))
-    :components ((:file "logistic")
-                 (:file "Log_ran_problems_15" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_20" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_25" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_30" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_35" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_40" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_45" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_50" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_55" :depends-on ("logistic"))
-                 (:file "Log_ran_problems_60" :depends-on ("logistic"))
-                 (:file "tests" :depends-on ("Log_ran_problems_15"
-                                                    "Log_ran_problems_20"
-                                                    "Log_ran_problems_25"
-                                                    "Log_ran_problems_30"
-                                                    "Log_ran_problems_35"
-                                                    "Log_ran_problems_40"
-                                                    "Log_ran_problems_45"
-                                                    "Log_ran_problems_50"
-                                                    "Log_ran_problems_55"
-                                                    "Log_ran_problems_60"))
-                 ))
+    :test-names ((pddl-tests . :shop2)
+                 (protection-test . :protection-test)
+                 (arity-test . :arity-test)
+                 (method-tests . :arity-test)
+                 (umt-tests . :shop2-user)
+                 (blocks-tests . :shop2-user)
+                 (depot-tests . :shop2-user)
+                 (logistics-tests . :shop2-user)
+                 )
+    :depends-on ((:version "shop2" #.cl-user::+shop-version+))
+    :version #.cl-user::+shop-version+
+    :components ((:module "shop-test-helper"
+                          :pathname "tests/"
+                          :components ((:file "common")))
+                          
+                 (:file "silent-shop-test")
+                 (:module "shop-pddl-tests"
+                          :pathname "tests/"
+                          :components ((:file "pddl-tests")))
+                 (:module "shop-protection-tests"
+                          :pathname "examples/"
+                          :serial t
+                          :components ((:file "protection-test-package")
+                                       (:file "protection-test")))
+                 (:module "shop-internal-tests"
+                          :pathname "tests/"
+                          :components ((:file "at-package")
+                                       (:file "arity-tests" :depends-on ("at-package"))
+                                       (:file "io-tests" :depends-on ("at-package"))))
+                 ;;; FIXME: put these tests in a separate package, instead of in SHOP2-USER [2012/09/05:rpg]
+                 (:module "shop-umt" 
+                          :pathname "examples/UMT2/"
+                          :components ((:file "UMT2")
+                                       (:file "pfile1")
+                                       (:file "pfile2")
+                                       ;; FIXME: interestingly, pfile3 does not seem solvable.
+                                       ;; Haven't checked to see why [2006/05/10:rpg]
+                                       (:file "pfile3")
+                                       (:file "umt-tests" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
+                 (:module "shop-blocks"
+                          :pathname "examples/blocks"
+                          :components ((:file "block2")
+                                       (:file "problem100")
+                                       (:file "problem200")
+                                       (:file "problem300")
+                                       (:file "tests"
+                                              :depends-on ("problem100" "problem200" "problem300"))))
+                 (:module "shop-depots"
+                          :pathname "examples/depots/"
+                          :components ((:file "depots")
+                                       (:file "pfile1")
+                                       (:file "pfile2")
+                                       (:file "pfile3")
+                                       (:file "pfile4")
+                                       (:file "pfile5")
+                                       (:file "pfile6")
+                                       (:file "pfile7")
+                                       (:file "pfile8")
+                                       (:file "pfile9")
+                                       (:file "pfile10")
+                                       (:file "pfile11")
+                                       (:file "pfile12")
+                                       (:file "pfile13")
+                                       (:file "pfile14")
+                                       (:file "pfile15")
+                                       (:file "pfile16")
+                                       (:file "pfile17")
+                                       (:file "pfile18")
+                                       (:file "pfile19")
+                                       (:file "pfile20")
+                                       (:file "pfile21")
+                                       (:file "pfile22")
+                                       (:file "tests")))
+                 (:module "shop-logistic"
+                          :pathname "examples/logistic/"
+                          :components ((:file "logistic")
+                                       (:file "Log_ran_problems_15" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_20" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_25" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_30" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_35" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_40" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_45" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_50" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_55" :depends-on ("logistic"))
+                                       (:file "Log_ran_problems_60" :depends-on ("logistic"))
+                                       (:file "tests" :depends-on ("Log_ran_problems_15"
+                                                                   "Log_ran_problems_20"
+                                                                   "Log_ran_problems_25"
+                                                                   "Log_ran_problems_30"
+                                                                   "Log_ran_problems_35"
+                                                                   "Log_ran_problems_40"
+                                                                   "Log_ran_problems_45"
+                                                                   "Log_ran_problems_50"
+                                                                   "Log_ran_problems_55"
+                                                                   "Log_ran_problems_60"))
+                                       ))))
 
 ;;; make sure we don't do this only once...
 
