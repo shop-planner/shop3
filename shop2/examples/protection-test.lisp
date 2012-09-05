@@ -103,18 +103,14 @@
      (apply-op !add-neg-protect))
     (unfailed (apply-op !remove-neg-protect))
 
-    ;; FIXME: Repair the error tests...
-
     ;; check protections before adding
-    #|
-  (def-test  (protection-init-check :fixtures (empty-state))
-      (:err) (apply-op !add-protect))
-  (def-test  (protection-init-check-neg :fixtures (empty-state))
-      (:err)
-    (progn
-      (apply-op !positive-op)
-      (apply-op !add-neg-protect)))
-|#
+    (with-fixture empty-state ()
+      (fiveam:signals error (apply-op !add-protect)))
+    (with-fixture empty-state ()
+      (fiveam:signals error
+        (progn
+          (apply-op !positive-op)
+          (apply-op !add-neg-protect))))
 
     ;; item number three
     (failed
