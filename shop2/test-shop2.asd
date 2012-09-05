@@ -114,7 +114,12 @@ shop2."
 
 (defvar cl-user::*nst-default-report-stream*)
 
-(defclass shop-nst-testable (nst-testable) ())
+(defclass shop-tester-mixin ()
+     ()
+  (:documentation "Mixin that adds silent functioning of SHOP2."))
+
+(defclass shop-nst-testable (shop-tester-mixin nst-testable) ())
+(defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
 (defsystem :test-shop2
     :in-order-to ((test-op (test-op "shop-pddl-tests"))
@@ -161,14 +166,14 @@ packages have been loaded yet."
 ;;; First test application --- PDDL tests.
 ;;;
 (defsystem :shop-pddl-tests
-    :class fiveam-tester-system
+    :class shop-fiveam-tester
     :depends-on (:shop2)
     :test-names ((pddl-tests . :shop2))
     :pathname "tests/"
     :components ((:file "pddl-tests")))
 
 (defsystem :shop-protection-tests
-    :class fiveam-tester-system
+    :class shop-fiveam-tester
     :depends-on (:shop2)
     :test-names ((protection-test . :protection-test))
     :pathname "examples/"
@@ -177,7 +182,7 @@ packages have been loaded yet."
                  (:file "protection-test")))
 
 (defsystem :shop-internal-tests
-    :class fiveam-tester-system
+    :class shop-fiveam-tester
     :depends-on (:shop2)
     :test-names ((arity-test . :arity-test)
                  (method-tests . :arity-test))
