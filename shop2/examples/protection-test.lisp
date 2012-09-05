@@ -103,6 +103,8 @@
      (apply-op !add-neg-protect))
     (unfailed (apply-op !remove-neg-protect))
 
+    ;; FIXME: Repair the error tests...
+
     ;; check protections before adding
     #|
   (def-test  (protection-init-check :fixtures (empty-state))

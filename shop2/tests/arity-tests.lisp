@@ -58,81 +58,79 @@
                     ((:protection (not (prop))))
                     ())))))
 
-(def-fixtures arity-domain ()
-   (dom
-    (init-domain)))
+(def-fixture arity-domain ()
+  (let ((dom
+         (init-domain)))
+    (&body)))
 
-(def-fixtures good-problem (:special arity-domain)
-  (foo
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'arity-match
-                   '() '(method foo bar)))))
+(def-fixture good-problem ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'arity-match
+                    '() '(method foo bar)))
+    (&body)))
 
-(def-fixtures bad-problem (:special arity-domain)
-  (bar
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'arity-mismatch
-                   '() '(method bar)))))
+(def-fixture bad-problem ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'arity-mismatch
+                    '() '(method bar)))
+    (&body)))
 
-(def-fixtures good-problem-op (:special arity-domain)
-  (foo
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'arity-match-op
-                   '() '(!has-an-arg foo)))))
+(def-fixture good-problem-op ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'arity-match-op
+                    '() '(!has-an-arg foo)))
+    (&body)))
 
-(def-fixtures bad-problem-op (:special arity-domain)
-  (bar
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'arity-mismatch-op
-                   '() '(!has-an-arg)))))
+(def-fixture bad-problem-op ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'arity-mismatch-op
+                    '() '(!has-an-arg)))
+    (&body)))
 
-(def-fixtures good-rest-problem-1 ()
-  (baz
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'meta
-                   '() '(metamethod foo bar)))))
+(def-fixture good-rest-problem-1 ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'meta
+                         '() '(metamethod foo bar)))
+    (&body)))
 
-(def-fixtures good-rest-problem-2 ()
-  (baz
-   (let (( shop2::*make-problem-silently* t ))
-     (make-problem 'meta-op
-                   '() '(metamethodop foo)))))
+(def-fixture good-rest-problem-2 ()
+  (progn
+    (let (( shop2::*make-problem-silently* t ))
+      (make-problem 'meta-op
+                    '() '(metamethodop foo)))
+    (&body)))
 
-(nst:def-criterion (failed () (retval &rest args))
-  (declare (ignore args))
-  (if (eq retval 'fail)
-      (sift.nst:make-success-report)
-      (sift.nst:make-failure-report)))
+(defmacro failed (body)
+  `(fiveam:is (eq ,body 'fail)))
 
-(nst:def-criterion-alias (unfailed)
-    '(:not failed))
+(defmacro unfailed (body)
+  `(fiveam:is (not (eq ,body 'fail))))
 
-(def-test-group arity-test (arity-domain)
-  (def-test  (method-arity-match :fixtures (good-problem))
-      (unfailed)
-    (locally (declare (special dom))
-      (nth-value 0 (find-plans 'arity-match :verbose 0 :domain dom))))
-  (def-test  (method-arity-mismatch :fixtures (bad-problem))
-      (:err :type shop2:task-arity-mismatch)
-        (locally (declare (special dom))
-          (nth-value 0 (find-plans 'arity-mismatch :domain dom :verbose 0))))
-  (def-test  (op-arity-match :fixtures (good-problem-op))
-      (unfailed)
-    (locally (declare (special dom))
-      (nth-value 0 (find-plans 'arity-match-op :verbose 0 :domain dom))))
-  (def-test  (op-arity-mismatch :fixtures (bad-problem-op))
-      (:err :type shop2:task-arity-mismatch)
-    (locally (declare (special dom))
-      (nth-value 0 (find-plans 'arity-mismatch-op :domain dom :verbose 0))))
-  (def-test  (method-rest-match :fixtures (good-rest-problem-1))
-      (unfailed)
-    (locally (declare (special dom))
-      (nth-value 0 (find-plans 'meta :verbose 0 :domain dom))))
-  (def-test  (op-rest-match :fixtures (good-rest-problem-2))
-      (unfailed)
-    (locally (declare (special dom))
-      (nth-value 0 (find-plans 'meta-op :verbose 0 :domain dom))))
-  )
+
+(test arity-test
+  (with-fixture arity-domain ()
+    (with-fixture good-problem ()
+      (unfailed 
+         (find-plans 'arity-match :verbose 0 :domain dom)))
+    (with-fixture bad-problem ()
+      (signals shop2:task-arity-mismatch
+          (find-plans 'arity-mismatch :domain dom :verbose 0)))
+    (with-fixture good-problem-op ()
+      (unfailed (find-plans 'arity-match-op :verbose 0 :domain dom)))
+    (with-fixture bad-problem-op ()
+      (signals shop2:task-arity-mismatch
+               (find-plans 'arity-mismatch-op :domain dom :verbose 0)))
+    (with-fixture good-rest-problem-1 ()
+      (unfailed
+       (find-plans 'meta :verbose 0 :domain dom)))
+    (with-fixture good-rest-problem-2 ()
+      (unfailed
+       (find-plans 'meta-op :verbose 0 :domain dom)))))
 
 
 

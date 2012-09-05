@@ -13,13 +13,14 @@
 ;;;   [2010/05/19:rpg] modified; block comment added.
 ;;;
 ;;;---------------------------------------------------------------------------
-
+(in-package :common-lisp-user)
 
 (defpackage arity-test
   (:nicknames #:at #:arity-tests)
   (:use #:common-lisp #:shop2)
-  (:import-from #:nst
-                #:def-fixtures
-                #:def-values-criterion
-                #:def-test
-                #:def-test-group))
+  (:import-from #:fiveam
+                #:def-fixture
+                #:with-fixture
+                #:test
+                #:signals
+                #:is))

@@ -118,9 +118,10 @@ shop2."
 
 (defsystem :test-shop2
     :in-order-to ((test-op (test-op "shop-pddl-tests"))
-                  (test-op (test-op "shop-protection-tests")))
+                  (test-op (test-op "shop-protection-tests"))
+                  (test-op (test-op "shop-internal-tests")))
     :class shop-nst-testable
-    :nst-systems (:arity-tests
+    :nst-systems (
                   :shop-blocks
                   :shop-depots
                   :shop-logistic
@@ -175,14 +176,11 @@ packages have been loaded yet."
     :components ((:file "protection-test-package")
                  (:file "protection-test")))
 
-;;; this should be renamed to something like "internal-tests".  I added the io-tests here;
-;;; I don't have the energy to proliferate files & packages [2010/05/19:rpg]
-(defsystem :arity-tests
-    :class shop-nst-testable
-    :depends-on (:shop2 nst)
-    :in-order-to ((test-op (load-op :arity-tests)))
-    :nst-groups ((:arity-test . arity-test)
-                 (:arity-test . method-tests))
+(defsystem :shop-internal-tests
+    :class fiveam-tester-system
+    :depends-on (:shop2)
+    :test-names ((arity-test . :arity-test)
+                 (method-tests . :arity-test))
     :pathname "tests/"
     :components ((:file "at-package")
                  (:file "arity-tests" :depends-on ("at-package"))
