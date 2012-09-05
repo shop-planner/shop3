@@ -52,7 +52,6 @@
 ;;; markings.
 
 (asdf:load-system "shop-asd")
-(asdf:load-system "asdf-nst")
 (asdf:load-system "fiveam-asdf")
 (in-package :shop2-asd)
 
@@ -84,21 +83,6 @@ to which test output should be written."))
                       :direct-superclasses (cons (find-class 'shop2-asd::stream-test-mixin)
                                                  (class-direct-superclasses (find-class 'asdf:test-op))))))
 
-(defmethod perform :around ((o stream-test-mixin) (c nst-testable))
-  "Bind the output stream to the result stream."
-  (flet ((verbose ()
-           (intern (symbol-name '#:*nst-verbosity*) :sift.nst)))
-    (let (( cl-user::*nst-default-report-stream* (result-stream o)))
-      (format cl-user::*nst-default-report-stream* "~&Running test on system: ~A~%"
-              (component-name c))
-      (force-output cl-user::*nst-default-report-stream*)
-      (let ((oldval (symbol-value (verbose))))
-        (set (verbose) 2)
-        (format t "~&Setting ~s to 2~%" (verbose))
-        (call-next-method)
-        (set (verbose) oldval))
-      (format cl-user::*nst-default-report-stream* "~&test on system ~A completed.~%"
-              (component-name c)))))
 (defclass tester-cl-source-file ( cl-file-with-defconstants )
   ()
   (:documentation "Special class that will have to recompile no matter
@@ -112,56 +96,31 @@ the tester files get recompiled, to take into account any changes to
 shop2."
   (values nil))
 
-(defvar cl-user::*nst-default-report-stream*)
-
 (defclass shop-tester-mixin ()
      ()
   (:documentation "Mixin that adds silent functioning of SHOP2."))
 
-(defclass shop-nst-testable (shop-tester-mixin nst-testable) ())
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
 (defsystem :test-shop2
     :in-order-to ((test-op (test-op "shop-pddl-tests"))
                   (test-op (test-op "shop-protection-tests"))
                   (test-op (test-op "shop-internal-tests"))
-                  (test-op (test-op "shop-umt")))
-    :class shop-nst-testable
-    :nst-systems (
-                  :shop-blocks
-                  :shop-depots
-                  :shop-logistic
-                  ;; :shop-pddl-tests
-                  ;; :shop-umt
+                  (test-op (test-op "shop-umt"))
+                  (test-op (test-op "shop-depots"))
+                  (test-op (test-op "shop-logistic"))
+                  (test-op (test-op "shop-blocks"))
                   )
-    :depends-on ((:version "shop2" #.cl-user::+shop-version+)
-                 (:version "nst" "4"))
+    :depends-on ((:version "shop2" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :components ((:file "silent-shop-test")))
 
-;;;
-;;; NST infrastructure for all unit tests.
-;;;
-(defun nst-group-exec (names)
-  "Build a call to run NST tests assuming that none of the relevant
-packages have been loaded yet."
-  (let ((fun-name (intern (symbol-name '#:run-nst-commands)
-                          (find-package :nst))))
-    ;; try to get the tables cleared...
-    (eval `(,fun-name
-            :cancel))
-    (eval `(,fun-name
-            :run-groups
-            ',(loop for (package . sym) in names
-                  collect (intern (symbol-name sym)
-                                  (find-package package)))))))
 
 (defsystem :shop-test-helper
-    :depends-on (:shop2 nst)
+    :depends-on (:shop2)
     :default-component-class tester-cl-source-file
-    :in-order-to ((load-op (compile-op :shop-test-helper)))
     :pathname "tests/"
-    :components ((:file "nst-common")))
+    :components ((:file "common")))
 
 ;;;
 ;;; First test application --- PDDL tests.
@@ -233,18 +192,16 @@ packages have been loaded yet."
 ;;; Third test application --- blocksworld.
 ;;;
 (defsystem :shop-blocks
-    :class shop-nst-testable
+    :class shop-fiveam-tester
     :depends-on (:shop-test-helper)
     :default-component-class tester-cl-source-file
-    :pathname #.(merge-pathnames (make-pathname :directory (examples-subdir "blocks")) *load-truename*)
-    :in-order-to ((test-op (load-op :shop-blocks))
-                  (load-op (compile-op :shop-blocks)))
-    :nst-group (:shop2-user . blocks-tests)
+    :pathname "examples/blocks"
+    :test-names ((blocks-tests . :shop2-user))
     :components ((:file "block2")
                  (:file "problem100" :depends-on ("block2"))
                  (:file "problem200" :depends-on ("block2"))
                  (:file "problem300" :depends-on ("block2"))
-                 (:file "nst-blocks"
+                 (:file "tests"
                         :depends-on ("problem100" "problem200" "problem300"))))
 
 ;;;
