@@ -42,7 +42,7 @@
 
 (defun logistics-domain ()
 
-  (defdomain logistics
+  (defdomain (logistics :redefine-ok t)
    (
     ;; basic operators
 
@@ -102,21 +102,21 @@
               (truck ?truck ?city-goal)
               ;;(truck-at ?truck ?loc-truck)
               )
-	    ((:task in-city-delivery ?truck ?obj ?loc-now ?loc-goal))
+            ((:task in-city-delivery ?truck ?obj ?loc-now ?loc-goal))
 
-	    different-city-deliver
-	    ((in-city ?loc-goal ?city-goal)
-	     (obj-at ?obj ?loc-now)
-	     (in-city ?loc-now ?city-now)
-	     (different ?city-goal ?city-now)
-	     (truck ?truck-now ?city-now)
-	     (truck ?truck-goal ?city-goal)
-	     (airport ?airport-now) (in-city ?airport-now ?city-now)
-	     (airport ?airport-goal) (in-city ?airport-goal ?city-goal))
-	    (:ordered (:task in-city-delivery ?truck-now ?obj 
+            different-city-deliver
+            ((in-city ?loc-goal ?city-goal)
+             (obj-at ?obj ?loc-now)
+             (in-city ?loc-now ?city-now)
+             (different ?city-goal ?city-now)
+             (truck ?truck-now ?city-now)
+             (truck ?truck-goal ?city-goal)
+             (airport ?airport-now) (in-city ?airport-now ?city-now)
+             (airport ?airport-goal) (in-city ?airport-goal ?city-goal))
+            (:ordered (:task in-city-delivery ?truck-now ?obj 
 ?loc-now ?airport-now)
-	              (:task air-deliver-obj ?obj ?airport-now ?airport-goal)
-	              (:task in-city-delivery ?truck-goal ?obj 
+                      (:task air-deliver-obj ?obj ?airport-now ?airport-goal)
+                      (:task in-city-delivery ?truck-goal ?obj 
 ?airport-goal ?loc-goal)))
 
     ;;;-------------------------------------------------
