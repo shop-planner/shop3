@@ -15,7 +15,7 @@
 
 
 (nst-depot-test depot-1
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE19 PALLET5)) (GOAL (ON CRATE18 PALLET25))
                                      (GOAL (ON CRATE17 PALLET18)) (GOAL (ON CRATE16 PALLET8))
@@ -219,7 +219,7 @@
        (!DROP HOIST27 CRATE0 PALLET11 DISTRIBUTOR1)))
     'PFILE1)
   (nst-depot-test depot-2
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE37 CRATE8)) (GOAL (ON CRATE36 CRATE33))
          (GOAL (ON CRATE35 PALLET29)) (GOAL (ON CRATE34 PALLET6))
@@ -594,7 +594,7 @@
        (!DROP HOIST13 CRATE16 CRATE18 DISTRIBUTOR3)))
     'PFILE2)
   (nst-depot-test depot-3
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE58 CRATE48)) (GOAL (ON CRATE57 CRATE32))
          (GOAL (ON CRATE56 PALLET17)) (GOAL (ON CRATE55 PALLET28))
@@ -1151,7 +1151,7 @@
        (!DROP HOIST12 CRATE6 PALLET29 DISTRIBUTOR2)))
     'PFILE3)
   (nst-depot-test depot-4
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE79 CRATE54)) (GOAL (ON CRATE78 PALLET10))
          (GOAL (ON CRATE77 CRATE41)) (GOAL (ON CRATE76 PALLET8))
@@ -1886,7 +1886,7 @@
        (!DROP HOIST0 CRATE33 CRATE74 DEPOT0)))
     'PFILE4)
   (nst-depot-test depot-5
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE99 CRATE26)) (GOAL (ON CRATE98 CRATE5))
          (GOAL (ON CRATE97 CRATE17)) (GOAL (ON CRATE96 PALLET25))
@@ -2761,7 +2761,7 @@
        (!DROP HOIST12 CRATE14 CRATE76 DISTRIBUTOR2)))
     'PFILE5)
   (nst-depot-test depot-6
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE149 CRATE135)) (GOAL (ON CRATE148 CRATE15))
          (GOAL (ON CRATE147 CRATE127)) (GOAL (ON CRATE146 CRATE3))
@@ -4121,7 +4121,7 @@
        (!DROP HOIST21 CRATE102 CRATE27 DISTRIBUTOR4)))
     'PFILE6)
   (nst-depot-test depot-7
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE39 CRATE6)) (GOAL (ON CRATE38 PALLET17))
          (GOAL (ON CRATE36 PALLET34)) (GOAL (ON CRATE35 CRATE15))
@@ -4491,7 +4491,7 @@
        (!DROP HOIST12 CRATE37 CRATE10 DISTRIBUTOR2)))
     'PFILE7)
   (nst-depot-test depot-8
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE39 CRATE7)) (GOAL (ON CRATE38 CRATE28))
          (GOAL (ON CRATE37 CRATE14)) (GOAL (ON CRATE35 CRATE24))
@@ -4846,7 +4846,7 @@
        (!DROP HOIST12 CRATE31 PALLET20 DISTRIBUTOR2)))
     'PFILE8)
   (nst-depot-test depot-9
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE39 PALLET19)) (GOAL (ON CRATE38 CRATE6))
          (GOAL (ON CRATE36 PALLET17)) (GOAL (ON CRATE35 CRATE22))
@@ -5208,7 +5208,7 @@
        (!DROP HOIST8 CRATE33 CRATE16 DEPOT8)))
     'PFILE9)
   (nst-depot-test depot-10
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE39 CRATE19)) (GOAL (ON CRATE38 CRATE15))
          (GOAL (ON CRATE37 CRATE39)) (GOAL (ON CRATE36 CRATE14))
@@ -5541,7 +5541,7 @@
        (!DROP HOIST1 CRATE2 CRATE27 DEPOT1)))
     'PFILE10)
   (nst-depot-test depot-11
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE59 CRATE11)) (GOAL (ON CRATE58 PALLET1))
          (GOAL (ON CRATE57 CRATE37)) (GOAL (ON CRATE56 CRATE43))
@@ -6019,7 +6019,7 @@
        (!DROP HOIST0 CRATE39 CRATE30 DEPOT0)))
     'PFILE11)
   (nst-depot-test depot-12
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE79 CRATE24)) (GOAL (ON CRATE78 CRATE28))
          (GOAL (ON CRATE77 CRATE68)) (GOAL (ON CRATE76 CRATE5))
@@ -6647,7 +6647,7 @@
        (!DROP HOIST2 CRATE45 CRATE70 DEPOT2)))
     'PFILE12)
   (nst-depot-test depot-13
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE59 CRATE21)) (GOAL (ON CRATE58 CRATE10))
          (GOAL (ON CRATE57 CRATE11)) (GOAL (ON CRATE55 CRATE32))
@@ -7165,7 +7165,7 @@
        (!DROP HOIST4 CRATE5 CRATE22 DISTRIBUTOR1)))
     'PFILE13)
   (nst-depot-test depot-14
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE79 CRATE47)) (GOAL (ON CRATE78 CRATE67))
          (GOAL (ON CRATE77 CRATE39)) (GOAL (ON CRATE76 CRATE65))
@@ -7821,7 +7821,7 @@
        (!DROP HOIST2 CRATE78 CRATE67 DEPOT2)))
     'PFILE14)
   (nst-depot-test depot-15
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE99 CRATE37)) (GOAL (ON CRATE98 CRATE41))
          (GOAL (ON CRATE97 CRATE4)) (GOAL (ON CRATE96 CRATE36))
@@ -8687,7 +8687,7 @@
        (!DROP HOIST8 CRATE49 CRATE44 DEPOT0)))
     'PFILE15)
   (nst-depot-test depot-16
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE79 CRATE40)) (GOAL (ON CRATE78 CRATE4))
          (GOAL (ON CRATE77 CRATE78)) (GOAL (ON CRATE76 PALLET7))
@@ -9557,7 +9557,7 @@
        (!UNLOAD HOIST0 CRATE6 TRUCK3 DEPOT0) (!DROP HOIST0 CRATE6 CRATE18 DEPOT0)))
     'PFILE16)
   (nst-depot-test depot-17
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE99 CRATE11)) (GOAL (ON CRATE97 PALLET26))
          (GOAL (ON CRATE96 CRATE70)) (GOAL (ON CRATE95 CRATE79))
@@ -10599,8 +10599,9 @@
        (!DROP HOIST5 CRATE15 CRATE51 DEPOT0)))
     'PFILE17)
 ;;; FIXME: this test is failing... (stack overflow) [2012/09/05:rpg]
+;;; This passes on cryptonomicon, but not on my Mac [2012/09/05:rpg]
 (nst-depot-test depot-18
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE119 CRATE80)) (GOAL (ON CRATE118 PALLET8))
          (GOAL (ON CRATE117 CRATE15)) (GOAL (ON CRATE116 PALLET25))
@@ -11933,7 +11934,7 @@
        (!DROP HOIST5 CRATE9 PALLET9 DEPOT0)))
     'PFILE18)
   (nst-depot-test depot-19
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE79 PALLET29)) (GOAL (ON CRATE78 PALLET27))
          (GOAL (ON CRATE77 PALLET13)) (GOAL (ON CRATE76 PALLET49))
@@ -12661,7 +12662,7 @@
        (!DROP HOIST5 CRATE66 CRATE65 DEPOT5)))
     'PFILE19)
   (nst-depot-test depot-20
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE99 CRATE30)) (GOAL (ON CRATE97 CRATE59))
          (GOAL (ON CRATE96 PALLET27)) (GOAL (ON CRATE95 CRATE51))
@@ -13564,7 +13565,7 @@
        (!DROP HOIST17 CRATE45 CRATE14 DISTRIBUTOR7)))
     'PFILE20)
   (nst-depot-test depot-21
-      (:primary-result-plan 
+      (:primary-result-plan
        ((!!ASSERT
         ((GOAL (ON CRATE149 CRATE15)) (GOAL (ON CRATE148 PALLET25))
          (GOAL (ON CRATE147 CRATE105)) (GOAL (ON CRATE146 PALLET48))
@@ -14910,7 +14911,7 @@
     'PFILE21)
 ;;; FIXME: currently this fails ... stack overflow [2012/09/05:rpg]
 (nst-depot-test depot-22
-                (:primary-result-plan 
+                (:primary-result-plan
                  ((!!ASSERT
                    ((GOAL (ON CRATE199 CRATE137)) (GOAL (ON CRATE198 CRATE189))
                     (GOAL (ON CRATE197 PALLET48)) (GOAL (ON CRATE196 CRATE68))
