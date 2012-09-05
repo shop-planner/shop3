@@ -399,7 +399,8 @@ but <domain-name> will be ignored."
        (unless *define-silently*
          (when *defdomain-verbose*
          (format t "~%Defining domain ~a...~%" ',name)))
-       #+allegro (excl:record-source-file ',name :type :shop2-domain)
+       #+allegro (excl:without-redefinition-warnings
+                  (excl:record-source-file ',name :type :shop2-domain))
        (let ((domain (apply #'make-instance ',type
                        :name ',name
                        ',options
