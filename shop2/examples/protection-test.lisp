@@ -38,7 +38,8 @@
 (in-package :protection-test)
 
 (defun init-protections-domain ()
-  (defdomain (protection-test-domain :noset t)
+  (defdomain (protection-test-domain :noset t
+                                     :redefine-ok t)
     (
      (:operator (!positive-op)
                 ()                      ;no preconditions
@@ -68,7 +69,7 @@
 (def-fixture protections-domain ()
     (let ((setup (init-protections-domain)))
       (&body)))
-  
+
 
 (def-fixture empty-state ()
     (let ((s (shop::make-initial-state setup
@@ -95,7 +96,7 @@
     (unfailed (apply-op !positive-op))
     (unfailed (apply-op !negative-op))
     ;; item number two
-    (unfailed 
+    (unfailed
      (progn (apply-op !positive-op)
             (apply-op !add-protect)))
     (unfailed (apply-op !remove-protect))
