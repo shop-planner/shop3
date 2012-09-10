@@ -28,7 +28,6 @@ shop2/examples/UMT2/umt-tests.lisp -text
 shop2/examples/apply-operator-bug.lisp -text
 shop2/examples/axiom-else-bug.lisp -text
 shop2/examples/blocks/block2.lisp -text
-shop2/examples/blocks/nst-blocks.lisp -text
 shop2/examples/blocks/problem100.lisp -text
 shop2/examples/blocks/problem200.lisp -text
 shop2/examples/blocks/problem300.lisp -text
