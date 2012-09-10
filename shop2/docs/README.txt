@@ -1,4 +1,45 @@
-Welcome to SHOP2, 2.0.1 
+Welcome to SHOP2, 2.9.0
+
+This release represents a first attempt to seriously address
+portability for SHOP2.  In particular, with this release we
+restructured the tests using the FiveAM library, which supports more
+lisp implementations than SIFT's NST testing library.  We have tested
+SHOP2 on Allegro Common Lisp, Steel Bank Common Lisp (SBCL), Clozure
+Common Lisp, and GNU clisp.
+
+We do not recommend the use of clisp with SHOP2, although we are
+certainly interested in supporting it, and would be happy to accept
+patches and fixes.  In particular, more difficult planning problems
+can cause stack exhaustion.  On all but clisp, compilation with
+
+(DECLAIM (OPTIMIZE (SPEED 3) (SPACE 3)))
+
+avoids this problem.  On clisp, some tests fail with stack exhaustion
+errors.  Also, on clisp, unlike the other lisps, a stack exhaustion
+error is *not* a Common Lisp condition, and cannot be successfully
+handled (or even aborted from).  If you must run with GNU clisp,
+please use the ANSI-compliance option.  If you need a free Common Lisp
+implementation, we urge you to use SBCL or Clozure Common Lisp
+instead.
+
+We have not had the time to test on other Common Lisps, such as ECL,
+ABCL, or CMU CL.  We suspect SHOP2 would work poorly on ABCL, because
+of the JVM's restrictions on tail call optimization.  We would welcome
+any test results or reports of experience with as-yet-unsupported CL
+implementations.
+
+Testing SHOP2 requires three ancillary libraries:
++ FiveAM test library
++ Arnesi utility library, required for building FiveAM
++ FiveAM ASDF tester library, which makes ASDF:TEST-SYSTEM on SHOP2
+invoke the FiveAM tests correctly.
+
+We make these libraries available in separate tarballs for the
+interested user.  Please report any test problems.
+
+Previous entries in the README/Changelog are retained below.
+
+---
 
 This is a release candidate for SHOP2 (lisp version), version 2.  This
 version inaugurates a gradual shift in the architecture of SHOP2, and
