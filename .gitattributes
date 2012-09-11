@@ -7,6 +7,7 @@ jenkins/ShopTestRunBase.pm -text
 jenkins/full-test-suite.asd -text
 jenkins/jenkins.perl -text
 jenkins/jm.perl -text
+jenkins/run-tests.sh svneol=native#text/plain
 shop2/common/common.lisp -text
 shop2/common/package-common.lisp -text
 shop2/common/state-decls.lisp -text
