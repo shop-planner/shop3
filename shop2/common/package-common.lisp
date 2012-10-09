@@ -81,5 +81,4 @@
              #:delete-atom-from-state
              #:tag-state
              #:make-state
-             #:make-initial-state
              ))
