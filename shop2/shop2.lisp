@@ -627,14 +627,15 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
   (when state-supplied-p
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
   ;;; should add a dependency on TRIVIAL-GARBAGE to get rid of this... [2011/09/28:rpg]
-  #+(or :ccl :allegro :sbcl clisp)
+  #+(or :ccl :allegro :sbcl clisp abcl)
   (when gc #+allegro (excl:gc t)
         #+sbcl (sb-ext:gc)
         #+ccl (ccl:gc)
         #+clisp (ext:gc)
         #+cmucl (extensions:gc :full t)
+        #+abcl (extensions:gc)
         )
-  #-(or :cCL :allegro :sbcl clisp cmucl)
+  #-(or :cCL :allegro :sbcl clisp cmucl abcl)
   (when gc (cerror "Just continue, skip GC."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*start-run-time* (get-internal-run-time))
