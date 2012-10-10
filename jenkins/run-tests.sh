@@ -11,7 +11,7 @@ usage () {
     echo " - quit with exit status 0 on getting eof"
     echo " - quit with exit status >0 if an unhandled error occurs"
     echo " you need to supply the .script in the second argument"
-    echo " lisps include abcl, allegro, allegromodern, ccl (clozure),"
+    echo " lisps include abcl, allegro, ccl (clozure),"
     echo "  clisp, cmucl, ecl, gclcvs, sbcl, and scl."
     echo "OPTIONS:"
     echo "    -d -- debug mode"
@@ -44,11 +44,7 @@ if [ x"$1" = "xhelp" ]; then
 fi
 lisp=${1:-sbcl} ; shift
 
-if [ -z "$*" ]; then
-    scripts="*.script"
-else
-    scripts="$*"
-fi
+scripts="test-shop2.lisp"
 
 sok=1
 
@@ -56,8 +52,7 @@ DO () { ( set -x ; "$@" ); }
 
 do_tests() {
   command="$1" eval="$2"
-  rm -f ~/.cache/common-lisp/"`pwd`"/* || true
-  ( cd .. && DO $command $eval '(load "test/compile-asdf.lisp")' )
+  ( DO $command $eval '(load "compile-shop2.lisp")' )
   if [ $? -ne 0 ] ; then
     echo "Compilation FAILED" >&2
   else
@@ -70,7 +65,6 @@ do_tests() {
     do
       echo "Testing: $i" >&2
       test_count=`expr "$test_count" + 1`
-      rm -f ~/.cache/common-lisp/"`pwd`"/* || true
       if DO $command $eval "(load \"$i\")" ; then
         echo "Using $command, $i passed" >&2
 	test_pass=`expr "$test_pass" + 1`
@@ -88,7 +82,7 @@ do_tests() {
     echo "  $test_pass passing and $test_fail failing" >&2
     if [ $test_fail -eq 0 ] ; then
 	echo "all tests apparently successful" >&2
-        echo success > ../tmp/results/status
+        echo success > tmp/results/status
     else
 	echo "failing test(s): $failed_list" >&2
     fi
@@ -111,11 +105,12 @@ case "$lisp" in
     flags="-q"
     nodebug="-batch"
     eval="-e" ;;
-  allegromodern)
-    command="${ALLEGROMODERN:-mlisp}"
-    flags="-q"
-    nodebug="-batch"
-    eval="-e" ;;
+    # allegromodern won't work... [2012/10/09:rpg]
+  # allegromodern)
+  #   command="${ALLEGROMODERN:-mlisp}"
+  #   flags="-q"
+  #   nodebug="-batch"
+  #   eval="-e" ;;
   ccl)
     command="${CCL:-ccl}"
     flags="--no-init --quiet"
@@ -123,7 +118,7 @@ case "$lisp" in
     eval="--eval" ;;
   clisp)
     command="${CLISP:-clisp}"
-    flags="-norc -ansi -I "
+    flags="-norc -ansi -I"
     nodebug="-on-error exit"
     eval="-x" ;;
   cmucl)
@@ -141,37 +136,37 @@ case "$lisp" in
     command="${ECL:-ecl}"
     flags="-norc -eval (ext::install-bytecodes-compiler)"
     eval="-eval" ;;
-  gclcvs)
-    export GCL_ANSI=t
-    command="${GCL:-gclcvs}"
-    flags="-batch"
-    eval="-eval" ;;
-  lispworks)
-    command="${LISPWORKS:-lispworks}"
-    # If you have a licensed copy of lispworks,
-    # you can obtain the "lispworks" binary with, e.g.
-    # echo '(hcl:save-image "/lispworks" :environment nil)' > /tmp/build.lisp ;
-    # ./lispworks-6-0-0-x86-linux -siteinit - -init - -build /tmp/build.lisp
-    flags="-siteinit - -init -"
-    eval="-eval" ;;
-  mkcl)
-    command="${MKCL:-mkcl}"
-    flags="-norc"
-    eval="-eval" ;;
+  # gclcvs)
+  #   export GCL_ANSI=t
+  #   command="${GCL:-gclcvs}"
+  #   flags="-batch"
+  #   eval="-eval" ;;
+  # lispworks)
+  #   command="${LISPWORKS:-lispworks}"
+  #   # If you have a licensed copy of lispworks,
+  #   # you can obtain the "lispworks" binary with, e.g.
+  #   # echo '(hcl:save-image "/lispworks" :environment nil)' > /tmp/build.lisp ;
+  #   # ./lispworks-6-0-0-x86-linux -siteinit - -init - -build /tmp/build.lisp
+  #   flags="-siteinit - -init -"
+  #   eval="-eval" ;;
+  # mkcl)
+  #   command="${MKCL:-mkcl}"
+  #   flags="-norc"
+  #   eval="-eval" ;;
   sbcl)
     command="${SBCL:-sbcl}"
     flags="--noinform --userinit /dev/null --sysinit /dev/null"
     nodebug="--disable-debugger"
     eval="--eval" ;;
-  scl)
-    command="${SCL:-scl}"
-    flags="-noinit"
-    nodebug="-batch"
-    eval="-eval" ;;
-  xcl)
-    command="${XCL:-xcl}"
-    flags="--no-userinit --no-siteinit"
-    eval="--eval" ;;
+  # scl)
+  #   command="${SCL:-scl}"
+  #   flags="-noinit"
+  #   nodebug="-batch"
+  #   eval="-eval" ;;
+  # xcl)
+  #   command="${XCL:-xcl}"
+  #   flags="--no-userinit --no-siteinit"
+  #   eval="--eval" ;;
   *)
     echo "Unsupported lisp: $1" >&2
     echo "Please add support to run-tests.sh" >&2
@@ -183,9 +178,10 @@ if ! type "$command" ; then
     exit 43
 fi
 
-ASDFDIR="$(cd .. ; /bin/pwd)"
-export CL_SOURCE_REGISTRY="${ASDFDIR}"
-export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${ASDFDIR}\" (\"${ASDFDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
+SHOP2DIR="$(cd ../shop2 ; /bin/pwd)"
+THISDIR="$(pwd)"
+export CL_SOURCE_REGISTRY="${SHOP2DIR}:${THISDIR}/arnesi:${THISDIR}/fiveam:${THISDIR}/fiveam-asdf"
+export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP2DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
 env | grep asdf
 
 command="$command $flags"
@@ -195,23 +191,24 @@ fi
 
 
 create_config () {
-    mkdir -p ../tmp/test-source-registry-conf.d ../tmp/test-asdf-output-translations-conf.d
+    mkdir -p tmp/test-source-registry-conf.d tmp/test-asdf-output-translations-conf.d
 }
 
 clean_up () {
-    rm -rf ../tmp/test-source-registry-conf.d ../tmp/test-asdf-output-translations-conf.d
+    rm -rf tmp/test-source-registry-conf.d tmp/test-asdf-output-translations-conf.d
 }
 
 if [ -z "$command" ] ; then
     echo "Error: cannot find or do not know how to run Lisp named $lisp"
 else
+    mkdir -p tmp
     create_config
-    mkdir -p ../tmp/results
-    echo failure > ../tmp/results/status
+    mkdir -p tmp/results
+    echo failure > tmp/results/status
     thedate=`date "+%Y-%m-%d"`
     do_tests "$command" "$eval" 2>&1 | \
-	tee "../tmp/results/${lisp}.text" "../tmp/results/${lisp}-${thedate}.save"
-    read a < ../tmp/results/status
+	tee "tmp/results/${lisp}.text" "tmp/results/${lisp}-${thedate}.save"
+    read a < tmp/results/status
     clean_up
     [ success = "$a" ] ## exit code
 fi
