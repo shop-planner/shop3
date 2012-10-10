@@ -118,7 +118,7 @@ case "$lisp" in
     eval="--eval" ;;
   clisp)
     command="${CLISP:-clisp}"
-    flags="-norc -ansi -I"
+    flags="-norc -ansi -I -m 8MB"
     nodebug="-on-error exit"
     eval="-x" ;;
   cmucl)
