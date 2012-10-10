@@ -56,9 +56,9 @@
     (:shadow #:defconstant)
     #+(or allegro sbcl ccl clisp)
     (:import-from #+allegro aclmop     #+sbcl sb-mop
-                  #+ccl ccl #+clisp clos
+                  #+ccl ccl #+clisp clos #+cmucl pcl
                   #:class-direct-superclasses)
-    #-(or allegro sbcl ccl clisp)
+    #-(or allegro sbcl ccl clisp cmucl)
     (error "Don't know how to find CLASS-DIRECT-SUPERCLASSES in this lisp.")
     )
 (in-package :shop2-asd)
