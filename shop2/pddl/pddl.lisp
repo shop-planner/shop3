@@ -122,7 +122,7 @@ add code for processing the actions that is parallel to process-operator."))
 ;;; by the OPERATOR defstruct in vanilla shop2.
 ;;;---------------------------------------------------------------------------
 (defstruct (pddl-action :named (:type list))
-  (head nil :type list)		
+  (head nil :type list)         
   precondition
   effect
   (cost-fun nil))
@@ -142,15 +142,15 @@ later be compiled into find-satisfiers or something."
     ;; operators [2006/07/31:rpg]
     (unless (eql (elt (symbol-name op-name) 0) #\!)
       (setf op-name (intern (concatenate 'string
-					 "!" (symbol-name op-name))
-			    (symbol-package op-name)
-			    ))
+                                         "!" (symbol-name op-name))
+                            (symbol-package op-name)
+                            ))
 ;;;      (format t "~&Making new SHOP2 operator name ~S from old name ~S.~%"
-;;;	      op-name (second item))
+;;;           op-name (second item))
       (setf (second item) op-name))
     (with-slots (operators) domain
       (when (gethash op-name operators)
-	(error "There is more than one operator named ~s" op-name))
+        (error "There is more than one operator named ~s" op-name))
       (setf (gethash op-name operators) (process-action domain item)))))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':predicates)) item)
@@ -167,7 +167,7 @@ later be compiled into find-satisfiers or something."
   "Processes a PDDL action.  Handles only the simplest class of actions, 
 with unconditional actions."
   (destructuring-bind (keyword action-symbol &key parameters precondition effect
-						  (cost 1.0))
+                                                  (cost 1.0))
       action-def
     (unless (eq keyword :action)
       (error "Unexpected action expression: ~A" action-def))
@@ -175,15 +175,15 @@ with unconditional actions."
     ;; actions [2006/08/01:rpg]
     (set-variable-property domain action-def)
     (multiple-value-bind (param-vars param-types)
-	(typed-list-vars parameters)
+        (typed-list-vars parameters)
       (declare (ignore param-types))
       (let ((precond
-	     (translate-precondition domain precondition))
-	    (eff
-	     (translate-effect domain effect))
-	    (head (cons action-symbol param-vars)))
-	(make-pddl-action :head head :precondition precond
-			  :effect eff :cost-fun cost)))))
+             (translate-precondition domain precondition))
+            (eff
+             (translate-effect domain effect))
+            (head (cons action-symbol param-vars)))
+        (make-pddl-action :head head :precondition precond
+                          :effect eff :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Additional generic functions, used to tailor the translation of
@@ -257,23 +257,23 @@ translated."
 into SHOP2 quantifier notation \(and adds some
 \(:of-type <type> <var>\) conditions\)."
   (labels ((iter (expr)
-	     (cond ((and (listp expr) (eq (first expr) quantifier))
-		    (rewrite-quant expr))
-		   ((listp expr)
-		    (mapcar #'iter expr))
-		   ((atom expr) expr)))
-	   (rewrite-quant (quant-expr)
-	     (destructuring-bind (quant typed-list sub-expr)
-		 quant-expr
-	       (declare (ignore quant))
-	       (multiple-value-bind (vars types)
-		   (typed-list-vars typed-list)
-		 `(,quantifier ,vars
-			  ,(let ((exprs (of-type-exprs vars types)))
-			     (if (= (length exprs) 1)
-				 (first exprs)
-				 (cons 'and exprs)))
-			  ,(iter sub-expr))))))
+             (cond ((and (listp expr) (eq (first expr) quantifier))
+                    (rewrite-quant expr))
+                   ((listp expr)
+                    (mapcar #'iter expr))
+                   ((atom expr) expr)))
+           (rewrite-quant (quant-expr)
+             (destructuring-bind (quant typed-list sub-expr)
+                 quant-expr
+               (declare (ignore quant))
+               (multiple-value-bind (vars types)
+                   (typed-list-vars typed-list)
+                 `(,quantifier ,vars
+                          ,(let ((exprs (of-type-exprs vars types)))
+                             (if (= (length exprs) 1)
+                                 (first exprs)
+                                 (cons 'and exprs)))
+                          ,(iter sub-expr))))))
     (iter expression)))
 
 (defun of-type-exprs (vars types)
@@ -281,40 +281,39 @@ into SHOP2 quantifier notation \(and adds some
 and their types and generate a list of distinguished propositions 
 we can use in preconditions."
   (loop for v in vars
-	as type in types
-	collect `(:of-type ,type ,v)))
+        as type in types
+        collect `(:of-type ,type ,v)))
   
 
 ;;; this should be fixed to check to make sure everything in the
 ;;; return value list is really a variable.... [2006/07/28:rpg]
+;;; FIXME: If the variables are not all typed (some are implicitly OBJECT), this
+;;; will fail. [2012/10/09:rpg]
 (defun typed-list-vars (typed-list)
   "Takes a typed-list (this is a PDDL construct) as argument and 
 pulls out the variables and types and returns two parallel
 lists of variable names and type names."
-  (let ((srav nil)
-	(sepyt nil))
-    (labels ((iter (lst &optional (counter 0))
-	       ;; counter is how many variables of the current type
-	       ;; have we seen so far. [2006/07/31:rpg]
-	       (cond ((null lst) nil)
-		     ((eq (first lst) '-)
-		      (setf sepyt
-			(nconc (make-list counter :initial-element (second lst))
-			       sepyt))
-		      (iter (cddr lst)))
-		     (t (push (first lst) srav)
-			(iter (rest lst) (1+ counter))))))
-      (iter typed-list))
-    (values 
-     (reverse srav)
-     (reverse sepyt))))
-
+  (loop with lst = typed-list
+        with counter = 0
+        until (null lst)
+        if (eq (first lst) '-)
+          append (make-list counter :initial-element (second lst)) into types
+          and do (setf lst (cddr lst)
+                    counter 0)
+        else
+          collect (first lst) into vars
+          and do (setf lst (cdr lst))
+                 (incf counter)
+        ;; FIXME: check to make sure counter == 0 here. Otherwise there are
+        ;; untyped variables 
+        finally (return (values vars types))))
+                            
 ;;;---------------------------------------------------------------------------
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
 ;;; SHOP2.
 ;;;---------------------------------------------------------------------------
 (defun apply-action (state task-body action protections depth
-			   in-unifier)
+                           in-unifier)
   "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then 
 APPLY-ACTION returns five values:
 1.  the operator as applied, with all bindings;
@@ -327,61 +326,61 @@ Otherwise it returns FAIL."
   (let* ((standardized-action (standardize action))
          (head (pddl-action-head standardized-action))
          (preconditions (pddl-action-precondition standardized-action))
-	 (effect (pddl-action-effect standardized-action))
+         (effect (pddl-action-effect standardized-action))
          unifier)
 
     ;; added rudimentary arity-checking...
     (unless (= (length task-body) (length head))
       (cerror "Continue (action application will fail)"
-	      "Arity of action in the plan library, ~D~%~T~S~%does not match task, ~D~%~T~S"
-	      (length head)
-	      head
-	      (length task-body)
-	      task-body))
+              "Arity of action in the plan library, ~D~%~T~S~%does not match task, ~D~%~T~S"
+              (length head)
+              head
+              (length task-body)
+              task-body))
 
     ;; new tracing facility for debugging
     (when *traced-tasks*
       (when (member (first head) *traced-tasks*)
-	(break "Applying action for ~A~%~S" (first head) task-body)))
+        (break "Applying action for ~A~%~S" (first head) task-body)))
 
     (let ((action-unifier (unify head (apply-substitution task-body in-unifier))))
 
       (when (eql action-unifier 'fail)
-	(values 'fail protections 0))
+        (values 'fail protections 0))
 
       ;; everything below is "if action-unifier != fail"
       
       (setf action-unifier
-	    (compose-substitutions action-unifier in-unifier))
+            (compose-substitutions action-unifier in-unifier))
       ;; first check the preconditions, if any
       (if preconditions
-	(let ((pre (apply-substitution preconditions action-unifier)))
-	  
-	  ;; need to specially handle the preconditions, since the
-	  ;; syntax of PDDL preconditions are different from
-	  ;; SHOP2. [2006/07/31:rpg]
-	  (let ((pu (shopthpr:find-satisfiers pre state t)))
-	    (unless pu
-	      (trace-print :operators (first head) state
-			   "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
-			   depth
-			   (first head)
-			   (apply-substitution task-body unifier)
-			   pre
-			   )
-	      (return-from apply-action (values 'fail preconditions 0)))
-	    (setq unifier (compose-substitutions action-unifier (first pu)))))
-	(setq unifier action-unifier)))
+        (let ((pre (apply-substitution preconditions action-unifier)))
+          
+          ;; need to specially handle the preconditions, since the
+          ;; syntax of PDDL preconditions are different from
+          ;; SHOP2. [2006/07/31:rpg]
+          (let ((pu (shopthpr:find-satisfiers pre state t)))
+            (unless pu
+              (trace-print :operators (first head) state
+                           "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
+                           depth
+                           (first head)
+                           (apply-substitution task-body unifier)
+                           pre
+                           )
+              (return-from apply-action (values 'fail preconditions 0)))
+            (setq unifier (compose-substitutions action-unifier (first pu)))))
+        (setq unifier action-unifier)))
     ;; end of scope for action-unifier...
 
     ;; all this stuff below here must be revised since we have an EFFECT,
     ;; instead of add and delete lists... [2006/07/30:rpg]
     (let* ((effect-subbed (apply-substitution effect unifier))
-	   (head-subbed (apply-substitution head unifier))
-	   (cost-value
-	    (eval (apply-substitution
-		   (pddl-action-cost-fun standardized-action) unifier)))
-	   (cost-number (if (numberp cost-value) cost-value 1.0)))
+           (head-subbed (apply-substitution head unifier))
+           (cost-value
+            (eval (apply-substitution
+                   (pddl-action-cost-fun standardized-action) unifier)))
+           (cost-number (if (numberp cost-value) cost-value 1.0)))
 
 
       ;; at this point UNIFIER is bound to the results of unifying
@@ -391,66 +390,66 @@ Otherwise it returns FAIL."
       ;; bindings from add and delete lists should not be plugged
       ;; in. [2004/01/20:rpg]
       (when *explanation*
-	(setq head-subbed `(,@(cons (first head-subbed)
-				    (mapcar #'list
-					    (rest (second action))
-					    (rest head-subbed)))
-			      :explanation
-			      ,(shopthpr:explain-satisfier (apply-substitution preconditions unifier)
-				state)))
-	)
+        (setq head-subbed `(,@(cons (first head-subbed)
+                                    (mapcar #'list
+                                            (rest (second action))
+                                            (rest head-subbed)))
+                              :explanation
+                              ,(shopthpr:explain-satisfier (apply-substitution preconditions unifier)
+                                state)))
+        )
       (trace-print :operators (first head) state
-		   "~2%Depth ~s, applying PDDL action ~s~%      task ~s~%       effect ~s"
-		   depth
-		   (first head)
-		   (apply-substitution task-body unifier)
-		   effect-subbed)
+                   "~2%Depth ~s, applying PDDL action ~s~%      task ~s~%       effect ~s"
+                   depth
+                   (first head)
+                   (apply-substitution task-body unifier)
+                   effect-subbed)
 
       (multiple-value-bind (final-adds final-dels)
-	  (extract-adds-and-deletes effect-subbed state)
+          (extract-adds-and-deletes effect-subbed state)
 
 
-	(let ((protections1 protections)               
-	      (statetag (tag-state state)))
-	  ;; process PROTECTIONS generated by this operator
-	  (dolist (d final-dels)
-	    (if (eq (car d) :protection)
-		(setq protections1 
-		      (delete-protection 
-		       protections1 (second d) depth (first head) state))
-		(delete-atom-from-state d state depth (first head))))
+        (let ((protections1 protections)               
+              (statetag (tag-state state)))
+          ;; process PROTECTIONS generated by this operator
+          (dolist (d final-dels)
+            (if (eq (car d) :protection)
+                (setq protections1 
+                      (delete-protection 
+                       protections1 (second d) depth (first head) state))
+                (delete-atom-from-state d state depth (first head))))
 
-	  (dolist (a final-adds)
-	    (unless (eq (car a) :protection)
-	      ;; added this error-checking.  I can't think of a case where
-	      ;; it's ok to add a non-ground literal to the
-	      ;; state. [2004/02/17:rpg]
-	      (unless (groundp a)
-		(error "Attempting to add non-ground literal ~S to state."
-		       a))
-	      (add-atom-to-state a state depth (first head))))
+          (dolist (a final-adds)
+            (unless (eq (car a) :protection)
+              ;; added this error-checking.  I can't think of a case where
+              ;; it's ok to add a non-ground literal to the
+              ;; state. [2004/02/17:rpg]
+              (unless (groundp a)
+                (error "Attempting to add non-ground literal ~S to state."
+                       a))
+              (add-atom-to-state a state depth (first head))))
 
-	  (cond
-	    ((protection-ok state protections1 head) 
-	     (setq protections protections1))
-	    (t
-	     (retract-state-changes state statetag)
-	     ;; I don't understand why we need to return more than one
-	     ;; value here. [2006/07/31:rpg]
-	     (return-from apply-action (values 'fail 'fail protections 0))))
+          (cond
+            ((protection-ok state protections1 head) 
+             (setq protections protections1))
+            (t
+             (retract-state-changes state statetag)
+             ;; I don't understand why we need to return more than one
+             ;; value here. [2006/07/31:rpg]
+             (return-from apply-action (values 'fail 'fail protections 0))))
 
-	  ;; protections just added are not checked immediately...
-	  (dolist (a final-adds)
-	    (when (eql (car a) :protection)
-	      (setq protections 
-		    (add-protection protections (second a) 
-				    depth (first head) state))))
+          ;; protections just added are not checked immediately...
+          (dolist (a final-adds)
+            (when (eql (car a) :protection)
+              (setq protections 
+                    (add-protection protections (second a) 
+                                    depth (first head) state))))
 
-	  (trace-print :operators action state "~&PDDL action ~A successfully applied." head-subbed)
+          (trace-print :operators action state "~&PDDL action ~A successfully applied." head-subbed)
 
-	  (values head-subbed statetag 
-		  protections cost-number
-		  unifier))))))
+          (values head-subbed statetag 
+                  protections cost-number
+                  unifier))))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Helpers for apply-action
@@ -462,64 +461,64 @@ two values."
   (case (first effect-expr)
     (and
      (loop for effect in (rest effect-expr)
-	   with add and delete
-	   do (multiple-value-setq (add delete)
-		  (extract-adds-and-deletes effect state))
-	   when add
-	     append add into recursive-adds
-	   when delete
-	     append delete into recursive-deletes
-	   finally (return (values recursive-adds recursive-deletes))))
+           with add and delete
+           do (multiple-value-setq (add delete)
+                  (extract-adds-and-deletes effect state))
+           when add
+             append add into recursive-adds
+           when delete
+             append delete into recursive-deletes
+           finally (return (values recursive-adds recursive-deletes))))
     (not
      ;; add something to deletes
      (values nil (list (second effect-expr))))
     (forall
      (destructuring-bind (forall vars restr consequent)
-	 effect-expr
+         effect-expr
        (declare (ignore forall vars))
        (let ((unifiers
-	      (shopthpr:find-satisfiers restr state)))
-	 (when unifiers
-	   (loop for unifier in unifiers
-		 with new-adds and new-deletes
-		 do (multiple-value-setq (new-adds new-deletes)
-			(extract-adds-and-deletes
-			 (apply-substitution consequent unifier)
-			 state))
-		 append new-adds into adds
-		 append new-deletes into dels
-		 finally (return (values adds dels)))))))
+              (shopthpr:find-satisfiers restr state)))
+         (when unifiers
+           (loop for unifier in unifiers
+                 with new-adds and new-deletes
+                 do (multiple-value-setq (new-adds new-deletes)
+                        (extract-adds-and-deletes
+                         (apply-substitution consequent unifier)
+                         state))
+                 append new-adds into adds
+                 append new-deletes into dels
+                 finally (return (values adds dels)))))))
     (when
-	(destructuring-bind (when antecedent consequent)
-	    effect-expr
-	  (declare (ignore when))
-	  (let ((result (shopthpr:find-satisfiers antecedent state t)))
-	    (when result
-	      (let ((unifier (first result)))
-		(multiple-value-bind (new-adds new-deletes)
-		    (extract-adds-and-deletes
-		     (apply-substitution consequent unifier)
-		     state)
-		  (values new-adds new-deletes)))))))
-    (otherwise				;includes :protection
+        (destructuring-bind (when antecedent consequent)
+            effect-expr
+          (declare (ignore when))
+          (let ((result (shopthpr:find-satisfiers antecedent state t)))
+            (when result
+              (let ((unifier (first result)))
+                (multiple-value-bind (new-adds new-deletes)
+                    (extract-adds-and-deletes
+                     (apply-substitution consequent unifier)
+                     state)
+                  (values new-adds new-deletes)))))))
+    (otherwise                          ;includes :protection
      ;; normal expression
      (values (list effect-expr) nil))))
-	
+        
 
 (defmethod validator-export ((domain simple-pddl-domain) (plan list) stream)
   ;; first check to see if there are costs in the plan...
   (when (numberp (second plan))
     (setf plan (remove-costs plan)))
   (flet ((de-shopify (list)
-	   (cons
-	    ;; now the first element will be a list, which isn't
-	    ;; entirely desirable, but helps us avoid package
-	    ;; issues. [2007/07/17:rpg]
-	    (subseq (symbol-name (first list)) 1)
-	    (rest list))))
+           (cons
+            ;; now the first element will be a list, which isn't
+            ;; entirely desirable, but helps us avoid package
+            ;; issues. [2007/07/17:rpg]
+            (subseq (symbol-name (first list)) 1)
+            (rest list))))
     (let ((massaged-plan
-	   (mapcar #'de-shopify
-	    (remove-if #'internal-operator-p plan :key 'first))))
+           (mapcar #'de-shopify
+            (remove-if #'internal-operator-p plan :key 'first))))
       (loop for x in massaged-plan
-	    as i from 0
-	    do (format stream "~d: ~a~%" i x)))))
+            as i from 0
+            do (format stream "~d: ~a~%" i x)))))
