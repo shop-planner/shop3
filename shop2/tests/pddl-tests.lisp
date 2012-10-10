@@ -95,23 +95,26 @@
 (fiveam:test pddl-actions
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
-      (fiveam:is (equal (pddl-action-head action)
-                        '(drive ?v ?from ?to ?fbefore ?fafter)))))
+      (fiveam:is (equal '(drive ?v ?from ?to ?fbefore ?fafter)
+                        (pddl-action-head action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
-      (fiveam:is (equal (pddl-action-precondition action)
-                        '(and (at ?v ?from) (accessible ?v ?from ?to)
-                          (fuel ?v ?fbefore) (next ?fbefore ?fafter))))))
+      (fiveam:is (equal '(and (at ?v ?from) (accessible ?v ?from ?to)
+                          (fuel ?v ?fbefore) (next ?fbefore ?fafter))
+                        (pddl-action-precondition action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
-      (fiveam:is (equal (pddl-action-effect action)
-                        '(and (not (at ?v ?from)) (at ?v ?to)
-                          (not (fuel ?v ?fbefore)) (fuel ?v ?fafter))))))
+      (fiveam:is (equal '(and (not (at ?v ?from)) (at ?v ?to)
+                          (not (fuel ?v ?fbefore)) (fuel ?v ?fafter))
+                        (pddl-action-effect action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
       (fiveam:is (eql (pddl-action-cost-fun action) 1.0))))
   (fiveam:is
    (equal
+    '(PDDL-ACTION (!WALK ?FROM ?TO) (AT ROBOT ?FROM)
+      (AND (NOT (AT ROBOT ?FROM)) (AT ROBOT ?TO))
+      1.0)
     (progn
       (defdomain (#.(gentemp (symbol-name '#:domain))
                     :type simple-pddl-domain
@@ -121,10 +124,7 @@
                    :precondition (at robot ?from)
                    :effect (and (not (at robot ?from))
                                 (at robot ?to)))))
-      (operator *domain* '!walk))
-    '(PDDL-ACTION (!WALK ?FROM ?TO) (AT ROBOT ?FROM)
-      (AND (NOT (AT ROBOT ?FROM)) (AT ROBOT ?TO))
-      1.0))))
+      (operator *domain* '!walk)))))
 
 
 
