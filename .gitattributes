@@ -10,6 +10,8 @@ jenkins/full-test-suite.asd -text
 jenkins/jenkins.perl -text
 jenkins/jm.perl -text
 jenkins/run-tests.sh svneol=native#text/plain
+jenkins/shop-full-suite-multiplatform-jenkins-script -text
+jenkins/shop-multiplatform-jenkins-script -text
 jenkins/test-shop2.lisp svneol=native#text/x-lisp
 shop2/common/common.lisp -text
 shop2/common/package-common.lisp -text
