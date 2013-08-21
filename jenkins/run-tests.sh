@@ -106,11 +106,11 @@ case "$lisp" in
     nodebug="-batch"
     eval="-e" ;;
     # allegromodern won't work... [2012/10/09:rpg]
-  # allegromodern)
-  #   command="${ALLEGROMODERN:-mlisp}"
-  #   flags="-q"
-  #   nodebug="-batch"
-  #   eval="-e" ;;
+  allegromodern)
+    command="${ALLEGROMODERN:-mlisp}"
+    flags="-q"
+    nodebug="-batch"
+    eval="-e" ;;
   ccl)
     command="${CCL:-ccl}"
     flags="--no-init --quiet"
@@ -118,7 +118,7 @@ case "$lisp" in
     eval="--eval" ;;
   clisp)
     command="${CLISP:-clisp}"
-    flags="-norc -ansi -I -m 8MB"
+    flags="-norc -ansi -I -m 12MB"
     nodebug="-on-error exit"
     eval="-x" ;;
   cmucl)
