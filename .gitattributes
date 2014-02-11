@@ -173,6 +173,9 @@ shop2/planning-tree/tree-funs.lisp -text
 shop2/planning-tree/tree-reductions.lisp -text
 shop2/shop-asd.asd -text
 shop2/shop2-common.asd -text
+shop2/shop2-theorem-prover-api/package.lisp -text
+shop2/shop2-theorem-prover-api/shop2-thmpr-api.asd -text
+shop2/shop2-theorem-prover-api/shop2-thmpr-api.lisp -text
 shop2/shop2-theorem-prover.asd -text
 shop2/shop2-unifier.asd -text
 shop2/shop2.asd -text
