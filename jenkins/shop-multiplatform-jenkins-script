@@ -2,10 +2,11 @@ echo Note the summary of run failures by platform at the bottom of this script o
 
 export SHOP_DIR=${WORKSPACE}/shop/
 
-export ALLEGRO=/usr/local/acl/acl82/alisp
-export CCL=/home/jmaraist/Lib/Lisp/clozure/ccl/lx86cl64
-export CLISP=/usr/bin/clisp
-export SBCL=/usr/local/bin/sbcl
+export ALLEGRO=alisp
+# Should fix this by installing ccl properly.
+export CCL=/home/rpg/bin/ccl
+export CLISP=clisp
+export SBCL=sbcl
 
 cd ${WORKSPACE}/shop/jenkins/
 
