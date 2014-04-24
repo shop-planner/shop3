@@ -19,7 +19,7 @@ usage () {
 
 unset DEBUG_TEST
 
-WHILE getopts "duh" OPTION
+while getopts "duh" OPTION
 do
     case $OPTION in
         d)
