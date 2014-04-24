@@ -1,5 +1,3 @@
-cd ${WORKSPACE}/shop/jenkins/
-
 ./build-shop.sh $LISP
 x1=$?
 
