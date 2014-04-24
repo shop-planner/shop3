@@ -1,5 +1,7 @@
 (in-package :common-lisp-user)
 
+(require :asdf)
+
 ;;; code adapted from cl-launch http://www.cliki.net/cl-launch
 (defun exit-lisp (return)
   #+allegro
