@@ -1,21 +1,5 @@
 (in-package :common-lisp-user)
 
-;; git checkout 
-git clone git://common-lisp.net/projects/asdf/asdf.git
-
-(defparameter *shop-root-directory*
-  (merge-pathnames
-   (make-pathname :directory '(:relative :back)
-                  :name nil :type nil)
-   *load-truename*))
-
-(format t "*SHOP-ROOT-DIRECTORY* is:")
-(describe *shop-root-directory*)
-
-(asdf:initialize-source-registry
- `(:source-registry (:tree ,*shop-root-directory*)
-                    :inherit-configuration))
-
 ;;; code adapted from cl-launch http://www.cliki.net/cl-launch
 (defun exit-lisp (return)
   #+allegro
