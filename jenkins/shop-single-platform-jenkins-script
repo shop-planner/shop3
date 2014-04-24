@@ -1,0 +1,29 @@
+echo Note the summary of run failures by platform at the bottom of this script output.
+
+
+git://common-lisp.net/projects/asdf/asdf.git
+
+
+export SHOP_DIR=${WORKSPACE}/shop/
+
+export ALLEGRO=/usr/local/acl/acl82/alisp
+export CCL=/home/jmaraist/Lib/Lisp/clozure/ccl/lx86cl64
+export CLISP=/usr/bin/clisp
+export SBCL=/usr/local/bin/sbcl
+
+cd ${WORKSPACE}/shop/jenkins/
+
+./run-tests.sh $LISP
+x1=$?
+
+if (( $x1 ))
+  then
+    exit 1
+  else
+    exit 0
+  fi
+
+
+# Local Variables:
+# mode: sh
+# End:
