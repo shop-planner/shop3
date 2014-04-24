@@ -1,4 +1,41 @@
-/bin/bash ./build-shop.sh $LISP
+#!/bin/bash
+export lisp=$LISP
+
+# Assumptions:
+# 1.  Executed from shop/jenkins/ directory.
+# 2.  There is a directory, on jenkins, the workspace, that contains a
+# checked out copy of shop (checked out as "shop-trunk/" and has a
+# copy of asdf in it.
+# 3.  The environment variable LISP specifies the name of the lisp
+# implementation to test.  See start-lisp.sh to see how to specify an
+# executable path for the lisp implementations, if you don't have them
+# in your path.
+# 4.  If you want this to work /outside/ Jenkins, bind the WORKSPACE
+# environment variable to a directory configured per (2), above.
+
+# ASDF must be installed in the jenkins workspace.
+cd asdf
+make
+cd ..
+
+# set up temporary directory for writing fasls
+if [ -e tmp ]; then
+    rm -r tmp
+fi
+mkdir -p /tmp/fasls
+cd asdf
+make
+cd ..
+if [ -e tmp ]; then
+    rm -r tmp
+fi
+mkdir -p /tmp/fasls
+
+export CL_SOURCE_REGISTRY="${WORKSPACE}/asdf//:${WORKSPACE}/shop-trunk//:"
+export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (T (\"${WORKSPACE}/tmp/fasls\")) :ignore-inherited-configuration)"
+
+source ./start-lisp.sh
+( DO $lisp_command $lisp_eval '(load "build-shop2.lisp")' )
 x1=$?
 
 if (( $x1 ))
