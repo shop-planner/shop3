@@ -5,7 +5,6 @@ jenkins/JENKINS-README.org -text
 jenkins/LepinayPaths.pm -text
 jenkins/ShopTestRunBase.pm -text
 jenkins/asdf.lisp svneol=native#text/x-lisp
-jenkins/build-shop.sh -text
 jenkins/build-shop2.lisp svneol=native#text/x-lisp
 jenkins/compile-shop2.lisp svneol=native#text/x-lisp
 jenkins/full-test-suite.asd -text
