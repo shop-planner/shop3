@@ -1,4 +1,4 @@
-./build-shop.sh $LISP
+/bin/bash ./build-shop.sh $LISP
 x1=$?
 
 if (( $x1 ))
