@@ -29,6 +29,11 @@
   (ext:quit :status return)
   (error "Don't know how to quit Lisp; wanting to use exit code ~a" return))
 
+(asdf:load-system "asdf")
+(asdf:initialize-output-translations)
+(asdf:initialize-source-registry)
+
+
 (setf asdf::*compile-file-failure-behaviour* :error)
 (setf asdf::*compile-file-warnings-behaviour* :warn)
 
