@@ -6,7 +6,7 @@
 # possible for callers to invoke an arbitrary lisp, and the DO()
 # function.
 
-lisp=${1:-sbcl} ; shift
+lisp=${LISP:-sbcl} ; shift
 
 # terminate on error
 set -e
