@@ -25,13 +25,6 @@ if [ -e tmp ]; then
     rm -r tmp
 fi
 mkdir -p /tmp/fasls
-cd asdf
-make
-cd ..
-if [ -e tmp ]; then
-    rm -r tmp
-fi
-mkdir -p /tmp/fasls
 
 export CL_SOURCE_REGISTRY="${WORKSPACE}/asdf//:${WORKSPACE}/shop-trunk//:"
 export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (T (\"${WORKSPACE}/tmp/fasls\")) :ignore-inherited-configuration)"
