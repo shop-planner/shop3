@@ -14,9 +14,11 @@ export lisp=$LISP
 # environment variable to a directory configured per (2), above.
 
 # ASDF must be installed in the jenkins workspace.
+pushd ${WORKSPACE}
 cd asdf
 make
-cd ..
+popd
+
 
 # set up temporary directory for writing fasls
 if [ -e tmp ]; then
