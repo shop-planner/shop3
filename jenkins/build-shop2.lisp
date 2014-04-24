@@ -2,7 +2,7 @@
 
 (require :asdf)
 
-(format t "~&Search based on: ~a~%" (sys:getenv "CL_SOURCE_REGISTRY"))
+(declaim (optimize (speed 3) (space 3) (safety 3)))
 
 ;;; code adapted from cl-launch http://www.cliki.net/cl-launch
 (defun exit-lisp (return)
