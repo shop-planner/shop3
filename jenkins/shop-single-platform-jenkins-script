@@ -1,5 +1,6 @@
 #!/bin/bash
-export lisp=$LISP
+export lisp=${LISP}
+echo "lisp is $lisp and LISP is $LISP"
 
 # Assumptions:
 # 1.  Executed from shop/jenkins/ directory.
