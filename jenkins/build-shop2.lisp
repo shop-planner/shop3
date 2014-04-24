@@ -2,6 +2,8 @@
 
 (require :asdf)
 
+(format t "~&Search based on: ~a~%" (sys:getenv "CL_SOURCE_REGISTRY"))
+
 ;;; code adapted from cl-launch http://www.cliki.net/cl-launch
 (defun exit-lisp (return)
   #+allegro
