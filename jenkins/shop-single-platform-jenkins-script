@@ -1,6 +1,4 @@
 #!/bin/bash
-echo "lisp is $lisp and LISP is $LISP"
-
 # Assumptions:
 # 1.  Executed from shop/jenkins/ directory.
 # 2.  There is a directory, on jenkins, the workspace, that contains a
