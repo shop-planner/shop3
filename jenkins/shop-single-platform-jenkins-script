@@ -29,14 +29,21 @@ export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (T (\"${WORKSPACE}/tmp/fa
 
 source ./start-lisp.sh
 ( DO $lisp_command $lisp_eval '(load "build-shop2.lisp")' )
-x1=$?
 
-if (( $x1 ))
+if (( $? ))
   then
     exit 1
-  else
-    exit 0
   fi
+
+( DO $lisp_command $lisp_eval '(load "test-shop2.lisp")' ))
+
+if (( $? ))
+  then
+    exit 1
+  fi
+
+exit 0
+
 
 
 # Local Variables:
