@@ -85,6 +85,7 @@ shop2."
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
 (defsystem :test-shop2
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
     :test-names ((pddl-tests . :shop2)
                  (protection-test . :protection-test)
