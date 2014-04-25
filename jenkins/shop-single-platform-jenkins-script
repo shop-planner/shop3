@@ -35,7 +35,7 @@ if (( $? ))
     exit 1
   fi
 
-( DO $lisp_command $lisp_eval '(load "test-shop2.lisp")' ))
+( DO $lisp_command $lisp_eval '(load "test-shop2.lisp")' )
 
 if (( $? ))
   then
