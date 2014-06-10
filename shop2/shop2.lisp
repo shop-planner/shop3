@@ -659,6 +659,16 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*explanation* explanation) (*attribution-list* nil)
          (*external-access* (fboundp 'external-access-hook))
          (*trace-query* (fboundp 'trace-query-hook))
+         (domain (cond (domain
+                        (etypecase domain
+                          (symbol 
+                           (find-domain domain :error))
+                          (domain domain)))
+                       (t
+                        ;; get domain from problem
+                        (unless (domain-name problem)
+                          (error "Domain not supplied and problem does not specify domain."))
+                        (find-domain (domain-name problem) :error))))
          (state (apply 'make-initial-state domain
                        (if state-type-supplied-p
                            state-type
@@ -794,4 +804,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                       internal-time-units-per-second)))))))
 
 (format t "~2%SHOP2 version ~a~%~a~%" cl-user::+shop-version+ +shopyright+)
+
+;; (eval-when (:compile-toplevel)
+;; (warn "Bogus warning."))
+
 

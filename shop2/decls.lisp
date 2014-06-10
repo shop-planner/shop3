@@ -250,6 +250,9 @@ will consult the user even in these cases.")
          is intended for use with a particular domain definition."))
   (:documentation "An object representing a SHOP2 problem."))
 
+(defmethod domain-name ((probspec symbol))
+  (domain-name (find-problem probspec)))
+
 (defmethod print-object ((x problem) stream)
   (if *print-readably*
       (format stream "#.(make-problem :name ~s ~@[:domain-name ~s~] :tasks ~s :state-atoms ~s)"
