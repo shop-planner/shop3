@@ -1,3 +1,7 @@
+* The following entirely OBE
+We have replaced NST with FiveAM for unit tests, so most of the following are
+out of date.  The files in this directory are all overdue to be pruned.
+
 * Running NST's jenkins script
 To run a local version of NST's jenkins script, mimic the
 =cadillac-jm.sh= and =beast-jm.sh= scripts.
