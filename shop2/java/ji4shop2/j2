@@ -1,2 +1,0 @@
-#!/usr/bin/env csh
-java -classpath bin umd.cs.shop2.Shop $*
