@@ -84,6 +84,10 @@ is properly set in GOALS."
   (find-satisfiers goals state just-one 0 :domain domain))
 
 ;;; FIND-SATISFIERS returns a list of all satisfiers of GOALS in AXIOMS
+(locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:simple-style-warning))
+  ;; this is necessary because SBCL (correctly) hates the use of OPTIONAL and
+  ;; KEY together.
+
 (defun find-satisfiers (goals state &optional just-one (level 0)
                         &key (domain *domain*))
   "Find and return a list of binding lists that represents the answer to
@@ -117,7 +121,7 @@ or all answers (nil)."
                   (eval (third goals)))
                 :key #'(lambda (sat)
                          (eval (apply-substitution (second goals) sat))))
-        satisfiers))))
+        satisfiers)))))
 
 ;;; EXTRACT-VARIABLES returns a list of all of the variables in EXPR
 (defun extract-variables (expr)
@@ -635,7 +639,11 @@ goal1 along with all of the other formulas in remaining."
 ;  UID4321) then the explanation would be
 ;    '(and ((:source PoliceReport UID1234) and (on x1 x2) (on x1 x3))
 ;          ((:source PoliceReport UID4321) on x2 x3))
-(defun explain-satisfier (unified-goal state &optional external
+(locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:simple-style-warning))
+  ;; this is necessary because SBCL (correctly) hates the use of OPTIONAL and
+  ;; KEY together.
+
+  (defun explain-satisfier (unified-goal state &optional external
                                        &key (domain nil domain-supp-p))
   (unless domain-supp-p (setf domain *domain*))
   (let ((*external-access* nil)) ; otherwise we'd query twice
@@ -669,7 +677,7 @@ goal1 along with all of the other formulas in remaining."
      ((listp (first unified-goal)) ; implicit and
       (explain-satisfier (cons 'and unified-goal) state external :domain domain))
      (t ; logical-atom
-      (add-source unified-goal external unified-goal)))))
+      (add-source unified-goal external unified-goal))))))
 
 (defun add-source (unified-goal external explanation)
   (if external
