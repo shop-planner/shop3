@@ -24,7 +24,7 @@ if [ -e tmp ]; then
 fi
 mkdir -p /tmp/fasls
 
-export CL_SOURCE_REGISTRY="${WORKSPACE}/asdf//:${WORKSPACE}/shop-trunk//:"
+export CL_SOURCE_REGISTRY="${WORKSPACE}/shop-trunk//:"
 export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (T (\"${WORKSPACE}/tmp/fasls\")) :ignore-inherited-configuration)"
 
 source ./start-lisp.sh
