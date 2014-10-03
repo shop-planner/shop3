@@ -37,7 +37,7 @@
 
 
 (setf asdf::*compile-file-failure-behaviour* :error)
-(setf asdf::*compile-file-warnings-behaviour* :warn)
+;;(setf asdf::*compile-file-warnings-behaviour* :warn)
 
 (defvar *build-warning* nil)
 (defvar *build-error* nil)
