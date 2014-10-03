@@ -52,7 +52,7 @@ DO () { ( set -x ; "$@" ); }
 
 do_tests() {
   command="$1" eval="$2"
-  ( DO $command $eval '(load "compile-shop2.lisp")' )
+  ( DO $command $eval '(load "build-shop2.lisp")' )
   if [ $? -ne 0 ] ; then
     echo "Compilation FAILED" >&2
   else

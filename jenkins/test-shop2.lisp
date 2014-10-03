@@ -5,33 +5,6 @@
 
 (or (ignore-errors (require :asdf)) (load "asdf"))
 
-;;; code adapted from cl-launch http://www.cliki.net/cl-launch
-(defun exit-lisp (return)
-  #+allegro
-  (excl:exit return)
-  #+clisp
-  (ext:quit return)
-  #+(or cmu scl)
-  (unix:unix-exit return)
-  #+ecl
-  (si:quit return)
-  #+gcl
-  (lisp:quit return)
-  #+lispworks
-  (lispworks:quit :status return :confirm nil :return nil :ignore-errors-p t)
-  #+(or openmcl mcl)
-  (ccl::quit return)
-  #+mkcl
-  (mk-ext:quit :exit-code return)
-  #+sbcl #.(let ((exit (find-symbol "EXIT" :sb-ext))
-                 (quit (find-symbol "QUIT" :sb-ext)))
-             (cond
-               (exit `(,exit :code return :abort t))
-               (quit `(,quit :unix-status return :recklessly-p t))))
-  #+(or abcl xcl)
-  (ext:quit :status return)
-  (error "Don't know how to quit Lisp; wanting to use exit code ~a" return))
-
 (defun leave-lisp (message return)
   (fresh-line *error-output*)
   (when message
@@ -39,7 +12,7 @@
     (terpri *error-output*))
   (finish-output *error-output*)
   (finish-output *standard-output*)
-  (exit-lisp return))
+  (uiop:quit return))
 
 (defmacro quit-on-error (&body body)
   `(call-quitting-on-error (lambda () ,@body)))

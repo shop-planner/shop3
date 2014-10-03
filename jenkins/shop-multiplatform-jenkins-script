@@ -10,15 +10,19 @@ export SBCL=sbcl
 
 cd ${WORKSPACE}/shop/jenkins/
 
-./run-tests.sh allegro
-x1=$?
-./run-tests.sh sbcl
-x2=$?
+# taking these out, since we have separate checks for them...
+x1=1
+# ./run-tests.sh allegro
+# x1=$?
+x2=1
+# ./run-tests.sh sbcl
+# x2=$?
 ./run-tests.sh ccl
 x3=$?
 # clisp is blowing up with stack overflows. 2012/10/10
+x4=1
 #./run-tests.sh clisp
-x4=$?
+#x4=$?
 #run-tests.sh cmucl
 
 if (( $x1 || $x2 || $x3 || $x4 ))
