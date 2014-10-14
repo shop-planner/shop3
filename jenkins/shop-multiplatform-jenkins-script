@@ -11,26 +11,26 @@ export SBCL=sbcl
 cd ${WORKSPACE}/shop/jenkins/
 
 # taking these out, since we have separate checks for them...
-x1=1
+x1=0
 # ./run-tests.sh allegro
 # x1=$?
-x2=1
+x2=0
 # ./run-tests.sh sbcl
 # x2=$?
 ./run-tests.sh ccl
 x3=$?
 # clisp is blowing up with stack overflows. 2012/10/10
-x4=1
+x4=0
 #./run-tests.sh clisp
 #x4=$?
 #run-tests.sh cmucl
 
 if (( $x1 || $x2 || $x3 || $x4 ))
-  then
+then
     exit 1
-  else
+else
     exit 0
-  fi
+fi
 
 
 # Local Variables:
