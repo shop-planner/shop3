@@ -39,7 +39,7 @@ is bound, write a message and exit on an error.  If
                    (leave-lisp "~&Script failed~%" 1))))))
     (funcall thunk)
     (format t "~&Script succeeded~%")
-    (uiop:quit 0))
+    (uiop:quit 0)))
 
 (quit-on-error
  (asdf:test-system "shop2"))
