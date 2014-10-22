@@ -3,7 +3,7 @@
 
 (in-package :testing-shop2)
 
-(or (ignore-errors (require :asdf)) (load "asdf"))
+(require :asdf)
 
 (defun leave-lisp (message return)
   (fresh-line *error-output*)
@@ -38,8 +38,8 @@ is bound, write a message and exit on an error.  If
                    (finish-output *error-output*)
                    (leave-lisp "~&Script failed~%" 1))))))
     (funcall thunk)
-    (leave-lisp "~&Script succeeded~%" 0)))
+    (format t "~&Script succeeded~%")
+    (uiop:quit 0))
 
 (quit-on-error
  (asdf:test-system "shop2"))
-
