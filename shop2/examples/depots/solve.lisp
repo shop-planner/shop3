@@ -1,3 +1,7 @@
+(in-package :shop2-user)
+
+(load "./depots.lisp")
+
 (load "./pfile1.lisp")
 (find-plans 'pfile1 :verbose :stats)
 
