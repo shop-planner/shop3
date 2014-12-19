@@ -315,5 +315,5 @@
             ;; need to move x if x is on something else that needs to be moved 
             ((on ?x ?w) (need-to-move ?w)))))))
 
-(eval-when (:load-toplevel)
+(eval-when (:load-toplevel :execute)
   (define-depot-domain))
