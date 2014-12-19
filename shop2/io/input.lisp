@@ -362,9 +362,8 @@ but <domain-name> will be ignored."
   ;; ARGS normally are state tasks
   ;; if extra arg is given, then the args are problem-name, domain-name, state,
   ;; and tasks respectively. in that case, we want to ignore domain-name
-  (if (= (length args) 3)
-    `(apply 'make-problem ',problem-name ',(cdr args))
-    `(apply 'make-problem ',problem-name ',args)))
+  (assert (or (= (length args) 3) (= (length args) 4)))
+  `(apply 'make-problem ',problem-name ',args))
 
 (defmacro def-problem-set (list-name problem-list)
   `(progn
