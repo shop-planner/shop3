@@ -60,8 +60,8 @@
 (defsystem :shop2
     :serial t
     :default-component-class cl-file-with-defconstants
-    :depends-on ((:version "shop2-common" #.cl-user::+shop-version+)
-                 (:version "shop2-theorem-prover" #.cl-user::+shop-version+))
+    :depends-on ((:version "shop2/common" #.cl-user::+shop-version+)
+                 (:version "shop2/theorem-prover" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :in-order-to ((test-op (test-op :test-shop2)))
     :components  (
@@ -84,3 +84,33 @@
                 :components ((:file "tree-accessors")
                                      (:file "tree-reductions")))
        (:file "shop2")))
+
+(defsystem :shop2/common
+    :serial t
+    :pathname "common/"
+    :version #.cl-user::+shop-version+
+    :depends-on (:shop2/unifier)
+    :components ((:file "package-common")
+                 (:file "common")
+                 (:file "state-decls")
+                 (:file "state-utils")))
+
+(defsystem :shop2/theorem-prover
+    :serial t
+    :pathname "theorem-prover/"
+    :depends-on ("shop2/common" "shop2/unifier")
+    :version #.cl-user::+shop-version+
+    :components ((:file "package-thpr")
+                 (:file "decls")
+                 (:file "theorem-prover")))
+
+
+(defsystem :shop2/unifier
+    :serial t
+        :pathname "unification/"
+        :depends-on ("shop-asd")
+    :version #.cl-user::+shop-version+
+    :components ((:file "package-unifier")
+                 (:file "tracer")
+                 (:file "unify")))
+
