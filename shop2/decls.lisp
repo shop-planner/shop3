@@ -260,6 +260,20 @@ will consult the user even in these cases.")
       (print-unreadable-object (x stream :type t)
         (princ (name x) stream))))
 
+;;;---------------------------------------------------------------------------
+;;; OPERATORS
+;;;---------------------------------------------------------------------------
+
+(defstruct (operator :named (:type list))
+  "This structure definition was added in order to make the
+access to operator attributes self-documenting.  Later, the list
+structure could be removed, and a true struct could be used instead."
+  (head nil :type list)                 ;this is the operator expression itself...
+  preconditions
+  deletions
+  additions
+  (cost-fun nil))
+
 ;;;------------------------------------------------------------------------------------------------------
 ;;; CLOS Generic Method Definitions
 ;;;------------------------------------------------------------------------------------------------------
