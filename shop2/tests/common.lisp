@@ -15,6 +15,4 @@ costs.  This function just throws away the costs."
 
 
 (defun plan-quietly (problem &rest args)
-  (apply #'find-plans problem :which :first :verbose 0 args))
-
-
+  (apply #'find-plans problem :which :first :verbose 0 :gc t args))
