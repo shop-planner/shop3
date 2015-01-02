@@ -429,27 +429,28 @@ of SHOP2 extensions to extend or override the normal problem-building.")
   (:method ((problem problem))
      (state-atoms problem))
   (:method ((problem-name symbol))
-     (let ((answer (find-problem problem-name)))
-       (unless answer (error "No initial state for the name ~s" problem-name))
-       (get-state answer))))
+    (get-state (find-problem problem-name t))))
 
 (defgeneric problem-state (problem)
   (:documentation "Alias for get-state.")
   (:method ((problem problem))
-     (get-state problem)))
+     (get-state problem))
+  (:method ((name symbol))
+    (problem-state (find-problem name t)))
+  )
 
 (defgeneric get-tasks (problem)
   (:method ((name symbol))
-           (let ((answer (find-problem name)))
-             (unless answer (error "No task list for the name ~s" name))
-             (get-tasks answer)))
+    (get-tasks (find-problem name t)))
   (:method ((problem problem))
            (tasks problem)))
 
 (defgeneric problem-tasks (problem)
   (:documentation "Alias for get-tasks.")
   (:method ((problem problem))
-     (get-tasks problem)))
+     (get-tasks problem))
+  (:method ((name symbol))
+    (problem-tasks (find-problem name t))))
 
 (defgeneric delete-problem (problem)
   (:method ((problem-name symbol))
@@ -460,8 +461,18 @@ of SHOP2 extensions to extend or override the normal problem-building.")
            (delete problem *all-problems*))))
 
 
-(defun find-problem (name)
-  (find name *all-problems* :key #'name))
+;;; ERRORP defaults to NIL only for backwards compatibility.  It might be better
+;;; to make T be the default. [2015/01/01:rpg]
+(defun find-problem (name &optional (errorp NIL))
+  (let ((found 
+          (find name *all-problems* :key #'name)))
+    (cond (found
+           found)
+          (errorp
+           (error "No such problem: ~a" name))
+          (t nil))))
+        
+    
 
 
 ;;;---------------------------------------------------------------------------
