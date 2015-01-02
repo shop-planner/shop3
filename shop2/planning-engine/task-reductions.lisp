@@ -66,16 +66,6 @@
 ;;; modified to use the new SHOP2 operator syntax, which includes preconditions (swm)
 ;;; ------------------------------------------------------------------------
 
-(defstruct (operator :named (:type list))
-  "This structure definition was added in order to make the
-access to operator attributes self-documenting.  Later, the list
-structure could be removed, and a true struct could be used instead."
-  (head nil :type list)                 ;this is the operator expression itself...
-  preconditions
-  deletions
-  additions
-  (cost-fun nil))
-
 (defmethod apply-operator ((domain domain) state task-body operator protections depth
                              in-unifier)
   "If OPERATOR is applicable to TASK in STATE, then APPLY-OPERATOR returns
