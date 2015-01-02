@@ -11,13 +11,6 @@
 # 4.  If you want this to work /outside/ Jenkins, bind the WORKSPACE
 # environment variable to a directory configured per (2), above.
 
-# ASDF must be installed in the jenkins workspace.
-pushd ${WORKSPACE}
-cd asdf
-make
-popd
-
-
 # set up temporary directory for writing fasls
 if [ -e tmp ]; then
     rm -r tmp
