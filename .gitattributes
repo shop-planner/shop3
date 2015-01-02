@@ -1,15 +1,9 @@
 * text=auto !eol
-jenkins/BeastPaths.pm -text
-jenkins/FullMultiplatform.pm -text
 jenkins/JENKINS-README.org -text
-jenkins/LepinayPaths.pm -text
-jenkins/ShopTestRunBase.pm -text
 jenkins/asdf.lisp svneol=native#text/x-lisp
 jenkins/build-shop2.lisp svneol=native#text/x-lisp
 jenkins/compile-shop2.lisp svneol=native#text/x-lisp
 jenkins/full-test-suite.asd -text
-jenkins/jenkins.perl -text
-jenkins/jm.perl -text
 jenkins/run-tests.sh svneol=native#text/plain
 jenkins/shop-full-suite-multiplatform-jenkins-script -text
 jenkins/shop-multiplatform-jenkins-script -text
