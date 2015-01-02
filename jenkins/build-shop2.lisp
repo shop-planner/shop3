@@ -22,6 +22,7 @@
                             (signal x)
                             (push x *build-warning*)))
                (error #'(lambda (x)
+                          (declare (ignore x))
                           (setf *build-error* t))))
   (asdf:load-system "shop2" :force :all))
 
