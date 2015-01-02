@@ -627,9 +627,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
   (when state-supplied-p
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
   ;;; should add a dependency on TRIVIAL-GARBAGE to get rid of this... [2011/09/28:rpg]
-  #+(or :ccl :allegro :sbcl clisp abcl)
+  #+(or ccl allegro sbcl clisp abcl)
   (when gc #+allegro (excl:gc t)
-        #+sbcl (sb-ext:gc)
+        #+sbcl (sb-ext:gc :full t)
         #+ccl (ccl:gc)
         #+clisp (ext:gc)
         #+cmucl (extensions:gc :full t)
