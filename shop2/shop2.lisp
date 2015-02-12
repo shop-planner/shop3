@@ -583,7 +583,10 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; Top-level calls to the planner
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
-                   &key (domain *domain*) (which *which*) (verbose *verbose*)
+                   ;; FIXME: handling of DOMAIN is over-complicated.  Since it's
+                   ;; handled explicitly below, we could have a simpler logic
+                   ;; here
+                   &key (domain *domain* domain-supplied-p) (which *which*) (verbose *verbose*)
                         (gc *gc*) (pp *pp*)
                         (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
                         (time-limit *time-limit*) (explanation *explanation*)
@@ -659,16 +662,16 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*explanation* explanation) (*attribution-list* nil)
          (*external-access* (fboundp 'external-access-hook))
          (*trace-query* (fboundp 'trace-query-hook))
-         (domain (cond (domain
+         (domain (cond (domain-supplied-p
                         (etypecase domain
                           (symbol 
                            (find-domain domain :error))
                           (domain domain)))
+                       ((domain-name problem)
+                        (find-domain (domain-name problem) :error))
+                       (domain domain)
                        (t
-                        ;; get domain from problem
-                        (unless (domain-name problem)
-                          (error "Domain not supplied and problem does not specify domain."))
-                        (find-domain (domain-name problem) :error))))
+                        (error "Domain not supplied and problem does not specify domain."))))
          (state (apply 'make-initial-state domain
                        (if state-type-supplied-p
                            state-type
