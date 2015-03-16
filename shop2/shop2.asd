@@ -162,7 +162,7 @@ shop2."
                  (depot-tests . :shop2-user)
                  (logistics-tests . :shop2-user)
                  )
-    :num-checks 196
+    :num-checks 198
     :depends-on ((:version "shop2" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :components ((:module "shop-test-helper"
