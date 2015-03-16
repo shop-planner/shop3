@@ -74,5 +74,14 @@
                 '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
                 placeholder nil '(:ordered (:task shop2::!!inop))))))))
 
+(test check-problem-deletion
+  (make-problem 'problem-for-deletion-test
+                '((foo x) (bar y))
+                '(achieve (bar x)))
+  (fiveam:is-true (find-problem 'problem-for-deletion-test))
+  (delete-problem 'problem-for-deletion-test)
+  (fiveam:is-false (find-problem 'problem-for-deletion-test nil)))
+
+
 
 

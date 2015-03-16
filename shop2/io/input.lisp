@@ -169,8 +169,7 @@ messages when it is asked to define components.")
         problem-inst))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
-  (setf *all-problems*
-        (delete (name problem) *all-problems* :key 'name))
+  (delete-problem (name problem))        ;get rid of old problem definition
   (setf *all-problems* (cons problem *all-problems*))
   (setf (slot-value problem 'tasks) (process-task-list tasks)
         (slot-value problem 'state-atoms) state)
@@ -182,12 +181,6 @@ messages when it is asked to define components.")
 (defmethod problem->state ((domain domain) problem)
   (list
    (get-state problem)))
-
-;;;(defun delete-problem (problem-name)
-;;;  (setf (get problem-name :state) nil
-;;;     (get problem-name :tasks) nil)
-;;;  (setf *all-problems* (delete problem-name *all-problems*))
-;;;  problem-name)
 
 ;;;---------------------------------------------------------------------------
 ;;; I have added these two accessors to make it easier to modify the
