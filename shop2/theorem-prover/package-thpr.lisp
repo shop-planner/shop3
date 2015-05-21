@@ -91,6 +91,7 @@
              #:assign*                  ; possibly non-canonical
                                         ; addition
              #:setof                    ; all-solutions predicate
+             #:bagof                    ; all-solutions predicate
 
              ;; hook routine that will later be exported through shop2 package
              #:external-access-hook

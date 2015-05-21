@@ -126,6 +126,7 @@
              #:enforce
              #:assign*
              #:setof
+             #:bagof
              #:protect
 
              #:defproblem

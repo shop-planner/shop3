@@ -313,6 +313,11 @@ in the goal, so we ignore the extra reference."
     (standard-satisfiers-for-setof domain (cdr goal) other-goals
                                    state bindings (1+ level) just1)))
 
+(def-logical-keyword (bagof domain)
+  (:satisfier-method (goal other-goals state bindings level just1)
+    (standard-satisfiers-for-bagof domain (cdr goal) other-goals
+                                   state bindings (1+ level) just1)))
+
 (def-logical-keyword (:external domain)
   (:satisfier-method (goal other-goals state bindings level just1)
     (standard-satisfiers-for-external domain (cdr goal) other-goals
@@ -502,6 +507,25 @@ in the goal, so we ignore the extra reference."
                             (loop for binding-list in raw-results
                                 collect (binding-list-value var binding-list))
                             :test 'equal))))
+        (seek-satisfiers (apply-substitution other-goals (list new-binding))
+                         state (apply-substitution bindings (list new-binding))
+                         newlevel just1 :domain domain)))))
+
+(defun standard-satisfiers-for-bagof (domain arguments other-goals
+                                             state bindings newlevel just1)
+  ;; (bagof ?var expr ?outvar)
+  (destructuring-bind (var bounds outvar) arguments
+    (let ((raw-results (find-satisfiers (list bounds) state
+                                        ;; no bindings should be
+                                        ;; necessary because of the
+                                        ;; substitution into the
+                                        ;; goal...
+                                        nil 0 :domain domain)))
+      (unless raw-results (return-from standard-satisfiers-for-bagof nil))
+      (let ((new-binding
+             (make-binding outvar
+                            (loop for binding-list in raw-results
+                                  collect (binding-list-value var binding-list)))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
                          newlevel just1 :domain domain)))))
