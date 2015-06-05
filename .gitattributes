@@ -311,6 +311,7 @@ shop2/examples/IPC-2002/ZenoTravel/Time/hard_probs/run.lisp svneol=native#text/x
 shop2/examples/IPC-2002/ZenoTravel/Time/hard_probs/validate.sh svneol=native#text/plain
 shop2/examples/IPC-2002/ZenoTravel/Time/zenotravelTandN.pddl -text
 shop2/examples/IPC-2002/ZenoTravel/Time/zenotravelTime.lisp svneol=native#text/x-lisp
+shop2/examples/IPC-2002/solution-converter.lisp svneol=native#text/x-lisp
 shop2/examples/UMT2/Documentation.doc -text svneol=unset#unset
 shop2/examples/UMT2/Documentation.pdf -text svneol=unset#unset
 shop2/examples/UMT2/UMT2.lisp -text
