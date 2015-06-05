@@ -1,3 +1,5 @@
+(in-package :shop2-user)
+
 ;;;
 ;;; *** Solution Converter ***
 ;;; 
