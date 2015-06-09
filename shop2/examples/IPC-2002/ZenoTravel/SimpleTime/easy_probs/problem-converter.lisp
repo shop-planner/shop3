@@ -1,3 +1,5 @@
+(in-package :common-lisp-user)
+
 (defun parse-object-list (object-list)
    (unless (null object-list)
        (cons (list (third object-list) (first object-list)) (parse-object-list (cdr (cdr (cdr object-list)))))))
@@ -36,7 +38,8 @@
     (with-open-file (instr pddl-file :direction :input)
       (let ((pddl (read instr)))
         (with-open-file (outstr shop-file :direction :output
-                                    :if-exists :supersede)
+                         :if-exists :supersede)
+           (format outstr "(in-package :shop2-user)~%")
            (format outstr "(defproblem ")
            (format outstr (concatenate 'string "" problem-name))
            (format outstr " ZENOTRAVEL ~%")
