@@ -134,13 +134,13 @@
     (fiveam:is-true warning)
     (when warning
       (fiveam:is-true (typep warning 'singleton-variable))
-      (when  (typep warning 'singleton-variable))
-      (fiveam:is (eq (shop2::construct-type warning)
-                     :method))
-      (fiveam:is (eq (shop2::construct-name warning)
-                     'assess-fire))
-      (fiveam:is (equal (shop2::variable-names warning)
-                        '(?fa))))))
+      (when  (typep warning 'singleton-variable)
+        (fiveam:is (eq (shop2::construct-type warning)
+                       :method))
+        (fiveam:is (eq (shop2::construct-name warning)
+                       'assess-fire))
+        (fiveam:is (equal (shop2::variable-names warning)
+                          '(?fa)))))))
 
 
 (fiveam:test clean-in-context
