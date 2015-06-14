@@ -183,7 +183,8 @@ shop2."
                           :pathname "tests/"
                           :components ((:file "at-package")
                                        (:file "arity-tests" :depends-on ("at-package"))
-                                       (:file "io-tests" :depends-on ("at-package"))))
+                                       (:file "io-tests" :depends-on ("at-package"))
+                                       (:file "singleton-tests")))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP2-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"
