@@ -29,6 +29,12 @@
     (with-singleton-warnings 
       (shop2::check-for-singletons table :construct-type :method :construct-name name))))
 
+;;; better alternative than check-method...
+(defun test-process-method (sexp)
+  (shop2::set-variable-property (make-instance 'domain) sexp)
+  (with-singleton-warnings 
+    (shop2::process-method (make-instance 'domain) sexp)))
+
 
 (fiveam:test blort-singleton
   (let ((warning 
@@ -120,18 +126,17 @@
 (fiveam:test mws-in-context
   (let ((warning
           (nth-value 1
-                     (with-singleton-warnings 
-                       (shop2::process-method (make-instance 'domain)
-                                      '(:method (assess-fire ?s ?x)
-                                        assess-fire
-                                        (;; preconditions
-                                         (extinguished-fire ?x)
-                                         (at ?x (pos ?fx ?fy ?fa))
-                                         (short-sensor ?s)
-                                         (altitude-band ?s ?abs))
-                                        ;; task list
-                                        (:ordered (!fly-to ?s (pos ?fx ?fy ?abs))
-                                         (!assess ?s ?x))))))))
+                     (test-process-method 
+                      '(:method (assess-fire ?s ?x)
+                        assess-fire
+                        (;; preconditions
+                         (extinguished-fire ?x)
+                         (at ?x (pos ?fx ?fy ?fa))
+                         (short-sensor ?s)
+                         (altitude-band ?s ?abs))
+                        ;; task list
+                        (:ordered (!fly-to ?s (pos ?fx ?fy ?abs))
+                         (!assess ?s ?x)))))))
     (fiveam:is-true warning)
     (when warning
       (fiveam:is-true (typep warning 'singleton-variable))
@@ -147,14 +152,13 @@
 (fiveam:test clean-in-context
   (let ((warning
           (nth-value 1 
-                     (with-singleton-warnings 
-                       (shop2::process-method (make-instance 'domain)
-                               '(:method (assert-facts ?facts)
-                                 done
-                                 ((= ?facts nil))
-                                 ()
-                                 recurse
-                                 ((= ?facts (?fact . ?rest)))
-                                 (:ordered (!!assert ?fact)
-                                  (:immediate assert-facts ?rest))))))))
+                     (test-process-method
+                      '(:method (assert-facts ?facts)
+                        done
+                        ((= ?facts nil))
+                        ()
+                        recurse
+                        ((= ?facts (?fact . ?rest)))
+                        (:ordered (!!assert ?fact)
+                         (:immediate assert-facts ?rest)))))))
     (fiveam:is (null warning))))
