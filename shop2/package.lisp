@@ -215,6 +215,7 @@
              ;; conditions
              #:no-method-for-task
              #:task-arity-mismatch
+             #:singleton-variable
 
              ;; things you might want to use in your domain definitions
              #:variablep

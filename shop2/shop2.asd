@@ -161,6 +161,7 @@ shop2."
                  (blocks-tests . :shop2-user)
                  (depot-tests . :shop2-user)
                  (logistics-tests . :shop2-user)
+                 (singleton-tests . :shop2-user)
                  )
     :num-checks 198
     :depends-on ((:version "shop2" #.cl-user::+shop-version+))

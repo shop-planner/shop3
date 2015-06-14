@@ -534,3 +534,24 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 
 (defun report-no-method (x str)
   (format str "No method definition for task ~A" (slot-value x 'task-name)))
+
+(define-condition singleton-variable (shop-condition warning)
+  ((variable-names
+    :initarg :variable-names
+    :reader variable-names
+    )
+   (construct-type
+    :initarg :construct-type
+    :reader construct-type
+    )
+   (construct-name
+    :initarg :construct-name
+    :reader construct-name
+    ))
+  (:report (lambda (cond str)
+             (format str "Singleton variable~p ~{~a~^, ~} in ~a ~a"
+                     (length (variable-names cond))
+                     (variable-names cond)
+                     (construct-type cond)
+                     (construct-name cond))))
+)

@@ -64,7 +64,7 @@
   (:documentation
    "Record facts about X being a variable, operator, or
 other special symbol.  Done for side-effects.  Returns nothing
-of interest (ie, t)."))
+of interest."))
 
 ;;;(defstruct constraint
 ;;;  "Variables can be bound to constraints, which will be handled specially in
@@ -97,6 +97,10 @@ of interest (ie, t)."))
 (defmacro variable-p (x)
   "I can't remember the no-hyphen syntax for this call."
   `(variablep ,x))
+
+(defun anonymous-var-p (x)
+  "Does X name an anonymous variable?"
+  (and (variablep x) (get x 'anonymous)))
 
 (deftype shop-variable ()
     `(satisfies variablep))
@@ -369,10 +373,13 @@ variables, with new names."
 (defmethod set-variable-property ((domain t) x)
   (cond ((symbolp x)
          (cond ((eql (elt (symbol-name x) 0) #\?)
-                (setf (get x 'variable) t))
+                (setf (get x 'variable) t)
+                (when (eql (elt (symbol-name x) 1) #\_)
+                  (setf (get x 'anonymous) t)))
                ((eql (elt (symbol-name x) 0) #\!)
-                (setf (get x 'primitive) t))))
-        ((atom x) t)
+                (setf (get x 'primitive) t)))
+         (values))
+        ((atom x) (values))
         ((consp x)
          (set-variable-property domain (car x))
          (set-variable-property domain (cdr x)))))

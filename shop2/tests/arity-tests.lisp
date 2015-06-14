@@ -18,7 +18,7 @@
 (defun init-domain ()
   (let (( *defdomain-verbose* nil ))
 
-    (defdomain (arity-test-domain :noset t)
+    (defdomain (arity-test-domain :noset t :redefine-ok t)
         (
          (:method (method ?x ?y)
                   ()
@@ -37,7 +37,7 @@
                     ()                  ;no preconditions
                     ((prop))
                     ())
-         (:operator (!has-an-arg ?x)
+         (:operator (!has-an-arg ?_x)
                     ()
                     ()
                     ((prop)))

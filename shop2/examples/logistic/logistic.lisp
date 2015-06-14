@@ -41,7 +41,8 @@
 (in-package :shop2-user)
 
 (defun logistics-domain ()
-  (let ((*define-silently* t))
+  (let ((*define-silently* t)
+        (shop2::*ignore-singleton-variables* t))
     (defdomain (logistics :redefine-ok t)
        (
         ;; basic operators

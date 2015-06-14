@@ -66,6 +66,12 @@
 \(domains, etc.\) are defined.  When this value is NIL, SHOP2 defaults to printing
 messages when it is asked to define components.")
 
+(defvar *ignore-singleton-variables*
+  nil
+  "When T -- which should only be for legacy SHOP2 domains -- 
+do NOT emit singleton variable warnings.")
+
+
 ;;; ------------------------------------------------------------------------
 ;;; Functions for creating and manipulating planning domains and problems
 ;;; ------------------------------------------------------------------------
@@ -224,6 +230,8 @@ looks through the preconditions finding the forall
       (case pre1
         (or (cons 'or (process-pre domain  (cdr pre))))
         (imply
+         (unless (= (length pre) 3)
+           (error "Ill-formed IMPLY expression: ~s" pre))
          (cons 'imply (process-pre domain  (cdr pre))))
         (:first (cons :first (process-pre domain  (cdr pre))))
         (forall
@@ -243,41 +251,52 @@ looks through the preconditions finding the forall
 ;;; unused variable. It also regularizes the methdods in old SHOP format.
 (defmethod process-method ((domain domain) method)
   (let* ((method-head (second method))
-         (method-name (car method-head)))
+         (method-name (car method-head))
+         (task-variables (harvest-variables method-head)))
     (flet ((massage-task-net (clause)
              ;; this is a bunch of stuff for processing the task net which
              ;; I am sorry to say I don't fully understand.  I don't know
              ;; why this is quoted, honestly. [2010/05/19:rpg]
              (let ((first-of-clause (first clause)))
                (cond
-                ;; check to see if there is a quote or
-                ;; backquote in the front of this list (SHOP1
-                ;; or SHOP2 syntax) and process accordingly
-                ((or (eq first-of-clause 'quote)
-                     (eq first-of-clause *back-quote-name*))
-                 ;; this next bit of strangeness is to take the quote
-                 ;; off the front of the task list,
-                 ;; decompose the task list, then slap the quote back on
-                 `(,first-of-clause ,(process-task-list (second clause))))
-                ((search-tree 'call clause)
-                 `(simple-backquote ,(process-task-list clause)))
-                (t
-                 `(quote ,(process-task-list clause)))))))
+                 ;; check to see if there is a quote or
+                 ;; backquote in the front of this list (SHOP1
+                 ;; or SHOP2 syntax) and process accordingly
+                 ((or (eq first-of-clause 'quote)
+                      (eq first-of-clause *back-quote-name*))
+                  ;; this next bit of strangeness is to take the quote
+                  ;; off the front of the task list,
+                  ;; decompose the task list, then slap the quote back on
+                  `(,first-of-clause ,(process-task-list (second clause))))
+                 ((search-tree 'call clause)
+                  `(simple-backquote ,(process-task-list clause)))
+                 (t
+                  `(quote ,(process-task-list clause)))))))
+
       ;; answer will be (:method <head> ...)
       `(,(first method)
         ,method-head
         ,@(loop with tail = (cddr method)
-              for branch-counter from 0
-              until (null tail)
-                    ;; find or make a method label
-              if (and (car tail) (symbolp (car tail)))
-                collect (pop tail)
-              else
-                collect (gensym (format nil "~A~D--"
+                with pre
+                with task-net
+                with var-table
+                for branch-counter from 0
+                until (null tail)
+                ;; find or make a method label
+                if (and (car tail) (symbolp (car tail)))
+                  collect (pop tail)
+                else
+                  collect (gensym (format nil "~A~D--"
                                           method-name branch-counter))
-              ;; collect the preconditions
-              collect (process-pre domain (pop tail))
-              collect (massage-task-net (pop tail)))))))
+                ;; collect the preconditions
+                do (setf pre (pop tail))
+                   (setf task-net (pop tail))
+                   (setf var-table (harvest-variables (cons pre task-net)))
+                   (check-for-singletons var-table :context-table task-variables
+                                                   :construct-type (first method)
+                                                   :construct-name method-name)
+              collect (process-pre domain pre)
+              collect (massage-task-net task-net))))))
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
 ;;; but only runs once per method definition.
@@ -298,6 +317,8 @@ looks through the preconditions finding the forall
 ;;; unused variable. It also addresses the issue of different
 ;;; syntaxes of operators in different versions of SHOP.
 (defmethod process-operator ((domain domain) operator)
+  (let ((var-table (harvest-variables operator)))
+    (check-for-singletons var-table :construct-type (first operator) :construct-name (first (second operator))))
   (let ((lopt (length operator)))
     (cond ((= lopt 4)             ; a SHOP 1 operator, no cost specified
            (make-operator :head (second operator)
@@ -325,6 +346,58 @@ looks through the preconditions finding the forall
                           :additions (process-pre domain  (fifth operator))
                           :cost-fun (process-pre domain  (sixth operator))))
           (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
+
+(defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name)
+  (unless *ignore-singleton-variables*
+    (when context-table
+      (assert (not context-tables))
+      (setf context-tables (list context-table)))
+    (let ((singletons nil))
+      (maphash #'(lambda (k v)
+                   (when (= v 1) (push k singletons))) var-table)
+      (when singletons
+        (when context-tables
+          (setf singletons (filter-singletons singletons context-tables)))
+        (when singletons
+          (warn 'singleton-variable
+                :variable-names singletons
+                :construct-type construct-type
+                :construct-name construct-name))))
+  (values)))
+
+(defun filter-singletons (singletons context-tables)
+  (remove-if #'(lambda (singleton)
+                     (some #'(lambda (table) (> (gethash singleton table 0) 0))
+                           context-tables))
+                 singletons))
+
+(defun harvest-variables (sexp &optional all-vars)
+  "Tree-walk the SEXP, harvesting all variables into a hash-table.  The hash-table
+will have as keys variable names, and values will be counts of number of 
+appearances.  Defaults to *not* counting variables with the \"ignore prefix\" of
+underscore, unless ALL-VARS is non-NIL.
+   PRECONDITION:  PROCESS-VARIABLE-PROPERTY must have been called on the surrounding
+context, becasue this relies on VARIABLEP working."
+  (let ((retval (make-hash-table :test 'eq)))
+    (labels ((iter (sexp)
+               (cond ((null sexp) (values))
+                     ((variablep sexp)
+                      (when (or all-vars
+                                  (not (anonymous-var-p sexp)))
+                        (bump-entry sexp))
+                      (values))
+                     ((consp sexp)
+                      (iter (car sexp))
+                      (iter (rest sexp)))
+                     (t
+                      ;; can't check for ATOM, because there might be arrays, or
+                      ;; any old stuff in the SHOP2 code.
+                      (values))))
+             (bump-entry (var-name)
+               (let ((entry (gethash var-name retval 0)))
+                 (setf (gethash var-name retval) (1+ entry)))))
+      (iter sexp)
+      retval)))
 
 (defun process-task-list (tasks)
   (cond
@@ -436,8 +509,6 @@ to the domain with domain-name NAME."
   (declare (ignore type))
   (values))
 
-;;; I have refactored parse-domain-items to use eql method dispatch
-;;; instead of a case statement dispatch... [2006/07/28:rpg]
 (defmethod parse-domain-items ((domain domain) items)
   (with-slots (axioms operators methods) domain
     (setf axioms (make-hash-table :test 'eq)

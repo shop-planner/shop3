@@ -10,7 +10,8 @@
 ;;; ------------------------------------------------------------------------
 
 (defun define-blocks-domain ()
-  (let (( *define-silently* t))
+  (let (( *define-silently* t)
+        (shop2::*ignore-singleton-variables* t))
     (defdomain (blocks-normal :redefine-ok t)
        (
         ;; basic block-stacking operators

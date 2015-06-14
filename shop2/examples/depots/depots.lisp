@@ -1,7 +1,8 @@
 (in-package :shop2-user)
 
 (defun define-depot-domain ()
-  (let ((*define-silently* t))
+  (let ((*define-silently* t)
+        (shop2::*ignore-singleton-variables* t))
     (defdomain (depot :redefine-ok t)
        ((:operator (!drive ?x ?y ?z)
                    ((at ?x ?y))

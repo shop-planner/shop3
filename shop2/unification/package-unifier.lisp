@@ -73,6 +73,8 @@
              #:make-binding-list #:make-binding
              #:binding-var #:binding-val
              #:variablep #:groundp
+             #:variable-p
+             #:anonymous-var-p
              ;; this is defined as a type, so you can use typep with it. [2009/10/06:rpg]
              #:shop-variable
              #:set-variable-property

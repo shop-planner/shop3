@@ -1,7 +1,8 @@
 (in-package :shop2-user)
 
 (defun define-umt-domain ()
-  (let ((*define-silently* t))
+  (let ((*define-silently* t)
+        (shop2::*ignore-singleton-variables* t))
     (defdomain (UM-Translog-2 :redefine-ok t)
        ( 
         (:method (assert-goals (?goal . ?goals) ?out)
