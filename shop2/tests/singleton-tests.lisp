@@ -118,9 +118,10 @@
                        '(?fa)))))
 
 (fiveam:test mws-in-context
-  (multiple-value-bind (def warning)
-      (with-singleton-warnings 
-        (shop2::process-method (make-instance 'domain)
+  (let ((warning
+          (nth-value 1
+                     (with-singleton-warnings 
+                       (shop2::process-method (make-instance 'domain)
                                       '(:method (assess-fire ?s ?x)
                                         assess-fire
                                         (;; preconditions
@@ -130,7 +131,7 @@
                                          (altitude-band ?s ?abs))
                                         ;; task list
                                         (:ordered (!fly-to ?s (pos ?fx ?fy ?abs))
-                                         (!assess ?s ?x)))))
+                                         (!assess ?s ?x))))))))
     (fiveam:is-true warning)
     (when warning
       (fiveam:is-true (typep warning 'singleton-variable))
@@ -144,9 +145,10 @@
 
 
 (fiveam:test clean-in-context
-  (multiple-value-bind (def warning)
-      (with-singleton-warnings 
-        (shop2::process-method (make-instance 'domain)
+  (let ((warning
+          (nth-value 1 
+                     (with-singleton-warnings 
+                       (shop2::process-method (make-instance 'domain)
                                '(:method (assert-facts ?facts)
                                  done
                                  ((= ?facts nil))
@@ -154,5 +156,5 @@
                                  recurse
                                  ((= ?facts (?fact . ?rest)))
                                  (:ordered (!!assert ?fact)
-                                  (:immediate assert-facts ?rest)))))
+                                  (:immediate assert-facts ?rest))))))))
     (fiveam:is (null warning))))
