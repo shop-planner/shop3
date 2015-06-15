@@ -162,8 +162,9 @@ shop2."
                  (depot-tests . :shop2-user)
                  (logistics-tests . :shop2-user)
                  (singleton-tests . :shop2-user)
+                 (misc-tests . :shop2-user)
                  )
-    :num-checks 214
+    :num-checks 215
     :depends-on ((:version "shop2" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :components ((:module "shop-test-helper"
@@ -184,7 +185,8 @@ shop2."
                           :components ((:file "at-package")
                                        (:file "arity-tests" :depends-on ("at-package"))
                                        (:file "io-tests" :depends-on ("at-package"))
-                                       (:file "singleton-tests")))
+                                       (:file "singleton-tests")
+                                       (:file "misc")))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP2-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"

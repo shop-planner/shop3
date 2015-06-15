@@ -419,6 +419,7 @@ shop2/tests/arity-tests.lisp -text
 shop2/tests/at-package.lisp -text
 shop2/tests/common.lisp -text
 shop2/tests/io-tests.lisp -text
+shop2/tests/misc.lisp svneol=native#text/x-lisp
 shop2/tests/pddl-tests.lisp -text
 shop2/tests/singleton-tests.lisp svneol=native#text/x-lisp
 shop2/theorem-prover/decls.lisp -text
