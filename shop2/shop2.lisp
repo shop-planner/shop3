@@ -659,6 +659,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*explanation* explanation) (*attribution-list* nil)
          (*external-access* (fboundp 'external-access-hook))
          (*trace-query* (fboundp 'trace-query-hook))
+         (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
                           (symbol
