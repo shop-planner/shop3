@@ -251,7 +251,7 @@ will consult the user even in these cases.")
   (:documentation "An object representing a SHOP2 problem."))
 
 (defmethod domain-name ((probspec symbol))
-  (domain-name (find-problem probspec)))
+  (domain-name (find-problem probspec t)))
 
 (defmethod print-object ((x problem) stream)
   (if *print-readably*
@@ -477,14 +477,18 @@ of SHOP2 extensions to extend or override the normal problem-building.")
 
 ;;; ERRORP defaults to NIL only for backwards compatibility.  It might be better
 ;;; to make T be the default. [2015/01/01:rpg]
-(defun find-problem (name &optional (errorp NIL))
-  (let ((found 
-          (find name *all-problems* :key #'name)))
-    (cond (found
-           found)
-          (errorp
-           (error "No such problem: ~a" name))
-          (t nil))))
+(defun find-problem (name-or-problem &optional (errorp NIL))
+  (if (typep name-or-problem 'problem)
+      ;; make FIND-PROBLEM idempotent...
+      name-or-problem
+      (let* ((name name-or-problem)
+             (found 
+               (find name *all-problems* :key #'name)))
+        (cond (found
+               found)
+              (errorp
+               (error "No such problem: ~a" name))
+              (t nil)))))
         
     
 
