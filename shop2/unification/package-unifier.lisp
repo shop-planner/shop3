@@ -75,6 +75,7 @@
              #:variablep #:groundp
              #:variable-p
              #:anonymous-var-p
+             #:uniquify-anonymous-variables
              ;; this is defined as a type, so you can use typep with it. [2009/10/06:rpg]
              #:shop-variable
              #:set-variable-property

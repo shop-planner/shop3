@@ -314,6 +314,8 @@ if they do, or FAIL \(*NOT* nil\) if they don't."
   "Return a new variable, made from BASE-NAME"
   (let ((sym (if base-name (gensym (string base-name)) (gensym "?"))))
     (setf (get sym 'variable) t)
+    (when (eq (aref (symbol-name sym) 1) #\_)
+      (setf (get sym 'anonymous) t))
     sym))
 
 ;;;---------------------------------------------------------------------------
@@ -350,6 +352,23 @@ variables, with new names."
              (values new-var (cons (cons expr new-var) subs))))))
     (t
      (values expr subs))))
+
+(defun uniquify-anonymous-variables (sexp)
+  "Replace all anonymous variables in SEXP by standardization,
+so that all anonymous variables are distinct."
+  (labels ((iter (sexp)
+             (cond ((null sexp) nil)
+                   ((anonymous-var-p sexp)
+                    (shop2.unifier::variable-gensym sexp))
+                   ((consp sexp)
+                    (cons
+                     (iter (car sexp))
+                     (iter (rest sexp))))
+                   (t
+                    ;; can't check for ATOM, because there might be arrays, or
+                    ;; any old stuff in the SHOP2 code.
+                    sexp))))
+      (iter sexp)))
 
 ;;;---------------------------------------------------------------------------
 ;;; Moved this here because it has to do with binding lists... [2005/11/06:rpg]

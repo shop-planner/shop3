@@ -250,9 +250,11 @@ looks through the preconditions finding the forall
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also regularizes the methdods in old SHOP format.
 (defmethod process-method ((domain domain) method)
-  (let* ((method-head (second method))
+  (let* ((method (uniquify-anonymous-variables method))
+         (method-head (second method))
          (method-name (car method-head))
-         (task-variables (harvest-variables method-head)))
+         (task-variables (harvest-variables method-head))
+         body-var-tables)
     (flet ((massage-task-net (clause)
              ;; this is a bunch of stuff for processing the task net which
              ;; I am sorry to say I don't fully understand.  I don't know
@@ -274,6 +276,8 @@ looks through the preconditions finding the forall
                   `(quote ,(process-task-list clause)))))))
 
       ;; answer will be (:method <head> ...)
+      (prog1
+          ;; here's the transformed METHOD
       `(,(first method)
         ,method-head
         ,@(loop with tail = (cddr method)
@@ -292,11 +296,17 @@ looks through the preconditions finding the forall
                 do (setf pre (pop tail))
                    (setf task-net (pop tail))
                    (setf var-table (harvest-variables (cons pre task-net)))
+                   (push var-table body-var-tables)
                    (check-for-singletons var-table :context-table task-variables
                                                    :construct-type (first method)
                                                    :construct-name method-name)
               collect (process-pre domain pre)
-              collect (massage-task-net task-net))))))
+              collect (massage-task-net task-net)))
+        ;; just before returning, check for singletons in the method's head
+        (check-for-singletons task-variables :context-tables body-var-tables
+                                             :construct-type (first method)
+                                             :construct-name method-name)))))
+
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
 ;;; but only runs once per method definition.
@@ -317,9 +327,10 @@ looks through the preconditions finding the forall
 ;;; unused variable. It also addresses the issue of different
 ;;; syntaxes of operators in different versions of SHOP.
 (defmethod process-operator ((domain domain) operator)
-  (let ((var-table (harvest-variables operator)))
-    (check-for-singletons var-table :construct-type (first operator) :construct-name (first (second operator))))
-  (let ((lopt (length operator)))
+  (let* ((operator (uniquify-anonymous-variables operator))
+         (var-table (harvest-variables operator))
+         (lopt (length operator)))
+    (check-for-singletons var-table :construct-type (first operator) :construct-name (first (second operator)))
     (cond ((= lopt 4)             ; a SHOP 1 operator, no cost specified
            (make-operator :head (second operator)
                           :preconditions nil
@@ -346,6 +357,8 @@ looks through the preconditions finding the forall
                           :additions (process-pre domain  (fifth operator))
                           :cost-fun (process-pre domain  (sixth operator))))
           (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
+
+
 
 (defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name)
   (unless *ignore-singleton-variables*
@@ -538,11 +551,33 @@ to the domain with domain-name NAME."
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':-)) item)
   (with-slots (axioms) domain
     ;; convert SHOP 1.x axioms into SHOP 2 axioms if necessary
-    (let ((regularized (regularize-axiom domain item)))
+    (let ((regularized (process-axiom domain item)))
+      ;; FIXME: standardize anonymous variables, check for singletons
+      ;; (setf regularized (uniquify-anonymous-variables regularized))
       (push regularized (gethash (first (second item)) axioms)))))
 
+(defun process-axiom (domain axiom)
+  (let* ((regularized (uniquify-anonymous-variables (regularize-axiom domain axiom)))
+         (head (second regularized))
+         (head-variables (harvest-variables head))
+         all-variables)
+    (loop with tail = (cddr regularized)
+          while tail
+          do (let* ((body (second tail)) ;first is label
+                    (var-table (harvest-variables body)))
+               (check-for-singletons var-table
+                                     :context-table head-variables
+                                     :construct-type (first regularized)
+                                     :construct-name (first head))
+               (push var-table all-variables))
+             (setf tail (cddr tail)))
+    (check-for-singletons head-variables :context-tables all-variables
+                                     :construct-type (first regularized)
+                                     :construct-name (first head))
+    regularized))
 
-
+          
+  
 
 
 
