@@ -20,7 +20,7 @@
 
     (defdomain (arity-test-domain :noset t :redefine-ok t)
         (
-         (:method (method ?x ?y)
+         (:method (method ?_x ?_y)
                   ()
                   ((!positive-op)))
          (:method (metamethod . ?args)
