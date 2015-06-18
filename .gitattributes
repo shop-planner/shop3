@@ -422,6 +422,10 @@ shop2/tests/io-tests.lisp -text
 shop2/tests/misc.lisp svneol=native#text/x-lisp
 shop2/tests/pddl-tests.lisp -text
 shop2/tests/singleton-tests.lisp svneol=native#text/x-lisp
+shop2/tests/umt-domain/axioms.lisp svneol=native#text/x-lisp
+shop2/tests/umt-domain/operators.lisp svneol=native#text/x-lisp
+shop2/tests/umt-domain/pfile1.lisp svneol=native#text/x-lisp
+shop2/tests/umt-domain/umt2-domain.lisp svneol=native#text/x-lisp
 shop2/theorem-prover/decls.lisp -text
 shop2/theorem-prover/package-thpr.lisp -text
 shop2/theorem-prover/theorem-prover.lisp -text

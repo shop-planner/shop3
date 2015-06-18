@@ -532,6 +532,64 @@ to the domain with domain-name NAME."
       (parse-domain-item domain (car x) x))
     (values)))
 
+(defmethod parse-domain-items :around ((domain domain) items)
+  "Handle :INCLUDE directives."
+  ;; short-circuit if no include directives
+  (unless (member :include items :key 'first :test 'eq)
+    (call-next-method))
+  (call-next-method domain
+                    (loop :for item :in items
+                          :if (eq (first item) :include)
+                            :append (translate-include item)
+                          :else
+                            :collect item)))
+
+(defun translate-include (include-item)
+  (destructuring-bind (keyword domain-name &optional pathname)
+      include-item
+    (assert (eq keyword :include))
+    (assert (symbolp domain-name))
+    (assert (or (null pathname) (stringp pathname) (pathnamep pathname)))
+    (unless pathname
+      (setf pathname (make-pathname :name (string-downcase (symbol-name domain-name))
+                                    :type "lisp")))
+    (domain-include-parse domain-name (domain-include-search pathname))))
+
+(defun domain-include-search (path)
+  "Search for PATH relative to *COMPILE-FILE-TRUENAME*, *LOAD-TRUENAME*,
+and *DEFAULT-PATHNAME-DEFAULTS*."
+  (or 
+   (if (uiop:absolute-pathname-p path)
+       (probe-file path)
+     (let ((search (list *compile-file-truename* *load-truename* *default-pathname-defaults*)))
+       (dolist (merge search)
+         (let ((fullpath (when merge
+                           (merge-pathnames path merge))))
+           (when fullpath
+             (when (probe-file fullpath)
+               (return-from domain-include-search fullpath)))))
+       nil))
+   (error "No such include file: ~a" path)))
+
+(defun domain-include-parse (domain-name path)
+  (let ((domain-form
+         (with-open-file (str path :direction :input)
+             (let ((*package* *package*))
+               (loop :for x = (read str nil nil)
+                     :while x
+                     :with name
+                     :if (eq (car x) 'in-package)
+                     :do (set '*package* (find-package (second x)))
+                     :else :if (eq (car x) 'defdomain)
+                     :do (setf name (if (listp (second x)) (first (second x)) (second x)))
+                     :and :when (equalp (symbol-name name) (symbol-name domain-name))
+                     :return x)))))
+    (if domain-form
+        ;; return the items
+        (third domain-form)
+      (error "Did not find definition of domain named ~a in file ~a"
+             domain-name path))))
+
 ;;;---------------------------------------------------------------------------
 ;;; Parse-domain-item methods
 ;;;---------------------------------------------------------------------------
