@@ -22,6 +22,13 @@
   (let ((*domain* (make-instance 'domain)))
     (&body)))
 
+(def-fixture op-def-domain ()
+  (let ((domain (make-instance 'domain)))
+    (setf (slot-value domain 'shop2::operators)
+          (make-hash-table :test 'eq))
+    (&body)))
+
+
 (def-fixture method-def ()
   (let ((meth '(:method (achieve-goals ?goals)
           ()
@@ -73,6 +80,224 @@
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
                 '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
                 placeholder nil '(:ordered (:task shop2::!!inop))))))))
+
+(test check-operator-definitions
+  ;; FIXME: it's possibly wrong to be depending on the accidental return of the operator object
+  (let ((op (with-fixture op-def-domain ()
+              (shop2::parse-domain-item domain :operator '(:operator (!!delete-truck ?truck)
+                                                           ()
+                                                           ((typevp ?truck truck))
+                                                           ())))))
+    (is (equal (shop2::operator-head op) '(!!delete-truck ?truck)))
+    (is (null (shop2::operator-preconditions op)))
+    (is (null (shop2::operator-additions op)))
+    (is (equal (shop2::operator-deletions op) '((typevp ?truck truck))))
+    (is (= (shop2::operator-cost-fun op) 1.0)))
+  (let ((op (with-fixture op-def-domain ()
+              (shop2::parse-domain-item domain :op '(:op (!!delete-truck ?truck)
+                                                           :delete
+                                                           ((typevp ?truck truck)))))))
+    (is (equal (shop2::operator-head op) '(!!delete-truck ?truck)))
+    (is (null (shop2::operator-preconditions op)))
+    (is (null (shop2::operator-additions op)))
+    (is (equal (shop2::operator-deletions op) '((typevp ?truck truck))))
+    (is (= (shop2::operator-cost-fun op) 1.0)))
+  ;; here's a big one
+  (let ((op (with-fixture op-def-domain ()
+              (shop2::parse-domain-item domain :operator
+                                        '(:operator (!takeoff ?p ?flight-alt ?earliest-start ?start ?end)
+                                          ;; preconditions
+                                          (
+                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                           (= 0 ?alt)
+                                           (fuel ?p ?fuel)
+                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                           (call >= ?fuel-remaining 0)
+                                           ;; uninformed hack FIXME
+                                           (assign ?duration 10)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           
+                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                           (assign ?end (+ ?start ?duration))
+                                           )
+                                          ;; deletes
+                                          (
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?alt))
+                                           (fuel ?p ?fuel)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           )
+                                          
+                                          ;; adds
+                                          (
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?flight-alt))
+                                           (fuel ?p ?fuel-remaining)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?end)
+                                           (read-time (at ?p) ?end)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?end)
+                                           (read-time (fuel ?p) ?end)
+                                           )
+                                          ;; cost
+                                          0)))))
+    (is (equal (shop2::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
+    (is (equal (shop2::operator-preconditions op)
+        '(
+                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                           (= 0 ?alt)
+                                           (fuel ?p ?fuel)
+                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                           (call >= ?fuel-remaining 0)
+                                           ;; uninformed hack FIXME
+                                           (assign ?duration 10)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           
+                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                           (assign ?end (+ ?start ?duration))
+                                           )))
+    (is (equal (shop2::operator-additions op)
+               '(
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?flight-alt))
+                                           (fuel ?p ?fuel-remaining)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?end)
+                                           (read-time (at ?p) ?end)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?end)
+                                           (read-time (fuel ?p) ?end)
+                                           )))
+    (is (equal (shop2::operator-deletions op) '(
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?alt))
+                                           (fuel ?p ?fuel)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           )))
+    (is (= (shop2::operator-cost-fun op) 0)))
+  (let ((op (with-fixture op-def-domain ()
+              (shop2::parse-domain-item domain :op
+                                        '(:op (!takeoff ?p ?flight-alt ?earliest-start ?start ?end)
+                                          :precond
+                                          (
+                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                           (= 0 ?alt)
+                                           (fuel ?p ?fuel)
+                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                           (call >= ?fuel-remaining 0)
+                                           ;; uninformed hack FIXME
+                                           (assign ?duration 10)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           
+                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                           (assign ?end (+ ?start ?duration))
+                                           )
+                                          :delete
+                                          (
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?alt))
+                                           (fuel ?p ?fuel)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           )
+                                          
+                                          :add
+                                          (
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?flight-alt))
+                                           (fuel ?p ?fuel-remaining)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?end)
+                                           (read-time (at ?p) ?end)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?end)
+                                           (read-time (fuel ?p) ?end)
+                                           )
+                                          :cost
+                                          0)))))
+    (is (equal (shop2::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
+    (is (equal (shop2::operator-preconditions op)
+        '(
+                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                           (= 0 ?alt)
+                                           (fuel ?p ?fuel)
+                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                           (call >= ?fuel-remaining 0)
+                                           ;; uninformed hack FIXME
+                                           (assign ?duration 10)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           
+                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                           (assign ?end (+ ?start ?duration))
+                                           )))
+    (is (equal (shop2::operator-additions op)
+               '(
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?flight-alt))
+                                           (fuel ?p ?fuel-remaining)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?end)
+                                           (read-time (at ?p) ?end)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?end)
+                                           (read-time (fuel ?p) ?end)
+                                           )))
+    (is (equal (shop2::operator-deletions op) '(
+                                           ;; update fuel and position
+                                           (at ?p (pos ?north ?east ?alt))
+                                           (fuel ?p ?fuel)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           )))
+    (is (= (shop2::operator-cost-fun op) 0))))
+
+    
+           
+
+
 
 (test check-problem-deletion
   (make-problem 'problem-for-deletion-test

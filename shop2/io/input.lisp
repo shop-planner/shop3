@@ -322,7 +322,7 @@ looks through the preconditions finding the forall
 ;;; perhaps the form should be searched for an instance of "call"; if found, put "backquote" on the
 ;;; front and modify the backquote function to handle "call" like comma.
 
-;;; this function pre-process the operator, replace every
+;;; this function pre-processes the operator, replaces every
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also addresses the issue of different
 ;;; syntaxes of operators in different versions of SHOP.
@@ -358,7 +358,21 @@ looks through the preconditions finding the forall
                           :cost-fun (process-pre domain  (sixth operator))))
           (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
 
-
+(defmethod process-op ((domain domain) operator)
+  (let ((operator (uniquify-anonymous-variables operator)))
+    (destructuring-bind (keyword task &key add delete precond (cost 1.0)) operator
+      (let* ((task-table (harvest-variables task))
+             (add-table (harvest-variables add))
+             (del-table (harvest-variables delete))
+             (precond-table (harvest-variables precond))
+             (cost-table (harvest-variables cost))
+             (tables (list task-table add-table del-table precond-table cost-table)))
+        (loop :for table :in tables
+              :as others = (remove table tables :test 'eq)
+              :do (check-for-singletons table :context-tables others :construct-type keyword
+                                              :construct-name (first task))))
+      (make-operator :head task :preconditions precond :deletions delete
+                     :additions add :cost-fun cost))))
 
 (defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name)
   (unless *ignore-singleton-variables*
@@ -605,6 +619,13 @@ and *DEFAULT-PATHNAME-DEFAULTS*."
       (when (gethash op-name operators)
         (error "There is more than one operator named ~s" op-name))
       (setf (gethash op-name operators) (process-operator domain item)))))
+
+(defmethod parse-domain-item ((domain domain) (item-key (eql ':op)) item)
+  (let ((op-name (first (second item))))
+    (with-slots (operators) domain
+      (when (gethash op-name operators)
+        (error "There is more than one operator named ~s" op-name))
+      (setf (gethash op-name operators) (process-op domain item)))))
 
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':-)) item)
   (with-slots (axioms) domain

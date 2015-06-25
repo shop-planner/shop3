@@ -75,6 +75,6 @@
 complex defconstants."))
 
 (defconstant +shop-package+ :shop2-user)
-(defconstant cl-user::+shop-version+ "2.10.3")
+(defconstant cl-user::+shop-version+ "2.10.4")
 
 (defsystem :shop-asd)

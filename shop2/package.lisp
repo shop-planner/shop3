@@ -186,6 +186,7 @@
              #:domain
              #:task-sorter
              #:process-operator
+             #:process-op
              #:process-axiom
              #:process-method
              #:handle-domain-options

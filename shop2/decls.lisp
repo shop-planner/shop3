@@ -319,6 +319,15 @@ by domain type on how operator definitions are parsed.
 Should return something suitable for installation in the
 operators table of DOMAIN."))
 
+(defgeneric process-op (domain operator-def)
+  (:documentation "This generic function allows for specialization
+by domain type on how operator definitions are parsed.
+Should return something suitable for installation in the
+operators table of DOMAIN.
+  This generic function supports the new syntax for
+operators that comes with the :OP keyword instead of
+:OPERATOR."))
+
 (defgeneric process-method (domain method-def)
   (:documentation "This generic function allows for
 specialization by domain type on how method definitions
