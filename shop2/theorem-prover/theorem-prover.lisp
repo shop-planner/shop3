@@ -589,72 +589,50 @@ goal1 along with all of the other formulas in remaining."
             (setq answers (shop-union new-answers answers :test #'equal))))))
     ;; Next, look for ways to prove GOAL1 from the *axioms*
     (dolist (r (axioms domain (car goal1)))
-      (format t "~&Running axiom:~%~T~S~%" r)
       (let ((standardized-r (standardize r)))
         (unless (eql (setq mgu1 (unify goal1 (second standardized-r)))
                      (shop-fail))
           (setq found-match t) ; for debugging printout
           ;; found an axiom which unifies, now look at branches of the tail
-          (block examine-axiom-branches
-            (let ((tail (cddr standardized-r)))
-              (loop :for ax-branch-name = (car tail)
-                    :as ax-branch = (second tail)
-                    :with branch-answers
-                    :with new-answers
-                    :until (null tail)
-                    do
-                       (trace-print :goals (car goal1) state
-                                    "~2%Level ~s, axiom matches goal ~s~
+          (let ((tail (cddr standardized-r)))
+            (do ((ax-branch-name (car tail) (car tail))
+                 (ax-branch (cadr tail) (cadr tail)))
+              ((null tail)  nil)
+              (trace-print :goals (car goal1) state
+                  "~2%Level ~s, axiom matches goal ~s~
                     ~%     axiom ~s~%satisfiers ~s"
-                                    level goal1 ax-branch-name mgu1)
-                       (trace-print :axioms ax-branch-name state
-                                    "~2%Level ~s, trying axiom ~s~%      goal ~s~
+                level goal1 ax-branch-name mgu1)
+              (trace-print :axioms ax-branch-name state
+                  "~2%Level ~s, trying axiom ~s~%      goal ~s~
                     ~%      tail ~s"
-                                    level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
-                       (if (eq (car ax-branch) :first)
-                           (setq new-just1 t
-                                 ax-branch (cdr ax-branch))
-                           (setq new-just1 just1))
-                       (setf branch-answers
-                             (seek-satisfiers
-                              (apply-substitution (list ax-branch) mgu1)
-                              state (apply-substitution bindings mgu1) (1+ level)
-                              new-just1 :domain domain))
-                       (when branch-answers
-                         (format t "~&Successfully solved branch ~a~%" ax-branch-name)
-                         (setq new-answers
-                               (loop :for ans :in new-answers
-                                      :appending (seek-satisfiers
-                                                  (apply-substitution
-                                                   (apply-substitution remaining mgu1)
-                                                   ans)
-                                                  state (apply-substitution bindings mgu1) (1+ level)
-                                                  new-just1 :domain domain))))
-                       (cond (new-answers
-                              ;; implicitly, BRANCH-ANSWERS must be non-NIL
-                              (trace-print :axioms ax-branch-name state
-                                           "~2%Level ~s, applying axiom ~s~%      goal ~s~
+                level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
+              (if (eq (car ax-branch) :first)
+                (setq new-just1 t ax-branch (cdr ax-branch))
+                (setq new-just1 just1))
+              (setq new-answers
+                    (seek-satisfiers
+                     (apply-substitution (append (list ax-branch) remaining)
+                                         mgu1)
+                     state (apply-substitution bindings mgu1) (1+ level)
+                     new-just1 :domain domain))
+              (if new-answers
+                (progn
+                  (trace-print :axioms ax-branch-name state
+                      "~2%Level ~s, applying axiom ~s~%      goal ~s~
                         ~%      tail ~s"
-                                           level ax-branch-name goal1
-                                           (apply-substitution ax-branch mgu1))
-                              (when new-just1
-                                (return-from do-conjunct new-answers))
-                              (setq answers (shop-union new-answers answers :test #'equal))
-                              ;; we are done with this axiom, return
-                              (return-from examine-axiom-branches))
-                             (branch-answers
-                              ;; we matched this axiom, but failed to extend: we
-                              ;; have to try remaining axioms
-                              (format t "Failed to extend ~a to a full solution.~%" ax-branch-name)
-                              (return-from examine-axiom-branches))
-                             (t
-                              (format t "For branch ~S found no new answers~%" ax-branch-name)
-                              (trace-print :axioms ax-branch-name state
-                                           "~2%Level ~s, exiting axiom ~s~%      goal ~s~
+                    level ax-branch-name goal1
+                    (apply-substitution ax-branch mgu1))
+                  (if new-just1
+                    (return-from do-conjunct new-answers))
+                  (setq answers (shop-union new-answers answers :test #'equal))
+                  (return nil))
+                (progn
+                  (trace-print :axioms ax-branch-name state
+                      "~2%Level ~s, exiting axiom ~s~%      goal ~s~
                         ~%      tail ~s"
-                                           level ax-branch-name goal1
-                                           (apply-substitution ax-branch mgu1))))
-                       (setf tail (cddr tail))))))))
+                    level ax-branch-name goal1
+                    (apply-substitution ax-branch mgu1))))
+              (setf tail (cddr tail)))))))
     (unless found-match
       (trace-print :goals (car goal1) state
           "~2%Level ~s, couldn't match goal ~s" level goal1))
