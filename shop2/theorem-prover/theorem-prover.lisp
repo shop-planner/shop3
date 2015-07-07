@@ -568,76 +568,101 @@ in the goal, so we ignore the extra reference."
   "Where goal1 is an atomic predicate (not an atom per se, but a clause not
 headed by an operator or other symbol), try to find a binding that satisfies
 goal1 along with all of the other formulas in remaining."
-  (let (mgu1 answers new-answers found-match new-just1)
-    (trace-print :goals (car goal1) state
-        "~2%Level ~s, trying to satisfy goal ~s" level goal1)
+  (trace-print :goals (car goal1) state
+               "~2%Level ~s, trying to satisfy goal ~s" level goal1)
 
-    ;; Then, look for ways to satisfy GOAL1 from the atoms in state
+  ;; Then, look for ways to satisfy GOAL1 from the atoms in state
+  (multiple-value-bind (answers found-match)
+      (do-conjunct-from-atoms domain goal1 remaining state bindings level just1)
+    (when (and answers just1)
+      (return-from do-conjunct answers))
+
+    ;; Next, look for ways to prove GOAL1 from the *axioms*
+    (multiple-value-bind (axiom-answers axiom-found-match)
+        (do-conjunct-from-axioms domain goal1 remaining state bindings level just1)
+      (when (and axiom-answers just1)
+        (return-from do-conjunct axiom-answers))
+
+      (unless (or found-match axiom-found-match)
+        (trace-print :goals (car goal1) state
+                     "~2%Level ~s, couldn't match goal ~s" level goal1))
+      (shop-union answers axiom-answers :test 'equal))))
+
+(defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1)
+  (let (answers mgu1 found-match)
     (dolist (r (state-candidate-atoms-for-goal state goal1))
       (unless (eql (setq mgu1 (unify goal1 r)) (shop-fail))
         (setq found-match t) ; for debugging printout
-        (setq new-answers
+        (let ((new-answers
               (seek-satisfiers (apply-substitution remaining mgu1)
                                state (apply-substitution bindings mgu1)
-                               (1+ level) just1 :domain domain))
-        (if new-answers
-          (progn
+                               (1+ level) just1 :domain domain)))
+          (when new-answers
             (trace-print :goals (car goal1) state
-                "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
-              level goal1 new-answers)
-            (if just1 (return-from do-conjunct new-answers))
-            (setq answers (shop-union new-answers answers :test #'equal))))))
-    ;; Next, look for ways to prove GOAL1 from the *axioms*
-    (dolist (r (axioms domain (car goal1)))
-      (let ((standardized-r (standardize r)))
-        (unless (eql (setq mgu1 (unify goal1 (second standardized-r)))
-                     (shop-fail))
-          (setq found-match t) ; for debugging printout
-          ;; found an axiom which unifies, now look at branches of the tail
-          (let ((tail (cddr standardized-r)))
-            (do ((ax-branch-name (car tail) (car tail))
-                 (ax-branch (cadr tail) (cadr tail)))
-              ((null tail)  nil)
-              (trace-print :goals (car goal1) state
-                  "~2%Level ~s, axiom matches goal ~s~
-                    ~%     axiom ~s~%satisfiers ~s"
-                level goal1 ax-branch-name mgu1)
-              (trace-print :axioms ax-branch-name state
-                  "~2%Level ~s, trying axiom ~s~%      goal ~s~
-                    ~%      tail ~s"
-                level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
-              (if (eq (car ax-branch) :first)
-                (setq new-just1 t ax-branch (cdr ax-branch))
-                (setq new-just1 just1))
-              (setq new-answers
-                    (seek-satisfiers
-                     (apply-substitution (append (list ax-branch) remaining)
-                                         mgu1)
-                     state (apply-substitution bindings mgu1) (1+ level)
-                     new-just1 :domain domain))
-              (if new-answers
-                (progn
-                  (trace-print :axioms ax-branch-name state
-                      "~2%Level ~s, applying axiom ~s~%      goal ~s~
-                        ~%      tail ~s"
-                    level ax-branch-name goal1
-                    (apply-substitution ax-branch mgu1))
-                  (if new-just1
-                    (return-from do-conjunct new-answers))
-                  (setq answers (shop-union new-answers answers :test #'equal))
-                  (return nil))
-                (progn
-                  (trace-print :axioms ax-branch-name state
-                      "~2%Level ~s, exiting axiom ~s~%      goal ~s~
-                        ~%      tail ~s"
-                    level ax-branch-name goal1
-                    (apply-substitution ax-branch mgu1))))
-              (setf tail (cddr tail)))))))
-    (unless found-match
-      (trace-print :goals (car goal1) state
-          "~2%Level ~s, couldn't match goal ~s" level goal1))
-    (return-from do-conjunct answers)))
+                         "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
+                         level goal1 new-answers)
+            (when just1 (return-from do-conjunct-from-atoms (values new-answers found-match)))
+            (setf answers (shop-union new-answers answers :test #'equal))))))
+    (values answers found-match)))
 
+(defun do-conjunct-from-axioms (domain goal1 remaining state bindings level just1)
+  (let (found-match answers)
+    (dolist (r (axioms domain (car goal1)))
+      (multiple-value-bind (axiom-answers axiom-found-match)
+          (do-conjunct-from-axiom r domain goal1 remaining state bindings level just1)
+        (when (and just1 axiom-answers)
+          (return-from do-conjunct-from-axioms
+            (values axiom-answers axiom-found-match)))
+        (setf found-match (or found-match axiom-found-match)
+              answers (shop-union axiom-answers answers :test 'equal))))
+    (values answers found-match)))
+
+(defun do-conjunct-from-axiom (axiom domain goal1 remaining state bindings level just1)
+  (let* ((standardized-axiom (standardize axiom))
+         (mgu1 (unify goal1 (second standardized-axiom)))
+         found-match new-just1)
+    (unless (eql mgu1 (shop-fail))
+      ;; found an axiom which unifies, now look at branches of the tail
+      (setf found-match t)
+      (let ((tail (cddr standardized-axiom)))
+        (block break
+        (do ((ax-branch-name (car tail) (car tail))
+             (ax-branch (cadr tail) (cadr tail)))
+            ((null tail)  nil)
+          (trace-print :goals (car goal1) state
+                       "~2%Level ~s, axiom matches goal ~s~
+                    ~%     axiom ~s~%satisfiers ~s"
+                       level goal1 ax-branch-name mgu1)
+          (trace-print :axioms ax-branch-name state
+                       "~2%Level ~s, trying axiom ~s~%      goal ~s~
+                    ~%      tail ~s"
+                       level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
+          (if (eq (car ax-branch) :first)
+              (setq new-just1 t ax-branch (cdr ax-branch))
+              (setq new-just1 just1))
+          (let ((new-answers
+                  (seek-satisfiers
+                   (apply-substitution (append (list ax-branch) remaining)
+                                       mgu1)
+                   state (apply-substitution bindings mgu1) (1+ level)
+                   new-just1 :domain domain)))
+            (if new-answers
+              (progn
+                (trace-print :axioms ax-branch-name state
+                             "~2%Level ~s, applying axiom ~s~%      goal ~s~
+                        ~%      tail ~s"
+                             level ax-branch-name goal1
+                             (apply-substitution ax-branch mgu1))
+                (return-from do-conjunct-from-axiom (values new-answers found-match)))
+              (progn
+                (trace-print :axioms ax-branch-name state
+                             "~2%Level ~s, exiting axiom ~s~%      goal ~s~
+                        ~%      tail ~s"
+                             level ax-branch-name goal1
+                             (apply-substitution ax-branch mgu1))))
+          (setf tail (cddr tail)))))))
+    ;; if you get here, you have failed in the proof.
+    nil))
 
 
 ;;; ------------------------------------------------------------------------

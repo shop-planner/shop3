@@ -156,15 +156,16 @@ shop2."
     :test-names ((pddl-tests . :shop2)
                  (protection-test . :protection-test)
                  (arity-test . :arity-test)
+                 (io-tests . :arity-test)
                  (method-tests . :arity-test)
-                 (umt-tests . :shop2-user)
+                 (umt-domain-tests . :shop2-user)
                  (blocks-tests . :shop2-user)
                  (depot-tests . :shop2-user)
                  (logistics-tests . :shop2-user)
                  (singleton-tests . :shop2-user)
                  (misc-tests . :shop2-user)
                  )
-    :num-checks 265
+    :num-checks 262
     :depends-on ((:version "shop2" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :components ((:module "shop-test-helper"

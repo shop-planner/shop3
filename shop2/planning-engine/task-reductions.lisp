@@ -309,12 +309,16 @@ Otherwise it returns FAIL."
                            (first body)
                            task-body
                            answers)
-              (return-from apply-method (values answers unifiers)))
-          (trace-print :methods (first body) state
-                     "~2%Depth ~s, inapplicable method ~s~%      task ~s"
-                     depth
-                     (first body)
-                     task-body))))))
+              (return-from apply-method 
+                (values answers unifiers)))
+            ;; I believe the following relies on TRACE-PRINT implicitly returning NIL
+            (progn
+              (trace-print :methods (first body) state
+                         "~2%Depth ~s, inapplicable method ~s~%      task ~s"
+                         depth
+                         (first body)
+                         task-body)
+              nil))))))
 
 ;;; This function forces there to be at least one immediate task in any
 ;;;  reduction so that when a method is reduced, it is immediately
@@ -509,13 +513,13 @@ Otherwise it returns FAIL."
       (setq L1 (cdr L1)))
     (return-from delete-task-top-list (values L1 tempML))))
 
-; copy-task-tree is like copy-tree except that anything starting with
-; a :task is simply inserted rather than copied.  The motivation here
-; is to allow functions that destructively modify the task tree
-; structures to not disrupt other copies but to still allow references
-; to individual tasks to be compared using eq (as is done in some
-; helpers to extract-tree).
+;;; copy-task-tree is like copy-tree except that anything starting with a :task
+;;; is simply inserted rather than copied.  The motivation here is to allow
+;;; functions that destructively modify the task tree structures to not disrupt
+;;; other copies but to still allow references to individual tasks to be
+;;; compared using eq (as is done in some helpers to extract-tree).
 (defun copy-task-tree (tt)
+  (declare (optimize (debug 1) (space 3) (speed 3)))
   (cond
    ((atom tt) tt)
    ((eq (first tt) :task) tt)
