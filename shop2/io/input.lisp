@@ -525,6 +525,9 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
            (error "No domain named ~A" name))
           (t if-not-found))))
 
+(defun delete-domain (name)
+  (setf (get name :domain) nil))
+
 (defun set-domain (name)
   "NAME argument is a symbol.  Will set the global variable *DOMAIN*
 to the domain with domain-name NAME."

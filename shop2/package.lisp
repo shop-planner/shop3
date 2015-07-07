@@ -146,6 +146,7 @@
              #:defdomain
              #:set-domain
              #:find-domain
+             #:delete-domain
              #:*defdomain-verbose*
 
              ;; default planner search setting --- should be replaced
