@@ -1,5 +1,8 @@
 (in-package :shop2-user)
 
+(fiveam:def-suite umt-domain-tests)
+(fiveam:in-suite umt-domain-tests)
+
 (fiveam:def-fixture umt-domain ()
   (progn 
     (define-umt-domain)
