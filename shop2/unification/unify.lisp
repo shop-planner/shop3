@@ -137,6 +137,10 @@ variable."
   ;; constraints
   )
 
+(defmethod make-load-form ((obj binding) &optional env)
+  (declare (ignore env))
+  `(make-binding (quote ,(binding-var obj)) ,(binding-val obj)))
+
 (defun find-binding (target binding-list)
   (find target binding-list :key #'binding-var))
 
