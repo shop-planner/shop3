@@ -333,6 +333,30 @@ in the goal, so we ignore the extra reference."
     (standard-satisfiers-for-and domain (cdr goal) other-goals
                                  state bindings (1+ level) just1)))
 
+;;; John's DEF-LOGICAL-KEYWORD is too rigid for this...
+#+nil
+(def-logical-keyword (%cut% domain)
+  (:satisfier-method (goal other-goals state bindings level just1)
+    (standard-satisfiers-for-%cut% domain other-goals
+                                 state bindings (1+ level) just1)))
+(DEFMETHOD REAL-SEEK-SATISFIERS-FOR (DOMAIN
+                                       (keyword (EQL '%CUT%))
+                                       GOAL
+                                       OTHER-GOALS
+                                       STATE
+                                       BINDINGS
+                                       LEVEL
+                                       JUST1)
+    (DECLARE (IGNORABLE DOMAIN keyword goal))
+    (restart-case
+     (signal 'cut-commit)
+     (continue ()
+      (seek-satisfiers other-goals state bindings (1+ level) just1 :domain domain))))
+(DEFMETHOD LOGICAL-KEYWORDP ((keyword (EQL '%CUT%)) DOMAIN)
+    (DECLARE (IGNORABLE DOMAIN keyword))
+    T)
+
+
 (defun incorporate-unifiers (unifiers remaining just-one
                                       state bindings domain newlevel)
   (let (answers)
@@ -620,47 +644,56 @@ goal1 along with all of the other formulas in remaining."
 (defun do-conjunct-from-axiom (axiom domain goal1 remaining state bindings level just1)
   (let* ((standardized-axiom (standardize axiom))
          (mgu1 (unify goal1 (second standardized-axiom)))
+         committed
          found-match new-just1)
     (unless (eql mgu1 (shop-fail))
       ;; found an axiom which unifies, now look at branches of the tail
       (setf found-match t)
       (let ((tail (cddr standardized-axiom)))
         (block break
-        (do ((ax-branch-name (car tail) (car tail))
-             (ax-branch (cadr tail) (cadr tail)))
-            ((null tail)  nil)
-          (trace-print :goals (car goal1) state
-                       "~2%Level ~s, axiom matches goal ~s~
+          (do ((ax-branch-name (car tail) (car tail))
+               (ax-branch (cadr tail) (cadr tail)))
+              ((null tail)  nil)
+            (trace-print :goals (car goal1) state
+                         "~2%Level ~s, axiom matches goal ~s~
                     ~%     axiom ~s~%satisfiers ~s"
-                       level goal1 ax-branch-name mgu1)
-          (trace-print :axioms ax-branch-name state
-                       "~2%Level ~s, trying axiom ~s~%      goal ~s~
+                         level goal1 ax-branch-name mgu1)
+            (trace-print :axioms ax-branch-name state
+                         "~2%Level ~s, trying axiom ~s~%      goal ~s~
                     ~%      tail ~s"
-                       level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
-          (if (eq (car ax-branch) :first)
-              (setq new-just1 t ax-branch (cdr ax-branch))
+                         level ax-branch-name goal1 (apply-substitution ax-branch mgu1))
+            (if (eq (car ax-branch) :first)
+                (setq new-just1 t ax-branch (cdr ax-branch))
               (setq new-just1 just1))
-          (let ((new-answers
-                  (seek-satisfiers
-                   (apply-substitution (append (list ax-branch) remaining)
-                                       mgu1)
-                   state (apply-substitution bindings mgu1) (1+ level)
-                   new-just1 :domain domain)))
-            (if new-answers
-              (progn
-                (trace-print :axioms ax-branch-name state
-                             "~2%Level ~s, applying axiom ~s~%      goal ~s~
+            (let ((new-answers
+                   (handler-bind
+                    ((cut-commit
+                      #'(lambda (c)
+                          (setf committed t)
+                          (continue c))))
+                    (seek-satisfiers
+                     (apply-substitution (append (list ax-branch) `((%cut%)) remaining)
+                                         mgu1)
+                     state (apply-substitution bindings mgu1) (1+ level)
+                     new-just1 :domain domain))))
+              (if new-answers
+                  (progn
+                    (trace-print :axioms ax-branch-name state
+                                 "~2%Level ~s, applying axiom ~s~%      goal ~s~
                         ~%      tail ~s"
-                             level ax-branch-name goal1
-                             (apply-substitution ax-branch mgu1))
-                (return-from do-conjunct-from-axiom (values new-answers found-match)))
-              (progn
-                (trace-print :axioms ax-branch-name state
-                             "~2%Level ~s, exiting axiom ~s~%      goal ~s~
+                                 level ax-branch-name goal1
+                                 (apply-substitution ax-branch mgu1))
+                    (return-from do-conjunct-from-axiom (values new-answers found-match)))
+                (progn
+                  (trace-print :axioms ax-branch-name state
+                               "~2%Level ~s, exiting axiom ~s~%      goal ~s~
                         ~%      tail ~s"
-                             level ax-branch-name goal1
-                             (apply-substitution ax-branch mgu1))))
-          (setf tail (cddr tail)))))))
+                               level ax-branch-name goal1
+                               (apply-substitution ax-branch mgu1))))
+              (if committed
+                  ;; don't look at any more axiom tails.
+                  (return-from break)
+                (setf tail (cddr tail))))))))
     ;; if you get here, you have failed in the proof.
     nil))
 

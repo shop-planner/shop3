@@ -173,3 +173,6 @@ warnings, errors, etc.")
              (when (slot-boundp condition 'comment)
                (format stream "  ~a" (comment condition))))))
 
+;;; used for the internals of IF-THEN-ELSE in the theorem-prover
+(define-condition cut-commit (condition)
+  ())
