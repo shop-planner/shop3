@@ -24,22 +24,24 @@
              (format s "Encountered bad backtrack condition in SHOP2."))))
 
 (defun test-backtrack-domain ()
-  (defdomain test-backtrack
-    ((:method (example-with-backtrack ?x)
-       ((foo ?x)
-        (bar ?_y))
-       ())
-     (:- (= ?x ?x)
-         ())
-     (:- (foo ?x)
-         ((= ?x 2)
-          (eval (eql ?x 2)))
-         ((eval (error '%bad-backtrack-cond)))))))
+  (let ((shop2:*define-silently* t))
+    (defdomain (test-backtrack :redefine-ok t)
+        ((:method (example-with-backtrack ?x)
+           ((foo ?x)
+            (bar ?_y))
+           ())
+         (:- (= ?x ?x)
+             ())
+         (:- (foo ?x)
+             ((= ?x 2)
+              (eval (eql ?x 2)))
+             ((eval (error '%bad-backtrack-cond))))))))
 
 (defun bad-backtrack-problem ()
-  (make-problem 'bad-backtrack-problem 'test-backtrack
+  (let ((shop2:*define-silently* t))
+    (make-problem 'bad-backtrack-problem 'test-backtrack
                 nil
-                '(example-with-backtrack 2)))
+                '(example-with-backtrack 2))))
 
 ;;; this just checks to make sure that the domain works: it doesn't actually
 ;;; check the bug.
@@ -54,35 +56,22 @@
     (shop2:delete-domain 'test-backtrack)))
   
 ;;; To verify SHOP2 ticket:261 (https://svn.sift.info:3333/trac/shop2/ticket/261) do the following:
-#+nil
-(progn
+(fiveam:test bad-backtrack-case
   (test-backtrack-domain)
   (bad-backtrack-problem)
-  (find-plans 'bad-backtrack-problem))
-;;; this will raise an error as we somehow backtrack into the error call, which
-;;; should be unreachable.
-;;; compare to
-#+nil
-(progn
-  (test-backtrack-domain)
-  (make-problem 'check-bad-backtrack-domain 'test-backtrack
-                '((bar 22))
-                '(example-with-backtrack 2))
-  (find-plans 'check-bad-backtrack-domain))
-;;; is this in FIND-SATISFIERS?
-#+nil 
-(progn
-  (test-backtrack-domain)
+  (fiveam:is-false
+     (find-plans 'bad-backtrack-problem :verbose 0))
   (let* ((domain (find-domain 'test-backtrack))
          (state (shop2::make-initial-state domain :mixed '((bar 22)))))
-    (find-satisfiers '((foo ?x)(bar ?_y)) state nil 0 :domain domain)))
-#+nil 
-(progn
-  (test-backtrack-domain)
+    (fiveam:is
+     (equalp
+      '((#S(SHOP2.UNIFIER::BINDING :VAR ?X :VAL 2)
+         #S(SHOP2.UNIFIER::BINDING :VAR ?_Y :VAL 22)))
+      (find-satisfiers '((foo ?x)(bar ?_y)) state nil 0 :domain domain))))
   (let* ((domain (find-domain 'test-backtrack))
          (state (shop2::make-initial-state domain :mixed nil)))
-    (query '((foo ?x)(bar ?_y)) state :domain domain)))
-;;; yes, it is.
+    (fiveam:is-false
+     (shop2.theorem-prover:query '((foo ?x)(bar ?_y)) state :domain domain))))
 
 
       

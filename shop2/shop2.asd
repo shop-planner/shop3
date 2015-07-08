@@ -165,7 +165,7 @@ shop2."
                  (singleton-tests . :shop2-user)
                  (misc-tests . :shop2-user)
                  )
-    :num-checks 262
+    :num-checks 265
     :depends-on ((:version "shop2" #.cl-user::+shop-version+))
     :version #.cl-user::+shop-version+
     :components ((:module "shop-test-helper"
