@@ -65,8 +65,8 @@
          (state (shop2::make-initial-state domain :mixed '((bar 22)))))
     (fiveam:is
      (equalp
-      '((#S(SHOP2.UNIFIER::BINDING :VAR ?X :VAL 2)
-         #S(SHOP2.UNIFIER::BINDING :VAR ?_Y :VAL 22)))
+      `((,(shop2.unifier::make-binding '?x 2)
+         ,(shop2.unifier::make-binding '?_y 22)))
       (find-satisfiers '((foo ?x)(bar ?_y)) state nil 0 :domain domain))))
   (let* ((domain (find-domain 'test-backtrack))
          (state (shop2::make-initial-state domain :mixed nil)))
