@@ -710,10 +710,11 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (determine-verbosity *verbose*)
 
     (when *print-stats*
-      (format t "~%---------------------------------------------------------------------------")
+      (format t "~&---------------------------------------------------------------------------")
       (format t "~%~@[Problem ~s with ~]:WHICH = ~s, :VERBOSE = ~s" problem which *verbose*)
-      (if *optimize-cost*
-          (format t ", OPTIMIZE-COST = ~s" *optimize-cost*)))
+      (when *optimize-cost*
+          (format t ", OPTIMIZE-COST = ~s" *optimize-cost*))
+      (terpri))
     ;; if *hand-steer* allows the user to abort planning.
     (catch 'user-done
       (ecase which
