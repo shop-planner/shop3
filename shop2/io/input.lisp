@@ -554,12 +554,14 @@ to the domain with domain-name NAME."
   ;; short-circuit if no include directives
   (unless (member :include items :key 'first :test 'eq)
     (call-next-method))
-  (call-next-method domain
-                    (loop :for item :in items
-                          :if (eq (first item) :include)
-                            :append (translate-include item)
-                          :else
-                            :collect item)))
+  (call-next-method domain (expand-include items)))
+
+(defun expand-include (items)
+  (loop :for item :in items
+        :if (eq (first item) :include)
+          :append (translate-include item)
+        :else
+          :collect item))
 
 (defun translate-include (include-item)
   (destructuring-bind (keyword domain-name &optional pathname)
@@ -603,7 +605,7 @@ and *DEFAULT-PATHNAME-DEFAULTS*."
                      :return x)))))
     (if domain-form
         ;; return the items
-        (third domain-form)
+        (expand-include (third domain-form))
       (error "Did not find definition of domain named ~a in file ~a"
              domain-name path))))
 
