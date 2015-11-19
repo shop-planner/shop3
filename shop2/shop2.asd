@@ -114,6 +114,13 @@
                  (:file "tracer")
                  (:file "unify")))
 
+(defsystem :shop2/plan-grapher
+  :depends-on ("shop2" "cl-dot")
+  :serial t
+  :pathname "plan-grapher/"
+  :components ((:file "package")
+               (:file "graph-plan-tree"))
+  )
 
 ;;;---------------------------------------------------------------------------
 ;;; Testing
