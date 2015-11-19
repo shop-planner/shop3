@@ -255,8 +255,8 @@ will consult the user even in these cases.")
 
 (defmethod print-object ((x problem) stream)
   (if *print-readably*
-      (format stream "#.(make-problem :name ~s ~@[:domain-name ~s~] :tasks ~s :state-atoms ~s)"
-              (name x) (domain-name x) (tasks x) (state-atoms x))
+      (format stream "#.(make-problem '~s ~@['~s~] '~s '~s)"
+              (name x) (domain-name x) (state-atoms x) (tasks x))
       (print-unreadable-object (x stream :type t)
         (princ (name x) stream))))
 
