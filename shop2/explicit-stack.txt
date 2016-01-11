@@ -1,0 +1,45 @@
+# -*- mode:org; -*-
+
+* Intro
+Design for explicit stack reformulation of the SHOP2 search engine.
+* Top level decomposition
+** Seek plans (=SEEK-PLANS=)
+   [[file:planning-engine/search.lisp::(defmethod%20seek-plans%20((domain%20domain)%20state%20tasks%20top-tasks%20partial-plan%20partial-plan-cost][SEEK-PLANS source]]
+- If no tasks, invoke =SEEK-PLANS-NULL=
+- If immediate tasks, choose 1 and =SEEK-PLANS-TASK=
+- Else we pick a top-task and try to solve it
+** =SEEK-PLANS-TASK=
+[[file:planning-engine/search.lisp::(defmethod%20seek-plans-task%20(domain%20task1%20state%20tasks%20top-tasks%20partial-plan][SEEK-PLANS-TASK source]]
+Simply dispatch to either =SEEK-PLANS-NONPRIMITIVE= or =SEEK-PLANS-PRIMITIVE=.
+** =SEEK-PLANS-PRIMITIVE=
+- Dispatch to either
+  - =APPLY-OPERATOR= or
+  - =APPLY-ACTION=
+- Recursive call to =SEEK-PLANS=
+- On failure (return from recursive call), undo the effects of the primitive.
+** =SEEK-PLANS-NONPRIMITIVE=
+- Iterate over the set of method definitions
+- For each method definition, call =APPLY-METHOD= and, if the method
+  application succeeds, invoke =SEEK-PLANS= recursively.
+** =SEEK-PLANS-NULL=
+Check the plan to see if it meets conditions like which plan are we looking for,
+cost acceptable, etc.  If so, use =STORE-PLAN!= (and possible also
+=DUMP-PREVIOUS-PLANS!=).  Then return.
+** =APPLY-OPERATOR=
+- standardize the operator (should this be done one time only?)
+- unify with the body
+- check the preconditions
+- apply the additions and deletions (vast majority of the function does this).
+** =APPLY-ACTION= (PDDL actions)
+Really, essentially the same as =APPLY-OPERATOR=, but with a few changes because
+of the different scoping (preconditions not scoped over effects).
+* Search state components:
+- State (world state)
+- Tasks
+- Top tasks
+- Partial plan
+- Cost so far
+- Depth
+- Protections
+- Unifier
+- Subtask parents table
