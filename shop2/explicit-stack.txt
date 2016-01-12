@@ -45,6 +45,7 @@ of the different scoping (preconditions not scoped over effects).
 - Unifier
 - Subtask parents table
 - Backtrack stack
+- Alternatives -- what are the alternatives for the current choice?
 *Note:* in CIRCA, the state of the search has a set of alternatives explicitly
  stored.  But in SHOP2, the alternatives are implicit in the set of tasks and
  top-tasks.  Is that sufficient, though?  If we are going to explore these
@@ -55,19 +56,33 @@ of the different scoping (preconditions not scoped over effects).
 #+BEGIN_SRC common-lisp
   (defun search (state)
     (iter while t
-      (cond ((empty state)
+      (if (empty state)
              ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
              (cond ((check-for-done state settings)
                     state) ;extract plan from this
-                   (t (backtrack state))))
-            (t (let (task)
-                 (setf task
-                       (cond ((immediate-tasks state)
-                              (choose-immediate-task state))
-                             (t
-                              (choose-toplevel-task state))))
-                 (let ((new-state (expand-task state task)))
-                   (search new-state)))))))
+                   (t (search (backtrack state))))
+          (multiple-value-bind (task new-state)
+              (cond ((immediate-tasks state)
+                     (choose-immediate-task state))
+                    (t
+                     (choose-toplevel-task state)))
+            (search new-state)))))
+
+  ;;; this is ALMOST right, but not right because it doesn't tell what happens when we backtrack.
+  ;;; that's why CIRCA has the notion of MODE, so that you can know how to move forward.
+  (defun choose-immediate-task (state)
+    ;; COPY-STATE could/should be destructive...
+    (let* ((new-state (copy-state state))
+           (immediate-tasks (immediate-tasks (get-immediate-list (top-tasks new-state))))
+           (chosen (choose-immediate-task immediate-tasks unifier))
+           ;; check to make sure this can really be done...
+           (alternatives (remove chosen immediate-tasks)))
+      ;; record the new alternatives
+      (bt-checkpoint new-state)
+      (bt-alternatives new-state alternatives)
+      (values chosen new-state)))
+
+
 
   (defun expand-task (state task)
     (let ((new-state
@@ -83,12 +98,15 @@ of the different scoping (preconditions not scoped over effects).
       new-state))
 
   (defun backtrack (state &optional until)
+    "Simple chronological backtracking if UNTIL is NIL, else
+  backjump to the point named by UNTIL. Return new STATE
+  object."
     (iter (for entry = (pop (backtrack-stack state)))
        (unless entry
          (error "Stack empty on backtrack."))
-       (bt-undo entry)
-       (when (bt-match entry until)
-          (return t))))
+       (bt-undo entry state) ;; undoes effects recorded in ENTRY...
+       (when (bt-match entry until) ;; check to see if we are done backtracking
+          (return state))))
 
 
 
