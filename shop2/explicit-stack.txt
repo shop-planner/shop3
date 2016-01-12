@@ -34,6 +34,7 @@ cost acceptable, etc.  If so, use =STORE-PLAN!= (and possible also
 Really, essentially the same as =APPLY-OPERATOR=, but with a few changes because
 of the different scoping (preconditions not scoped over effects).
 * Search state components:
+  [[file:planning-engine/explicit-search.lisp::(defclass%20search-state%20()][SEARCH-STATE]]
 - State (world state)
 - Tasks
 - Top tasks
@@ -43,6 +44,13 @@ of the different scoping (preconditions not scoped over effects).
 - Protections
 - Unifier
 - Subtask parents table
+- Backtrack stack
+*Note:* in CIRCA, the state of the search has a set of alternatives explicitly
+ stored.  But in SHOP2, the alternatives are implicit in the set of tasks and
+ top-tasks.  Is that sufficient, though?  If we are going to explore these
+ alternatives in a way that is more general than left-to-right, do we need to
+ explicitly track the alternatives so that, for example, we can choose the top
+ tasks is a different order?
 * Proposed algorithm
 #+BEGIN_SRC common-lisp
   (defun search (state)
@@ -60,4 +68,35 @@ of the different scoping (preconditions not scoped over effects).
                               (choose-toplevel-task state))))
                  (let ((new-state (expand-task state task)))
                    (search new-state)))))))
+
+  (defun expand-task (state task)
+    (let ((new-state
+            (cond ((primitive-task-p task)
+                   (let (op (operator *domain* task-name)))
+                     (etypecase op
+                       (operator
+                        (state-apply-operator state task))
+                       (pddl-action
+                        (state-apply-action state task))))
+                  (t
+                   (state-apply-non-primitive state task)))))
+      new-state))
+
+  (defun backtrack (state &optional until)
+    (iter (for entry = (pop (backtrack-stack state)))
+       (unless entry
+         (error "Stack empty on backtrack."))
+       (bt-undo entry)
+       (when (bt-match entry until)
+          (return t))))
+
+
+
 #+END_SRC
+
+* Alternative design
+We could adopt the "virtual machine" model that CIRCA uses.  In this case, we
+could have the following "registers:"
+- Search state
+- Backtrack stack
+- Domain
