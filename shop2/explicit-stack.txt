@@ -43,3 +43,21 @@ of the different scoping (preconditions not scoped over effects).
 - Protections
 - Unifier
 - Subtask parents table
+* Proposed algorithm
+#+BEGIN_SRC common-lisp
+  (defun search (state)
+    (iter while t
+      (cond ((empty state)
+             ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
+             (cond ((check-for-done state settings)
+                    state) ;extract plan from this
+                   (t (backtrack state))))
+            (t (let (task)
+                 (setf task
+                       (cond ((immediate-tasks state)
+                              (choose-immediate-task state))
+                             (t
+                              (choose-toplevel-task state))))
+                 (let ((new-state (expand-task state task)))
+                   (search new-state)))))))
+#+END_SRC
