@@ -118,3 +118,61 @@ could have the following "registers:"
 - Search state
 - Backtrack stack
 - Domain
+** Top-level outline
+#+BEGIN_SRC common-lisp
+  (defun search (state)
+      (iter (while t)
+        (ecase (mode state)
+          (check-for-done
+           (if (empty state)
+               ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
+               (cond ((check-for-done state settings)
+                      (setf (mode state) 'extract-plan))
+                     (t (backtrack state))))
+               (setf (mode state) 'pop-immediate-task))
+          (pop-immediate-task
+           (cond ((immediate-tasks state)
+                  (setf state (choose-immediate-task state))
+                  (setf (mode state) 'expand-task))
+                 (t
+                  (setf (mode state) 'pop-toplevel-task))))
+          (pop-toplevel-task
+           (setf state (choose-toplevel-task state))
+           (setf (mode state) 'expand-task))
+          (expand-task
+           (let ((task (current-task state)))
+             (if (primitivep task)
+                 (setf (mode state) 'expand-primitive-task)
+                 (setf (mode state) 'expand-nonprimitive-task))))
+          ;; I think the two following need to be exploded,
+          ;; or at least expand-nonprimitive-task, which needs to
+          ;; split into choosing methods, choosing bindings, etc.,
+          ;; everywhere there's a backtrack point.  Probably primitive
+          ;; can be left.
+          (expand-primitive-task
+           (multiple-value-bind (success new-state)
+               (expand-primitive-state state)
+             ;; maybe this should just be side-effecting...
+             (setf state new-state)
+             (if success
+                 (setf (mode state) 'check-for-done)
+                 (backtrack state))))
+          (expand-nonprimitive-task
+           (multiple-value-bind (success new-state)
+               (expand-nonprimitive-state state)
+             ;; maybe this should just be side-effecting...
+             (setf state new-state)
+             (if success
+                 (setf (mode state) 'check-for-done)
+                 (backtrack state))))
+
+
+
+           )
+          (expand-nonprimitive-task
+           )
+          (extract-plan
+           ;; stuff here
+           (check-plans-found)
+           ))))
+#+END_SRC
