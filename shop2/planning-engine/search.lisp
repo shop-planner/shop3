@@ -61,6 +61,11 @@
 
 (in-package :shop2)
 
+(defmacro when-done (&body body)
+  `(when (and *plans-found* (eq which-plans :first)
+              (not (optimize-continue-p which-plans)))
+     ,@body))
+
 ;;; SEEK-PLANS is the basic planning engine.  Here are its arguments:
 ;;;  - STATE is the current state;
 ;;;  - TASKS is the list of remaining tasks to accomplish;
@@ -78,10 +83,10 @@
 ;;; Seek-plans has been broken down into the following lower level
 ;;; functions, below: seek-plans-task, seek-plans-primitive,
 ;;;                   seek-plans-nonprimitive, seek-plans-null
-(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans ((domain domain) state tasks top-tasks partial-plan partial-plan-cost
                          depth which-plans protections
                          unifier)
+  #+nil (declare (:explain :calls))     ; diagnose Allegro compilation
   (when (time-expired-p)
     (if *print-stats* (format t "~%Terminating because the time limit has expired."))
     (throw *internal-time-tag* nil))
@@ -115,9 +120,7 @@
                 depth which-plans protections
                                         ;tree
                 unifier))
-             ;; rewrote this as if-then-else, to make it clearer...
-             (when (and *plans-found* (eq which-plans :first)
-                        (not (optimize-continue-p which-plans)))
+             (when-done
                (return-from seek-plans nil))
              (cond (task1
 
@@ -139,28 +142,28 @@
                                   partial-plan-cost depth which-plans
                                   protections
                                   unifier)
-                 (when (and *plans-found* (eq which-plans :first)
-                            (not (optimize-continue-p which-plans)))
+                 (when-done
                    (return-from seek-plans nil))
                  (trace-print :tasks (get-task-name task1) state
                               "~2%Depth ~s, backtracking from task ~s"
                               depth
                               task1)
                  (backtrack "Task ~S failed" task1))
+               ;; this is permutation search over the orderings of the
+               ;; TOP-TASKS.
                (loop for task1 in (task-sorter domain top-tasks unifier)
                      while task1
                      do (seek-plans-task domain task1 state tasks top-tasks partial-plan
                              partial-plan-cost depth which-plans
                              protections
                              unifier)
-                     when (and *plans-found* (eq which-plans :first)
-                                             (not (optimize-continue-p which-plans)))
-                       do (return-from seek-plans nil)
-                     do (trace-print :tasks (get-task-name task1) state
+                        (when-done
+                          (return-from seek-plans nil))
+                        (trace-print :tasks (get-task-name task1) state
                               "~2%Depth ~s, backtracking from task ~s"
                               depth
                               task1)
-                        (backtrack "Task ~S failed" task1)))))))))
+                        (backtrack "Task ~S failed" task1))))))))
 
 (defun choose-immediate-task (immediate-tasks unifier)
   "Which of the set of IMMEDIATE-TASKS should SHOP2 work on
@@ -201,7 +204,6 @@ of SHOP2."
                 (nth input task-list)
                 (user-choose-task task-list immediate)))))))
 
-(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-task (domain task1 state tasks top-tasks partial-plan
                               partial-plan-cost depth which-plans
                               protections
@@ -224,7 +226,7 @@ of SHOP2."
                                  partial-plan partial-plan-cost depth
                                  which-plans protections
                                  unifier
-                                 )))))
+                                 ))))
 
 ;;; so we can use etypecase in seek-plans-primitive
 (deftype operator ()
@@ -232,7 +234,6 @@ of SHOP2."
 (deftype pddl-action ()
   '(satisfies pddl-action-p))
 
-(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-primitive ((domain domain) task1 task-name task-body state tasks top-tasks
                                  partial-plan partial-plan-cost depth which-plans protections unifier)
 ;;; I commented out the following two lines since we are getting the domain object from the first parameter right now
@@ -281,9 +282,8 @@ of SHOP2."
                       new-cost (1+ depth) which-plans protections
                       operator-unifier))
         (retract-state-changes state tag)
-        nil)))))
+        nil))))
 
-(let (#+allegro (compiler:tail-call-non-self-merge-switch t))
 (defmethod seek-plans-nonprimitive ((domain domain) task1 task-name task-body state tasks
                                       top-tasks partial-plan partial-plan-cost
                                       depth which-plans protections
@@ -316,9 +316,8 @@ of SHOP2."
                         partial-plan-cost (1+ depth) which-plans
                         protections
                         u1)
-                when (and *plans-found* (eq which-plans :first)
-                                        (not (optimize-continue-p which-plans)))
-                  do (return-from seek-plans-nonprimitive nil))))))))
+                   (when-done
+                     (return-from seek-plans-nonprimitive nil))))))))
 
 ;;; Called when there are no top level tasks to run
 (defmethod seek-plans-null ((domain domain) state which-plans partial-plan partial-plan-cost depth unifier)
