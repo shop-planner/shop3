@@ -111,7 +111,7 @@ Otherwise it returns FAIL."
       ;; first check the preconditions, if any
       (when preconditions
         (setq pre (apply-substitution preconditions operator-unifier))
-        (setq pu (shopthpr:find-satisfiers pre state t 0 :domain domain))
+        (setq pu (find-satisfiers pre state t 0 :domain domain))
         (unless pu
           (trace-print :operators (first head) state
                        "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
