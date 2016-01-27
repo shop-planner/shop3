@@ -130,7 +130,7 @@ or all answers (nil)."
                     (nth (random n) satisfiers))
                    satisfiers)))
             (t
-             satisfiers)))))
+             satisfiers))))))
 
 ;;; EXTRACT-VARIABLES returns a list of all of the variables in EXPR
 (defun extract-variables (expr)
