@@ -106,6 +106,8 @@ or all answers (nil)."
               (if (= (length goals) 3)
                   (third goals)
                 (fourth goals)))
+             ((eq (first goals) :random)
+              (second goals))
              (t goals)))
            (variables (extract-variables sought-goals))
            (answer (seek-satisfiers sought-goals state variables level
@@ -115,13 +117,20 @@ or all answers (nil)."
                                answer)))
                                         ;(format t "~%sat: ~s~%" satisfiers) ;***
 
-      (if (eq (first goals) :sort-by)
-          (sort satisfiers
+      (cond ((eq (first goals) :sort-by)
+             (sort satisfiers
                 (if (= (length goals) 3) #'<
                   (eval (third goals)))
                 :key #'(lambda (sat)
-                         (eval (apply-substitution (second goals) sat))))
-        satisfiers)))))
+                         (eval (apply-substitution (second goals) sat)))))
+            ((eq (first goals) :random)
+             (let ((n (length satisfiers)))
+               (if (> n 0)
+                   (list
+                    (nth (random n) satisfiers))
+                   satisfiers)))
+            (t
+             satisfiers)))))
 
 ;;; EXTRACT-VARIABLES returns a list of all of the variables in EXPR
 (defun extract-variables (expr)
