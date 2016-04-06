@@ -451,6 +451,8 @@ in the goal, so we ignore the extra reference."
         newlevel just1 :domain domain))
 
       ;; trivial unification --- probably wrong --- should be true unification
+      ;; actually, I don't think that this is wrong -- ASSIGN is variable assignment
+      ;; and if you want unification, you should use =. [2016/04/06:rpg]
       ((equalp var ans)
        (seek-satisfiers
         other-goals
