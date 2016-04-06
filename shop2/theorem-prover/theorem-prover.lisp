@@ -444,21 +444,21 @@ in the goal, so we ignore the extra reference."
   (let ((var (first arguments))
         (ans (eval (second arguments))))
     (cond
-     ((variablep var)
-      (seek-satisfiers
-       (apply-substitution other-goals (list (make-binding var ans)))
-       state (apply-substitution bindings (list (make-binding var ans)))
-       newlevel just1 :domain domain))
+      ((variablep var)
+       (seek-satisfiers
+        (apply-substitution other-goals (list (make-binding var ans)))
+        state (apply-substitution bindings (list (make-binding var ans)))
+        newlevel just1 :domain domain))
 
-     ;; trivial unification --- probably wrong --- should be true unification
-     ((equalp var ans)
-      (seek-satisfiers
-       (apply-substitution other-goals nil)
-       state (apply-substitution bindings nil)
-       newlevel just1 :domain domain))
+      ;; trivial unification --- probably wrong --- should be true unification
+      ((equalp var ans)
+       (seek-satisfiers
+        other-goals
+        state bindings
+        newlevel just1 :domain domain))
 
-     ;; otherwise, a constant value for VAR didn't match ANS
-     (t nil))))
+      ;; otherwise, a constant value for VAR didn't match ANS
+      (t nil))))
 
 (defun standard-satisfiers-for-enforce (domain arguments other-goals
                                                state bindings newlevel just1)
