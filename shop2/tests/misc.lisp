@@ -21,6 +21,7 @@
 (define-condition %bad-backtrack-cond (error)
   ()
   (:report (lambda (c s)
+             (declare (ignorable c))
              (format s "Encountered bad backtrack condition in SHOP2."))))
 
 (defun test-backtrack-domain ()
