@@ -205,28 +205,26 @@ of SHOP2."
                 (user-choose-task task-list immediate)))))))
 
 (defmethod seek-plans-task (domain task1 state tasks top-tasks partial-plan
-                              partial-plan-cost depth which-plans
-                              protections
-                              unifier
-                              )
-  (let ((task-name (get-task-name task1))
-        (task-body (get-task-body task1)))
-    (trace-print :tasks task-name state
-                 "~2%Depth ~s, trying task ~s"
-                 depth
-                 (apply-substitution task1 unifier))
-;;    (y-or-n-p "continue?")
-    (if (primitivep task-name)
-        (seek-plans-primitive domain task1 task-name task-body state tasks top-tasks
-                              partial-plan partial-plan-cost depth which-plans
-                              protections
-                              unifier
-                              )
-        (seek-plans-nonprimitive domain task1 task-name task-body state tasks top-tasks
-                                 partial-plan partial-plan-cost depth
-                                 which-plans protections
-                                 unifier
-                                 ))))
+                            partial-plan-cost depth which-plans
+                            protections
+                            unifier
+                            )
+  (trace-print :tasks (get-task-name task1) state
+               "~2%Depth ~s, trying task ~s"
+               depth
+               (apply-substitution task1 unifier))
+  ;;    (y-or-n-p "continue?")
+  (if (primitivep (get-task-name task1))
+      (seek-plans-primitive domain task1 state tasks top-tasks
+                            partial-plan partial-plan-cost depth which-plans
+                            protections
+                            unifier
+                            )
+      (seek-plans-nonprimitive domain task1 state tasks top-tasks
+                               partial-plan partial-plan-cost depth
+                               which-plans protections
+                               unifier
+                               )))
 
 ;;; so we can use etypecase in seek-plans-primitive
 (deftype operator ()
@@ -234,62 +232,73 @@ of SHOP2."
 (deftype pddl-action ()
   '(satisfies pddl-action-p))
 
-(defmethod seek-plans-primitive ((domain domain) task1 task-name task-body state tasks top-tasks
+(defmethod seek-plans-primitive ((domain domain) task1 state tasks top-tasks
                                  partial-plan partial-plan-cost depth which-plans protections unifier)
-;;; I commented out the following two lines since we are getting the domain object from the first parameter right now
-;;; [2006/08/09:ugur]
-;;  (declare (special *domain*))
-;;  (let ((m (operator *domain* task-name)))
-  (let ((m (operator domain task-name)))
+  (let ((task-name (get-task-name task1)))
+    (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag cost)
+        (seek-plans-primitive-1 domain task1 state tasks top-tasks
+                                depth protections unifier)
+      (unless success
+        (return-from seek-plans-primitive nil))
+      (let ((new-cost (+ cost partial-plan-cost)))
+        (when (and *optimize-cost*
+                   (not (acceptable-cost-p new-cost)))
+          (trace-print :operators task-name state
+                       "~2%Depth ~s, backtracking from operator ~s because the plan costs too much~%     task ~s~%     cost ~s"
+                       depth task-name (cdr task1) new-cost)
+          (backtrack "Exceeded plan cost with operator ~S" task-name)
+          (retract-state-changes state tag)
+          (return-from seek-plans-primitive nil))
+        (seek-plans domain state tasks1 top-tasks1
+                    (cons cost (cons planned-action partial-plan))
+                    new-cost (1+ depth) which-plans protections1
+                    unifier1))
+      (retract-state-changes state tag)
+      nil)))
+
+(defun seek-plans-primitive-1 (domain task1 state tasks top-tasks
+                               depth protections unifier)
+  (let* ((task-name (get-task-name task1))
+         (task-body (get-task-body task1))
+         (m (operator domain task-name)))
     (unless m
       (error "No operator for task ~s" task1))
     (multiple-value-bind
-        (result1 tag protections cost operator-unifier)
+          (planned-action tag protections1 cost operator-unifier)
         ;; I can't yet turn this into method dispatch, because the
         ;; operators and pddl-actions, so far, are only :list type
         ;; structs --- this because they used to be simply lists.
         ;; Changing this will require tracking places where
         ;; unification happens and fixing them. [2006/07/30:rpg]
         (etypecase m
-            (operator
-             (apply-operator domain state task-body m protections depth
-                             unifier))
-            ;; pddl action
-            (pddl-action
-             (apply-action state task-body m protections depth
-                             unifier)))
-      (when (eql result1 'fail)
-        (return-from seek-plans-primitive nil))
+          (operator
+           (apply-operator domain state task-body m protections depth
+                           unifier))
+          ;; pddl action
+          (pddl-action
+           (apply-action state task-body m protections depth
+                         unifier)))
+      (when (eql planned-action 'fail)
+        (return-from seek-plans-primitive-1 nil))
 
       (when *plan-tree*
-        (record-operator task1 result1 operator-unifier))
+        (record-operator task1 planned-action operator-unifier))
 
       (multiple-value-bind (top-tasks1 tasks1)
           (delete-task-top-list top-tasks tasks task1)
 
-        (let ((new-cost (+ cost partial-plan-cost)))
-          (when (and *optimize-cost*
-                     (not (acceptable-cost-p new-cost)))
-            (trace-print :operators task-name state
-                         "~2%Depth ~s, backtracking from operator ~s because the plan costs too much~%     task ~s~%     cost ~s"
-                         depth task-name (cdr task1) new-cost)
-            (backtrack "Exceeded plan cost with operator ~S" task-name)
-            (retract-state-changes state tag)
-            (return-from seek-plans-primitive nil))
 
-          (seek-plans domain state tasks1 top-tasks1
-                      (cons cost (cons result1 partial-plan))
-                      new-cost (1+ depth) which-plans protections
-                      operator-unifier))
-        (retract-state-changes state tag)
-        nil))))
+        (values t top-tasks1 tasks1 protections1 planned-action operator-unifier tag cost)))))
 
-(defmethod seek-plans-nonprimitive ((domain domain) task1 task-name task-body state tasks
+
+(defmethod seek-plans-nonprimitive ((domain domain) task1 state tasks
                                       top-tasks partial-plan partial-plan-cost
                                       depth which-plans protections
                                       in-unifier
                                       )
-  (let ((methods (methods domain task-name)))
+  (let* ((task-name (get-task-name task1))
+         (task-body (get-task-body task1))
+        (methods (methods domain task-name)))
     (unless methods
       (error (make-condition 'no-method-for-task :task-name task-name)))
     (dolist (m methods)
@@ -309,15 +318,21 @@ of SHOP2."
                    (trace-print :tasks task-name state
                          "~2%Depth ~s, reduced task ~s~% reduction ~s"
                          depth task1 r)
-                   (setq top-tasks1 (replace-task-top-list top-tasks task1 r))
-                   (let ((new-task-net (replace-task-main-list tasks task1 r)))
-                     (setq tasks1 new-task-net))
+                   (multiple-value-setq (top-tasks1 tasks1)
+                     (apply-method-bindings task1 top-tasks tasks r u1))
                    (seek-plans domain state tasks1 top-tasks1 partial-plan
                         partial-plan-cost (1+ depth) which-plans
                         protections
                         u1)
                    (when-done
                      (return-from seek-plans-nonprimitive nil))))))))
+
+(defun apply-method-bindings (task top-tasks tasks reduction unifier)
+  (when *plan-tree*
+    (record-reduction task reduction unifier))
+  (let ((top-tasks1 (replace-task-top-list top-tasks task reduction))
+          (new-task-net (replace-task-main-list tasks task reduction)))
+      (values top-tasks1 new-task-net)))
 
 ;;; Called when there are no top level tasks to run
 (defmethod seek-plans-null ((domain domain) state which-plans partial-plan partial-plan-cost depth unifier)
@@ -408,16 +423,16 @@ we use to return plans."
         *states-found* nil))
 
 (defun dump-higher-cost-plans! ()
-  (loop for plan in *plans-found*
-        for unifier in *unifiers-found*
-        for state in *states-found*
-        when (acceptable-cost-p (plan-cost plan))
-          collect plan into plans
-        and collect unifier into unifiers
-        and collect state into states
-        finally (setf *plans-found* plans
-                      *unifiers-found* unifiers
-                      *states-found* states)))
+  (iter (for plan in *plans-found*)
+        (for unifier in *unifiers-found*)
+        (for state in *states-found*)
+        (when (acceptable-cost-p (plan-cost plan))
+          (collecting plan into plans)
+          (collecting unifier into unifiers)
+          (collecting state into states))
+    (finally (setf *plans-found* plans
+                   *unifiers-found* unifiers
+                   *states-found* states))))
 
 ;;; end helpers for SEEK-PLANS-NULL
 

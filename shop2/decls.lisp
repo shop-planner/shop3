@@ -65,6 +65,7 @@
 ;;;------------------------------------------------------------------------------------------------------
 
 (defvar *all-problems* nil)         ; all problems that have been defined
+(defvar *shop-version*)
 
 ;;; Many of these should probably be absorbed into the definition of
 ;;; PLANNER... [2006/07/05:rpg]
@@ -389,10 +390,10 @@ five values:
 This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."))
 
-(defgeneric seek-plans-primitive (domain task1 task-name task-body state tasks top-tasks
+(defgeneric seek-plans-primitive (domain task1 state tasks top-tasks
                                   partial-plan partial-plan-cost depth which-plans protections
                                   unifier)
-  (:documentation "If there is an OPERATOR that is applicable to the primitive TASK in STATE,
+  (:documentation "If there is an OPERATOR that is applicable to the primitive TASK1 in STATE,
 then SEEK-PLANS-PRIMITIVE applies that OPERATOR, generates the successor state, updates the current
 partial plan with the OPERATOR, and continues with planning by recursively calling SEEK-PLANS.
 Otherwise, it returns FAIL."))
@@ -420,7 +421,7 @@ the actions in the partial plan before doing the actual SEEK-PLANS-NULL..."))
                    and depending on the task's type, it invokes either SEEK-PLANS-PRIMITIVE or SEEK-PLANS-NONPRIMITIVE,
                    which are the real task-decomposition workhorses."))
 
-(defgeneric seek-plans-nonprimitive (domain task1 task-name task-body state tasks top-tasks
+(defgeneric seek-plans-nonprimitive (domain task1 state tasks top-tasks
                                      partial-plan partial-plan-cost depth which-plans protections
                                      unifier)
   (:documentation "Applies the HTN method to the current TASK1 and generates the subtasks of TASK.

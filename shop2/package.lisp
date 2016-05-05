@@ -61,7 +61,8 @@
 
 (defpackage :shop2
     (:nicknames :shop)
-    (:use :common-lisp :shop2.unifier :shop2.common :shop2.theorem-prover)
+    (:use :common-lisp :shop2.unifier :shop2.common :shop2.theorem-prover
+          :iterate)
     #+sbcl
     (:shadow #:defconstant)
     (:shadow #:domain)

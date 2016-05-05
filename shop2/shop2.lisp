@@ -7,7 +7,7 @@
 
 (defconstant +shopyright+
 "Copyright (C) 2002  University of Maryland.
-Modifications by SIFT, LLC personnel Copyright (C) 2004-2008 SIFT, LLC.
+Modifications by SIFT, LLC personnel Copyright (C) 2004-2016 SIFT, LLC.
 This software is distributed on an \"AS IS\" basis, WITHOUT WARRANTY OF ANY
 KIND, either express or implied.  This software is distributed under an
 MPL/GPL/LGPL triple license.  For details, see the software source file.")
@@ -805,7 +805,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                    (/ total-run-time
                       internal-time-units-per-second)))))))
 
-(format t "~2%SHOP2 version ~a~%~a~%" cl-user::+shop-version+ +shopyright+)
+(format t "~2%SHOP2 version ~a~%~a~%" *shop-version* +shopyright+)
 
 ;; (eval-when (:compile-toplevel)
 ;; (warn "Bogus warning."))

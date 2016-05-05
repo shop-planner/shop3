@@ -397,6 +397,9 @@ shop2/examples/toy/test-force-immediate.lisp -text
 shop2/examples/toy/test-immediate.lisp -text
 shop2/examples/toy/unbound-example.lisp -text
 shop2/examples/tree-binding-problems.lisp -text
+shop2/explicit-stack-search/backtrack-stack.lisp -text
+shop2/explicit-stack-search/decls.lisp -text
+shop2/explicit-stack-search/explicit-search.lisp -text
 shop2/explicit-stack.txt svneol=native#text/plain
 shop2/find-uses.bash -text
 shop2/io/debugging.lisp -text
@@ -412,6 +415,7 @@ shop2/planning-tree/tree-accessors.lisp -text
 shop2/planning-tree/tree-funs.lisp -text
 shop2/planning-tree/tree-reductions.lisp -text
 shop2/shop-asd.asd -text
+shop2/shop-version.lisp-expr -text
 shop2/shop2-theorem-prover-api/package.lisp -text
 shop2/shop2-theorem-prover-api/shop2-thmpr-api.asd -text
 shop2/shop2-theorem-prover-api/shop2-thmpr-api.lisp -text

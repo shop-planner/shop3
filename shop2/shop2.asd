@@ -51,7 +51,7 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(asdf:oos 'asdf:load-op :shop-asd)
+(asdf:load-system :shop-asd)
 (in-package :shop2-asd)
 
 ;;;
@@ -60,9 +60,10 @@
 (defsystem :shop2
     :serial t
     :default-component-class cl-file-with-defconstants
-    :depends-on ((:version "shop2/common" #.cl-user::+shop-version+)
-                 (:version "shop2/theorem-prover" #.cl-user::+shop-version+))
-    :version #.cl-user::+shop-version+
+    :depends-on ((:version "shop2/common" (:read-file-form "shop-version.lisp-expr"))
+                 (:version "shop2/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
+                 :iterate)
+    :version (:read-file-form "shop-version.lisp-expr")
     :in-order-to ((test-op (test-op :shop2/test)))
     :components  (
        (:file "package")
@@ -79,16 +80,26 @@
                 :components ((:file "protections")
                                      (:file "task-reductions")
                                      (:file "search")))
+       (:module "explicit-stack-search"
+                :serial t
+                :components ((:file "decls")
+                             (:file "backtrack-stack")
+                             (:file "explicit-search")))
        (:module tree
                 :pathname "planning-tree/"
                 :components ((:file "tree-accessors")
                                      (:file "tree-reductions")))
-       (:file "shop2")))
+       (:file "shop2"
+              :perform (load-op :before (op c)
+                               (declare (ignorable op c))
+                               (set (intern (symbol-name '#:*shop-version*)
+                                            (find-package :shop2))
+                                    (asdf:component-version (asdf:find-system "shop2")))))))
 
 (defsystem :shop2/common
     :serial t
     :pathname "common/"
-    :version #.cl-user::+shop-version+
+    :version (:read-file-form "shop-version.lisp-expr")
     :depends-on (:shop2/unifier)
     :components ((:file "package-common")
                  (:file "common")
@@ -99,7 +110,7 @@
     :serial t
     :pathname "theorem-prover/"
     :depends-on ("shop2/common" "shop2/unifier")
-    :version #.cl-user::+shop-version+
+    :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")
                  (:file "theorem-prover")))
@@ -109,7 +120,7 @@
     :serial t
         :pathname "unification/"
         :depends-on ("shop-asd")
-    :version #.cl-user::+shop-version+
+    :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-unifier")
                  (:file "tracer")
                  (:file "unify")))
@@ -173,8 +184,8 @@ shop2."
                  (misc-tests . :shop2-user)
                  )
     :num-checks 265
-    :depends-on ((:version "shop2" #.cl-user::+shop-version+))
-    :version #.cl-user::+shop-version+
+    :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr")))
+    :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
                           :pathname "tests/"
                           :components ((:file "common")))
@@ -269,5 +280,3 @@ shop2."
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))
                                        ))))
-
-
