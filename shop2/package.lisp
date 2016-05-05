@@ -139,6 +139,7 @@
              #:find-problem
 
              #:find-plans
+             #:find-plans-stack         ; explicit stack version
              #:do-problems
              #:shop-trace
              #:shop-untrace
