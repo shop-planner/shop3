@@ -39,7 +39,7 @@ on the value of the MODE slot of STATE."
   ;; kick off the stack VM
   (setf (mode state) 'check-for-done)
   (catch 'search-failed
-    (iter (while t)
+    (iter
       (verbose-format "~&State is: ~a. Mode is: ~a.~%" state (mode state))
       (ecase (mode state)
         (check-for-done
