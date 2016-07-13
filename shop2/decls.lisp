@@ -65,7 +65,7 @@
 ;;;------------------------------------------------------------------------------------------------------
 
 (defvar *all-problems* nil)         ; all problems that have been defined
-(defvar *shop-version*)
+(defvar *shop-version* "VERSION STRING")
 
 ;;; Many of these should probably be absorbed into the definition of
 ;;; PLANNER... [2006/07/05:rpg]

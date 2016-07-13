@@ -636,7 +636,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         #+abcl (extensions:gc)
         #+lispworks (hcl:gc-generation t) ; add case for lispworks 5/1/13 BWM
         )
-  #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks)
+  #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks ecl)
   (when gc (cerror "Just continue, skip GC."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*start-run-time* (get-internal-run-time))
