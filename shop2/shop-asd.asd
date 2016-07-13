@@ -54,13 +54,13 @@
 (defpackage :shop2-asd
     (:use :common-lisp :asdf)
     (:shadow #:defconstant)
-    #+(or allegro sbcl ccl clisp abcl lispworks)
+    #+(or allegro sbcl ccl clisp abcl lispworks ecl)
     (:import-from #+allegro aclmop     #+sbcl sb-mop
                   #+ccl ccl #+clisp clos #+cmucl pcl
-                  #+abcl mop
+                  #+abcl mop #+ecl clos
                   #+lispworks hcl
                   #:class-direct-superclasses)
-    #-(or allegro sbcl ccl clisp cmucl abcl lispworks)
+    #-(or allegro sbcl ccl clisp cmucl abcl lispworks ecl)
     (error "Don't know how to find CLASS-DIRECT-SUPERCLASSES in this lisp.")
     )
 (in-package :shop2-asd)
