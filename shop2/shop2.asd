@@ -280,3 +280,13 @@ shop2."
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))
                                        ))))
+
+#+ecl
+(defmethod perform :before ((op test-op)
+                            (c (eql (asdf:find-system :shop2/test))))
+  (macrolet ((set-limit (limited limit)
+               `(unless (>= (ext:get-limit ',limited) ,limit)
+                  (ext:set-limit ',limited ,limit ))))
+    (set-limit ext:binding-stack 20480 )
+    (set-limit ext:c-stack 10000000)
+    (set-limit ext:lisp-stack 1000000)))
