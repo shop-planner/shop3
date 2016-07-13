@@ -635,6 +635,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         #+cmucl (extensions:gc :full t)
         #+abcl (extensions:gc)
         #+lispworks (hcl:gc-generation t) ; add case for lispworks 5/1/13 BWM
+        #+ecl (ext:gc t)
         )
   #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks ecl)
   (when gc (cerror "Just continue, skip GC."
