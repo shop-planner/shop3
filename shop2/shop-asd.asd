@@ -51,18 +51,20 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+#-(or allegro sbcl ccl clisp cmucl abcl lispworks ecl mkcl)
+(error "Don't know how to find CLASS-DIRECT-SUPERCLASSES in this lisp.")
+
 (defpackage :shop2-asd
     (:use :common-lisp :asdf)
     (:shadow #:defconstant)
-    #+(or allegro sbcl ccl clisp abcl lispworks ecl)
+    #+(or allegro sbcl ccl clisp abcl lispworks ecl mkcl)
     (:import-from #+allegro aclmop     #+sbcl sb-mop
                   #+ccl ccl #+clisp clos #+cmucl pcl
-                  #+abcl mop #+ecl clos
+                  #+abcl mop #+(or ecl mkcl) clos
                   #+lispworks hcl
                   #:class-direct-superclasses)
-    #-(or allegro sbcl ccl clisp cmucl abcl lispworks ecl)
-    (error "Don't know how to find CLASS-DIRECT-SUPERCLASSES in this lisp.")
     )
+
 (in-package :shop2-asd)
 
 (defmacro defconstant (name value &optional doc)
