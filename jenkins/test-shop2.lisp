@@ -21,25 +21,29 @@
   "Unless the environment variable DEBUG_ASDF_TEST
 is bound, write a message and exit on an error.  If
 *asdf-test-debug* is true, enter the debugger."
-  (handler-bind
-      ((error (lambda (c)
-                (format *error-output* "~&~a~&" c)
-                (cond
-                  ((ignore-errors (funcall (find-symbol "GETENV" :asdf) "DEBUG_ASDF_TEST"))
-                   (break))
-                  (t
-                   (finish-output *standard-output*)
-                   (finish-output *trace-output*)
-                   (format *error-output* "~&ABORTING:~% ~S~%" c)
-                   #+sbcl (sb-debug:backtrace 69)
-                   #+clozure (ccl:print-call-history :count 69 :start-frame-number 1)
-                   #+clisp (system::print-backtrace)
-                   (format *error-output* "~&ABORTING:~% ~S~%" c)
-                   (finish-output *error-output*)
-                   (leave-lisp "~&Script failed~%" 1))))))
-    (funcall thunk)
-    (format t "~&Script succeeded~%")
-    (uiop:quit 0)))
+  (flet ((quit (c)
+           (format *error-output* "~&~a~&" c)
+           (cond
+            ((ignore-errors (funcall (find-symbol "GETENV" :asdf) "DEBUG_ASDF_TEST"))
+             (break))
+            (t
+             (finish-output *standard-output*)
+             (finish-output *trace-output*)
+             (format *error-output* "~&ABORTING:~% ~S~%" c)
+             (uiop:print-condition-backtrace c)
+             (format *error-output* "~&ABORTING:~% ~S~%" c)
+             (finish-output *error-output*)
+             (leave-lisp "~&Script failed~%" 1)))))
+    (handler-bind
+        ((error (lambda (c)
+                  (quit c)))
+         ;; on ECL memory errors are SERIOUS-CONDITIONs.
+         ;; editorial: this seems wrong.
+         #+ecl
+         (serious-condition (lambda (c) (quit c))))
+      (funcall thunk)
+      (format t "~&Script succeeded~%")
+      (uiop:quit 0))))
 
 (quit-on-error
  (asdf:test-system "shop2"))
