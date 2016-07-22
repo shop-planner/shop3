@@ -21,8 +21,8 @@
   "Unless the environment variable DEBUG_ASDF_TEST
 is bound, write a message and exit on an error.  If
 *asdf-test-debug* is true, enter the debugger."
-  (flet ((quit (c)
-           (format *error-output* "~&~a~&" c)
+  (flet ((quit (c desc)
+           (format *error-output* "~&Encountered ~a during test.~%~a~%" desc c)
            (cond
             ((ignore-errors (funcall (find-symbol "GETENV" :asdf) "DEBUG_ASDF_TEST"))
              (break))
@@ -36,11 +36,11 @@ is bound, write a message and exit on an error.  If
              (leave-lisp "~&Script failed~%" 1)))))
     (handler-bind
         ((error (lambda (c)
-                  (quit c)))
-         ;; on ECL memory errors are SERIOUS-CONDITIONs.
-         ;; editorial: this seems wrong.
-         #+ecl
-         (serious-condition (lambda (c) (quit c))))
+                  (quit c  "ERROR")))
+         (storage-condition
+          (lambda (c) (quit c "STORAGE-CONDITION")))
+         (serious-condition (lambda (c)
+                              (quit c "Other SERIOUS-CONDIITON"))))
       (funcall thunk)
       (format t "~&Script succeeded~%")
       (uiop:quit 0))))
