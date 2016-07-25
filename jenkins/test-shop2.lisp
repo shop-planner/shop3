@@ -24,8 +24,10 @@ is bound, write a message and exit on an error.  If
   (flet ((quit (c desc)
            (format *error-output* "~&Encountered ~a during test.~%~a~%" desc c)
            (cond
+            ;; decline to handle the error.
             ((ignore-errors (funcall (find-symbol "GETENV" :asdf) "DEBUG_ASDF_TEST"))
-             (break))
+             (format t "~&Interactive mode (DEBUG_ASDF_TEST) -- Invoke debugger.~%")
+             (invoke-debugger c))
             (t
              (finish-output *standard-output*)
              (finish-output *trace-output*)
