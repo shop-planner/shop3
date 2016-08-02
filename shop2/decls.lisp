@@ -549,7 +549,19 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 (defun report-no-method (x str)
   (format str "No method definition for task ~A" (slot-value x 'task-name)))
 
-(define-condition singleton-variable (shop-condition warning)
+(define-condition domain-parse-warning (shop-condition warning)
+  ()
+  )
+
+(define-condition domain-item-parse-warning (domain-parse-warning)
+  ()
+  (:documentation "We have a separate class for warnings generated while parsing
+  a shop domain.  This is done because the items in the SHOP domain parsing are
+  processed in reverse order, so we would like to grab up all of these warnings
+  and then re-issue them in lexical order."))
+
+
+(define-condition singleton-variable (domain-item-parse-warning)
   ((variable-names
     :initarg :variable-names
     :reader variable-names
@@ -561,11 +573,27 @@ task keyword of TASK and LIBRARY-TASK are the same.")
    (construct-name
     :initarg :construct-name
     :reader construct-name
+    )
+   (construct
+    :initarg :construct
+    :reader construct
+    :initform nil
+    )
+   (branch-number
+    :initarg :branch-number
+    :reader branch-number
+    :initform nil
     ))
   (:report (lambda (cond str)
-             (format str "Singleton variable~p ~{~a~^, ~} in ~a ~a"
+             (format str "Singleton variable~p ~{~a~^, ~} in ~a ~a ~@[branch ~d~]~@[~%~s~]"
                      (length (variable-names cond))
                      (variable-names cond)
                      (construct-type cond)
-                     (construct-name cond))))
+                     (construct-name cond)
+                     (branch-number cond)
+                     (construct cond))))
 )
+
+;;; for shop-pprint -- a dispatch table.
+(defparameter *shop-pprint-table*
+              (copy-pprint-dispatch))

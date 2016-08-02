@@ -71,8 +71,9 @@
 
        (:module io
                 :components ((:file "input")
-                                    (:file "output")
-                                    (:file "debugging")))
+                             (:file "output")
+                             (:file "debugging")
+                             (:file "shop-pprint")))
        (:module pddl
                 :components ((:file "pddl")))
        (:module search

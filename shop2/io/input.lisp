@@ -71,7 +71,6 @@ messages when it is asked to define components.")
   "When T -- which should only be for legacy SHOP2 domains -- 
 do NOT emit singleton variable warnings.")
 
-
 ;;; ------------------------------------------------------------------------
 ;;; Functions for creating and manipulating planning domains and problems
 ;;; ------------------------------------------------------------------------
@@ -284,10 +283,19 @@ looks through the preconditions finding the forall
                 with pre
                 with task-net
                 with var-table
+                ;; there's only one task net
+                with singleton = (or (= (length tail) 1)
+                                     ;; branch name and task net...
+                                     (and (= (length tail) 2)
+                                          (symbolp (first tail))
+                                          (not (variablep (first tail)))))
                 for branch-counter from 0
                 until (null tail)
                 ;; find or make a method label
-                if (and (car tail) (symbolp (car tail)))
+                if (and (car tail)
+                        (symbolp (car tail))
+                        ;; could be a second-order HTN.
+                        (not (variablep (first tail))))
                   collect (pop tail)
                 else
                   collect (gensym (format nil "~A~D--"
@@ -299,13 +307,16 @@ looks through the preconditions finding the forall
                    (push var-table body-var-tables)
                    (check-for-singletons var-table :context-table task-variables
                                                    :construct-type (first method)
-                                                   :construct-name method-name)
-              collect (process-pre domain pre)
-              collect (massage-task-net task-net)))
+                                                   :construct-name method-name
+                                                   :construct method
+                                                   :branch-number (unless singleton (1+ branch-counter)))
+                collect (process-pre domain pre)
+                collect (massage-task-net task-net)))
         ;; just before returning, check for singletons in the method's head
         (check-for-singletons task-variables :context-tables body-var-tables
                                              :construct-type (first method)
-                                             :construct-name method-name)))))
+                                             :construct-name method-name
+                                             :construct method)))))
 
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
@@ -330,7 +341,8 @@ looks through the preconditions finding the forall
   (let* ((operator (uniquify-anonymous-variables operator))
          (var-table (harvest-variables operator))
          (lopt (length operator)))
-    (check-for-singletons var-table :construct-type (first operator) :construct-name (first (second operator)))
+    (check-for-singletons var-table :construct-type (first operator) :construct-name (first (second operator))
+                          :construct operator)
     (cond ((= lopt 4)             ; a SHOP 1 operator, no cost specified
            (make-operator :head (second operator)
                           :preconditions nil
@@ -370,11 +382,12 @@ looks through the preconditions finding the forall
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
               :do (check-for-singletons table :context-tables others :construct-type keyword
-                                              :construct-name (first task))))
+                                              :construct-name (first task)
+                                              :construct operator)))
       (make-operator :head task :preconditions precond :deletions delete
                      :additions add :cost-fun cost))))
 
-(defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name)
+(defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name construct branch-number)
   (unless *ignore-singleton-variables*
     (when context-table
       (assert (not context-tables))
@@ -389,7 +402,9 @@ looks through the preconditions finding the forall
           (warn 'singleton-variable
                 :variable-names singletons
                 :construct-type construct-type
-                :construct-name construct-name))))
+                :construct-name construct-name
+                :construct construct
+                :branch-number branch-number))))
   (values)))
 
 (defun filter-singletons (singletons context-tables)
@@ -487,6 +502,7 @@ but <domain-name> will be ignored."
     (remf options :type)
     (remf options :redefine-ok)
     (remf options :noset)
+    ;; yuck: this should really be rewritten as a function.
     `(progn
        (unless *define-silently*
          (when *defdomain-verbose*
@@ -500,7 +516,16 @@ but <domain-name> will be ignored."
          ;; I suspect that this should go away and be handled by
          ;; initialize-instance... [2006/07/31:rpg]
          (apply #'handle-domain-options domain ',options)
-         (parse-domain-items domain ',items)
+         (let (warnings)
+           (handler-bind
+               ((domain-item-parse-warning
+                 #'(lambda (c)
+                     (push c warnings)
+                     (muffle-warning c))))
+             (parse-domain-items domain ',items))
+           (when warnings
+             (let ((*print-pprint-dispatch* *shop-pprint-table*))
+               (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
          (install-domain domain ,redefine-ok)
          (unless ,noset
            (setf *domain* domain))
@@ -645,19 +670,25 @@ and *DEFAULT-PATHNAME-DEFAULTS*."
          (head (second regularized))
          (head-variables (harvest-variables head))
          all-variables)
+    ;; at this point the tail will be of the form ( [<branch-name> <branch-body>]* )
     (loop with tail = (cddr regularized)
+          with multi-tail = (> (length tail) 2)
+          for branch from 0
           while tail
           do (let* ((body (second tail)) ;first is label
                     (var-table (harvest-variables body)))
                (check-for-singletons var-table
                                      :context-table head-variables
-                                     :construct-type (first regularized)
-                                     :construct-name (first head))
+                                     :construct-type 'axiom
+                                     :construct-name (first head)
+                                     :construct axiom
+                                     :branch-number (when multi-tail (1+ branch)))
                (push var-table all-variables))
              (setf tail (cddr tail)))
     (check-for-singletons head-variables :context-tables all-variables
-                                     :construct-type (first regularized)
-                                     :construct-name (first head))
+                                     :construct-type 'axiom
+                                     :construct-name (first head)
+                                     :construct axiom)
     regularized))
 
           
