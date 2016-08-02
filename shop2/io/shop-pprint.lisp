@@ -72,28 +72,28 @@
     (pprint-newline :mandatory str)     ; mandatory break before body
     (pprint-logical-block (str (cddr method))
       (pprint-indent :block 2)
-      (iter (with tails = (cddr method))
-            (while tails)
-            (with first = t)
-            (unless first
-              (pprint-newline :mandatory str))
-            (setf first nil)
-            (let* ((name-or-preconds (pop tails))
-                   (name (when (and (symbolp name-or-preconds)
-                                    (not (variablep name-or-preconds)))
-                           name-or-preconds))
-                   (preconds (if name (pop tails)
+      (loop :with tails = (cddr method)
+            :with first = t
+            :while tails
+            :unless first
+              :do (pprint-newline :mandatory str)
+            :do (setf first nil)
+            :do (let* ((name-or-preconds (pop tails))
+                       (name (when (and (symbolp name-or-preconds)
+                                        (not (variablep name-or-preconds)))
                                name-or-preconds))
-                   (task-net (pop tails)))
-              (pprint-logical-block (str (if name (list name preconds task-net)
-                                           (list preconds task-net)))
-                (when name (write name str))
-                (pprint-newline :mandatory str)
-                ;; preconditions
-                (pprint-preconds str preconds)
-                (pprint-newline :mandatory str)
-                ;; task-net
-                (pprint-task-net str task-net)))))))
+                       (preconds (if name (pop tails)
+                                     name-or-preconds))
+                       (task-net (pop tails)))
+                  (pprint-logical-block (str (if name (list name preconds task-net)
+                                                 (list preconds task-net)))
+                    (when name (write name str))
+                    (pprint-newline :mandatory str)
+                    ;; preconditions
+                    (pprint-preconds str preconds)
+                    (pprint-newline :mandatory str)
+                    ;; task-net
+                    (pprint-task-net str task-net)))))))
 
 (defun pprint-task-net (str task-net)
   ;; FIXME: handle the :IMMEDIATE, :ORDERED, and :UNORDERED keywords
