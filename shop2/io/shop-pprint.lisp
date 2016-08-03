@@ -87,7 +87,7 @@
                        (task-net (pop tails)))
                   (pprint-logical-block (str (if name (list name preconds task-net)
                                                  (list preconds task-net)))
-                    (when name (write name str))
+                    (when name (write name :stream str))
                     (pprint-newline :mandatory str)
                     ;; preconditions
                     (pprint-preconds str preconds)
