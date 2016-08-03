@@ -679,14 +679,14 @@ and *DEFAULT-PATHNAME-DEFAULTS*."
                     (var-table (harvest-variables body)))
                (check-for-singletons var-table
                                      :context-table head-variables
-                                     :construct-type 'axiom
+                                     :construct-type :-
                                      :construct-name (first head)
                                      :construct axiom
                                      :branch-number (when multi-tail (1+ branch)))
                (push var-table all-variables))
              (setf tail (cddr tail)))
     (check-for-singletons head-variables :context-tables all-variables
-                                     :construct-type 'axiom
+                                     :construct-type :-
                                      :construct-name (first head)
                                      :construct axiom)
     regularized))

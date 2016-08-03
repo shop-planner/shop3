@@ -588,7 +588,11 @@ task keyword of TASK and LIBRARY-TASK are the same.")
              (format str "Singleton variable~p ~{~a~^, ~} in ~a ~a ~@[branch ~d~]~@[~%~s~]"
                      (length (variable-names cond))
                      (variable-names cond)
-                     (construct-type cond)
+                     ;; the messages read oddly when we said "Singleton variable ... in :-..."
+                     ;; change to something more meaningful
+                     (if (eq (construct-type cond) :-)
+                         "AXIOM"
+                         (construct-type cond))
                      (construct-name cond)
                      (branch-number cond)
                      (construct cond))))
