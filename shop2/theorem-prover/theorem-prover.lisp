@@ -618,9 +618,11 @@ goal1 along with all of the other formulas in remaining."
       (when (and axiom-answers just1)
         (return-from do-conjunct axiom-answers))
 
-      (unless (or found-match axiom-found-match)
+      (if (or found-match axiom-found-match)
         (trace-print :goals (car goal1) state
-                     "~2%Level ~s, couldn't match goal ~s" level goal1))
+                     "~2%Level ~s, couldn't match goal ~s" level goal1)
+        (trace-print :goals (car goal1) state
+               "~2%Level ~s, matched goal ~s" level goal1))
       (shop-union answers axiom-answers :test 'equal))))
 
 (defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1)
