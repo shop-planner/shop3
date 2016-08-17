@@ -64,6 +64,7 @@
     (:use :common-lisp)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
+             #:trigger-trace
 
              ;; the unifier interface
              #:unify-fail #:unify-p

@@ -68,10 +68,14 @@
                                         ; apply one of these.
 (defvar *traced-tasks* nil)             ; break when attempting to
                                         ; expand one of these.
+(defvar *traced-axioms*
+  nil)
+(defvar *traced-goals* nil)
+
 
 (defconstant SHOP-TRACE-ITEMS
   (list :methods :axioms :operators :tasks :goals :effects :protections
-       :states :plans)
+       :states :plans :item)
   "Acceptable arguments for SHOP-TRACE (and SHOP-UNTRACE).")
 
 (defmacro shop-trace (&rest items)
@@ -108,40 +112,48 @@
   (unless (null items)
     (dolist (item items)
       (cond ((member item SHOP-TRACE-ITEMS)
-            (pushnew item *shop-trace*))
-           ((listp item)
-            (case (car item)
-              (:task (shop-trace-task (second item)))
-              (:method (shop-trace-method (second item)))
-              (:axiom (shop-trace-axiom (second item)))
-              (otherwise
-               (warn "Ignoring invalid shop-trace argument ~S" item))))
-           (t
-            (warn "Ignoring invalid shop-trace argument ~S" item)))))
+             (pushnew item *shop-trace*))
+            ((listp item)
+             (macrolet ((trace-item (variable)
+                          `(progn (pushnew (second item) ,variable)
+                                  (pushnew :item *shop-trace*))))
+               (case (car item)
+                 (:task (trace-item *traced-tasks*))
+                 (:method (trace-item *traced-methods*))
+                 (:goal (trace-item *traced-goals*))
+                 (:axiom (trace-item *traced-axioms*))
+                 (otherwise
+                  (warn "Ignoring invalid shop-trace argument ~S" item)))))
+            (t
+             (warn "Ignoring invalid shop-trace argument ~S" item)))))
   (shop-trace-info))
 
-(defun shop-trace-method (meth-name)
-  (pushnew meth-name *traced-methods*))
+(defmethod trigger-trace ((keyword (eql :methods)) (item symbol))
+  (member item *traced-methods* :test 'eq))
 
-(defun shop-trace-axiom (axiom-name)
-  (declare (ignore axiom-name))
-  (cerror "Just do nothing"
-         "Tracing axioms by name is not yet implemented."))
+(defmethod trigger-trace ((keyword (eql :axioms)) (item symbol))
+  (member item *traced-axioms* :test 'eq))
 
-;;;(defun shop-trace-op (opname)
-;;;  (pushnew opname *traced-operators*))
+(defmethod trigger-trace ((keyword (eql :goals)) (item symbol))
+  (member item *traced-goals* :test 'eq))
 
-(defun shop-trace-task (taskname)
-  (pushnew taskname *traced-tasks*))
+(defmethod trigger-trace ((keyword (eql :tasks)) (item symbol))
+  (member item *traced-tasks* :test 'eq))
+
 
 (defun shop-trace-info ()
   "Information about the traced aspects of shop2."
   (append
    *shop-trace*
-   (loop for taskname in *traced-tasks*
-       collect `(:task ,taskname))
-   (loop for methname in *traced-methods*
-       collect `(:method ,methname))))
+   (mapcar #'(lambda (taskname)
+               `(:task ,taskname)) *traced-tasks*)
+   (mapcar #'(lambda (methname)
+               `(:method ,methname)) *traced-methods*)
+   (mapcar #'(lambda (goalname)
+               `(:goal ,goalname)) *traced-goals*)
+   (mapcar #'(lambda (axiomname)
+               `(:axiom ,axiomname)) *traced-axioms*)))
+
 
 (defmacro shop-untrace (&rest items)
   (if (null items)
@@ -152,7 +164,10 @@
   (setf *shop-trace* nil
        *traced-tasks* nil
        ;;*traced-operators* nil
-       *traced-methods* nil))
+       *traced-methods* nil
+       *traced-goals* nil
+       *traced-axioms* nil))
+
 
 ;;; (SHOP-UNTRACE ...) is the inverse of (SHOP-TRACE ...)
 (defun shop-untrace-1 (items)
