@@ -605,14 +605,16 @@ to the domain with domain-name NAME."
     (domain-include-parse domain-name (domain-include-search pathname))))
 
 (defun domain-include-search (path)
-  "Search for PATH relative to *COMPILE-FILE-TRUENAME*, *LOAD-TRUENAME*,
-and *DEFAULT-PATHNAME-DEFAULTS*."
+  "Search for PATH relative to *COMPILE-FILE-TRUENAME*, *LOAD-TRUENAME*, the cached
+location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
   (or
    (if (uiop:absolute-pathname-p path)
        (probe-file path)
-     (let ((search (list *compile-file-truename* *load-truename* *default-pathname-defaults*
-                         ;; to undo what's done by ASDF in moving the FASLs
-                         *defdomain-pathname*)))
+     (let ((search (list
+                    ;; to undo what's done by ASDF in moving the FASLs
+                    *defdomain-pathname*
+                    *compile-file-truename* *load-truename*
+                    *default-pathname-defaults*)))
        (dolist (merge search)
          (let ((fullpath (when merge
                            (merge-pathnames path merge))))
