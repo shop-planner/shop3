@@ -485,6 +485,10 @@ but <domain-name> will be ignored."
 ;;;---------------------------------------------------------------------------
 #+allegro (excl::define-simple-parser defdomain second :shop2-domain)
 (defvar *defdomain-verbose* t)
+(defvar *defdomain-pathname* nil
+  "Dynamic variable used to enable INCLUDE directives to find files
+relative to the file containing the DEFDOMAIN.  Necessary because ASDF
+breaks usage of *load-truename* by moving the FASLs.")
 (defmacro defdomain (name-and-options items)
   ;; note that we are copying name-and-options because we destructively modify
   ;; it later (or at least destructively modify the options list which might
@@ -503,7 +507,8 @@ but <domain-name> will be ignored."
     (remf options :redefine-ok)
     (remf options :noset)
     ;; yuck: this should really be rewritten as a function.
-    `(progn
+    `(let ((*defdomain-pathname* ,(or *compile-file-truename*
+                                      *load-truename*)))
        (unless *define-silently*
          (when *defdomain-verbose*
          (format t "~%Defining domain ~a...~%" ',name)))
@@ -602,10 +607,12 @@ to the domain with domain-name NAME."
 (defun domain-include-search (path)
   "Search for PATH relative to *COMPILE-FILE-TRUENAME*, *LOAD-TRUENAME*,
 and *DEFAULT-PATHNAME-DEFAULTS*."
-  (or 
+  (or
    (if (uiop:absolute-pathname-p path)
        (probe-file path)
-     (let ((search (list *compile-file-truename* *load-truename* *default-pathname-defaults*)))
+     (let ((search (list *compile-file-truename* *load-truename* *default-pathname-defaults*
+                         ;; to undo what's done by ASDF in moving the FASLs
+                         *defdomain-pathname*)))
        (dolist (merge search)
          (let ((fullpath (when merge
                            (merge-pathnames path merge))))
