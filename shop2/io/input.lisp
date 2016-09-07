@@ -169,6 +169,7 @@ do NOT emit singleton variable warnings.")
                             )))
         (apply 'initialize-problem problem-inst :state state
                :tasks tasks extras)
+        (setf *problem* problem-name)
         #+allegro
         (excl:record-source-file problem-name :type :shop2-problem)
         problem-inst))))
