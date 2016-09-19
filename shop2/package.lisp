@@ -182,8 +182,10 @@
              #:get-tasks
              #:get-problems
 
-             ;; get rid of cost information out of a plan tree...
+             ;; get rid of extraneous out of a plan tree...
              #:remove-costs
+             #:shorter-plan
+             #:internal-operator-p
 
              ;; classes and methods to be specialized
              #:domain
@@ -215,6 +217,7 @@
              #:find-all-complex-node-if
              #:find-complex-node-for-task
              #:find-all-complex-node-for-task
+             #:make-complex-node
 
              ;; conditions
              #:no-method-for-task
@@ -237,5 +240,3 @@
     (:use :shop2 :common-lisp)
     (:export #:explain-satisfier
              #:find-satisfiers))
-
-
