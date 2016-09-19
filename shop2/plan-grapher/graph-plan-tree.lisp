@@ -1,6 +1,8 @@
 (in-package :spg)
 
-(defun graph-plan-tree (plan-tree &key (tree-processor 'identity))
+(defun graph-plan-tree (plan-tree &key (tree-processor 'identity) graph-class)
+  "Takes a SHOP2 PLAN-TREE as output, and returns a CL-DOT graph object."
+  (declare (ignore graph-class))        ; this is an IOU for better using the CL-DOT protocol.
   (let ((modified-tree (funcall tree-processor plan-tree)))
     (cl-dot:generate-graph modified-tree)))
 
