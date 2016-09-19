@@ -58,7 +58,8 @@
 (defun complex-node-p (tree-node)
   "Is TREE-NODE a representation of a complex node (i.e., not an operator) in
 the SHOP2 tree format as described in SHOP2?"
-  (listp (first tree-node)))
+  (and (listp (first tree-node))
+       (symbolp (first (first tree-node)))))
 
 (defun complex-node-task (tree-node)
   "TREE-NODE must be a COMPLEX-NODE (cf. COMPLEX-NODE-P).
@@ -93,7 +94,9 @@ children that are internal operators (primitive nodes) removed."
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (and (= (length tree-node) 3)
-       (numberp (first tree-node))))
+       (numberp (first tree-node))
+       (numberp (third tree-node))
+       (listp (second tree-node))))
 
 (defun primitive-node-task (tree-node)
   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
@@ -137,7 +140,7 @@ satisfies FUN."
   "Return a complex node whose TASK (first element)
 satisfies FUN."
   (labels ((list-iter (lst acc)
-             (if (null lst)
+ (null lst)
                  acc
                  (let ((new (node-iter (first lst))))
                    (reverse (list-iter (cdr lst) (append new acc))))))
@@ -162,6 +165,3 @@ satisfies FUN."
    #'(lambda (task)
        (eq (first task) task-name))
    tree))
-
-
-
