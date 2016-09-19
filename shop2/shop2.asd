@@ -131,6 +131,7 @@
   :serial t
   :pathname "plan-grapher/"
   :components ((:file "package")
+               (:file "decls")
                (:file "graph-plan-tree"))
   )
 

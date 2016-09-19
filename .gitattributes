@@ -407,6 +407,7 @@ shop2/io/output.lisp -text
 shop2/io/shop-pprint.lisp svneol=native#text/x-lisp
 shop2/package.lisp -text
 shop2/pddl/pddl.lisp -text
+shop2/plan-grapher/decls.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/graph-plan-tree.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/package.lisp svneol=native#text/x-lisp
 shop2/planning-engine/protections.lisp -text
