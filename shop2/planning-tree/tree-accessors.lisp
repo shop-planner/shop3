@@ -140,7 +140,7 @@ satisfies FUN."
   "Return a complex node whose TASK (first element)
 satisfies FUN."
   (labels ((list-iter (lst acc)
- (null lst)
+             (if (null lst)
                  acc
                  (let ((new (node-iter (first lst))))
                    (reverse (list-iter (cdr lst) (append new acc))))))
