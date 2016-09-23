@@ -1,6 +1,3 @@
-jenkins/log
-jenkins/shopdir.lisp
-jenkins/tmp
 shop2/*.fasl
 shop2/*.ps
 shop2/Makefile
@@ -16,6 +13,9 @@ shop2/examples/IPC-2002/Depots/SimpleTime/easy_probs/pfile*.lisp
 shop2/examples/IPC-2002/Depots/SimpleTime/easy_probs/pfile*.soln
 shop2/io/acl-8.2a-linux-x86
 shop2/io/acl-8.2m-linux-x86
+shop2/jenkins/log
+shop2/jenkins/shopdir.lisp
+shop2/jenkins/tmp
 shop2/pddl/acl-8.2a-linux-x86
 shop2/pddl/acl-8.2m-linux-x86
 shop2/planning-engine/acl-8.2a-linux-x86

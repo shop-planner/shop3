@@ -178,7 +178,7 @@ if ! type "$command" ; then
     exit 43
 fi
 
-SHOP2DIR="$(cd ../shop2 ; /bin/pwd)"
+SHOP2DIR="$(cd .. ; /bin/pwd)"
 THISDIR="$(pwd)"
 export CL_SOURCE_REGISTRY="${SHOP2DIR}:${THISDIR}/arnesi:${THISDIR}/fiveam:${THISDIR}/fiveam-asdf:${THISDIR}/iterate"
 export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP2DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"

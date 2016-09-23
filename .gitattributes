@@ -1,15 +1,4 @@
 * text=auto !eol
-jenkins/JENKINS-README.org -text
-jenkins/asdf.lisp svneol=native#text/x-lisp
-jenkins/build-shop2.lisp svneol=native#text/x-lisp
-jenkins/compile-shop2.lisp svneol=native#text/x-lisp
-jenkins/full-test-suite.asd -text
-jenkins/run-tests.sh svneol=native#text/plain
-jenkins/shop-full-suite-multiplatform-jenkins-script -text
-jenkins/shop-multiplatform-jenkins-script -text
-jenkins/shop-single-platform-jenkins-script -text
-jenkins/start-lisp.sh -text
-jenkins/test-shop2.lisp svneol=native#text/x-lisp
 shop2/common/common.lisp -text
 shop2/common/package-common.lisp -text
 shop2/common/state-decls.lisp -text
@@ -405,6 +394,17 @@ shop2/find-uses.bash -text
 shop2/io/debugging.lisp -text
 shop2/io/output.lisp -text
 shop2/io/shop-pprint.lisp svneol=native#text/x-lisp
+shop2/jenkins/JENKINS-README.org -text
+shop2/jenkins/asdf.lisp svneol=native#text/x-lisp
+shop2/jenkins/build-shop2.lisp svneol=native#text/x-lisp
+shop2/jenkins/compile-shop2.lisp svneol=native#text/x-lisp
+shop2/jenkins/full-test-suite.asd -text
+shop2/jenkins/run-tests.sh svneol=native#text/plain
+shop2/jenkins/shop-full-suite-multiplatform-jenkins-script -text
+shop2/jenkins/shop-multiplatform-jenkins-script -text
+shop2/jenkins/shop-single-platform-jenkins-script -text
+shop2/jenkins/start-lisp.sh -text
+shop2/jenkins/test-shop2.lisp svneol=native#text/x-lisp
 shop2/package.lisp -text
 shop2/pddl/pddl.lisp -text
 shop2/plan-grapher/decls.lisp svneol=native#text/x-lisp
