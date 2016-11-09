@@ -154,11 +154,14 @@ satisfies FUN."
   "Return a primitive node whose TASK satisfies FUN.  When
 the node is found, returns two values: the node itself, and its
 parent."
-  (labels ((list-iter (lst &optional parent)
+  (labels ((list-iter (lst parent)
              (unless (null lst)
-               (or (node-iter (first lst) parent)
-                   (list-iter (rest lst) parent))))
-           (node-iter (node &optional parent)
+               (multiple-value-bind (found-node found-parent)
+                   (node-iter (first lst) parent)
+                 (if found-node
+                     (values found-node found-parent)
+                     (list-iter (rest lst) parent)))))
+           (node-iter (node parent)
              (cond ((complex-node-p node)
                     (list-iter (complex-node-children node) node))
                    ((primitive-node-p node)
@@ -167,8 +170,8 @@ parent."
                     (error 'type-error :expected-type 'tree-node :datum node)))))
     ;; Ugh: SHOP plan trees are really forests. Most of the time.
     (if (complex-node-p tree)
-        (node-iter tree)
-        (list-iter tree))))
+        (node-iter tree nil)
+        (list-iter tree nil))))
 
 (defun find-primitive-node-for-task (task tree)
   "Return a primitive node whose task matches TASK. When
