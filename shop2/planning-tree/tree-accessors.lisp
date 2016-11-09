@@ -34,7 +34,7 @@
 ;;; or the LGPL.
 ;;; ----------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
+;;; Smart Information Flow Technologies Copyright 2006-2007, 2016
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
 ;;;
@@ -90,6 +90,9 @@ children that are internal operators (primitive nodes) removed."
                                       (tree-node-task-name child))
                          collect child)))
 
+(defun make-primitive-node (task cost position)
+  (list cost task position))
+
 (defun primitive-node-p (tree-node)
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
@@ -102,6 +105,17 @@ the SHOP2 tree format as described in SHOP2?"
   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
 Returns the corresponding TASK s-expression."
   (second tree-node))
+
+(defun primitive-node-cost (tree-node)
+  "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
+Returns the corresponding cost (number)."
+  (first tree-node))
+
+(defun primitive-node-position (tree-node)
+  "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
+Returns the corresponding plan sequence position (integer)."
+  (third tree-node))
+
 
 (defun tree-node-task (tree-node)
   (cond ((primitive-node-p tree-node) (primitive-node-task tree-node))
@@ -136,6 +150,32 @@ satisfies FUN."
     ;; top level i
     (list-iter tree)))
 
+(defun find-primitive-node-if (fun tree)
+  "Return a primitive node whose TASK satisfies FUN.  When
+the node is found, returns two values: the node itself, and its
+parent."
+  (labels ((list-iter (lst &optional parent)
+             (unless (null lst)
+               (or (node-iter (first lst) parent)
+                   (list-iter (rest lst) parent))))
+           (node-iter (node &optional parent)
+             (cond ((complex-node-p node)
+                    (list-iter (complex-node-children node) node))
+                   ((primitive-node-p node)
+                    (when (funcall fun (primitive-node-task node)) (values node parent)))
+                   (t
+                    (error 'type-error :expected-type 'tree-node :datum node)))))
+    ;; Ugh: SHOP plan trees are really forests. Most of the time.
+    (if (complex-node-p tree)
+        (node-iter tree)
+        (list-iter tree))))
+
+(defun find-primitive-node-for-task (task tree)
+  "Return a primitive node whose task matches TASK. When
+the node is found, returns two values: the node itself, and its
+parent."
+  (find-primitive-node-if #'(lambda (node-task) (equalp node-task task)) tree))
+
 (defun find-all-complex-node-if (fun tree)
   "Return a complex node whose TASK (first element)
 satisfies FUN."
@@ -165,3 +205,24 @@ satisfies FUN."
    #'(lambda (task)
        (eq (first task) task-name))
    tree))
+
+(defun copy-plan-tree (tree)
+  "Return a functional copy of TREE. By \"functional\" we mean satisfies the
+key tree property -- the primitive tasks are EQ to the primitive tasks in the 
+plan sequence."
+  (labels ((list-iter (lst)
+             (mapcar #'node-iter lst))
+           (node-iter (node)
+             (cond ((complex-node-p node)
+                    (make-complex-node (complex-node-task node)
+                                       (list-iter (complex-node-children node))))
+                   ((primitive-node-p node)
+                    (make-primitive-node (primitive-node-task node)
+                                         (primitive-node-cost node)
+                                         (primitive-node-position node)))
+                   (t
+                    (error 'type-error :expected-type 'tree-node :datum node)))))
+    ;; Ugh: SHOP plan trees are really forests. Most of the time.
+    (if (complex-node-p tree)
+        (node-iter tree)
+        (list-iter tree))))

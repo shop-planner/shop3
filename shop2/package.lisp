@@ -205,15 +205,21 @@
              #:seek-plans-null
 
              ;; tree-accessors
+             #:copy-plan-tree
              #:complex-node-p
              #:complex-node-task
              #:complex-node-children
              #:primitive-node-p
+             #:primitive-node-task
+             #:primitive-node-cost
+             #:primitive-node-position
              #:remove-internal-operators
              #:tree-node-task
              #:tree-node-task-name
              #:task-name
              #:find-complex-node-if
+             #:find-primitive-node-if
+             #:find-primitive-node-for-task
              #:find-all-complex-node-if
              #:find-complex-node-for-task
              #:find-all-complex-node-for-task
