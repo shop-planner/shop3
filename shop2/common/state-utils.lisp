@@ -79,6 +79,12 @@ using MAKE-INITIAL-STATE.")
     (:hash (make-hash-state atoms))
     (:bit (make-bit-state atoms))))
 
+;;; very large states can be difficult and time-consuming to print.
+(defmethod print-object ((s state) str)
+  (if *print-readably*
+      (call-next-method)
+      (print-unreadable-object (s str :type t :identity t))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "tagged-state" class
 
@@ -109,7 +115,7 @@ using MAKE-INITIAL-STATE.")
   (unless (typep action 'action-type)
     (error "Unacceptable action ~S" action))
   (push (make-state-update :action action :literal atom)
-	(rest (first (tagged-state-tags-info st)))))
+        (rest (first (tagged-state-tags-info st)))))
 
 (defmethod retract-state-changes ((st tagged-state) tag)
   (multiple-value-bind (new-tags-info changes)
@@ -128,8 +134,8 @@ using MAKE-INITIAL-STATE.")
 ;;;  (let ((shop2::state st))
 ;;;    ;; the above binding makes the trace-print work properly --- it references state [2006/12/06:rpg]
     (trace-print :effects (car atom) st
-		 "~2%Depth ~s, adding atom to current state~%      atom ~s~%  operator ~s"
-		 depth atom operator)
+                 "~2%Depth ~s, adding atom to current state~%      atom ~s~%  operator ~s"
+                 depth atom operator)
 ;;;  )
   (unless (atom-in-state-p atom st)
 ;    (unless (member (cons 'delete atom) (first (first st)) :test #'equal)
@@ -140,8 +146,8 @@ using MAKE-INITIAL-STATE.")
 ;;;  (let ((shop2::state st))
 ;;;    ;; the above binding makes the trace-print work properly --- it references state [2006/12/06:rpg]
     (trace-print :effects (car atom) st
-		 "~2%Depth ~s, deleting atom from current state~%      atom ~s~%  operator ~s"
-		 depth atom operator)
+                 "~2%Depth ~s, deleting atom from current state~%      atom ~s~%  operator ~s"
+                 depth atom operator)
 ;;;    )
   (when (atom-in-state-p atom st)
     (include-in-tag 'delete atom st)
@@ -162,8 +168,8 @@ using MAKE-INITIAL-STATE.")
 ;;; The "list-state" class
 
 (defstruct (list-state (:include tagged-state)
-		       (:constructor makeliststate)
-		       (:copier nil)))
+                       (:constructor makeliststate)
+                       (:copier nil)))
 
 
 
@@ -204,7 +210,7 @@ using MAKE-INITIAL-STATE.")
   (let ((the-copy (make-list-state nil)))
     (setf (state-body the-copy) (copy-tree (state-body st)))
     (setf (tagged-state-tags-info the-copy)
-	  (copy-tree (tagged-state-tags-info st)))
+          (copy-tree (tagged-state-tags-info st)))
     the-copy))
 
 ;;; Unlike for MIXED, HASH, and BIT encodings, LIST-insert-atom-into-statebody and
@@ -223,34 +229,34 @@ using MAKE-INITIAL-STATE.")
    ((eq (car atom) (caar statebody))
     (cons
      (cons (caar statebody)
-	   (if (member atom (cdar statebody) :test #'equal)
-	       (cdar statebody)
-	     (cons atom (cdar statebody))))
+           (if (member atom (cdar statebody) :test #'equal)
+               (cdar statebody)
+             (cons atom (cdar statebody))))
      (cdr statebody)))
    (t (cons (car statebody)
-	    (LIST-insert-atom-into-statebody atom (cdr statebody))))))
+            (LIST-insert-atom-into-statebody atom (cdr statebody))))))
 
 (defun LIST-remove-atom-from-statebody (atom statebody)
   (cond ((null statebody) nil)
-	((string< (car atom) (caar statebody)) statebody)
-	((eq (car atom) (caar statebody))
-	 (let ((newval (remove atom (cdar statebody) :test #'equal)))
-	   (if newval
-	       (cons (cons (car atom) newval) (cdr statebody))
-	       ;; if there are no remaining propositions for this
-	       ;; predicate, we just drop the entry
-	       ;; altogether. [2006/08/02:rpg]
-	       (cdr statebody))))
-	(t (cons (car statebody)
-		 (LIST-remove-atom-from-statebody atom (cdr statebody))))))
+        ((string< (car atom) (caar statebody)) statebody)
+        ((eq (car atom) (caar statebody))
+         (let ((newval (remove atom (cdar statebody) :test #'equal)))
+           (if newval
+               (cons (cons (car atom) newval) (cdr statebody))
+               ;; if there are no remaining propositions for this
+               ;; predicate, we just drop the entry
+               ;; altogether. [2006/08/02:rpg]
+               (cdr statebody))))
+        (t (cons (car statebody)
+                 (LIST-remove-atom-from-statebody atom (cdr statebody))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "hash-state" class
 
 (defstruct (hash-state (:include tagged-state)
-		       (:constructor makehashstate)
-		       (:copier nil)))
+                       (:constructor makehashstate)
+                       (:copier nil)))
 
 (defmethod make-initial-state (domain (state-encoding (eql :hash)) atoms &key)
   (declare (ignore domain))
@@ -273,9 +279,9 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-atoms ((st hash-state))
   (let ((statebody (state-body st))
-	(acc nil))
+        (acc nil))
     (maphash #'(lambda (key val)
-		 (declare (ignore val)) (setf acc (cons key acc)))
+                 (declare (ignore val)) (setf acc (cons key acc)))
              statebody)
     acc))
 
@@ -301,15 +307,15 @@ using MAKE-INITIAL-STATE.")
   (let ((the-copy (make-hash-state nil)))
     (setf (state-body the-copy) (copy-hash-table (state-body st)))
     (setf (tagged-state-tags-info the-copy)
-	  (copy-tree (tagged-state-tags-info st)))
+          (copy-tree (tagged-state-tags-info st)))
     the-copy))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "mixed-state" class
 
 (defstruct (mixed-state (:include tagged-state)
-			(:constructor makemixedstate)
-			(:copier nil)))
+                        (:constructor makemixedstate)
+                        (:copier nil)))
 
 (defmethod make-initial-state (domain (state-encoding (eql :mixed)) atoms &key)
   (declare (ignore domain))
@@ -338,10 +344,10 @@ using MAKE-INITIAL-STATE.")
   (let ((statebody (state-body st)))
     (let ((acc nil)) 
       (maphash #'(lambda (pred lis)
-		   (setf acc
-			 (append (mapcar #'(lambda (entry) (cons pred entry)) lis)
-				 acc)))
-	       statebody)
+                   (setf acc
+                         (append (mapcar #'(lambda (entry) (cons pred entry)) lis)
+                                 acc)))
+               statebody)
       acc)))
 
 (defmethod atom-in-state-p (atom (st mixed-state))
@@ -355,8 +361,8 @@ using MAKE-INITIAL-STATE.")
   ;(format t "state-body: ~A~%~%"  (state-atoms st))
   (cond
    ((find-if-not #'(lambda (term)
-		     (and (atom term) (not (variablep term))))
-		 (rest goal))
+                     (and (atom term) (not (variablep term))))
+                 (rest goal))
     (state-all-atoms-for-predicate st (first goal)))
    ((atom-in-state-p goal st) (list goal))
    (t nil)))
@@ -365,7 +371,7 @@ using MAKE-INITIAL-STATE.")
   (let ((the-copy (make-mixed-state nil)))
     (setf (state-body the-copy) (copy-hash-table (state-body st)))
     (setf (tagged-state-tags-info the-copy)
-	  (copy-tree (tagged-state-tags-info st)))
+          (copy-tree (tagged-state-tags-info st)))
     the-copy))
 
 ; If we don't trust that copy-hash-table copies a mixed-state correctly, we can
@@ -380,8 +386,8 @@ using MAKE-INITIAL-STATE.")
 ;;; The "bit-state" class
 
 (defstruct (bit-state (:include tagged-state)
-		      (:constructor %make-bit-state)
-		      (:copier nil)))
+                      (:constructor %make-bit-state)
+                      (:copier nil)))
 
 
 
@@ -403,24 +409,24 @@ using MAKE-INITIAL-STATE.")
     ;; don't think the hash tables in the statebody do anything in this
     ;; implementation.
     (setf (state-body st)
-	  (list (make-hash-table :test #'eq)
-		(make-hash-table :test #'equal)
-		(make-hash-table :test #'eq)
-		nil))
+          (list (make-hash-table :test #'eq)
+                (make-hash-table :test #'equal)
+                (make-hash-table :test #'eq)
+                nil))
     (dolist (atom atoms) (insert-atom atom st))
     st))
 
 (defmethod insert-atom (atom (st bit-state))
   (let* ((statebody (state-body st))
-	 (pred-table (first statebody))
+         (pred-table (first statebody))
          (entity-table (second statebody))
          (extras (fourth statebody))
          (entities (rest atom))
          (types (mapcar #'(lambda (entity)
-			    (first (gethash entity entity-table)))
+                            (first (gethash entity entity-table)))
                         entities))
          (entity-numbers (mapcar #'(lambda (entity)
-				     (second (gethash entity entity-table)))
+                                     (second (gethash entity entity-table)))
                                  entities))
          (pred-entry (gethash (first atom) pred-table))
          (pred-types (first pred-entry))
@@ -433,15 +439,15 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod remove-atom (atom (st bit-state))
   (let* ((statebody (state-body st))
-	 (pred-table (first statebody))
+         (pred-table (first statebody))
          (entity-table (second statebody))
          (extras (fourth statebody))
          (entities (rest atom))
          (types (mapcar #'(lambda (entity)
-			    (first (gethash entity entity-table)))
+                            (first (gethash entity entity-table)))
                         entities))
          (entity-numbers (mapcar #'(lambda (entity)
-				     (second (gethash entity entity-table)))
+                                     (second (gethash entity entity-table)))
                                  entities))
          (pred-entry (gethash (first atom) pred-table))
          (pred-types (first pred-entry))
@@ -455,28 +461,28 @@ using MAKE-INITIAL-STATE.")
 (defmethod state-atoms ((st bit-state))
   (let ((acc nil))
     (maphash #'(lambda (pred lis)
-		 (declare (ignore lis))
-		 (setf acc
-		       (append
-			(state-all-atoms-for-predicate st pred)
+                 (declare (ignore lis))
+                 (setf acc
+                       (append
+                        (state-all-atoms-for-predicate st pred)
                        acc)))
              (first (state-body st)))
     (remove-duplicates (append
-			acc 
-			(mapcan #'(lambda (entry) (copy-list (cdr entry)))
-				(fourth (state-body st)))))))
+                        acc 
+                        (mapcan #'(lambda (entry) (copy-list (cdr entry)))
+                                (fourth (state-body st)))))))
 
 (defmethod atom-in-state-p (atom (st bit-state))
   (let* ((statebody (state-body st))
-	 (pred-table (first statebody))
+         (pred-table (first statebody))
          (entity-table (second statebody))
          (extras (fourth statebody))
          (entities (rest atom))
          (types (mapcar #'(lambda (entity)
-			    (first (gethash entity entity-table)))
+                            (first (gethash entity entity-table)))
                         entities))
          (entity-numbers (mapcar #'(lambda (entity)
-				     (second (gethash entity entity-table)))
+                                     (second (gethash entity entity-table)))
                                  entities))
          (pred-entry (gethash (first atom) pred-table))
          (pred-types (first pred-entry))
@@ -488,7 +494,7 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-all-atoms-for-predicate ((st bit-state) pred)
   (let* ((statebody (state-body st))
-	 (pred-table (first statebody))
+         (pred-table (first statebody))
          (type-table (third statebody))
          (extras (fourth statebody))
          (pred-entry (gethash pred pred-table))
@@ -499,11 +505,11 @@ using MAKE-INITIAL-STATE.")
     (append
      (when pred-entry
        (mapcar #'(lambda (entities)
-		   (cons pred entities))
+                   (cons pred entities))
                (BIT-statebody-search-array
                 pred-array pred-type-counts
                 (mapcar #'(lambda (type-name)
-			    (second (gethash type-name type-table)))
+                            (second (gethash type-name type-table)))
                         pred-types)
                 (mapcar #'(lambda (x) (declare (ignore x)) (list :variable 0))
                         pred-types))))
@@ -511,7 +517,7 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-candidate-atoms-for-goal ((st bit-state) goal)
   (let* ((statebody (state-body st))
-	 (pred-table (first statebody))
+         (pred-table (first statebody))
          (entity-table (second statebody))
          (type-table (third statebody))
          (extras (fourth statebody))
@@ -529,21 +535,21 @@ using MAKE-INITIAL-STATE.")
                 (= (length goal-terms) (length pred-types)))
        (let ((initial-counter
               (mapcar #'(lambda (entity pred-type)
-			  (if (variablep entity)
-			      (list :variable 0)
-			    (let ((entry (gethash entity entity-table)))
-			      (if (eq (first entry) pred-type)
-				  (list :fixed (second entry))
-				nil))))
+                          (if (variablep entity)
+                              (list :variable 0)
+                            (let ((entry (gethash entity entity-table)))
+                              (if (eq (first entry) pred-type)
+                                  (list :fixed (second entry))
+                                nil))))
                       goal-terms pred-types)))
 
          (unless (member nil initial-counter)
            (mapcar #'(lambda (entities)
-		       (cons pred entities))
+                       (cons pred entities))
                    (BIT-statebody-search-array
                     pred-array pred-type-counts
                     (mapcar #'(lambda (type-name)
-				(second (gethash type-name type-table)))
+                                (second (gethash type-name type-table)))
                             pred-types)
                     initial-counter)))))
      (rest (assoc pred extras)))))
@@ -553,7 +559,7 @@ using MAKE-INITIAL-STATE.")
 (defmethod copy-state ((st bit-state))
   (let ((the-copy (make-bit-state (state-atoms st))))
     (setf (tagged-state-tags-info the-copy)
-	  (copy-tree (tagged-state-tags-info st)))
+          (copy-tree (tagged-state-tags-info st)))
     the-copy))
 
 ;;; I don't know what these next two functions do, so I left them as defuns
@@ -567,7 +573,7 @@ using MAKE-INITIAL-STATE.")
      ((= (apply #'aref pred-array position) 1)
       (cons
        (mapcar #'(lambda (num entity-number-table)
-		   (gethash num entity-number-table))
+                   (gethash num entity-number-table))
                position entity-number-tables)
        (BIT-statebody-search-array
         pred-array pred-type-counts entity-number-tables
@@ -607,14 +613,14 @@ using MAKE-INITIAL-STATE.")
   ;; resizes in building, I hope. [2002/10/08:rpg]
   (let ((H2 (make-hash-table :size (hash-table-size H1) :test (hash-table-test H1))))
     (maphash #'(lambda (key val) (setf (gethash key H2) (funcall copy-fn val)))
-	     H1)
+             H1)
     H2))
 
 (defmethod state-trajectory ((st tagged-state))
   (let ((state (copy-state st)))
     (loop for state-info in (tagged-state-tags-info state)
-	for state-list = (state-atoms state)
-	with trajectory
-	do (push state-list trajectory)
-	   (retract-state-changes state (first state-info))
-	finally (return trajectory))))
+        for state-list = (state-atoms state)
+        with trajectory
+        do (push state-list trajectory)
+           (retract-state-changes state (first state-info))
+        finally (return trajectory))))
