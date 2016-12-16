@@ -782,10 +782,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                  total-run-time total-real-time)
     (let ((plan-trees
            (when *plan-tree*
-             (loop for plan in *plans-found*
-                   for unifier in *unifiers-found*
-                   for tree = (extract-tree plan)
-                   collect (apply-substitution tree unifier)))))
+             (extract-trees *plans-found* *unifiers-found*))))
       (when *print-plans*
         (cond
          (*plan-tree*
@@ -805,6 +802,12 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                 (+ 0.0
                    (/ total-run-time
                       internal-time-units-per-second)))))))
+
+(defun extract-trees (plans-found unifiers-found)
+  (loop for plan in plans-found
+        for unifier in unifiers-found
+        for tree = (extract-tree plan)
+        collect (apply-substitution tree unifier)))
 
 (format t "~2%SHOP2 version ~a~%~a~%" *shop-version* +shopyright+)
 
