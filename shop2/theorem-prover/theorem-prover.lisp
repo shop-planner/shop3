@@ -76,12 +76,14 @@
          (real-seek-satisfiers ,d ,goals ,state
                                ,bindings ,level ,just1)))))
 
-(defun query (goals state &key just-one (domain *domain*))
-  "More convenient top-level alternative to FIND-SATISFIERS.
+(defgeneric query (goals state &key just-one domain)
+  (:documentation 
+   "More convenient top-level alternative to FIND-SATISFIERS.
 Manages optional arguments and ensures that the variable property
-is properly set in GOALS."
-  (set-variable-property domain goals)
-  (find-satisfiers goals state just-one 0 :domain domain))
+is properly set in GOALS.")
+  (:method (goals state &key just-one (domain *domain*))
+    (set-variable-property domain goals)
+    (find-satisfiers goals state just-one 0 :domain domain)))
 
 ;;; FIND-SATISFIERS returns a list of all satisfiers of GOALS in AXIOMS
 (locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:simple-style-warning))
@@ -640,6 +642,10 @@ goal1 along with all of the other formulas in remaining."
                          level goal1 new-answers)
             (when just1 (return-from do-conjunct-from-atoms (values new-answers found-match)))
             (setf answers (shop-union new-answers answers :test #'equal))))))
+    (unless answers
+      (trace-print :goals (car goal1) state
+                   "~2%Level ~s, state fails goal ~s~%"
+                   level goal1))
     (values answers found-match)))
 
 (defun do-conjunct-from-axioms (domain goal1 remaining state bindings level just1)
@@ -652,6 +658,10 @@ goal1 along with all of the other formulas in remaining."
             (values axiom-answers axiom-found-match)))
         (setf found-match (or found-match axiom-found-match)
               answers (shop-union axiom-answers answers :test 'equal))))
+    (unless answers
+      (trace-print :goals (car goal1) state
+                    "~2%Level ~s, state axioms fail goal ~s"
+                         level goal1))
     (values answers found-match)))
 
 (defun do-conjunct-from-axiom (axiom domain goal1 remaining state bindings level just1)

@@ -556,6 +556,13 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
            (error "No domain named ~A" name))
           (t if-not-found))))
 
+;;; make QUERY easier to use
+(defmethod shop2.theorem-prover:query :around (goals state &key just-one (domain *domain*))
+  (if (symbolp domain)
+      (call-next-method goals state :just-one just-one :domain (find-domain domain))
+      (call-next-method)))
+  
+
 (defun delete-domain (name)
   (setf (get name :domain) nil))
 
