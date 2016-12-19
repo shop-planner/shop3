@@ -77,6 +77,7 @@
 (defparameter *expansions* 0)       ; number of task expansions so far
 (defparameter *plans-found* nil)    ; list of plans found so far
 (defparameter *plan-tree* nil)      ; whether to return the tree
+(defparameter *collect-state* nil)  ; whether to return the final states
 (defparameter *subtask-parents* nil) ; record of the parents in the tree
 (defparameter *operator-tasks* nil) ; record of the task atom for operators
 (defparameter *optimize-cost* nil)  ; whether to optimize with branch and bound

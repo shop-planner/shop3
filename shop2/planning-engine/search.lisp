@@ -410,7 +410,7 @@ of SHOP2."
   (push-last plan *plans-found*)
   ;; we only return the states when *plan-tree* is true, so don't
   ;; bother recording the states, otherwise [2012/07/11:rpg]
-  (when *plan-tree*
+  (when *collect-state*
     (push-last (copy-state state) *states-found*))
   (push-last unifier *unifiers-found*))
 

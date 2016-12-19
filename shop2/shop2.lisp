@@ -586,6 +586,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                    &key domain (which *which*) (verbose *verbose*)
                         (gc *gc*) (pp *pp*)
                         (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
+                        (collect-state *collect-state*)
                         (time-limit *time-limit*) (explanation *explanation*)
                         (depth-cutoff *depth-cutoff*)
                         ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
@@ -613,7 +614,10 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         3 or :LONG-PLANS - print the stats and plans, including all operator
              costs and all operators (even those whose names start with \"!!\")
      :GC says whether to do a garbage collection before calling SEEK-PLANS
-     :PLAN-TREE indicates whether or not to return a plan tree.
+     :PLAN-TREE indicates whether or not to return plan tree(s).
+     :COLLECT-STATE indicates whether or not to return final state(s).  For backward-
+             compatibility, states are also returned whenever :PLAN-TREE is true.
+             This should probably eventually change.
   RETURN VALUES:
      PLANS FOUND --- a list of plans.  Each plan is a list that alternates a
                      between instantiated operators and costs
@@ -650,7 +654,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*print-pretty* pp)
          ;; [mpelican:20090226.1825CST] obsolete, please use state-type arg or default-state-type slot in domain class
          (*state-encoding* :obsolete-state-encoding-variable)
-         (*plan-tree* plan-tree) (*subtask-parents* nil) (*operator-tasks* nil)
+         (*plan-tree* plan-tree)
+         (*collect-state* (or collect-state plan-tree))
+         (*subtask-parents* nil) (*operator-tasks* nil)
          (*optimize-cost* optimize-cost)
          (*expansions* 0) (*inferences* 0)
          ;; make this controllable [2004/08/06:rpg]
@@ -791,17 +797,25 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
           (format t "~%Plans:~%~s~%~%" (mapcar #'shorter-plan *plans-found*)))
          (t
           (format t "~%Plans:~%~s~%~%" *plans-found*))))
-      (if *plan-tree*
-          (values *plans-found*
+      (cond ((and *plan-tree* *collect-state*)
+             (values *plans-found*
                   (+ 0.0
                      (/ total-run-time
                         internal-time-units-per-second))
                   plan-trees
-                  *states-found*)
-        (values *plans-found*
-                (+ 0.0
-                   (/ total-run-time
-                      internal-time-units-per-second)))))))
+                  *states-found*))
+            (*collect-state*
+             (values *plans-found*
+                  (+ 0.0
+                     (/ total-run-time
+                        internal-time-units-per-second))
+                  nil
+                  *states-found*))
+            (t
+             (values *plans-found*
+                     (+ 0.0
+                        (/ total-run-time
+                           internal-time-units-per-second))))))))
 
 (defun extract-trees (plans-found unifiers-found)
   (loop for plan in plans-found
