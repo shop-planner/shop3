@@ -204,7 +204,7 @@ of SHOP2."
                 (nth input task-list)
                 (user-choose-task task-list immediate)))))))
 
-(defmethod seek-plans-task (domain task1 state tasks top-tasks partial-plan
+(defmethod seek-plans-task ((domain domain) task1 state tasks top-tasks partial-plan
                             partial-plan-cost depth which-plans
                             protections
                             unifier
