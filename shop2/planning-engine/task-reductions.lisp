@@ -251,8 +251,10 @@ Otherwise it returns FAIL."
                               (apply-substitution task-body in-unifier)))
     (when *traced-tasks*
       (when (member (first task-body) *traced-tasks*)
-        (break "Attempting to apply a method for ~A:~%~S"
-               (first task-body) task-body)))
+        (trace-print :tasks (first task-body) state
+                     "~2%Depth ~s, trying a method for task ~s~%"
+                     depth
+                     task-body)))
 
     (unless (eql task-unifier 'fail)
       (setq task-unifier (compose-substitutions in-unifier task-unifier))
