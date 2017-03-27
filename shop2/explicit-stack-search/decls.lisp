@@ -85,4 +85,4 @@ functions."
    ))
 
 (defmacro verbose-format (&rest args)
-  `(when *verbose* (format t ,@args)))
+  `(when (> *verbose* 0) (format t ,@args)))
