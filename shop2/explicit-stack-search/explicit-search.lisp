@@ -2,10 +2,15 @@
 
 (in-package :shop2)
 
-(defun find-plans-stack (problem &key domain verbose)
+(defvar *test-explicit-state-search* nil
+  "When testing, do we use standard SHOP2, or the explicit
+state variant?")
+
+(defun find-plans-stack (problem &key domain (verbose 0))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
-supports finding the first solution to PROBLEM."
+supports finding the first solution to PROBLEM.  To comply with SHOP2,
+though, always returns a list of plans."
   (let* ((*plan-tree* nil)
          (*verbose* verbose)
          (problem (find-problem problem t))
@@ -181,7 +186,11 @@ on the value of the MODE slot of STATE."
 ;;; finding the first plan.  Simplification to get things done
 ;;; more quickly.
 (defun check-plans-found (state)
-  (strip-NOPs (reverse (partial-plan state))))
+  (with-slots (partial-plan) state
+    (when partial-plan
+      (list ; comply with FIND-PLANS return type by returning a list of plans
+       ;; in this case always a singleton or nil.
+       (strip-NOPs (reverse partial-plan))))))
 (defun prepare-choose-immediate-task-state (state)
   (let ((immediates (immediate-tasks state)))
     (setf (alternatives state) immediates)
