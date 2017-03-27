@@ -113,6 +113,10 @@
 
 
 (test arity-test
+  (flet ((find-plans (problem &key verbose domain)
+           (if shop2::*test-explicit-state-search*
+               (find-plans-stack problem :verbose verbose :domain domain)
+               (find-plans  problem :verbose verbose :domain domain))))
   (with-fixture arity-domain ()
     (with-fixture good-problem ()
       (unfailed 
@@ -130,7 +134,7 @@
        (find-plans 'meta :verbose 0 :domain dom)))
     (with-fixture good-rest-problem-2 ()
       (unfailed
-       (find-plans 'meta-op :verbose 0 :domain dom)))))
+       (find-plans 'meta-op :verbose 0 :domain dom))))))
 
 
 

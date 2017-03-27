@@ -15,4 +15,15 @@ costs.  This function just throws away the costs."
 
 
 (defun plan-quietly (problem &rest args)
-  (apply #'find-plans problem :which :first :verbose 0 :gc t args))
+  (flet ((find-plans (problem  &rest rest &key which verbose gc)
+           (if shop2::*test-explicit-state-search*
+               (progn
+                 (remf rest :which)
+                 (remf rest :verbose)
+                 (remf rest :gc)
+                 (assert (eq which :first))
+                 (when rest
+                   (error "Can't handle rest arguments for FIND-PLANS-STACK: ~s" rest))
+                 (find-plans-stack problem :verbose verbose))
+               (find-plans  problem :which which :verbose verbose :gc gc))))
+    (apply #'find-plans problem :which :first :verbose 0 :gc t args)))
