@@ -179,7 +179,7 @@ shop2."
 (defmethod perform :around ((op ess-test-op) (c fiveam-tester-system))
   "Set dynamic variable to test the explicit state variant of SHOP2
 instead of basic SHOP2."
-  (progv (list (intern '#:*test-explicit-state-search* :shop2))
+  (progv (list (intern (symbol-name '#:*test-explicit-state-search*) :shop2))
       '(t)
     (call-next-method)))
 
