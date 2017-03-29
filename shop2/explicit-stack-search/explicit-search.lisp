@@ -76,12 +76,19 @@ on the value of the MODE slot of STATE."
              (stack-backtrack state)))
         (expand-task
          (let ((task (current-task state)))
+           (trace-print :tasks (get-task-name task) (world-state state)
+               "~2%Depth ~s, trying task ~s"
+               (depth state)
+               (apply-substitution task (unifier state)))
            (if (primitivep (get-task-name task))
                (setf (mode state) 'expand-primitive-task)
                (setf (mode state) 'prepare-to-choose-method))))
         (expand-primitive-task
          (if (expand-primitive-state state domain)
-             (setf (mode state) 'check-for-done)
+             (progn
+               (setf (mode state) 'check-for-done)
+               (incf (depth state)))
+
              (stack-backtrack state)))
         (prepare-to-choose-method
          (let* ((task-name (get-task-name (current-task state)))
@@ -93,10 +100,20 @@ on the value of the MODE slot of STATE."
         (choose-method
          (if (choose-method-state state domain)
              (setf (mode state) 'choose-method-bindings)
-             (stack-backtrack state)))
+             (progn
+               (let ((task1 (current-task state))
+                     (depth (depth state))
+                     (state (world-state state)))
+                 (trace-print :tasks (get-task-name task1) state
+                              "~2%Depth ~s, backtracking from task~%      task ~s"
+                              depth
+                              task1))
+             (stack-backtrack state))))
         (choose-method-bindings
            (if (choose-method-bindings-state state)
-               (setf (mode state) 'check-for-done)
+               (progn
+                 (setf (mode state) 'check-for-done)
+                 (incf (depth state)))
                (stack-backtrack state)))
         (extract-plan
          (return
@@ -111,8 +128,8 @@ on the value of the MODE slot of STATE."
       (let ((method-body-unifier (pop alternatives)))
         (destructuring-bind ((label . reduction) . unifier)
             method-body-unifier
-          (declare (ignore label))
           (push (make-cs-state :mode (mode state)
+                               :current-task current-task
                                :alternatives alternatives)
                 backtrack-stack)
           (push (make-method-instantiation
@@ -123,6 +140,9 @@ on the value of the MODE slot of STATE."
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
+          (trace-print :methods label (world-state state)
+                       "~2%Depth ~s, applying method ~s~%      task ~s~% reduction ~s"
+                         (depth state) label current-task reduction)
           (setf (unifier state) unifier)))
       t)))
 (defun CHOOSE-METHOD-STATE (state domain)
@@ -130,6 +150,7 @@ on the value of the MODE slot of STATE."
     (when alternatives            ; method alternatives remain
       (let ((method (pop alternatives)))
         (push (make-cs-state :mode (mode state)
+                             :current-task (current-task state)
                              :alternatives alternatives)
               backtrack-stack)
         (multiple-value-bind (expansions unifiers)
@@ -171,6 +192,7 @@ on the value of the MODE slot of STATE."
       ;; heuristic already applied here.
       (setf current-task (pop alternatives))
       (push (make-cs-state :alternatives alternatives
+                           :current-task current-task
                            :mode (mode state))
             (backtrack-stack state))
       state)))
@@ -202,6 +224,7 @@ on the value of the MODE slot of STATE."
             (choose-immediate-task alternatives (unifier state)))
       (setf alternatives (remove current-task alternatives :test 'eq))
       (push (make-cs-state :alternatives alternatives
+                           :current-task current-task
                            :mode (mode state))
             (backtrack-stack state))
       state)))

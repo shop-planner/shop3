@@ -18,6 +18,10 @@ classes."))
     :initarg :mode
     :reader mode
     )
+   (current-task
+    :initarg :current-task
+    :reader current-task
+    )
    (alternatives
     :initarg :alternatives
     :reader alternatives
@@ -26,6 +30,7 @@ classes."))
 
 (defmethod do-backtrack ((entry choice-entry) (state search-state))
   (setf (mode state) (mode entry)
+        (current-task state) (current-task entry)
         (alternatives state) (alternatives entry)))
 
 (defclass state-tag (stack-entry)
@@ -71,7 +76,8 @@ classes."))
         (protections state) (protections entry)
         (partial-plan state) (partial-plan entry)
         (unifier state) (unifier entry)
-        (cost state) (partial-plan-cost entry)))
+        (cost state) (partial-plan-cost entry))
+  (decf (depth state)))
 
 (defclass method-instantiation (stack-entry)
   ((unifier
@@ -91,15 +97,18 @@ classes."))
 (defmethod do-backtrack ((entry method-instantiation) (state search-state))
   (setf (top-tasks state) (top-tasks entry)
         (tasks state) (tasks entry)
-        (unifier state) (unifier entry)))
+        (unifier state) (unifier entry))
+  (decf (depth state)))
 
 
 ;;;---------------------------------------------------------------------------
 ;;; Constructors
 ;;;---------------------------------------------------------------------------
 
-(defun make-cs-state (&rest arglist &key mode alternatives)
-  (declare (ignorable mode alternatives))
+;;; keyword arguments just here so that it's easy to see what you can pass to
+;;; this function.
+(defun make-cs-state (&rest arglist &key mode alternatives current-task)
+  (declare (ignorable mode alternatives current-task))
   (apply 'make-instance 'choice-entry
          arglist))
 
