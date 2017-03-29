@@ -53,5 +53,5 @@ is bound, write a message and exit on an error.  If
 
 (quit-on-error
   (format t "~&;;; Testing explicit stack SHOP2.~%")
- (asdf:oos (intern '#:ess-test-op :shop2-asd) "shop2"))
+ (asdf:oos (intern (symbol-name '#:ess-test-op) :shop2-asd) "shop2"))
 
