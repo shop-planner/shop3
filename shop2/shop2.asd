@@ -54,6 +54,11 @@
 (asdf:load-system :shop-asd)
 (in-package :shop2-asd)
 
+
+(defclass ess-test-op (test-op)
+  ()
+  (:documentation "Test the explicit state variant of SHOP2."))
+
 ;;;
 ;;; The main system.
 ;;;
@@ -64,7 +69,8 @@
                  (:version "shop2/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")
-    :in-order-to ((test-op (test-op :shop2/test)))
+    :in-order-to ((test-op (test-op :shop2/test))
+                  (ess-test-op (ess-test-op :shop2/test)))
     :components  (
        (:file "package")
        (:file "decls")
@@ -169,6 +175,14 @@ shop2."
     (call-next-method)))
 
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
+
+(defmethod perform :around ((op ess-test-op) (c fiveam-tester-system))
+  "Set dynamic variable to test the explicit state variant of SHOP2
+instead of basic SHOP2."
+  (progv (list (intern '#:*test-explicit-state-search* :shop2))
+      '(t)
+    (call-next-method)))
+
 
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
