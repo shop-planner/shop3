@@ -48,8 +48,10 @@ is bound, write a message and exit on an error.  If
       (uiop:quit 0))))
 
 (quit-on-error
+ (format t "~&;;; Testing standard SHOP2.~%")
  (asdf:test-system "shop2"))
 
 (quit-on-error
+  (format t "~&;;; Testing explicit stack SHOP2.~%")
  (asdf:oos (intern '#:ess-test-op :shop2-asd) "shop2"))
 
