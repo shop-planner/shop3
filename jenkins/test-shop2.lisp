@@ -49,3 +49,7 @@ is bound, write a message and exit on an error.  If
 
 (quit-on-error
  (asdf:test-system "shop2"))
+
+(quit-on-error
+ (asdf:oos (intern '#:ess-test-op :shop2-asd) "shop2"))
+
