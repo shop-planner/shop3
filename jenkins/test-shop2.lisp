@@ -45,7 +45,7 @@ is bound, write a message and exit on an error.  If
                               (quit c "Other SERIOUS-CONDIITON"))))
       (funcall thunk)
       (format t "~&Script succeeded~%")
-      (uiop:quit 0))))
+      t)))
 
 (quit-on-error
  (format t "~&;;; Testing standard SHOP2.~%")
@@ -55,3 +55,4 @@ is bound, write a message and exit on an error.  If
   (format t "~&;;; Testing explicit stack SHOP2.~%")
  (asdf:oos (intern (symbol-name '#:ess-test-op) :shop2-asd) "shop2"))
 
+(uiop:quit 0)
