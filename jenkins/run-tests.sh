@@ -155,7 +155,7 @@ case "$lisp" in
     eval="-eval" ;;
   sbcl)
     command="${SBCL:-sbcl}"
-    flags="--noinform --userinit /dev/null --sysinit /dev/null"
+    flags="--dynamic-space-size 4000 --noinform --end-runtime-options --no-userinit --no-sysinit"
     nodebug="--disable-debugger"
     eval="--eval" ;;
   # scl)
