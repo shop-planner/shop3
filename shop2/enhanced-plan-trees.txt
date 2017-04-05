@@ -1,0 +1,125 @@
+# -*- mode:org; -*-
+
+* Introduction
+
+Here we present a preliminary design for implementing enhanced plan trees for
+SHOP2.  These aim to provide not just a derivation tree for the plan (as with
+the original plan trees in SHOP2), but also provide traceability of
+preconditions (consumers) to enabling actions (establishers).  Initially, these
+trees will only be built in explicit-state search.  They may be back-ported to
+conventional SHOP2 at a later date.  Note that plan /tree/ is actually a
+misnomer -- with the dependency information included, these are actually DAGs.
+
+* Tree structures
+
+** tree nodes
+
+Tree nodes are being put into their own package, to avoid name collisions with
+the ones already in SHOP2.  A little cumbersome, but should be ok:
+#+BEGIN_SRC common-lisp
+(defstruct tree-node
+  task
+  dependencies
+  )
+
+(defstruct (primitive-tree-node (:include tree-node))
+  )
+
+(defstruct (complex-tree-node (:include tree-node))
+  children
+  )
+
+#+END_SRC
+
+** dependencies
+ The dependency structures will look like this:
+ #+BEGIN_SRC common-lisp
+ (defstruct dependency
+   establisher
+   consumer
+   proposition
+  )
+ #+END_SRC
+
+* Backtracking
+
+Whenever we add one or more dependency records, we must push onto the backtrack
+stack a structure that will enable removing them.  Alternatively, since we will
+only add dependency records when we are adding a new plan tree node, we could
+simply remove all the dependencies on a plan-tree node whenever we backtrack to
+remove that node from the plan.  That seems simpler and more elegant.
+
+* Limitations
+
+** Handling axioms
+
+ The initial design does not record axioms used to prove non-primitive literals.
+ Instead, we only record primitive literals in the dependencies.  The assumption
+ is that if we cannot re-establish a clobbered primitive literal, we will need to
+ re-examine the preconditions from scratch, which involves re-evaluating all the
+ axioms, so there's no need to record intermediate steps.
+
+** Unordered task networks
+
+ The initial design does not handle unordered task networks, because doing so
+ would require re-ordering the children of a complex-tree-node based on which
+ ordering is chosen.
+
+** Iteration tasks
+
+ We have a number of cases where we have tasks like "visit all the targets," and
+ these tasks will have "all the targets" as their preconditions.  But note that
+ if a target goes away, it doesn't break "visit all the targets." So we need to
+ think about what it means to retrieve the extent of a set.
+
+* Build process
+
+We will build the tree top-down, in contrast to the original SHOP2 plan trees,
+which were built bottom-up, after the entire plan was completed.  We will add
+the nodes to the tree at the point where method expansions are made and
+primitive operators are inserted into the plan.
+
+* Implementation details 
+
+** Special variables
+
+ At the expense of having uglier code, I am inclined to use a pair of special
+ variables -- =*literals*= and =*establishers*= -- that we can push onto when we
+ are retrieving atoms from the state.  This will avoid having to completely
+ change the call and return protocols for the theorem-prover.
+
+ The theorem-prover will have an additional special variable --
+ =*record-dependencies-p*= -- that defaults to NIL, and is exported from the
+ theorem-prover library.  This is the boolean that we will check when deciding
+ whether to record.  This is simpler than having the two accumulator special
+ variables somehow have values that signaled that they are not in use.
+
+** Static predicates
+
+ It would be nice to have SHOP2 recognize static predicates so that we don't
+ need to record dependencies on unchanging literals.  Right now, the way we use
+ =!!ASSERT= and =!!DELETE= militates against this, since we can't simply look at
+ the normal operators and see what predicates they could change.  One thing we
+ could do, that's akin to what Prologs do, is infer static predicates based on
+ normal operators /and/ a =DYNAMIC= declaration.  If we are going to do this,  I
+ think we should check and raise an error if we ever try to change a fluent
+ whose predicate isn't recorded as dynamic (either inferred or user-specified).
+
+** Extracting the establishers
+
+ One problem is that currently the establishers are recorded based on state
+ tags, but the state tags don't correlate with primitive operators.  We'll need
+ to do something like record an association of tags with operators, which will
+ need to be done in =APPLY-OPERATOR= and =APPLY-ACTION= (PDDL actions).
+
+* Theorem-prover modifications
+
+If we use the special variables, then the only modifications that are necessary
+come when we are retrieving atoms from a state.  I believe that this can be
+limited to =DO-CONJUNCT-FROM-ATOMS=.  Unfortunately, despite the fact that this
+function seems to do only one conjunct, in fact it recursively tries to prove
+all the remaining goals after that.  Accordingly, we have to deal with
+backtracking if the recursive queries fail.  Another complication is extracting
+the /latest/ establisher of a fact from the state.  The current state objects
+record only the /first/ establisher.
+

@@ -18,6 +18,7 @@ shop2/decls.lisp -text
 shop2/docs/README.txt -text
 shop2/docs/shop2.doc -text svneol=unset#unset
 shop2/docs/shop2.pdf -text svneol=unset#unset
+shop2/enhanced-plan-trees.txt svneol=native#text/plain
 shop2/examples/IPC-2002/Depots/SimpleTime/easy_probs/pfile1 -text
 shop2/examples/IPC-2002/Depots/SimpleTime/easy_probs/pfile10 -text
 shop2/examples/IPC-2002/Depots/SimpleTime/easy_probs/pfile11 -text
