@@ -31,6 +31,9 @@ the ones already in SHOP2.  A little cumbersome, but should be ok:
 
 #+END_SRC
 
+The =task= of the =tree-node= is the node in the plan (primitive operator or
+method) that consumes all of the =dependencies=.
+
 ** dependencies
  The dependency structures will look like this:
  #+BEGIN_SRC common-lisp
@@ -65,12 +68,22 @@ remove that node from the plan.  That seems simpler and more elegant.
  would require re-ordering the children of a complex-tree-node based on which
  ordering is chosen.
 
+ We should probably raise an error if there are =:UNORDERED= task networks when
+ we are building these plan trees.
+
 ** Iteration tasks
 
  We have a number of cases where we have tasks like "visit all the targets," and
  these tasks will have "all the targets" as their preconditions.  But note that
  if a target goes away, it doesn't break "visit all the targets." So we need to
  think about what it means to retrieve the extent of a set.
+
+** Protections
+
+ This design does not yet handle protections.
+
+ We should probably raise an error if there are protections when we are building
+ these plan trees.
 
 * Build process
 
@@ -111,6 +124,30 @@ primitive operators are inserted into the plan.
  tags, but the state tags don't correlate with primitive operators.  We'll need
  to do something like record an association of tags with operators, which will
  need to be done in =APPLY-OPERATOR= and =APPLY-ACTION= (PDDL actions).
+
+** Tracking parent tasks
+
+ When expanding a complex task, we need to set a =PARENT= property in the
+ (search) state, in order that we can find where to stick the children.  This
+ suggests we need a slot for this in the search state, we need a choice-stack
+ record that records when we set the =PARENT=, with the old value, and we need
+ to figure out how the =PARENT= should initially be set.  Should be set
+ to a =PLAN= dummy value that we can expand with the initial tasks (since there
+ needn't be only one initial task).  This requires adding code for populating
+ the tree root that we haven't needed before, because I believe that the problem
+ tasks could be an arbitrary task network, so need to be inserted like a simpler
+ (no bindings) method expansion.
+
+ When should the =PARENT= slot be updated? Not when we pop a task, because the
+ task is what we are going to be putting into the plan.  When we expand a
+ primitive, we add it to the children of the current =PARENT=, and record this
+ tree operation on the backtrack stack.  I believe we need to update =PARENT=
+ when we do =PREPARE-TO-CHOOSE-METHOD=.  At this point we need to find the
+ tree-node corresponding to the =CURRENT-TASK=, and make that the =PARENT=
+ (recording this setting on the backtrack stack).  At the moment, unless we make
+ a big hash table with all the task -> tree node mappings, I don't see how to
+ avoid an $O(n)$ search for the task tree-node.
+
 
 * Theorem-prover modifications
 
