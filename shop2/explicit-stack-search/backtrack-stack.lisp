@@ -28,20 +28,12 @@ classes."))
     ))
   )
 
-(defmethod do-backtrack ((entry choice-entry) (state search-state))
-  (setf (mode state) (mode entry)
-        (current-task state) (current-task entry)
-        (alternatives state) (alternatives entry)))
-
 (defclass state-tag (stack-entry)
   ((tag
     :initarg :tag
     :reader tag
     ))
   )
-
-(defmethod do-backtrack ((entry state-tag) (state search-state))
-  (retract-state-changes (world-state state) (tag entry)))
 
 (defclass prim-state-expand (stack-entry)
   ((top-tasks
@@ -70,14 +62,29 @@ classes."))
     ))
   )
 
-(defmethod do-backtrack ((entry prim-state-expand) (state search-state))
-  (setf (top-tasks state) (top-tasks entry)
-        (tasks state) (tasks entry)
-        (protections state) (protections entry)
-        (partial-plan state) (partial-plan entry)
-        (unifier state) (unifier entry)
-        (cost state) (partial-plan-cost entry))
-  (decf (depth state)))
+
+(defclass add-child-to-tree (stack-entry)
+  (  (parent
+   :initarg :parent
+   :initform nil
+   :reader parent
+   )
+  (child
+   :initarg :child
+   :initform nil
+   :reader child
+   ))
+  )
+
+(defclass add-dependencies (stack-entry)
+     ((dependencies
+       :initarg :dependencies
+       :reader dependencies
+       ))
+  )
+
+
+
 
 (defclass method-instantiation (stack-entry)
   ((unifier
@@ -94,11 +101,49 @@ classes."))
     ))
   )
 
+
+
+;;;---------------------------------------------------------------------------
+;;; DO-BACKTRACK methods
+;;;---------------------------------------------------------------------------
+(defmethod do-backtrack ((entry state-tag) (state search-state))
+  (retract-state-changes (world-state state) (tag entry)))
+
 (defmethod do-backtrack ((entry method-instantiation) (state search-state))
   (setf (top-tasks state) (top-tasks entry)
         (tasks state) (tasks entry)
         (unifier state) (unifier entry))
   (decf (depth state)))
+
+(defmethod do-backtrack ((entry add-dependencies) (state search-state))
+  (mapc #'(lambda (dep)
+            (let ((consumer (plan-tree:consumer dep)))
+              (setf (plan-tree:tree-node-dependencies consumer)
+                (delete dep (plan-tree:tree-node-dependencies consumer) :key 'eq))))
+        (dependencies entry)))
+
+(defmethod do-backtrack ((entry add-child-to-tree) (state search-state))
+  (with-slots (parent child) entry
+    (assert (member child (plan-tree:complex-tree-node-children parent)))
+    (remove-subtree-from-table (plan-tree-lookup state) child)
+    (setf (plan-tree:complex-tree-node-children parent)
+          (delete child (plan-tree:complex-tree-node-children parent)))))
+
+(defmethod do-backtrack ((entry prim-state-expand) (state search-state))
+  (setf (top-tasks state) (top-tasks entry)
+        (tasks state) (tasks entry)
+        (protections state) (protections entry)
+        (partial-plan state) (partial-plan entry)
+        (unifier state) (unifier entry)
+        (cost state) (partial-plan-cost entry))
+  (decf (depth state)))
+
+
+(defmethod do-backtrack ((entry choice-entry) (state search-state))
+  (setf (mode state) (mode entry)
+        (current-task state) (current-task entry)
+        (alternatives state) (alternatives entry)))
+
 
 
 ;;;---------------------------------------------------------------------------
@@ -120,10 +165,11 @@ classes."))
 (defun make-prim-state-expand (&rest arglist
                                      &key top-tasks
                                      tasks protections partial-plan
-                                     unifier partial-plan-cost)
+                                     unifier partial-plan-cost
+                                       parent child)
   (declare (ignorable top-tasks
                       tasks protections partial-plan
-                      unifier partial-plan-cost))
+                      unifier partial-plan-cost parent child))
   (apply 'make-instance 'prim-state-expand
          arglist))
 
@@ -131,3 +177,18 @@ classes."))
   (declare (ignorable unifier top-tasks tasks))
   (apply 'make-instance 'method-instantiation
          arglist))
+
+(defun make-update-parent (&key old-parent)
+  (assert old-parent)
+  (make-instance 'update-parent :old-parent old-parent))
+
+(defun make-add-dependencies (dependencies)
+  (make-instance 'add-dependencies
+    :dependencies dependencies))
+
+
+(defun make-add-child-to-tree (&key parent child)
+  (make-instance 'add-child-to-tree
+                 :parent parent
+                 :child child))
+

@@ -90,12 +90,16 @@
        (:module "explicit-stack-search"
                 :serial t
                 :components ((:file "decls")
+                             ;; this is for the new plan tree that contains
+                             ;; dependency information.
+                             (:file "plan-tree")
                              (:file "backtrack-stack")
                              (:file "explicit-search")))
+       ;; this is for the original SHOP2 plan trees.
        (:module tree
                 :pathname "planning-tree/"
                 :components ((:file "tree-accessors")
-                                     (:file "tree-reductions")))
+                             (:file "tree-reductions")))
        (:file "shop2"
               :perform (load-op :before (op c)
                                (declare (ignorable op c))

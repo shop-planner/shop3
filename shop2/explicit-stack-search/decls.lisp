@@ -82,7 +82,20 @@ functions."
     :initform nil
     :accessor plans-found
     )
+   (plan-tree
+    :initarg :plan-tree
+    :reader plan-tree
+    )
+   (plan-tree-lookup
+    :initform (make-hash-table :test 'eq)
+    :reader plan-tree-lookup
+    )
    ))
 
 (defmacro verbose-format (&rest args)
   `(when (> *verbose* 0) (format t ,@args)))
+
+(defmacro appendf (place value)
+  `(setf ,place
+         (append ,place ,value)))
+
