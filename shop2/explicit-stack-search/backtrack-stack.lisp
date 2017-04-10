@@ -119,7 +119,7 @@ classes."))
   (mapc #'(lambda (dep)
             (let ((consumer (plan-tree:consumer dep)))
               (setf (plan-tree:tree-node-dependencies consumer)
-                (delete dep (plan-tree:tree-node-dependencies consumer) :key 'eq))))
+                (delete dep (plan-tree:tree-node-dependencies consumer) :test 'eq))))
         (dependencies entry)))
 
 (defmethod do-backtrack ((entry add-child-to-tree) (state search-state))
