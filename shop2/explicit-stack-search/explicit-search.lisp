@@ -223,8 +223,8 @@ on the value of the MODE slot of STATE."
         t)))))
 
 ;;; STUBS
-(defun make-dependencies (tree-node *literals* *establishers*)
-  (declare (ignore tree-node *literals* *establishers*))
+(defun make-dependencies (tree-node literals establishers)
+  (declare (ignore tree-node literals establishers))
   nil)
 
 (defun task-sexp-task-name (task)
