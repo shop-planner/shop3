@@ -125,7 +125,7 @@ primitive operators are inserted into the plan.
  to do something like record an association of tags with operators, which will
  need to be done in =APPLY-OPERATOR= and =APPLY-ACTION= (PDDL actions).
 
-** Tracking parent tasks
+** Tracking parent tasks: *OBSOLETE*
 
  When expanding a complex task, we need to set a =PARENT= property in the
  (search) state, in order that we can find where to stick the children.  This
@@ -134,24 +134,35 @@ primitive operators are inserted into the plan.
  to figure out how the =PARENT= should initially be set.  Should be set
  to a =PLAN= dummy value that we can expand with the initial tasks (since there
  needn't be only one initial task).  This requires adding code for populating
- the tree root that we haven't needed before, because I believe that the problem
+ the tree root that we haven't needed before, because i believe that the problem
  tasks could be an arbitrary task network, so need to be inserted like a simpler
  (no bindings) method expansion.
 
- When should the =PARENT= slot be updated? Not when we pop a task, because the
+ When should the =parent= slot be updated? Not when we pop a task, because the
  task is what we are going to be putting into the plan.  When we expand a
- primitive, we add it to the children of the current =PARENT=, and record this
+ primitive, we add it to the children of the current =parent=, and record this
  tree operation on the backtrack stack.  I believe we need to update =PARENT=
  when we do =PREPARE-TO-CHOOSE-METHOD=.  At this point we need to find the
  tree-node corresponding to the =CURRENT-TASK=, and make that the =PARENT=
  (recording this setting on the backtrack stack).  At the moment, unless we make
- a big hash table with all the task -> tree node mappings, I don't see how to
+ a big hash table with all the task -> tree node mappings, i don't see how to
  avoid an $O(n)$ search for the task tree-node.
+
+** INSTANTIATING TREE NODES
+
+The original plan was to instantiate a tree node when it was /expanded/, by,
+for instance =SEEK-PLANS-PRIMITIVE=, or =SEEK-PLANS-NON-PRIMITIVE=.  But,
+instead, we need to put in the tree nodes when the tasks are first added, either
+at the start of planning, or by instantiating the "right hand side" of a method.
+
+This requires a little backtracking over the previous draft implementation, but
+it shouldn't be much actual coding.  I think it will be easier if I add
+intermediate nodes for the =:ordered= and =:unordered= qualifiers.
 
 
 * Theorem-prover modifications
 
-If we use the special variables, then the only modifications that are necessary
+  If we use the special variables, then the only modifications that are necessary
 come when we are retrieving atoms from a state.  I believe that this can be
 limited to =DO-CONJUNCT-FROM-ATOMS=.  Unfortunately, despite the fact that this
 function seems to do only one conjunct, in fact it recursively tries to prove
