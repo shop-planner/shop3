@@ -104,4 +104,9 @@
              #:instantiation-error
              #:bad-argument
              #:theorem-prover-condition
+
+             ;; tracking dependencies
+             #:*record-dependencies-p*
+             #:*literals*
+             #:*establishers*
              ))

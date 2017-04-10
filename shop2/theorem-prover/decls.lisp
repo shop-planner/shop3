@@ -62,6 +62,13 @@
 
 (defvar *domain* nil)
 
+(defvar *record-dependencies-p* NIL
+  "Do we record dependencies when we find literals in the theorem
+prover.  If so, see *LITERALS* and *ESTABLISHERS*.")
+
+(defvar *literals*)
+(defvar *establishers*)
+
 (defvar *state*)
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (setf (documentation '*state* 'variable)
