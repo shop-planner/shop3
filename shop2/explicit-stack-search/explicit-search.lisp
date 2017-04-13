@@ -10,11 +10,24 @@ state variant?")
   nil
   "Do we build a dependency-enhanced plan tree?")
 
-(defun find-plans-stack (problem &key domain (verbose 0) plan-tree)
+(defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
 though, always returns a list of plans."
+  #+(or ccl allegro sbcl clisp abcl ecl)
+  (when gc #+allegro (excl:gc t)
+        #+sbcl (sb-ext:gc :full t)
+        #+ccl (ccl:gc)
+        #+clisp (ext:gc)
+        #+cmucl (extensions:gc :full t)
+        #+abcl (extensions:gc)
+        #+lispworks (hcl:gc-generation t) ; add case for lispworks 5/1/13 BWM
+        #+ecl (ext:gc t)
+        )
+  #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks ecl)
+  (when gc (cerror "Just continue, skip GC."
+                   "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*plan-tree* nil)
          (*enhanced-plan-tree* plan-tree)
          (*verbose* verbose)
@@ -30,14 +43,14 @@ though, always returns a list of plans."
                        (t
                         (error "Domain not supplied and problem does not specify domain."))))
          (world-state (apply 'make-initial-state domain
-                       (default-state-type domain)
-                       (problem->state domain problem)))
+                             (default-state-type domain)
+                             (problem->state domain problem)))
          (tasks (get-tasks problem))
          (search-state (make-instance 'search-state
-                                      :world-state world-state
-                                      :tasks tasks
-                                      ;; tree will be NIL if we aren't returning a plan tree.
-                                      :top-tasks (get-top-tasks tasks)))
+                         :world-state world-state
+                         :tasks tasks
+                         ;; tree will be NIL if we aren't returning a plan tree.
+                         :top-tasks (get-top-tasks tasks)))
          (tree  (when plan-tree
                   (let ((tree (plan-tree:make-complex-tree-node :task 'TOP)))
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
