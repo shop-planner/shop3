@@ -112,8 +112,12 @@ on the value of the MODE slot of STATE."
              (progn
                (setf (mode state) 'check-for-done)
                (incf (depth state)))
-
-             (stack-backtrack state)))
+             (with-slots (current-task depth world-state) state
+               (trace-print :tasks (get-task-name current-task) world-state
+                            "~2%Depth ~s, backtracking from task~%      task ~s"
+                            depth
+                            current-task)
+               (stack-backtrack state))))
         (prepare-to-choose-method
          (let* ((task-name (get-task-name (current-task state)))
                 (methods (methods domain task-name)))
@@ -150,7 +154,7 @@ on the value of the MODE slot of STATE."
         (*literals* nil)
         (*establishers* nil))
     (with-slots (alternatives backtrack-stack
-                              current-task
+                              current-task depth
                               top-tasks tasks) state
       (when alternatives            ; method alternatives remain
         (let ((method-body-unifier (pop alternatives)))
@@ -180,9 +184,9 @@ on the value of the MODE slot of STATE."
                                        reduction unifier))
             (trace-print :methods label (world-state state)
                          "~2%Depth ~s, applying method ~s~%      task ~s~% reduction ~s"
-                         (depth state) label current-task reduction)
-            (setf (unifier state) unifier))))
-      t)))
+                         depth label current-task reduction)
+            (setf (unifier state) unifier)))
+        t))))
 (defun CHOOSE-METHOD-STATE (state domain)
   (with-slots (alternatives backtrack-stack) state
     (when alternatives            ; method alternatives remain
