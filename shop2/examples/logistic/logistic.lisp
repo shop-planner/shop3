@@ -188,7 +188,7 @@
         ;; state axioms
 
         (:- (same ?x ?x) nil)
-        (:- (different ?x ?y) ((not (same ?x ?y))))
+        (:- (different ?x ?y) ((eval (not (eq '?x '?y))))) ;(not (same ?x ?y))))
 
 
         ))))
