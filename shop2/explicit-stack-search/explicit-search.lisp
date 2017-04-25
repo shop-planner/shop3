@@ -81,7 +81,8 @@ on the value of the MODE slot of STATE."
   (setf (mode state) 'check-for-done)
   (catch 'search-failed
     (iter
-      (when *enhanced-plan-tree* (assert (plan-tree state)))
+      (when *enhanced-plan-tree* (unless (plan-tree state)
+                                   (error "Search state object should have a PLAN-TREE.")))
       (verbose-format "~&State is: ~a. Mode is: ~a.~%" state (mode state))
       (ecase (mode state)
         (check-for-done
@@ -253,13 +254,15 @@ on the value of the MODE slot of STATE."
         t))))
 
 (defun make-dependencies (tree-node depend-lists hash-table)
-  (iter (for (prop . establisher) in depend-lists)
-    (assert (and prop establisher))
-    ;; PROP is the proposition consumed and establisher is a task name.
-    (collecting
-     (plan-tree:make-dependency :establisher (find-task-in-tree (strip-task-sexp establisher) hash-table)
-                                :prop prop
-                                :consumer tree-node))))
+  (iter (for depend in depend-lists)
+    (destructuring-bind (prop . establisher) depend
+      (unless (and prop establisher)
+        (error "Ill-formed dependency-list: ~S"  depend))
+      ;; PROP is the proposition consumed and establisher is a task name.
+      (collecting
+       (plan-tree:make-dependency :establisher (find-task-in-tree (strip-task-sexp establisher) hash-table)
+                                  :prop prop
+                                  :consumer tree-node)))))
 
 (defun task-sexp-task-name (task)
   (let* ((task (if (eq (first task) :task) (rest task)
