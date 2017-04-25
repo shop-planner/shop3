@@ -327,7 +327,7 @@ Otherwise it returns FAIL."
          (head (pddl-action-head standardized-action))
          (preconditions (pddl-action-precondition standardized-action))
          (effect (pddl-action-effect standardized-action))
-         unifier)
+         unifier depends)
 
     ;; added rudimentary arity-checking...
     (unless (= (length task-body) (length head))
@@ -359,7 +359,8 @@ Otherwise it returns FAIL."
           ;; need to specially handle the preconditions, since the
           ;; syntax of PDDL preconditions are different from
           ;; SHOP2. [2006/07/31:rpg]
-          (let ((pu (shopthpr:find-satisfiers pre state t)))
+          (multiple-value-bind (pu pd)
+              (shopthpr:find-satisfiers pre state t)
             (unless pu
               (trace-print :operators (first head) state
                            "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
@@ -369,7 +370,8 @@ Otherwise it returns FAIL."
                            pre
                            )
               (return-from apply-action (values 'fail preconditions 0)))
-            (setq unifier (compose-substitutions action-unifier (first pu)))))
+            (setf unifier (compose-substitutions action-unifier (first pu))
+                  depends (first pd))))
         (setq unifier action-unifier)))
     ;; end of scope for action-unifier...
 
@@ -449,7 +451,7 @@ Otherwise it returns FAIL."
 
           (values head-subbed statetag 
                   protections cost-number
-                  unifier))))))
+                  unifier depends))))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Helpers for apply-action
@@ -489,6 +491,9 @@ two values."
                  append new-deletes into dels
                  finally (return (values adds dels)))))))
     (when
+        (when *record-dependencies-p*
+          (cerror "Simply continue without recording secondary preconditions"
+                  "Do not correctly compute dependencies for PDDL conditional effects."))
         (destructuring-bind (when antecedent consequent)
             effect-expr
           (declare (ignore when))

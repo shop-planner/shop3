@@ -111,6 +111,41 @@ using MAKE-INITIAL-STATE.")
     (push (list new-tag) (tagged-state-tags-info st))
     new-tag))
 
+(defmethod last-establisher ((st tagged-state) literal)
+  (let* ((negative (eq (first literal) 'not))
+         (literal (if negative (second literal) literal)))
+    (iter outer (for (tag . updates) in (tagged-state-tags-info st))
+      (iter (for update in updates)
+        (when (equalp (state-update-literal update) literal)
+          (when (or (and negative (member (state-update-action update)
+                                      '(delete redundant-delete) :test 'eq))
+                    (member (state-update-action update) '(add redundant-add) :test 'eq))
+            (if (zerop tag)
+                (return-from last-establisher :init)
+                (return-from last-establisher (decode-tag tag)))))))
+    ;; atom is established/deleted in the initial state...
+    nil))
+
+(defun decode-tag (tag)
+  (or (gethash tag *state-tag-map*)
+      (error "No action/operator instance stored for state update tag ~A" tag)))
+
+(defun prepare-state-tag-decoder ()
+  (setf *state-tag-map* (make-hash-table :test 'eq)))
+
+(defun delete-state-tag-decoder ()
+  (setf *state-tag-map* nil))
+
+(defun make-tag-map (tag operator)
+  "Record association of TAG with operator/action instance OPERATOR."
+  (setf (gethash tag *state-tag-map*) operator))
+
+(defun delete-tag-map (tag)
+  "Erase association of TAG with its operator/action instance."
+  (remhash tag *state-tag-map*))
+
+
+
 (defmethod include-in-tag (action atom (st tagged-state))
   (unless (typep action 'action-type)
     (error "Unacceptable action ~S" action))
@@ -133,14 +168,16 @@ using MAKE-INITIAL-STATE.")
 (defmethod add-atom-to-state (atom (st tagged-state) depth operator)
 ;;;  (let ((shop2::state st))
 ;;;    ;; the above binding makes the trace-print work properly --- it references state [2006/12/06:rpg]
-    (trace-print :effects (car atom) st
-                 "~2%Depth ~s, adding atom to current state~%      atom ~s~%  operator ~s"
-                 depth atom operator)
+  (trace-print :effects (car atom) st
+               "~2%Depth ~s, adding atom to current state~%      atom ~s~%  operator ~s"
+               depth atom operator)
 ;;;  )
-  (unless (atom-in-state-p atom st)
-;    (unless (member (cons 'delete atom) (first (first st)) :test #'equal)
-    (include-in-tag 'add atom st)
-    (insert-atom atom st)))
+  (let ((in-state-p (atom-in-state-p atom st)))
+    (cond ((and in-state-p *state-tag-map*)
+           (include-in-tag 'redundant-add atom st))
+          ((not in-state-p)
+           (include-in-tag 'add atom st)
+           (insert-atom atom st)))))
 
 (defmethod delete-atom-from-state (atom (st tagged-state) depth operator)
 ;;;  (let ((shop2::state st))
@@ -149,9 +186,11 @@ using MAKE-INITIAL-STATE.")
                  "~2%Depth ~s, deleting atom from current state~%      atom ~s~%  operator ~s"
                  depth atom operator)
 ;;;    )
-  (when (atom-in-state-p atom st)
-    (include-in-tag 'delete atom st)
-    (remove-atom atom st)))
+  (cond ((atom-in-state-p atom st)
+         (include-in-tag 'delete atom st)
+         (remove-atom atom st))
+        (*state-tag-map*
+         (include-in-tag 'redundant-delete atom st))))
 
 (defun pull-tag-info (tags-info tag)
   (if (null tags-info)

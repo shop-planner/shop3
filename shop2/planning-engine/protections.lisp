@@ -61,15 +61,16 @@
 ;;; if the state has everything that the protections list has, then
 ;;; return true, else return nil
 (defun protection-ok (state protections head)
-  (dolist (p protections)
-    (unless (shopthpr:find-satisfiers (car p) state t)
-      (trace-print
-       :operators (first head) state
-       "~%Backtracking because operator ~s~%  violated the protected condition ~s"
-       (first head) (car p))
-      (backtrack "Protection violation ~S" (car p))
-      (return-from protection-ok nil)))
-  t)
+  (let ((*record-dependencies-p* nil))
+    (dolist (p protections)
+      (unless (shopthpr:find-satisfiers (car p) state t)
+        (trace-print
+         :operators (first head) state
+         "~%Backtracking because operator ~s~%  violated the protected condition ~s"
+         (first head) (car p))
+        (backtrack "Protection violation ~S" (car p))
+        (return-from protection-ok nil)))
+    t))
 
 ;;; increase the count for PROTECT in the protection list
 (defun add-protection (protections protect depth operator state)

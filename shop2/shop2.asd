@@ -111,7 +111,7 @@
     :serial t
     :pathname "common/"
     :version (:read-file-form "shop-version.lisp-expr")
-    :depends-on (:shop2/unifier)
+    :depends-on (:shop2/unifier :iterate)
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")

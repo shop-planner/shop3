@@ -16,6 +16,7 @@
            #:make-unordered-tree-node
            #:make-ordered-tree-node
            #:ordered-tree-node
+           #:make-dependency
            ))
 
 (in-package :plan-tree)
@@ -47,4 +48,36 @@
 
 (defstruct (unordered-tree-node (:include complex-tree-node)))
 
+
+(defmethod print-object ((d dependency) str)
+  (print-unreadable-object (d str)
+    (format str "~S -> ~S"
+            (tree-node-task (establisher d))
+            (prop d))))
+
+(defmethod print-object ((d primitive-tree-node) str)
+  (print-unreadable-object (d str :type t)
+    (format str "~S"
+            (tree-node-task d))
+    (when (tree-node-dependencies d)
+      (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
+
+(defmethod print-object ((d complex-tree-node) str)
+  (print-unreadable-object (d str :type t)
+    (format str "~S :CHILDREN ~S"
+            (tree-node-task d)
+            (complex-tree-node-children d))
+    (when (tree-node-dependencies d)
+      (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
+
+
+(defmethod print-object ((d ordered-tree-node) str)
+  (print-unreadable-object (d str :type t)
+    (format str ":CHILDREN ~S"
+            (complex-tree-node-children d))))
+
+(defmethod print-object ((d unordered-tree-node) str)
+  (print-unreadable-object (d str :type t)
+    (format str ":CHILDREN ~S"
+            (complex-tree-node-children d))))
            

@@ -264,7 +264,7 @@ of SHOP2."
     (unless m
       (error "No operator for task ~s" task1))
     (multiple-value-bind
-          (planned-action tag protections1 cost operator-unifier)
+          (planned-action tag protections1 cost operator-unifier depends)
         ;; I can't yet turn this into method dispatch, because the
         ;; operators and pddl-actions, so far, are only :list type
         ;; structs --- this because they used to be simply lists.
@@ -288,7 +288,7 @@ of SHOP2."
           (delete-task-top-list top-tasks tasks task1)
 
 
-        (values t top-tasks1 tasks1 protections1 planned-action operator-unifier tag cost)))))
+        (values t top-tasks1 tasks1 protections1 planned-action operator-unifier tag cost depends)))))
 
 
 (defmethod seek-plans-nonprimitive ((domain domain) task1 state tasks

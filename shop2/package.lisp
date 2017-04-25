@@ -118,6 +118,7 @@
              ;; :use shop-theorem-prover
              #:explain-satisfier #:find-satisfiers
              #:extract-variables
+             #:query
 
              #:call
              #:imply

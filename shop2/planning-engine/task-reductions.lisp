@@ -83,7 +83,7 @@ Otherwise it returns FAIL."
          (deletions (operator-deletions standardized-operator))
          (additions (operator-additions standardized-operator))
          operator-unifier pre protections1 tempdel tempadd statetag
-         head-subbed dels-subbed adds-subbed pu unifier
+         head-subbed dels-subbed adds-subbed pu pd unifier
          cost-value cost-number)
 
     ;; added rudimentary arity-checking...
@@ -111,7 +111,8 @@ Otherwise it returns FAIL."
       ;; first check the preconditions, if any
       (when preconditions
         (setq pre (apply-substitution preconditions operator-unifier))
-        (setq pu (find-satisfiers pre state t 0 :domain domain))
+        (multiple-value-setq (pu pd)    ;precond unifier, dependencies
+          (find-satisfiers pre state t 0 :domain domain))
         (unless pu
           (trace-print :operators (first head) state
                        "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
@@ -213,7 +214,7 @@ Otherwise it returns FAIL."
 
       (dolist (a tempadd)
         (when (eql (first a) :protection)
-          (unless (find-satisfiers (list (second a)) state t 0 :domain domain)
+          (unless (let ((*record-dependencies-p* nil))(find-satisfiers (list (second a)) state t 0 :domain domain))
             (error "Adding a protection ~A that is violated in state." a))
           (setq protections
             (add-protection protections (second a)
@@ -223,7 +224,7 @@ Otherwise it returns FAIL."
 
       (values head-subbed statetag
               protections cost-number
-              unifier)))))
+              unifier (first pd))))))
 
 (defun well-formed-listp (l)
   (null (cdr (last l))))
@@ -235,7 +236,8 @@ Otherwise it returns FAIL."
                          in-unifier)
   (declare (ignore protections))        ; do we really want to ignore protections?
   (let ((standardized-method (standardize method))
-        task-unifier state-unifiers pre tail)
+        task-unifier state-unifiers dependencies
+        pre tail)
 
     (when (and (well-formed-listp (second standardized-method))
                (well-formed-listp task-body))
@@ -280,31 +282,48 @@ Otherwise it returns FAIL."
                            task-body)
 
         ;; find all matches to the current state
-        (setq state-unifiers (shopthpr:find-satisfiers pre state nil 0
-                                                       :domain domain))
+        (multiple-value-setq (state-unifiers dependencies)
+          (shopthpr:find-satisfiers pre state nil 0
+                                    :domain domain))
 
         (if state-unifiers
             (let* ((answers-with-duplicates
-                    (mapcan
-                     #'(lambda (unifier)
-                         (let ((unifier (compose-substitutions (copy-tree unifier) task-unifier)))
-                           (mapcar
-                            #'(lambda (reduction)
-                                (cons
-                                 (cons (first body) reduction)
-                                 ;;keep the unifier around a bit longer...
-                                 ;; [2003/06/25:rpg]
-                                 unifier))
-                            (force-immediate-reduction
-                             (eval (apply-substitution tail unifier))))))
-                     state-unifiers))
+                     (if *record-dependencies-p*
+                         (mapcan
+                          #'(lambda (unifier depends)
+                              (let ((unifier (compose-substitutions (copy-tree unifier) task-unifier)))
+                                (mapcar
+                                 #'(lambda (reduction)
+                                     (list
+                                      (cons (first body) reduction)
+                                      ;;keep the unifier around a bit longer...
+                                      ;; [2003/06/25:rpg]
+                                      unifier
+                                      (when *record-dependencies-p* depends)))
+                                 (force-immediate-reduction
+                                  (eval (apply-substitution tail unifier))))))
+                          state-unifiers dependencies)
+                         (mapcan
+                          #'(lambda (unifier)
+                              (let ((unifier (compose-substitutions (copy-tree unifier) task-unifier)))
+                                (mapcar
+                                 #'(lambda (reduction)
+                                     (list
+                                      (cons (first body) reduction)
+                                      ;;keep the unifier around a bit longer...
+                                      ;; [2003/06/25:rpg]
+                                      unifier))
+                                 (force-immediate-reduction
+                                  (eval (apply-substitution tail unifier))))))
+                          state-unifiers)))
                    (answers-and-unifiers
                     (remove-duplicates answers-with-duplicates
                                        ;; added this to ignore the unifiers....
                                        :key #'car
                                        :test #'equal :from-end t))
-                   (answers (mapcar #'car answers-and-unifiers))
-                   (unifiers (mapcar #'cdr answers-and-unifiers)))
+                   (answers (mapcar #'first answers-and-unifiers))
+                   (unifiers (mapcar #'second answers-and-unifiers))
+                   (depends (when *record-dependencies-p* (mapcar #'third answers-and-unifiers))))
               (trace-print :methods (first body) state
                            "~2%Depth ~s, applicable method ~s~%      task ~s~%reductions ~s"
                            depth
@@ -312,7 +331,7 @@ Otherwise it returns FAIL."
                            task-body
                            answers)
               (return-from apply-method 
-                (values answers unifiers)))
+                (values answers unifiers depends)))
             ;; I believe the following relies on TRACE-PRINT implicitly returning NIL
             (progn
               (trace-print :methods (first body) state

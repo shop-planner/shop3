@@ -61,7 +61,7 @@
 
 (defpackage :shop2.theorem-prover
     (:nicknames :shopthpr :shop.theorem-prover)
-    (:use :common-lisp :shop2.common :shop2.unifier)
+    (:use :common-lisp :shop2.common :shop2.unifier :iterate)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
              #:*state*

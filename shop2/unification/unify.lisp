@@ -121,9 +121,9 @@ variable."
 
 ;;; Lisp has a built-in UNION function, but we need something that returns
 ;;; the same results regardless of what platform SHOP is running on.
-(defun shop-union (s1 s2 &key (test #'eql))
+(defun shop-union (s1 s2 &key (test #'eql) (key 'identity))
    (append s1
-     (remove-if #'(lambda (e2) (member e2 s1 :test test)) s2)))
+     (remove-if #'(lambda (e2) (member (funcall key e2) (funcall key s1) :test test)) s2)))
 
 ;;;(defun variable-name (x)
 ;;;  (cond ((prim-variable-p x) x)
@@ -184,8 +184,11 @@ variable."
 ;;;   (:INTERNAL APPLY-METHOD 0), :OPERATOR
 ;;;   REAL-APPLY-SUBSTITUTION, :OPERATOR
 
+;;; BINDING-LIST is a list of BINDING structures.
+;;; TARGET is an s-expression, which can be a propositional
+;;; s-expression, or a unifier.
 (defun real-apply-substitution (target binding-list)
-  (cond ((atom target)
+  (cond ((atom target) 
          (let ((result (find-binding target binding-list)))
            (if result (binding-val result) target)))
         ((null (cdr target)) (list (real-apply-substitution (car target) binding-list)))

@@ -122,3 +122,11 @@ in state.")
 the sequence of states, starting from the initial state, and terminating at
 this state.  This function returns a trajectory leading to STATE.")
   )
+
+(defvar *state-tag-map* nil
+  "Will be bound to a hash table to look up an operator/action instance
+from a tag.")
+
+(defgeneric last-establisher (state literal)
+  (:documentation "Return the action that last established LITERAL
+before STATE."))

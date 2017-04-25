@@ -84,7 +84,7 @@ axioms for PREDICATE in THPR-DOMAIN."))
 ;;; Defgenerics for functions used to tailor the theorem-prover
 ;;;---------------------------------------------------------------------------
 (defgeneric real-seek-satisfiers-for
-    (domain goal-head goal other-goals state bindings level just1)
+    (domain goal-head goal other-goals state bindings level just1 dependencies-in)
   (:documentation "Define how a semantically meaningful logical
 connective should be interpreted in the given domain.
 

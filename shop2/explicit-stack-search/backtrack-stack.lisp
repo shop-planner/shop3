@@ -107,7 +107,9 @@ classes."))
 ;;; DO-BACKTRACK methods
 ;;;---------------------------------------------------------------------------
 (defmethod do-backtrack ((entry state-tag) (state search-state))
-  (retract-state-changes (world-state state) (tag entry)))
+  (retract-state-changes (world-state state) (tag entry))
+  (when *record-dependencies-p*
+    (delete-tag-map (tag entry))))
 
 (defmethod do-backtrack ((entry method-instantiation) (state search-state))
   (setf (top-tasks state) (top-tasks entry)

@@ -68,13 +68,22 @@
 ;;;  find-satisfiers and some compilers want all macros to be defined before
 ;;;  any code which invokes them.
 (defmacro seek-satisfiers (goals state bindings level just1
-                           &key (domain nil domain-supp-p))
+                                 &key (domain nil domain-supp-p)
+                                 dependencies)
+  "Find satisfying assignments to variables in GOALS, using STATE and
+BINDINGS.  Find just one assignment if JUST1 is non-NIL.
+   BINDINGS is *NOT* a list of binding structures! It is a list made
+up of either variables or the values assigned to those variables.  This
+list will be harvested into a list of binding lists by FIND-SATISFIERS.
+   Returns a list of values for the variables \(or the variables
+themselves, if unbound\).  Will also return a set of dependencies, which
+will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
   (let ((d (gensym)))
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
-           (list ,bindings)
+           (values (list ,bindings) (list ,dependencies))
          (real-seek-satisfiers ,d ,goals ,state
-                               ,bindings ,level ,just1)))))
+                               ,bindings ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain)
   (:documentation 
@@ -90,49 +99,64 @@ is properly set in GOALS.")
   ;; this is necessary because SBCL (correctly) hates the use of OPTIONAL and
   ;; KEY together.
 
-(defun find-satisfiers (goals state &optional just-one (level 0)
-                        &key (domain *domain*))
-  "Find and return a list of binding lists that represents the answer to
+         (defun find-satisfiers (goals state &optional just-one (level 0)
+                                       &key (domain *domain*))
+           "Find and return a list of binding lists that represents the answer to
 goals \(a list representation of a deductive query\), where
 state provides the database.  level is a non-negative integer indicating the
 current depth of inference, used in debugging prints, and
 just-one is a boolean indicating whether you want just one answer (non-nil)
 or all answers (nil)."
-  (setf *current-state* state)
-  (let ((*state* state))
-    (declare (special *state*))
-    (let* ((sought-goals
-            (cond
-             ((eq (first goals) :first) (rest goals))
-             ((eq (first goals) :sort-by)
-              (if (= (length goals) 3)
-                  (third goals)
-                (fourth goals)))
-             ((eq (first goals) :random)
-              (second goals))
-             (t goals)))
-           (variables (extract-variables sought-goals))
-           (answer (seek-satisfiers sought-goals state variables level
+           (setf *current-state* state)
+           (let ((*state* state))
+             (declare (special *state*))
+             (let* ((sought-goals
+                     (cond
+                      ((eq (first goals) :first) (rest goals))
+                      ((eq (first goals) :sort-by)
+                       (if (= (length goals) 3)
+                           (third goals)
+                         (fourth goals)))
+                      ((eq (first goals) :random)
+                       (second goals))
+                      (t goals)))
+                    (variables (extract-variables sought-goals)))
+               (multiple-value-bind (answers depends)
+                   (seek-satisfiers sought-goals state variables level
                                     (or (eq (first goals) :first) just-one)
-                                    :domain domain))
-           (satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
-                               answer)))
+                                    :domain domain)
+                 (let ((satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
+                                           answers)))
                                         ;(format t "~%sat: ~s~%" satisfiers) ;***
 
-      (cond ((eq (first goals) :sort-by)
-             (sort satisfiers
-                (if (= (length goals) 3) #'<
-                  (eval (third goals)))
-                :key #'(lambda (sat)
-                         (eval (apply-substitution (second goals) sat)))))
-            ((eq (first goals) :random)
-             (let ((n (length satisfiers)))
-               (if (> n 0)
-                   (list
-                    (nth (random n) satisfiers))
-                   satisfiers)))
-            (t
-             satisfiers))))))
+                   (cond ((eq (first goals) :sort-by)
+                          (if *record-dependencies-p*
+                              (let* ((double-list (pairlis satisfiers
+                                                          depends))
+                                     (sorted
+                                      (sort double-list
+                                            (if (= (length goals) 3) #'<
+                                              (eval (third goals)))
+                                            :key #'(lambda (double)
+                                                     (eval (apply-substitution (second goals) (car double)))))))
+                                (values (mapcar #'car sorted) (mapcar #'cdr sorted)))
+                              ;; else
+                              (sort satisfiers
+                                    (if (= (length goals) 3) #'<
+                                      (eval (third goals)))
+                                    :key #'(lambda (sat)
+                                             (eval (apply-substitution (second goals) sat))))))
+                         ((eq (first goals) :random)
+                          (let* ((n (length satisfiers))
+                                 (r (random n)))
+                            (if (> n 0)
+                                (values
+                                 (list
+                                  (nth r satisfiers))
+                                 (nth r depends))
+                              (values satisfiers depends))))
+                         (t
+                          (values satisfiers depends)))))))))
 
 ;;; EXTRACT-VARIABLES returns a list of all of the variables in EXPR
 (defun extract-variables (expr)
@@ -142,18 +166,16 @@ or all answers (nil)."
     (shop-union (extract-variables (car expr))
                 (extract-variables (cdr expr))))))
 
-;;; the following comment seems to be out of date --- it describes a
-;;; variables list that simply doesn't appear...
 ;;; ; REAL-SEEK-SATISFIERS is the workhorse for FIND-SATISFIERS.  For each
-;;; ; proof of GOALS from AXIOMS, it returns the values of GOAL's variables
+;;; ; proof of GOALS from AXIOMS and states, it returns the values of GOAL's variables
 ;;; ; that make the proof true.  Here are the other parameters:
-;;; ;  - VARIABLES is the list of variables that need to appear in the answer
+;;; ;  - STATE: the state of the world in which the query is to be evaluated.
 ;;; ;  - BINDINGS is the variable bindings at the current node of the proof tree
 ;;; ;  - LEVEL is the current search depth, for use in debugging printout
 ;;; ;  - JUST1 is a flag saying whether to return after finding the 1st satisfier
 
 ;;; Function real-seek-satisfiers pulls out the
-(defun real-seek-satisfiers (domain goals state bindings level just1)
+(defun real-seek-satisfiers (domain goals state bindings level just1 dependencies-in)
   (setq *inferences* (1+ *inferences*))
   (let ((goal1 goals) (remaining nil))
 
@@ -172,7 +194,7 @@ or all answers (nil)."
         (setf goal1 (cons 'and goal1))))
 
     (real-seek-satisfiers-for domain (car goal1) goal1 remaining
-                              state bindings level just1)))
+                              state bindings level just1 dependencies-in)))
 
 (defmacro def-logical-keyword ((name domain-specializer) &body forms)
   "(def-logical-keyword name domain-specializer options &body forms) where forms
@@ -267,82 +289,83 @@ Defines methods for REAL-SEEK-SATISFIERS-FOR and LOGICAL-KEYWORDP."
 ;;;             imply forall sort-by)))
 
 (defmethod real-seek-satisfiers-for (domain goal-head goal other-goals
-                                     state bindings level just1)
+                                     state bindings level just1
+                                     dependencies-in)
      "The default method catches the non-keyword case: goal is an
 atomic predicate, so try to satisfy it.  The goal-head is intact
 in the goal, so we ignore the extra reference."
      (declare (ignorable goal-head))
-     (do-conjunct domain goal other-goals state bindings level just1))
+     (do-conjunct domain goal other-goals state bindings level just1 dependencies-in))
 
 (def-logical-keyword (not domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
-    (standard-satisfiers-for-not domain (cdr goal) other-goals
-                                 state bindings (1+ level) just1)))
+  (:satisfier-method (goal other-goals state bindings level just1  dependencies-in)
+      (standard-satisfiers-for-not domain (cdr goal) other-goals
+                                   state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (eval domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-eval domain (cdr goal) other-goals
-                                  state bindings (1+ level) just1)))
+                                  state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (call domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-call domain (cdr goal) other-goals
-                                  state bindings (1+ level) just1)))
+                                  state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (assign* domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-assign* domain (cdr goal) other-goals
-                                     state bindings (1+ level) just1)))
+                                     state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (assign domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-assign domain (cdr goal) other-goals
-                                    state bindings (1+ level) just1)))
+                                    state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (imply domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-imply domain (cdr goal) other-goals
-                                   state bindings (1+ level) just1)))
+                                   state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (or domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-or domain (cdr goal) other-goals
-                                state bindings (1+ level) just1)))
+                                state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (forall domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-forall domain (cdr goal) other-goals
-                                    state bindings (1+ level) just1)))
+                                    state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (exists domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-exists domain (cdr goal) other-goals
-                                    state bindings (1+ level) just1)))
+                                    state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (setof domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-setof domain (cdr goal) other-goals
-                                   state bindings (1+ level) just1)))
+                                   state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (bagof domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-bagof domain (cdr goal) other-goals
-                                   state bindings (1+ level) just1)))
+                                   state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (:external domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-external domain (cdr goal) other-goals
-                                      state bindings (1+ level) just1)))
+                                      state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (enforce domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-enforce domain (cdr goal) other-goals
-                                 state bindings (1+ level) just1)))
+                                 state bindings (1+ level) just1 dependencies-in)))
 
 (def-logical-keyword (and domain)
-  (:satisfier-method (goal other-goals state bindings level just1)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-and domain (cdr goal) other-goals
-                                 state bindings (1+ level) just1)))
+                                 state bindings (1+ level) just1 dependencies-in)))
 
 ;;; John's DEF-LOGICAL-KEYWORD is too rigid for this...
 #+nil
@@ -357,89 +380,105 @@ in the goal, so we ignore the extra reference."
                                        STATE
                                        BINDINGS
                                        LEVEL
-                                       JUST1)
+                                       JUST1 dependencies-in)
     (DECLARE (IGNORABLE DOMAIN keyword goal))
     (restart-case
      (signal 'cut-commit)
      (continue ()
-      (seek-satisfiers other-goals state bindings (1+ level) just1 :domain domain))))
+      (seek-satisfiers other-goals state bindings (1+ level) just1 :domain domain :dependencies dependencies-in))))
 (DEFMETHOD LOGICAL-KEYWORDP ((keyword (EQL '%CUT%)) DOMAIN)
     (DECLARE (IGNORABLE DOMAIN keyword))
     T)
 
-
 (defun incorporate-unifiers (unifiers remaining just-one
-                                      state bindings domain newlevel)
-  (let (answers)
-    (dolist (unifier unifiers)
-      (let ((new-answers
-             (seek-satisfiers (apply-substitution remaining unifier)
-                              state (apply-substitution bindings unifier)
-                              newlevel just-one :domain domain)))
-        (when new-answers
-          (when just-one (return-from incorporate-unifiers new-answers))
-          (setf answers (shop-union new-answers answers :test #'equal)))))
-    answers))
+                                      state bindings dependencies-in added-dependencies domain newlevel)
+  (let (answers depends)
+    (if *record-dependencies-p*
+        (iter (for unifier in unifiers)
+              (as dependency-set in added-dependencies)
+              (multiple-value-bind (new-answers new-dependencies)
+                  (seek-satisfiers (apply-substitution remaining unifier)
+                                   state (apply-substitution bindings unifier)
+                                   newlevel just-one :domain domain
+                                   :dependencies (append dependencies-in dependency-set))
+                (multiple-value-setq (answers depends)
+                  (answer-set-union new-answers answers new-dependencies depends))))
+      (dolist (unifier unifiers)
+        (let ((new-answers
+               (seek-satisfiers (apply-substitution remaining unifier)
+                                state (apply-substitution bindings unifier)
+                                newlevel just-one :domain domain)))
+          (when new-answers
+            (when just-one (return-from incorporate-unifiers new-answers))
+            (setf answers (shop-union new-answers answers :test #'equal))))))
+    (values answers depends)))
 
 (defun standard-satisfiers-for-not (domain arguments other-goals
-                                    state bindings newlevel just1)
+                                           state bindings newlevel just1 dependencies-in)
   (unless (eql (length arguments) 1)
     ;; This probably needs to be replaced with a "real" SHOP error
     ;; class of some sort.
     (error "Too many arguments provided to NOT: ~s" (cdr arguments)))
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing arbitrary dependencies for negations."))
 
   ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
   (cond
-    ((seek-satisfiers arguments state nil newlevel t :domain domain)
-     nil)
-    (t
-     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))))
+   ((let ((*record-dependencies-p* nil))
+      (seek-satisfiers arguments state nil newlevel t :domain domain))
+    nil)
+   (t
+    (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))))
 
 (defun standard-satisfiers-for-eval (domain arguments other-goals
-                                     state bindings newlevel just1)
+                                     state bindings newlevel just1 dependencies-in)
   (assert (= (length arguments) 1))
   (cond
     ((eval (car arguments))
-     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))
+     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
     (t nil)))
 
 (defun standard-satisfiers-for-call (domain arguments other-goals
-                                     state bindings newlevel just1)
+                                     state bindings newlevel just1 dependencies-in)
   (cond
     ((eval arguments)
-     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))
+     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
     (t nil)))
 
 (defun standard-satisfiers-for-assign* (domain arguments other-goals
-                                        state bindings newlevel just1)
+                                        state bindings newlevel just1 dependencies-in)
   ;; it's possible that the VAR part of (ASSIGN VAR ANS) will already
   ;; be bound by the time the ASSIGN form is examined.  We need to
   ;; check for this important special case. [2003/06/20:rpg]
   (let ((var (car arguments))
         (answers (eval (cadr arguments))))
-    (loop for ans in answers
-        with resulting-answers = nil
-        with new-answers
-        if (or (variablep var)
+    (iter (for ans in answers)
+          (with resulting-answers)
+          (with new-answers)
+          (with resulting-depends)
+          (with new-depends)
+        (when (or (variablep var)
                ;; trivial unification --- probably wrong, should be true unification
                (equalp var ans))
-        do (setf new-answers
+          (multiple-value-setq (new-answers new-depends)
              (seek-satisfiers
               (apply-substitution other-goals
                                   (list (make-binding var ans)))
               state
               (apply-substitution bindings
                                   (list (make-binding var ans)))
-              newlevel just1 :domain domain))
-        when new-answers
-        if just1
-        do (return-from standard-satisfiers-for-assign* new-answers)
-        else do (setf resulting-answers
-                  (shop-union new-answers resulting-answers :test #'equal))
-        finally (return resulting-answers))))
+              newlevel just1 :domain domain :dependencies dependencies-in)))
+        (when new-answers
+          (if just1
+              (return-from standard-satisfiers-for-assign* (values new-answers new-depends))
+            ;; else
+            (multiple-value-setq (resulting-answers resulting-depends)
+              (answer-set-union new-answers resulting-answers new-depends resulting-depends))))
+        (finally (return-from standard-satisfiers-for-assign* (values resulting-answers resulting-depends))))))
 
 (defun standard-satisfiers-for-assign (domain arguments other-goals
-                                       state bindings newlevel just1)
+                                       state bindings newlevel just1 dependencies-in)
   ;; it's possible that the VAR part of (ASSIGN VAR ANS) will already
   ;; be bound by the time the ASSIGN form is examined.  We need to
   ;; check for this important special case. [2003/06/20:rpg]
@@ -450,7 +489,7 @@ in the goal, so we ignore the extra reference."
        (seek-satisfiers
         (apply-substitution other-goals (list (make-binding var ans)))
         state (apply-substitution bindings (list (make-binding var ans)))
-        newlevel just1 :domain domain))
+        newlevel just1 :domain domain :dependencies dependencies-in))
 
       ;; trivial unification --- probably wrong --- should be true unification
       ;; actually, I don't think that this is wrong -- ASSIGN is variable assignment
@@ -459,66 +498,84 @@ in the goal, so we ignore the extra reference."
        (seek-satisfiers
         other-goals
         state bindings
-        newlevel just1 :domain domain))
+        newlevel just1 :domain domain :dependencies dependencies-in))
 
       ;; otherwise, a constant value for VAR didn't match ANS
       (t nil))))
 
 (defun standard-satisfiers-for-enforce (domain arguments other-goals
-                                               state bindings newlevel just1)
+                                               state bindings newlevel just1 dependencies-in)
   (destructuring-bind (clause &rest error-args) arguments
-    (let ((new-answers (find-satisfiers (list clause) state just1 newlevel
-                                        :domain domain)))
+    (multiple-value-bind (new-answers new-dependencies)
+        (find-satisfiers (list clause) state just1 newlevel
+                         :domain domain)
       (unless new-answers (apply #'error error-args))
       (incorporate-unifiers new-answers other-goals
-                            just1 state bindings domain newlevel))))
+                            just1 state bindings dependencies-in new-dependencies domain newlevel))))
 
 (defun standard-satisfiers-for-imply (domain arguments other-goals
-                                      state bindings newlevel just1)
+                                      state bindings newlevel just1 dependencies-in)
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for IMPLY."))
+  (unless (= (length arguments) 2)
+    (error "Ill-formed IMPLY expression: ~S" (cons 'IMPLY arguments)))
   (let ((conditionA (first arguments)) (conditionB (second arguments)))
     (cond
      ((or (not (find-satisfiers conditionA state nil 0 :domain domain))
           (find-satisfiers conditionB state t 0 :domain domain))
-      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))
+      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
      (t nil))))
 
 (defun standard-satisfiers-for-or (domain arguments other-goals
-                                   state bindings newlevel just1)
-  (let ((answers nil))
+                                   state bindings newlevel just1 dependencies-in)
+  (let ((answers nil)
+        (depends nil))
     (dolist (arg arguments)
       ;; First, look for ways to satisfy arg from the atoms in STATE
       (let ((mgu1 (find-satisfiers arg state nil newlevel :domain domain)))
         (when mgu1
           (dolist (tempmgu mgu1)
-            (let ((new-answers (seek-satisfiers
+            (multiple-value-bind
+                (new-answers new-depends)
+                (seek-satisfiers
                                 (apply-substitution other-goals tempmgu)
                                 state (apply-substitution bindings tempmgu)
-                                newlevel just1 :domain domain)))
+                                newlevel just1 :domain domain :dependencies dependencies-in)
               (when new-answers
                 (if just1
-                  (return-from standard-satisfiers-for-or new-answers)))
-              (setf answers (shop-union new-answers answers :test #'equal)))))))
-    (values answers)))
+                  (return-from standard-satisfiers-for-or (values new-answers new-depends))
+                  (multiple-value-setq (answers depends)
+                    (answer-set-union new-answers answers new-depends depends)))))))))
+    (values answers depends)))
 
 (defun standard-satisfiers-for-forall (domain arguments other-goals
-                                       state bindings newlevel just1)
+                                       state bindings newlevel just1 dependencies-in)
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for FORALL."))
   (let* ((bounds (second arguments))
          (conditions (third arguments))
          (mgu2 (find-satisfiers bounds state nil 0 :domain domain)))
     (dolist (m2 mgu2)
-      (unless (seek-satisfiers (apply-substitution conditions m2)
-                               state bindings 0 t :domain domain)
+      (unless (let ((*record-dependencies-p* nil))
+                (seek-satisfiers (apply-substitution conditions m2)
+                               state bindings 0 t :domain domain))
         (return-from standard-satisfiers-for-forall nil))))
-  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))
+  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
 
 (defun standard-satisfiers-for-exists (domain arguments other-goals
-                                       state bindings newlevel just1)
+                                       state bindings newlevel just1 dependencies-in)
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for EXISTS."))
   (let* ((bounds (second arguments))
          (conditions (third arguments))
          (mgu2 (find-satisfiers bounds state nil 0 :domain domain)))
     (loop for m2 in mgu2
-        when (seek-satisfiers (apply-substitution conditions m2)
-                              state bindings 0 t :domain domain)
+        when (let ((*record-dependencies-p* nil))
+               (seek-satisfiers (apply-substitution conditions m2)
+                              state bindings 0 t :domain domain))
           return t                      ; short-circuit, and move on
                                         ; to remaining
                                         ; goals... [2007/07/15:rpg]
@@ -526,11 +583,14 @@ in the goal, so we ignore the extra reference."
           (return-from standard-satisfiers-for-exists nil)))
 
   ;; Satisfy other goals
-  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain))
+  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
 
 (defun standard-satisfiers-for-setof (domain arguments other-goals
-                                             state bindings newlevel just1)
+                                             state bindings newlevel just1 dependencies-in)
   ;; (setof ?var expr ?outvar)
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for SETOF."))
   (destructuring-bind (var bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
@@ -547,11 +607,14 @@ in the goal, so we ignore the extra reference."
                             :test 'equal))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
-                         newlevel just1 :domain domain)))))
+                         newlevel just1 :domain domain :dependencies dependencies-in)))))
 
 (defun standard-satisfiers-for-bagof (domain arguments other-goals
-                                             state bindings newlevel just1)
+                                             state bindings newlevel just1 dependencies-in)
   ;; (bagof ?var expr ?outvar)
+  (when *record-dependencies-p*
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for BAGOF."))
   (destructuring-bind (var bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
@@ -566,20 +629,25 @@ in the goal, so we ignore the extra reference."
                                   collect (binding-list-value var binding-list)))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
-                         newlevel just1 :domain domain)))))
+                         newlevel just1 :domain domain :dependencies dependencies-in)))))
 
 (defun standard-satisfiers-for-external (domain arguments other-goals
-                                         state bindings newlevel just1)
-  (incorporate-unifiers
-   (or (external-find-satisfiers domain arguments state)
-       (find-satisfiers arguments state nil newlevel :domain domain))
-   other-goals just1 state bindings domain newlevel))
-
+                                         state bindings newlevel just1 dependencies-in)
+  (let (new-unifiers new-depends)
+    (multiple-value-setq (new-unifiers new-depends)
+      (external-find-satisfiers domain arguments state))
+    (unless new-unifiers
+      (multiple-value-setq (new-unifiers new-depends)
+        (find-satisfiers arguments state nil newlevel :domain domain)))
+    (when new-unifiers
+      (incorporate-unifiers new-unifiers other-goals just1 state bindings dependencies-in new-depends domain newlevel))))
+   
 (defun standard-satisfiers-for-and (domain arguments other-goals
-                                    state bindings newlevel just1)
-  (incorporate-unifiers
-   (find-satisfiers arguments state nil newlevel :domain domain)
-   other-goals just1 state bindings domain newlevel))
+                                    state bindings newlevel just1 dependencies-in)
+  (multiple-value-bind (new-unifiers new-depends)
+      (find-satisfiers arguments state nil newlevel :domain domain)
+  (incorporate-unifiers new-unifiers
+   other-goals just1 state bindings dependencies-in new-depends domain newlevel)))
 
 ; An alternate version that wasn't used:
 ;(defun external-find-satisfiers (goal state)
@@ -601,7 +669,11 @@ in the goal, so we ignore the extra reference."
     nil))
 
 ;;; Goal1 is guaranteed to be an atomic predicate
-(defun do-conjunct (domain goal1 remaining state bindings level just1)
+;;; BINDINGS is a list of either variables or the values assigned to those bindings.
+;;; Note that this is a SINGLE (partial) solution -- but below here we recursively
+;;; call SEEK-SATISFIERS multiple times, so that this is a single node in the proof
+;;; tree, but the return value represents a SET of leaf nodes in the proof tree.
+(defun do-conjunct (domain goal1 remaining state bindings level just1 dependencies-in)
   "Where goal1 is an atomic predicate (not an atom per se, but a clause not
 headed by an operator or other symbol), try to find a binding that satisfies
 goal1 along with all of the other formulas in remaining."
@@ -609,62 +681,121 @@ goal1 along with all of the other formulas in remaining."
                "~2%Level ~s, trying to satisfy goal ~s" level goal1)
 
   ;; Then, look for ways to satisfy GOAL1 from the atoms in state
-  (multiple-value-bind (answers found-match)
-      (do-conjunct-from-atoms domain goal1 remaining state bindings level just1)
+  (multiple-value-bind (answers found-match dependencies)
+      (do-conjunct-from-atoms domain goal1 remaining state bindings level just1 dependencies-in)
+    (when *record-dependencies-p* (assert (= (length answers) (length dependencies))))
     (when (and answers just1)
-      (return-from do-conjunct answers))
+      (return-from do-conjunct (values answers dependencies)))
 
     ;; Next, look for ways to prove GOAL1 from the *axioms*
-    (multiple-value-bind (axiom-answers axiom-found-match)
-        (do-conjunct-from-axioms domain goal1 remaining state bindings level just1)
+    (multiple-value-bind (axiom-answers axiom-found-match axiom-dependencies)
+        (do-conjunct-from-axioms domain goal1 remaining state bindings level just1 dependencies-in)
+      (when *record-dependencies-p* (assert (= (length axiom-answers) (length axiom-dependencies))))
       (when (and axiom-answers just1)
-        (return-from do-conjunct axiom-answers))
+        (return-from do-conjunct (values axiom-answers axiom-dependencies)))
 
+      ;; found-match is a little deceiving -- it means we found a
+      ;; MATCH for GOAL1: it doesn't mean we have proved REMAINAING,
+      ;; as well.
       (if (or found-match axiom-found-match)
-        (trace-print :goals (car goal1) state
-                     "~2%Level ~s, couldn't match goal ~s" level goal1)
-        (trace-print :goals (car goal1) state
-               "~2%Level ~s, matched goal ~s" level goal1))
-      (shop-union answers axiom-answers :test 'equal))))
+          (progn
+            (trace-print :goals (car goal1) state
+                         "~2%Level ~s, matched goal ~s" level goal1)
+            ;; DO-CONJUNCT returns a list of lists of variable bindings,
+            ;; each for a different answer.
+            (answer-set-union answers axiom-answers dependencies axiom-dependencies))
+          (progn 
+            (trace-print :goals (car goal1) state
+                         "~2%Level ~s, couldn't match goal ~s" level goal1)
+            nil)))))
 
-(defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1)
-  (let (answers mgu1 found-match)
+;;; BINDINGS is a list of either variables or the values assigned to those bindings.
+;;; Note that this is a SINGLE (partial) solution -- but below here we recursively
+;;; call SEEK-SATISFIERS multiple times, so that this is a single node in the proof
+;;; tree, but the return value represents a SET of leaf nodes in the proof tree.
+(defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1 dependencies-in)
+  (let (answers mgu1 found-match depends)
     (dolist (r (state-candidate-atoms-for-goal state goal1))
       (unless (eql (setq mgu1 (unify goal1 r)) (shop-fail))
-        (setq found-match t) ; for debugging printout
-        (let ((new-answers
+        (let ((updated-dependencies
+               (when *record-dependencies-p*
+                 (let ((e (last-establisher state r)))
+                   (when e              ; fact might come from initial state
+                     (cons (cons r e) dependencies-in))))))
+          (setq found-match t) ; for debugging printout
+          (multiple-value-bind (new-answers new-depends)
               (seek-satisfiers (apply-substitution remaining mgu1)
                                state (apply-substitution bindings mgu1)
-                               (1+ level) just1 :domain domain)))
-          (when new-answers
-            (trace-print :goals (car goal1) state
-                         "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
-                         level goal1 new-answers)
-            (when just1 (return-from do-conjunct-from-atoms (values new-answers found-match)))
-            (setf answers (shop-union new-answers answers :test #'equal))))))
+                               (1+ level) just1 :domain domain :dependencies updated-dependencies)
+            (when *record-dependencies-p* (assert (= (length new-answers) (length new-depends))))
+            (when new-answers
+              (trace-print :goals (car goal1) state
+                           "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
+                           level goal1 new-answers)
+              (when just1 (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
+              ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
+              ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
+              (multiple-value-setq (answers depends)
+                (answer-set-union new-answers answers new-depends depends))
+              ;; (format t "~&Answers: ~s~%" answers)
+              )))))
     (unless answers
       (trace-print :goals (car goal1) state
                    "~2%Level ~s, state fails goal ~s~%"
                    level goal1))
-    (values answers found-match)))
+    (values answers found-match depends)))
 
-(defun do-conjunct-from-axioms (domain goal1 remaining state bindings level just1)
-  (let (found-match answers)
+;;; BINDINGS is a list of either variables or the values assigned to those bindings.
+;;; Note that this is a SINGLE (partial) solution -- but below here we recursively
+;;; call SEEK-SATISFIERS multiple times, so that this is a single node in the proof
+;;; tree, but the return value represents a SET of leaf nodes in the proof tree.
+(defun do-conjunct-from-axioms (domain goal1 remaining state bindings level just1 dependencies-in)
+  (let (found-match answers dependencies)
     (dolist (r (axioms domain (car goal1)))
-      (multiple-value-bind (axiom-answers axiom-found-match)
-          (do-conjunct-from-axiom r domain goal1 remaining state bindings level just1)
+      (multiple-value-bind (axiom-answers axiom-found-match axiom-dependencies)
+          (do-conjunct-from-axiom r domain goal1 remaining state bindings level just1 dependencies-in)
+        (when *record-dependencies-p* (assert (= (length axiom-answers) (length axiom-dependencies))))
         (when (and just1 axiom-answers)
           (return-from do-conjunct-from-axioms
-            (values axiom-answers axiom-found-match)))
-        (setf found-match (or found-match axiom-found-match)
-              answers (shop-union axiom-answers answers :test 'equal))))
+            (values axiom-answers axiom-found-match axiom-dependencies)))
+        (setf found-match (or found-match axiom-found-match))
+        (multiple-value-setq (answers dependencies)
+          (answer-set-union axiom-answers answers axiom-dependencies dependencies))))
+    (when *record-dependencies-p* (assert (= (length answers) (length dependencies))))
     (unless answers
       (trace-print :goals (car goal1) state
                     "~2%Level ~s, state axioms fail goal ~s"
                          level goal1))
-    (values answers found-match)))
+    (values answers found-match dependencies)))
 
-(defun do-conjunct-from-axiom (axiom domain goal1 remaining state bindings level just1)
+(defun answer-set-union (answer-list new-answer-list dependency-list new-dependency-list)
+  "Remove redundant answers from ANSWER-LIST.  If we remove an entry from ANSWER-LIST,
+also remove the corresponding entry from DEPENDENCY-LIST.
+   ANSWER-LIST is a list of lists of (variable | value).
+   Returns two values: the filtered answer-list and the filtered dependency-list."
+  (cond (*record-dependencies-p*
+         (assert (and (= (length answer-list) (length dependency-list))
+                      (= (length new-answer-list) (length new-dependency-list))))
+         (iter (for answer in new-answer-list)
+               (as dependencies in new-dependency-list)
+               (unless (member answer answer-list :test 'equal)
+                 (collect answer into filtered-answers)
+                 (collect dependencies into filtered-dependencies))
+               (finally (return-from answer-set-union
+                          (values (append answer-list filtered-answers)
+                                  (append dependency-list filtered-dependencies))))))
+        (t
+         (iter (for answer in new-answer-list)
+               (unless (member answer answer-list :test 'equal)
+                 (collect answer into filtered-answers))
+               (finally (return-from answer-set-union (append answer-list filtered-answers)))))))
+  
+
+;;; BINDINGS is a list of either variables or the values assigned to those bindings.
+;;; Note that this is a SINGLE (partial) solution -- but below here we recursively
+;;; call SEEK-SATISFIERS multiple times, so that this is a single node in the proof
+;;; tree, but the return value represents a SET of leaf nodes in the proof tree.
+(defun do-conjunct-from-axiom (axiom domain goal1 remaining state bindings level just1 dependencies-in)
   (let* ((standardized-axiom (standardize axiom))
          (mgu1 (unify goal1 (second standardized-axiom)))
          committed
@@ -688,8 +819,8 @@ goal1 along with all of the other formulas in remaining."
             (if (eq (car ax-branch) :first)
                 (setq new-just1 t ax-branch (cdr ax-branch))
               (setq new-just1 just1))
-            (let ((new-answers
-                   (handler-bind
+            (multiple-value-bind (new-answers new-dependencies)
+                (handler-bind
                     ((cut-commit
                       #'(lambda (c)
                           (setf committed t)
@@ -698,7 +829,7 @@ goal1 along with all of the other formulas in remaining."
                      (apply-substitution (append (list ax-branch) `((%cut%)) remaining)
                                          mgu1)
                      state (apply-substitution bindings mgu1) (1+ level)
-                     new-just1 :domain domain))))
+                     new-just1 :domain domain :dependencies dependencies-in))
               (if new-answers
                   (progn
                     (trace-print :axioms ax-branch-name state
@@ -706,19 +837,20 @@ goal1 along with all of the other formulas in remaining."
                         ~%      tail ~s"
                                  level ax-branch-name goal1
                                  (apply-substitution ax-branch mgu1))
-                    (return-from do-conjunct-from-axiom (values new-answers found-match)))
+                    (when *record-dependencies-p* (assert (= (length new-answers) (length new-dependencies))))
+                    (return-from do-conjunct-from-axiom (values new-answers found-match new-dependencies)))
                 (progn
                   (trace-print :axioms ax-branch-name state
                                "~2%Level ~s, exiting axiom ~s~%      goal ~s~
                         ~%      tail ~s"
                                level ax-branch-name goal1
-                               (apply-substitution ax-branch mgu1))))
+                               (apply-substitution ax-branch mgu1)))))
               (if committed
                   ;; don't look at any more axiom tails.
                   (return-from break)
                 (setf tail (cddr tail))))))))
     ;; if you get here, you have failed in the proof.
-    nil))
+    nil)
 
 
 ;;; ------------------------------------------------------------------------

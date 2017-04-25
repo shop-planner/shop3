@@ -9,12 +9,18 @@ state variant?")
 (defvar *enhanced-plan-tree*
   nil
   "Do we build a dependency-enhanced plan tree?")
+(defvar *no-dependencies*
+  NIL
+  "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
-(defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*))
+
+(defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*) (no-dependencies nil))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
-though, always returns a list of plans."
+though, always returns a list of plans.
+  If the PLAN-TREE keyword argument is non-NIL, will return an enhanced plan
+tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
   #+(or ccl allegro sbcl clisp abcl ecl)
   (when gc #+allegro (excl:gc t)
         #+sbcl (sb-ext:gc :full t)
@@ -30,6 +36,8 @@ though, always returns a list of plans."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
   (let* ((*plan-tree* nil)
          (*enhanced-plan-tree* plan-tree)
+         (*no-dependencies* no-dependencies)
+         (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (problem (find-problem problem t))
          (domain (cond (domain
@@ -56,9 +64,13 @@ though, always returns a list of plans."
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree))))
     (when plan-tree
-      (setf (slot-value search-state 'plan-tree) tree))
+      (setf (slot-value search-state 'plan-tree) tree)
+      (unless no-dependencies
+        (prepare-state-tag-decoder)))
     (set-variable-property domain tasks)
-    (seek-plans-stack search-state domain)))
+    (unwind-protect
+        (seek-plans-stack search-state domain)
+      (delete-state-tag-decoder))))
 
 (defun seek-plans-stack (state domain &optional (which-plans :first))
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP2 search
@@ -69,6 +81,7 @@ on the value of the MODE slot of STATE."
   (setf (mode state) 'check-for-done)
   (catch 'search-failed
     (iter
+      (when *enhanced-plan-tree* (assert (plan-tree state)))
       (verbose-format "~&State is: ~a. Mode is: ~a.~%" state (mode state))
       (ecase (mode state)
         (check-for-done
@@ -150,43 +163,41 @@ on the value of the MODE slot of STATE."
                             (plan-tree state))))))))))
 
 (defun CHOOSE-METHOD-BINDINGS-STATE (state)
-  (let ((*record-dependencies-p* *enhanced-plan-tree*)
-        (*literals* nil)
-        (*establishers* nil))
-    (with-slots (alternatives backtrack-stack
-                              current-task depth
-                              top-tasks tasks) state
-      (when alternatives            ; method alternatives remain
-        (let ((method-body-unifier (pop alternatives)))
-          (destructuring-bind ((label . reduction) . unifier)
-              method-body-unifier
-            (push (make-cs-state :mode (mode state)
-                                 :current-task current-task
-                                 :alternatives alternatives)
-                  backtrack-stack)
-            (push (make-method-instantiation
-                   :unifier (unifier state)
-                   :top-tasks top-tasks
-                   :tasks tasks)
-                  backtrack-stack)
-            (when *enhanced-plan-tree*
-              (let* ((parent (find-task-in-tree current-task (plan-tree-lookup state)))
-                     (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
-                (let ((depends (make-dependencies parent *literals* *establishers*)))
+  (with-slots (alternatives backtrack-stack
+               current-task depth
+               top-tasks tasks) state
+    (when alternatives            ; method alternatives remain
+      (let ((method-body-unifier (pop alternatives)))
+        (destructuring-bind ((label . reduction) unifier depends)
+            method-body-unifier
+          (push (make-cs-state :mode (mode state)
+                               :current-task current-task
+                               :alternatives alternatives)
+                backtrack-stack)
+          (push (make-method-instantiation
+                 :unifier (unifier state)
+                 :top-tasks top-tasks
+                 :tasks tasks)
+                backtrack-stack)
+          (when *enhanced-plan-tree*
+            (let* ((parent (find-task-in-tree current-task (plan-tree-lookup state)))
+                   (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
+              (when *record-dependencies-p*
+                (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
-                    (make-add-dependencies depends)))
-                (appendf (plan-tree:complex-tree-node-children parent) (list child))
-                (push (make-add-child-to-tree :parent parent :child child)
-                      backtrack-stack)))
-            (multiple-value-setq (top-tasks tasks)
-                (apply-method-bindings current-task top-tasks tasks
-                                       reduction unifier))
-            (trace-print :methods label (world-state state)
-                         "~2%Depth ~s, applying method ~s~%      task ~s~% reduction ~s"
-                         depth label current-task reduction)
-            (setf (unifier state) unifier)))
-        t))))
+                    (make-add-dependencies depends))))
+              (appendf (plan-tree:complex-tree-node-children parent) (list child))
+              (push (make-add-child-to-tree :parent parent :child child)
+                    backtrack-stack)))
+          (multiple-value-setq (top-tasks tasks)
+            (apply-method-bindings current-task top-tasks tasks
+                                   reduction unifier))
+          (trace-print :methods label (world-state state)
+                       "~2%Depth ~s, applying method ~s~%      task ~s~% reduction ~s"
+                       depth label current-task reduction)
+          (setf (unifier state) unifier)))
+      t)))
 (defun CHOOSE-METHOD-STATE (state domain)
   (with-slots (alternatives backtrack-stack) state
     (when alternatives            ; method alternatives remain
@@ -195,13 +206,16 @@ on the value of the MODE slot of STATE."
                              :current-task (current-task state)
                              :alternatives alternatives)
               backtrack-stack)
-        (multiple-value-bind (expansions unifiers)
+        (multiple-value-bind (expansions unifiers dependencies)
             (apply-method domain (world-state state)
                           (get-task-body (current-task state))
                           method (protections state)
                           (depth state) (unifier state))
           (when expansions
-            (setf alternatives (mapcar #'cons expansions unifiers))
+            (setf alternatives
+                  (if *record-dependencies-p*
+                      (mapcar #'list expansions unifiers dependencies)
+                      (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
             t))))))
 (defun EXPAND-PRIMITIVE-STATE (state domain)
   ;; first we need to record what we will need to pop...
@@ -217,10 +231,8 @@ on the value of the MODE slot of STATE."
                                   :unifier unifier
                                   :partial-plan-cost cost)
           backtrack-stack)
-    (let ((*record-dependencies-p* *enhanced-plan-tree*)
-          (*literals* nil)
-          (*establishers* nil))
-    (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost)
+    (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
+                          depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)
       (when success
         (setf top-tasks top-tasks1
@@ -229,20 +241,25 @@ on the value of the MODE slot of STATE."
               partial-plan (cons prim-cost (cons planned-action (partial-plan state)))
               unifier unifier1)
         (incf cost prim-cost)
-        (when *enhanced-plan-tree*
+        (when (and *enhanced-plan-tree* *record-dependencies-p*)
           (let ((tree-node
                   (find-task-in-tree current-task (plan-tree-lookup state))))
-            (let ((depends (make-dependencies tree-node *literals* *establishers*)))
+            (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
-                (make-add-dependencies depends)))))
+                (make-add-dependencies depends))))
+          (make-tag-map tag current-task))
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
-        t)))))
+        t))))
 
-;;; STUBS
-(defun make-dependencies (tree-node literals establishers)
-  (declare (ignore tree-node literals establishers))
-  nil)
+(defun make-dependencies (tree-node depend-lists hash-table)
+  (iter (for (prop . establisher) in depend-lists)
+    (assert (and prop establisher))
+    ;; PROP is the proposition consumed and establisher is a task name.
+    (collecting
+     (plan-tree:make-dependency :establisher (find-task-in-tree (strip-task-sexp establisher) hash-table)
+                                :prop prop
+                                :consumer tree-node))))
 
 (defun task-sexp-task-name (task)
   (let* ((task (if (eq (first task) :task) (rest task)

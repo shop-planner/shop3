@@ -61,7 +61,7 @@
 
 (defpackage :shop2.common
     (:nicknames :shop2cmn :shop.common)
-    (:use :common-lisp :shop2.unifier)
+    (:use :common-lisp :shop2.unifier :iterate)
     (:export #:shop-fail #:call
 
              #:domain
@@ -81,4 +81,11 @@
              #:delete-atom-from-state
              #:tag-state
              #:make-state
+
+             ;; recording establishers
+             #:last-establisher
+             #:prepare-state-tag-decoder
+             #:delete-state-tag-decoder 
+             #:make-tag-map
+             #:delete-tag-map
              ))
