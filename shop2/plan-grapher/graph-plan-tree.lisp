@@ -32,7 +32,8 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
 
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:complex-tree-node))
-  (plan-tree:complex-tree-node-children obj))
+  ;; ugh, cl-dot emits these in reverse order, reversing the left-to-right order of the tree.
+  (reverse (plan-tree:complex-tree-node-children obj)))
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:primitive-tree-node))
   nil)
