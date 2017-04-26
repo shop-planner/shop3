@@ -93,7 +93,10 @@ functions."
    ))
 
 (defmacro verbose-format (&rest args)
-  `(when (> *verbose* 0) (format t ,@args)))
+  (let ((threshold (if (integerp (first args))
+                       (pop args)
+                       1)))
+    `(when (>= *verbose* ,threshold) (format t ,@args))))
 
 (defmacro appendf (place value)
   `(setf ,place
