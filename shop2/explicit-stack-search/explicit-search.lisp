@@ -5,6 +5,7 @@
 (defvar *test-explicit-state-search* nil
   "When testing, do we use standard SHOP2, or the explicit
 state variant?")
+(defvar 
 
 (defvar *enhanced-plan-tree*
   nil
@@ -75,7 +76,13 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
 (defun seek-plans-stack (state domain &optional (which-plans :first))
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP2 search
 virtual machine, cycling through different virtual instructions depending
-on the value of the MODE slot of STATE."
+on the value of the MODE slot of STATE.
+   Returns three values:
+List of PLANS -- currently there is always only one, but this complies
+   with the return from conventional SHOP2.
+List of PLAN-TREES -- optional
+List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
+    supplied."
   (declare (ignorable which-plans))
   ;; kick off the stack VM
   (setf (mode state) 'check-for-done)
@@ -160,8 +167,13 @@ on the value of the MODE slot of STATE."
         (extract-plan
          (let ((plan (check-plans-found state)))
            (return
-             (values plan (when *enhanced-plan-tree*
-                            (plan-tree state))))))))))
+             (values plan
+                     (when *enhanced-plan-tree*
+                       (list
+                            (plan-tree state)))
+                     (when *enhanced-plan-tree*
+                       (list
+                        (plan-tree-lookup state)))))))))))
 
 (defun CHOOSE-METHOD-BINDINGS-STATE (state)
   (with-slots (alternatives backtrack-stack
@@ -183,14 +195,14 @@ on the value of the MODE slot of STATE."
           (when *enhanced-plan-tree*
             (let* ((parent (find-task-in-tree current-task (plan-tree-lookup state)))
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
+              ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
+              (push (make-add-child-to-tree :parent parent :child child)
+                    backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
-                    (make-add-dependencies depends))))
-              (appendf (plan-tree:complex-tree-node-children parent) (list child))
-              (push (make-add-child-to-tree :parent parent :child child)
-                    backtrack-stack)))
+                    (make-add-dependencies depends))))))
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
@@ -396,8 +408,10 @@ on the value of the MODE slot of STATE."
                           (typep tree 'plan-tree:unordered-tree-node))
                       (remove-forest (plan-tree:complex-tree-node-children tree)))
                      ((typep tree 'plan-tree:primitive-tree-node)
+                      (assert (gethash (plan-tree:tree-node-task tree) hash-table))
                       (remhash (plan-tree:tree-node-task tree) hash-table))
                      ((typep tree 'plan-tree:complex-tree-node)
+                      (assert (gethash (plan-tree:tree-node-task tree) hash-table))
                       (remhash (plan-tree:tree-node-task tree) hash-table)
                       (remove-forest (plan-tree:complex-tree-node-children tree)))
                      (t (error "Unexpected argument:  ~s"  tree)))))
