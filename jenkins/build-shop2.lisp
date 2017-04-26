@@ -4,7 +4,7 @@
 
 (declaim (optimize (speed 3) (space 3) (safety 3)))
 
-;; (asdf:load-system "asdf")
+(asdf:load-system "asdf")
 ;; (asdf:initialize-output-translations)
 ;; (asdf:initialize-source-registry)
 
