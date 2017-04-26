@@ -5,7 +5,6 @@
 (defvar *test-explicit-state-search* nil
   "When testing, do we use standard SHOP2, or the explicit
 state variant?")
-(defvar 
 
 (defvar *enhanced-plan-tree*
   nil
