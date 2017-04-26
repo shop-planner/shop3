@@ -4,3 +4,9 @@
   ()
   (:documentation "A null class that the user subclass to
 tailor display of plan graphs."))
+
+
+(defclass enhanced-plan-tree-graph ()
+  ()
+  (:documentation "A null class that the user subclass to
+tailor display of plan graphs."))
