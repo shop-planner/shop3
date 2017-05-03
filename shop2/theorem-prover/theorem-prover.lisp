@@ -413,16 +413,19 @@ in the goal, so we ignore the extra reference."
             (setf answers (shop-union new-answers answers :test #'equal))))))
     (values answers depends)))
 
+(defvar *negation-deps-ok* nil)
+
 (defun standard-satisfiers-for-not (domain arguments other-goals
                                            state bindings newlevel just1 dependencies-in)
   (unless (eql (length arguments) 1)
     ;; This probably needs to be replaced with a "real" SHOP error
     ;; class of some sort.
     (error "Too many arguments provided to NOT: ~s" (cdr arguments)))
-  (when *record-dependencies-p*
-    (cerror "Simply return no new dependencies."
-            "We do not have correct logic for computing arbitrary dependencies for negations."))
-
+  (unless *negation-deps-ok*
+    (when *record-dependencies-p*
+      (cerror "Simply return no new dependencies."
+              "We do not have correct logic for computing arbitrary dependencies for negations.")
+      (setf *negation-deps-ok* t)))
   ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
   (cond
    ((let ((*record-dependencies-p* nil))
