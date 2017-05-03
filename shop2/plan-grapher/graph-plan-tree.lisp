@@ -23,17 +23,19 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
     (reverse
      (complex-node-children obj))))
 
+(defvar *label-depends*)
+
 (defun graph-enhanced-plan-tree (plan-tree &key 
-                                         (graph-object (make-instance 'enhanced-plan-tree-graph)))
-  "Takes a SHOP2 plan forest (PLAN-TREE) as input, and returns a CL-DOT graph object.
-Note that the PLAN-TREE name is a misnomer that reflects SHOP2 FIND-PLANS misnomer.
-If you ask for plan trees from SHOP2, you really get plan *forests*."
-    (cl-dot:generate-graph-from-roots graph-object (list plan-tree)))
+                                         (graph-object (make-instance 'enhanced-plan-tree-graph))
+                                         label-dependencies)
+  "Takes an enhanced SHOP2 plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
+  (let ((*label-depends* label-dependencies))
+    (cl-dot:generate-graph-from-roots graph-object (list plan-tree))))
 
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:complex-tree-node))
   ;; ugh, cl-dot emits these in reverse order, reversing the left-to-right order of the tree.
-  (reverse (plan-tree:complex-tree-node-children obj)))
+  (plan-tree:complex-tree-node-children obj))
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:primitive-tree-node))
   nil)
@@ -44,7 +46,14 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
                 (assert (typep est 'plan-tree:primitive-tree-node))
                 (make-instance 'cl-dot:attributed
                                :object est
-                               :attributes `(:constraint nil :color :blue))))
+                               :attributes `(,(if *label-depends* :label :edge-tooltip)
+                                             ,(format nil "~a" (plan-tree:prop x))
+                                             ,@(when *label-depends* (list :labelfontcolor :blue))
+                                             :penwidth 2.0
+                                             :style :dashed
+                                             ;; don't increase the depth -- cross edge
+                                             :constraint nil
+                                             :color :blue))))
           (plan-tree:tree-node-dependencies obj)))
 
 
