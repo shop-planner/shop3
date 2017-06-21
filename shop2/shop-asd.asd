@@ -67,6 +67,11 @@
 
 (in-package :shop2-asd)
 
+;;; FIXME: this will have the unpleasant and unexpected effect of
+;;; causing old values to persist when a programmer modifies them.  I
+;;; suggest it should be something like: (and (boundp ',name) (equalp
+;;; (symbol-value ',name) ,value).  Note that this has the possibly
+;;; unpleasant side-effect of causing value to be repeatedly computed.
 (defmacro defconstant (name value &optional doc)
   `(cl:defconstant ,name (if (boundp ',name) (symbol-value ',name) ,value)
      ,@(when doc (list doc))))
