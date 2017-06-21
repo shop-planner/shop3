@@ -145,6 +145,16 @@
                (:file "graph-plan-tree"))
   )
 
+(defsystem :shop2/minimal-subtree
+  :description "When there's an upset in plan execution, find a
+minimal affected subtree."
+  :depends-on ("shop2") ; initially an add-on, later it will be part of shop2
+  :pathname "minimal-subtree/"
+  :serial t
+  :components ((:file "package")
+               (:file "decls")
+               (:file "minimal-subtree")))
+
 ;;;---------------------------------------------------------------------------
 ;;; Testing
 ;;;---------------------------------------------------------------------------
