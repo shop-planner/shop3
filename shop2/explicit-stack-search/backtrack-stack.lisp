@@ -64,7 +64,7 @@ classes."))
 
 
 (defclass add-child-to-tree (stack-entry)
-  (  (parent
+  ((parent
    :initarg :parent
    :initform nil
    :reader parent
@@ -77,11 +77,10 @@ classes."))
   )
 
 (defclass add-dependencies (stack-entry)
-     ((dependencies
-       :initarg :dependencies
-       :reader dependencies
-       ))
-  )
+  ((dependencies
+    :initarg :dependencies
+    :reader dependencies
+    )))
 
 
 
@@ -129,7 +128,8 @@ classes."))
     (assert (member child (plan-tree:complex-tree-node-children parent)))
     (remove-subtree-from-table (plan-tree-lookup state) child)
     (setf (plan-tree:complex-tree-node-children parent)
-          (delete child (plan-tree:complex-tree-node-children parent)))))
+          (delete child (plan-tree:complex-tree-node-children parent))
+          (plan-tree:tree-node-parent child) nil)))
 
 (defmethod do-backtrack ((entry prim-state-expand) (state search-state))
   (setf (top-tasks state) (top-tasks entry)

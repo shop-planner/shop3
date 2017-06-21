@@ -7,11 +7,13 @@
            #:tree-node
            #:tree-node-task
            #:tree-node-dependencies
+           #:tree-node-parent
            #:primitive-tree-node
            #:make-primitive-tree-node
            #:complex-tree-node
            #:make-complex-tree-node
            #:complex-tree-node-children
+           #:pseudo-node
            #:unordered-tree-node
            #:make-unordered-tree-node
            #:make-ordered-tree-node
@@ -32,6 +34,7 @@
 (defstruct tree-node
   task
   dependencies
+  parent
   )
 
 (defstruct (primitive-tree-node (:include tree-node))
@@ -41,12 +44,14 @@
   children
   )
 
+(defstruct (pseudo-node (:include complex-tree-node)))
+
 ;;; maybe should revise this and have complex-tree-node as mixin, since
 ;;; ordered-tree-node and unordered-tree-node have neither TASK nor
 ;;; DEPENDENCIES.
-(defstruct (ordered-tree-node (:include complex-tree-node)))
+(defstruct (ordered-tree-node (:include pseudo-node)))
 
-(defstruct (unordered-tree-node (:include complex-tree-node)))
+(defstruct (unordered-tree-node (:include pseudo-node)))
 
 
 (defmethod print-object ((d dependency) str)
