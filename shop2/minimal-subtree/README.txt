@@ -105,6 +105,8 @@ and justifies the inclusion of the child.  So we revise:
                     nil))))
     (finally (return nil))) ; no threatened task found
 #+END_SRC
+*** =LEFTMOST-P=
+=(LEFTMOST-P TASK)= is true if =TASK= is the leftmost child of its parent.
 *** Definition of =CLOBBERED-P=
 #+BEGIN_SRC common-lisp
   (defun clobbered-p (task-node last-executed discrepancy)
@@ -117,3 +119,20 @@ and justifies the inclusion of the child.  So we revise:
             filtered)))
                                     
 #+END_SRC
+
+* Replanning
+Replanning loop will run as follows, given =FAILED-TASK=:
+#+BEGIN_SRC common-lisp
+  (iter (with target = (if (primitivep failed-task)
+                           (parent failed-task)
+                           failed-task))
+    (for new-plan = (replan target))
+    (if new-plan
+        (return new-plan)
+        (setf target (parent target)))
+    (finally (return nil)))               ; comprehensive failure
+#+END_SRC
+The reason for the check in the initial check of target is that
+primitive tasks are not replannable in SHOP2, but complex tasks might
+have alternative methods that could be applied.
+
