@@ -30,11 +30,6 @@ world after EXECUTED and the actual state of the world.
 Specified as follows (([:ADD|:DELETE] <facts>)*).
 That is, any number of lists headed by the :ADD or :DELETE
 operators, and followed by a list of facts (ground literals).
-  Keyword arguments:
-  This function must be able to trace the plan's effects on the
-world state.  The STATE-TRAJECTORY argument should be a STATE
-object returned by SHOP2's search.  INITIAL-STATE \(not currently 
-supported\), will allow FIND-FAILED-TASK to re-project execution.
   Returns:
   Leftmost, minimal task (plan subtree) that has one or more
 broken causal links."
