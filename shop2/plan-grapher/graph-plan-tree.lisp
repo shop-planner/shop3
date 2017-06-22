@@ -63,11 +63,12 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
                                          label-dependencies)
   "Takes an enhanced SHOP2 plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
   (let ((*label-depends* label-dependencies))
-    (cl-dot:generate-graph-from-roots graph-object (list plan-tree))))
+    (cl-dot:generate-graph-from-roots graph-object (list plan-tree :init))))
 
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:complex-tree-node))
   ;; ugh, cl-dot emits these in reverse order, reversing the left-to-right order of the tree.
+  ;; actually, it's even worse than that -- cl-dot emits them in a somewhat random order.
   (plan-tree:complex-tree-node-children obj))
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:primitive-tree-node))
@@ -76,10 +77,10 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
 (defmethod cl-dot:graph-object-pointed-to-by ((g enhanced-plan-tree-graph)(obj plan-tree:tree-node))
   (mapcar #'(lambda (x)
               (let ((est (plan-tree:establisher x)))
-                (assert (typep est 'plan-tree:primitive-tree-node))
+                (assert (typep est '(or (eql :init) plan-tree:primitive-tree-node)))
                 (make-instance 'cl-dot:attributed
                                :object est
-                               :attributes `(,(if *label-depends* :label :edge-tooltip)
+                               :attributes `(,(if *label-depends* :label :edgetooltip)
                                              ,(format nil "~a" (plan-tree:prop x))
                                              ,@(when *label-depends* (list :labelfontcolor :blue))
                                              :penwidth 2.0
@@ -89,12 +90,19 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
                                              :color :blue))))
           (plan-tree:tree-node-dependencies obj)))
 
-
 (defmethod cl-dot:graph-object-node ((g enhanced-plan-tree-graph) (obj plan-tree:complex-tree-node))
   (declare (ignorable g))
   (make-instance 'cl-dot:node
     :attributes `(:label ,(format nil "~A" (plan-tree:tree-node-task obj))
                          :shape :ellipse)))
+
+
+
+(defmethod cl-dot:graph-object-node ((g enhanced-plan-tree-graph) (obj (eql :init)))
+  (declare (ignorable g))
+  (make-instance 'cl-dot:node
+    :attributes `(:label "INIT"
+                         :shape :diamond)))
 
 (defmethod cl-dot:graph-object-node ((g enhanced-plan-tree-graph) (obj plan-tree:primitive-tree-node))
   (declare (ignorable g))

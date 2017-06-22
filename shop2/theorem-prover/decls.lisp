@@ -183,3 +183,9 @@ warnings, errors, etc.")
 ;;; used for the internals of IF-THEN-ELSE in the theorem-prover
 (define-condition cut-commit (condition)
   ())
+
+(defstruct (raw-depend (:conc-name rd-))
+  "Raw dependency record, computed by the theorem-prover before
+using it to build dependency records in the enhanced plan trees."
+  prop
+  est)

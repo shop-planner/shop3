@@ -266,14 +266,18 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 
 (defun make-dependencies (tree-node depend-lists hash-table)
   (iter (for depend in depend-lists)
-    (destructuring-bind (prop . establisher) depend
-      (unless (and prop establisher)
-        (error "Ill-formed dependency-list: ~S"  depend))
-      ;; PROP is the proposition consumed and establisher is a task name.
-      (collecting
-       (plan-tree:make-dependency :establisher (find-task-in-tree (strip-task-sexp establisher) hash-table)
-                                  :prop prop
-                                  :consumer tree-node)))))
+    ;; PROP is the proposition consumed and establisher is a task name.
+    (as prop = (shop2.theorem-prover::rd-prop depend))
+    (as establisher = (shop2.theorem-prover::rd-est depend))
+    (unless (and prop establisher)
+      (error "Ill-formed dependency-list: ~S"  depend))
+    (collecting
+     (plan-tree:make-dependency
+      :establisher (if (eq establisher :init)
+                       :init
+                       (find-task-in-tree (strip-task-sexp establisher) hash-table))
+      :prop prop
+      :consumer tree-node))))
 
 (defun task-sexp-task-name (task)
   (let* ((task (if (eq (first task) :task) (rest task)

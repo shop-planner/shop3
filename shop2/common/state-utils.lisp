@@ -121,10 +121,12 @@ using MAKE-INITIAL-STATE.")
                                       '(delete redundant-delete) :test 'eq))
                     (member (state-update-action update) '(add redundant-add) :test 'eq))
             (if (zerop tag)
+                ;; this case seems never to happen -- the zero tag all
+                ;; seems empty.
                 (return-from last-establisher :init)
                 (return-from last-establisher (decode-tag tag)))))))
     ;; atom is established/deleted in the initial state...
-    nil))
+    :init))
 
 (defun decode-tag (tag)
   (or (gethash tag *state-tag-map*)

@@ -418,21 +418,32 @@ in the goal, so we ignore the extra reference."
 (defun standard-satisfiers-for-not (domain arguments other-goals
                                            state bindings newlevel just1 dependencies-in)
   (unless (eql (length arguments) 1)
-    ;; This probably needs to be replaced with a "real" SHOP error
+    ;; FIXME::This probably needs to be replaced with a "real" SHOP error
     ;; class of some sort.
     (error "Too many arguments provided to NOT: ~s" (cdr arguments)))
-  (unless *negation-deps-ok*
-    (when *record-dependencies-p*
+  (when *record-dependencies-p*
+    (unless (or *negation-deps-ok* (groundp (first arguments)))
       (cerror "Simply return no new dependencies."
               "We do not have correct logic for computing arbitrary dependencies for negations.")
       (setf *negation-deps-ok* t)))
   ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
   (cond
-   ((let ((*record-dependencies-p* nil))
-      (seek-satisfiers arguments state nil newlevel t :domain domain))
-    nil)
+    ((let ((*record-dependencies-p* nil))
+       (seek-satisfiers arguments state nil newlevel t :domain domain))
+     ;; the negation is falsified
+     nil)
    (t
-    (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))))
+    (let (newdep)
+      (when (and *record-dependencies-p* (groundp (first arguments)))
+        (setf newdep
+              (make-raw-depend
+               :est
+               (dependency-for-negation (first arguments) state)
+               :prop `(not ,(first arguments)))))
+      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in))))))
+
+(defun dependency-for-negation (positive-literal state)
+  (last-establisher state `(not ,positive-literal)))
 
 (defun standard-satisfiers-for-eval (domain arguments other-goals
                                      state bindings newlevel just1 dependencies-in)
@@ -724,18 +735,20 @@ goal1 along with all of the other formulas in remaining."
                (when *record-dependencies-p*
                  (let ((e (last-establisher state r)))
                    (when e              ; fact might come from initial state
-                     (cons (cons r e) dependencies-in))))))
+                     (cons (make-raw-depend :prop r :est e) dependencies-in))))))
           (setq found-match t) ; for debugging printout
           (multiple-value-bind (new-answers new-depends)
               (seek-satisfiers (apply-substitution remaining mgu1)
                                state (apply-substitution bindings mgu1)
                                (1+ level) just1 :domain domain :dependencies updated-dependencies)
-            (when *record-dependencies-p* (assert (= (length new-answers) (length new-depends))))
+            (when *record-dependencies-p*
+              (assert (= (length new-answers) (length new-depends))))
             (when new-answers
               (trace-print :goals (car goal1) state
                            "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
                            level goal1 new-answers)
-              (when just1 (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
+              (when just1
+                (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
               ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
               ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
               (multiple-value-setq (answers depends)
@@ -756,8 +769,10 @@ goal1 along with all of the other formulas in remaining."
   (let (found-match answers dependencies)
     (dolist (r (axioms domain (car goal1)))
       (multiple-value-bind (axiom-answers axiom-found-match axiom-dependencies)
-          (do-conjunct-from-axiom r domain goal1 remaining state bindings level just1 dependencies-in)
-        (when *record-dependencies-p* (assert (= (length axiom-answers) (length axiom-dependencies))))
+          (do-conjunct-from-axiom r domain goal1 remaining state bindings
+            level just1 dependencies-in)
+        (when *record-dependencies-p*
+          (assert (= (length axiom-answers) (length axiom-dependencies))))
         (when (and just1 axiom-answers)
           (return-from do-conjunct-from-axioms
             (values axiom-answers axiom-found-match axiom-dependencies)))
@@ -840,8 +855,10 @@ also remove the corresponding entry from DEPENDENCY-LIST.
                         ~%      tail ~s"
                                  level ax-branch-name goal1
                                  (apply-substitution ax-branch mgu1))
-                    (when *record-dependencies-p* (assert (= (length new-answers) (length new-dependencies))))
-                    (return-from do-conjunct-from-axiom (values new-answers found-match new-dependencies)))
+                    (when *record-dependencies-p*
+                      (assert (= (length new-answers) (length new-dependencies))))
+                    (return-from do-conjunct-from-axiom
+                      (values new-answers found-match new-dependencies)))
                 (progn
                   (trace-print :axioms ax-branch-name state
                                "~2%Level ~s, exiting axiom ~s~%      goal ~s~

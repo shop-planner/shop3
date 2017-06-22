@@ -37,6 +37,9 @@
   parent
   )
 
+;;; FIXME: maybe I should make a special top node that stores the
+;;; hash-table, so that we keep it around in a less cumbersome way.
+
 (defstruct (primitive-tree-node (:include tree-node))
   )
 
@@ -56,8 +59,11 @@
 
 (defmethod print-object ((d dependency) str)
   (print-unreadable-object (d str)
-    (format str "~S -> ~S"
-            (tree-node-task (establisher d))
+    (if (eq (establisher d) :init)
+        (format str "init")
+        (format str "~A"
+                (tree-node-task (establisher d))))
+    (format str " -> ~A"
             (prop d))))
 
 (defmethod print-object ((d primitive-tree-node) str)
