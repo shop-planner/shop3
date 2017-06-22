@@ -6,11 +6,12 @@
 ;;; be the case, but if you save and reload plans, it might not be.
 ;;; Caveat lisper!
 (defmethod find-failed-task ((domain shop2:domain) plan
-                             (plan-tree plan-tree:tree-node) executed divergence)
+                             (plan-tree plan-tree:tree-node) executed divergence
+                             &key plan-tree-hash)
   "Default method for FIND-FAILED-TASK."
   (let ((plan-suffix (find-plan-suffix plan executed)))
     (iter outer (for plan-step in plan-suffix)
-      (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree)))
+      (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
         (unless (typep next 'pseudo-node) ;ordered and unordered nodes
           (when (clobbered-p next divergence)
             (return-from outer next))))))
@@ -46,7 +47,7 @@ checking (i.e., top-down)."
                step orig-plan))
     (finally (return plan))))    
 
-(defun find-plan-step (task plan-tree)
+(defun find-plan-step (task plan-tree &optional plan-tree-hash)
   (labels ((tree-search (plan-tree)
              (etypecase plan-tree
                (primitive-tree-node
@@ -56,8 +57,11 @@ checking (i.e., top-down)."
                 (iter (for tree-node in (complex-tree-node-children plan-tree))
                   (as result = (tree-search tree-node))
                   (when result (return-from find-plan-step result)))))))
-    (or (tree-search plan-tree)
-        (error "No tree node for task ~S in ~S" task plan-tree))))
+    (or
+     (if plan-tree-hash
+         (shop2::find-task-in-tree task plan-tree-hash)
+         (tree-search plan-tree))
+     (error "No tree node for task ~S in ~S" task plan-tree))))
 
 (defun clobbered-p (tree-node divergence)
   (let ((causal-links (tree-node-dependencies tree-node)))
