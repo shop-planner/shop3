@@ -131,3 +131,17 @@ The reason for the check in the initial check of target is that
 primitive tasks are not replannable in SHOP2, but complex tasks might
 have alternative methods that could be applied.
 
+* Secondary preconditions
+If we build causal links for secondary preconditions as well as
+primary preconditions, then we get failure detection that is complete,
+but not sound.
+
+But if we /didn't/ build causal links for the secondary preconditions,
+then we get failure detection that is sound, but incomplete, which
+would be worse.
+
+A possibility would be to use the causal links that are complete, but
+unsound, as a /prefilter/, and as part of the plan repair routine,
+check to see if there's a real plan failure, or a false positive.
+
+
