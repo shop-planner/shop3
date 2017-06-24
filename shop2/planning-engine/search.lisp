@@ -62,7 +62,8 @@
 (in-package :shop2)
 
 (defmacro when-done (&body body)
-  `(when (and *plans-found* (eq which-plans :first)
+  `(when (and *plans-found*
+              (or (eq which-plans :first) (eq which-plans :random))
               (not (optimize-continue-p which-plans)))
      ,@body))
 
@@ -150,8 +151,11 @@
                               task1)
                  (backtrack "Task ~S failed" task1))
                ;; this is permutation search over the orderings of the
-               ;; TOP-TASKS.
-               (loop for task1 in (task-sorter domain top-tasks unifier)
+               ;; TOP-TASKS, or over a randomized list of tasks if
+               ;; *WHICH* is :RANDOM (for Monroe) [2017/06/23:rpg]
+               (loop for task1 in (if (eq *which* :random)
+                                      (randomize-list top-tasks)
+                                      (task-sorter domain top-tasks unifier))
                      while task1
                      do (seek-plans-task domain task1 state tasks top-tasks partial-plan
                              partial-plan-cost depth which-plans
@@ -256,6 +260,7 @@ of SHOP2."
       (retract-state-changes state tag)
       nil)))
 
+
 (defun seek-plans-primitive-1 (domain task1 state tasks top-tasks
                                depth protections unifier)
   (let* ((task-name (get-task-name task1))
@@ -301,10 +306,16 @@ of SHOP2."
         (methods (methods domain task-name)))
     (unless methods
       (error (make-condition 'no-method-for-task :task-name task-name)))
+    ;; for Monroe [2017/06/23:rpg]
+    (when (eq *which* :random)
+      (setf methods (randomize-list methods)))
     (dolist (m methods)
       (multiple-value-bind (result1 unifier1)
           (apply-method domain state task-body m protections depth in-unifier)
         (when result1
+          ;; for Monroe [2017/06/23:rpg]
+          (when (eq *which* :random)
+            (setf result1 (randomize-list result1)))
           (loop for lr in result1
                 as u1 in unifier1
                 for label = (car lr)
@@ -474,7 +485,7 @@ This function just throws away the costs."
 
 ;;; This function returns true iff additional optimization needs to be done.
 (defun optimize-continue-p (which)
-  (assert (or (eq which :first) (eq which :all)))
+  (assert (or (eq which :first) (eq which :random) (eq which :all)))
   (cond
    ((not *optimize-cost*) nil)
    ;; added this so that we can terminate immediately if we're

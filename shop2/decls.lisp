@@ -603,3 +603,22 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 ;;; for shop-pprint -- a dispatch table.
 (defparameter *shop-pprint-table*
               (copy-pprint-dispatch))
+
+;;;---------------------------------------------------------------------------
+;;; Miscellaneous utilities from Monroe
+;;;---------------------------------------------------------------------------
+(defun randomize-list (lst)
+  "Returns a copy of LST with all its members in a random order."
+  (nshuffle-list lst))
+
+(defun nshuffle-list (list)
+  "Shuffle the list using an intermediate vector."
+  (let ((array (nshuffle-array (coerce list 'vector))))
+    (declare (dynamic-extent array))
+    (map-into list 'identity array)))
+
+(defun nshuffle-array (array)
+  (loop for i from (length array) downto 2
+        do (rotatef (aref array (random i))
+                    (aref array (1- i)))
+        finally (return array)))

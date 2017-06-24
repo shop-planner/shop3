@@ -605,6 +605,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :ALL-SHALLOWEST - depth-first search for all shallowest plans.
         :ID-FIRST   - iterative deepening search, returning the first plan.
         :ID-ALL     - iterative deepening search for all shallowest plans.
+        :RANDOM     - Randomized search.  Used by Monroe. Not for normal
+                      SHOP2 domains, since normal SHOP2 domains have order-
+                      dependent semantics.
      :VERBOSE says how much information to print about the plans SHOP2
               finds.  Its values can be any of the following:
         0 or NIL    - print nothing
@@ -761,7 +764,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
            (setq *expansions* 0
                  *inferences* 0)))
 
-        ((:first :all :shallowest :all-shallowest)
+        ((:first :all :shallowest :all-shallowest :random)
          (catch-internal-time
           (seek-plans domain state tasks top-tasks nil 0 0 which nil
                       ;; unifier

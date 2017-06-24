@@ -85,8 +85,8 @@
        (:module search
                 :pathname "planning-engine/"
                 :components ((:file "protections")
-                                     (:file "task-reductions")
-                                     (:file "search")))
+                             (:file "task-reductions")
+                             (:file "search")))
        (:module "explicit-stack-search"
                 :serial t
                 :components ((:file "decls")
