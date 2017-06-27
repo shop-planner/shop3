@@ -1,11 +1,12 @@
 (defpackage plan-tree
-  (:use common-lisp)
+  (:use common-lisp iterate)
   (:export #:dependency
            #:establisher
            #:consumer
            #:prop
            #:tree-node
            #:tree-node-task
+           #:tree-node-expanded-task
            #:tree-node-dependencies
            #:tree-node-parent
            #:primitive-tree-node
@@ -13,12 +14,16 @@
            #:complex-tree-node
            #:make-complex-tree-node
            #:complex-tree-node-children
+           #:top-node
+           #:make-top-node
            #:pseudo-node
            #:unordered-tree-node
            #:make-unordered-tree-node
            #:make-ordered-tree-node
            #:ordered-tree-node
            #:make-dependency
+           #:find-plan-step
+           #:find-task-in-tree
            ))
 
 (in-package :plan-tree)
@@ -33,6 +38,7 @@
 ;;; only primitive-tree-node and complext-tree-node should be instantiated.
 (defstruct tree-node
   task
+  expanded-task
   dependencies
   parent
   )
@@ -47,6 +53,11 @@
   children
   )
 
+(defstruct (top-node (:include complex-tree-node))
+  lookup-table
+  )
+
+
 (defstruct (pseudo-node (:include complex-tree-node)))
 
 ;;; maybe should revise this and have complex-tree-node as mixin, since
@@ -56,9 +67,15 @@
 
 (defstruct (unordered-tree-node (:include pseudo-node)))
 
+(defmacro print-unreadably ((&rest args) &body body)
+  `(if *print-readably*
+       (call-next-method)
+       (print-unreadable-object ,args
+         ,@body)))
+
 
 (defmethod print-object ((d dependency) str)
-  (print-unreadable-object (d str)
+  (print-unreadably (d str)
     (if (eq (establisher d) :init)
         (format str "init")
         (format str "~A"
@@ -67,28 +84,73 @@
             (prop d))))
 
 (defmethod print-object ((d primitive-tree-node) str)
-  (print-unreadable-object (d str :type t)
-    (format str "~S"
-            (tree-node-task d))
-    (when (tree-node-dependencies d)
+  (print-unreadably (d str)
+    (format str "Primitive: ~S"
+            (or (tree-node-expanded-task d) (tree-node-task d)))
+    #+ignore(when (tree-node-dependencies d)
       (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
 
+(defmethod print-object ((d top-node) str)
+  (print-unreadably (d str)
+    (format str " TOP-NODE CHILDREN: ~A"
+            (complex-tree-node-children d))))
+
+
 (defmethod print-object ((d complex-tree-node) str)
-  (print-unreadable-object (d str :type t)
-    (format str "~S :CHILDREN ~S"
-            (tree-node-task d)
+  (print-unreadably (d str)
+    (format str "Complex: ~S :CHILDREN ~A"
+            (or (tree-node-expanded-task d)
+                (tree-node-task d))
             (complex-tree-node-children d))
-    (when (tree-node-dependencies d)
+    #+ignore(when (tree-node-dependencies d)
       (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
 
 
 (defmethod print-object ((d ordered-tree-node) str)
-  (print-unreadable-object (d str :type t)
-    (format str ":CHILDREN ~S"
+  (print-unreadably (d str)
+    (format str "Ordered CHILDREN: ~A"
             (complex-tree-node-children d))))
 
 (defmethod print-object ((d unordered-tree-node) str)
-  (print-unreadable-object (d str :type t)
-    (format str ":CHILDREN ~S"
+  (print-unreadably (d str :type t)
+    (format str "Unordered CHILDREN: ~A"
             (complex-tree-node-children d))))
            
+(defun find-plan-step (task plan-tree &optional plan-tree-hash)
+  (labels ((tree-search (plan-tree)
+             (etypecase plan-tree
+               (primitive-tree-node
+                (when (equalp task (tree-node-task plan-tree))
+                  plan-tree))
+               (complex-tree-node
+                (iter (for tree-node in (complex-tree-node-children plan-tree))
+                  (as result = (tree-search tree-node))
+                  (when result (return-from find-plan-step result)))))))
+    (or
+     (if plan-tree-hash
+         (find-task-in-tree task plan-tree-hash)
+         (tree-search plan-tree))
+     (error "No tree node for task ~S in ~S" task plan-tree))))
+
+(defun find-task-in-tree (task &optional hash-table plan-tree)
+  "Return the PLAN-TREE:TREE-NODE in TREE corresponding to TASK."
+  (let ((task (shop2::strip-task-sexp task)))
+    (cond (hash-table
+           (or
+            (gethash task hash-table)
+            (error "No plan tree node for task ~S" task)))
+          (plan-tree
+           (labels ((tree-search (plan-tree)
+                      (if (or (eq task (tree-node-task plan-tree))
+                              (eq task (tree-node-expanded-task plan-tree)))
+                          plan-tree
+                          (etypecase plan-tree
+                            (primitive-tree-node nil)
+                            (complex-tree-node
+                             (iter (for tree-node in (complex-tree-node-children plan-tree))
+                               (as result = (tree-search tree-node))
+                               (when result (return-from find-task-in-tree result))))))))
+             (or
+              (tree-search plan-tree)
+              (error "No plan tree node for task ~S" task))))
+          (t (error "Must pass etiher hash-table or plan-tree to FIND-TASK-IN-TREE.")))))

@@ -60,7 +60,9 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                          ;; tree will be NIL if we aren't returning a plan tree.
                          :top-tasks (get-top-tasks tasks)))
          (tree  (when plan-tree
-                  (let ((tree (plan-tree:make-complex-tree-node :task 'TOP)))
+                  (let ((tree (plan-tree:make-top-node
+                               :task 'TOP
+                               :lookup-table (plan-tree-lookup search-state))))
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree))))
     (when plan-tree
@@ -165,6 +167,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
              (stack-backtrack state)))
         (extract-plan
          (let ((plan (check-plans-found state)))
+           (when *enhanced-plan-tree*
+             (apply-substitution-to-tree (unifier state) (plan-tree state)))
            (return
              (values plan
                      (when *enhanced-plan-tree*
@@ -174,10 +178,32 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                        (list
                         (plan-tree-lookup state)))))))))))
 
+;;; Traverse the plan tree, applying the bindings to the
+;;; EXPANDED-TASKs everywhere in the tree.
+(defun apply-substitution-to-tree (bindings plan-tree)
+  (labels ((apply-bindings-and-recurse (node)
+             (etypecase node
+               ((or plan-tree:top-node plan-tree:ordered-tree-node plan-tree:unordered-tree-node)
+                (recurse node))
+               (plan-tree:primitive-tree-node
+                (apply-bindings node))
+               (plan-tree:complex-tree-node
+                (apply-bindings node)
+                (recurse node))))
+           (apply-bindings (node)
+             (setf (plan-tree:tree-node-expanded-task node)
+                   (apply-substitution (plan-tree:tree-node-expanded-task node) bindings)))
+           (recurse (node)
+             (mapc 'apply-bindings-and-recurse (plan-tree:complex-tree-node-children node))))
+    
+    (apply-bindings-and-recurse plan-tree)))
+
+
 (defun CHOOSE-METHOD-BINDINGS-STATE (state)
   (with-slots (alternatives backtrack-stack
                current-task depth
-               top-tasks tasks) state
+               top-tasks tasks)
+      state
     (when alternatives            ; method alternatives remain
       (let ((method-body-unifier (pop alternatives)))
         (destructuring-bind ((label . reduction) unifier depends)
@@ -192,7 +218,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                  :tasks tasks)
                 backtrack-stack)
           (when *enhanced-plan-tree*
-            (let* ((parent (find-task-in-tree current-task (plan-tree-lookup state)))
+            (let* ((parent (plan-tree:find-task-in-tree current-task (plan-tree-lookup state)))
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
               ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
               (push (make-add-child-to-tree :parent parent :child child)
@@ -211,24 +237,38 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
           (setf (unifier state) unifier)))
       t)))
 (defun CHOOSE-METHOD-STATE (state domain)
-  (with-slots (alternatives backtrack-stack) state
+  (with-slots (alternatives backtrack-stack
+               plan-tree-lookup current-task)
+      state
     (when alternatives            ; method alternatives remain
       (let ((method (pop alternatives)))
         (push (make-cs-state :mode (mode state)
-                             :current-task (current-task state)
+                             :current-task current-task
                              :alternatives alternatives)
               backtrack-stack)
-        (multiple-value-bind (expansions unifiers dependencies)
+        (multiple-value-bind (expansions unifiers dependencies task-expansion)
             (apply-method domain (world-state state)
-                          (get-task-body (current-task state))
+                          (get-task-body current-task)
                           method (protections state)
                           (depth state) (unifier state))
           (when expansions
+            (when *enhanced-plan-tree*
+              (let ((task-node (plan-tree:find-task-in-tree current-task plan-tree-lookup)))
+                (push (record-node-expansion task-node task-expansion plan-tree-lookup)
+                      backtrack-stack)))
             (setf alternatives
                   (if *record-dependencies-p*
                       (mapcar #'list expansions unifiers dependencies)
                       (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
             t))))))
+
+;;; FIXME: severe problem in the tree building here.  The problem is
+;;; that there is a newly-consed instantiated action, PLANNED-ACTION
+;;; that is added to the plan sequence, which is NOT eq to the
+;;; CURRENT-TASK, which is how the PLAN-TREE object is populated.  I
+;;; think I *could* replace the TASK in the existing tree-node, but
+;;; that's an obscure side-effecting sort of thing to do, and might
+;;; behave oddly on backtracking. [2017/06/26:rpg]
 (defun EXPAND-PRIMITIVE-STATE (state domain)
   ;; first we need to record what we will need to pop...
   (with-slots (top-tasks tasks protections partial-plan
@@ -255,7 +295,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
         (incf cost prim-cost)
         (when (and *enhanced-plan-tree* *record-dependencies-p*)
           (let ((tree-node
-                  (find-task-in-tree current-task (plan-tree-lookup state))))
+                  (plan-tree:find-task-in-tree current-task (plan-tree-lookup state))))
+            (push (record-node-expansion tree-node planned-action (plan-tree-lookup state))
+                  (backtrack-stack state))
             (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
@@ -263,6 +305,15 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
           (make-tag-map tag current-task))
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
         t))))
+
+;;; record the expansion of a tree node by rewriting its task.  Return
+;;; the backtrack stack entry needed to undo the transformation.
+(defun record-node-expansion (tree-node expanded-task hash-table)
+  (assert expanded-task)
+  (setf (plan-tree:tree-node-expanded-task tree-node)
+        expanded-task)
+  (setf (gethash expanded-task hash-table) tree-node)
+  (make-record-expansion tree-node))
 
 (defun make-dependencies (tree-node depend-lists hash-table)
   (iter (for depend in depend-lists)
@@ -275,7 +326,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
      (plan-tree:make-dependency
       :establisher (if (eq establisher :init)
                        :init
-                       (find-task-in-tree (strip-task-sexp establisher) hash-table))
+                       (plan-tree:find-task-in-tree (strip-task-sexp establisher) hash-table))
       :prop prop
       :consumer tree-node))))
 
@@ -292,35 +343,6 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
          (task (if (eq (first task) :immediate) (rest task) task)))
     task))
   
-
-;;;(defun find-task-in-tree (task tree)
-;;;  "Return the PLAN-TREE:TREE-NODE in TREE corresponding to TASK.
-;;;Returns NIL if unfound -- callers should check for this error condition."
-;;;  (assert (typep tree 'plan-tree:tree-node))
-;;;  (let ((task (strip-task-sexp task)))
-;;;    ;; (break "Task is ~s Tree is ~s" task tree)
-;;;    (labels ((find-task-in-forest (forest)
-;;;               (if (null forest) nil
-;;;                   (or (find-task-in-tree-1 (first forest))
-;;;                       (find-task-in-forest (rest forest)))))
-;;;             (find-task-in-tree-1 (tree)
-;;;               (cond ((or (typep tree 'plan-tree:ordered-tree-node)
-;;;                          (typep tree 'plan-tree:unordered-tree-node))
-;;;                      (find-task-in-forest (plan-tree:complex-tree-node-children tree)))
-;;;                     ((eq (plan-tree:tree-node-task tree) task)
-;;;                      tree)
-;;;                     ((typep tree 'plan-tree:primitive-tree-node) nil)
-;;;                     ((typep tree 'plan-tree:complex-tree-node)
-;;;                      (find-task-in-forest (plan-tree:complex-tree-node-children tree)))
-;;;                     (t (error "Unexpected arguments: ~s ~s" task tree)))))
-;;;      (find-task-in-tree-1 tree))))
-
-(defun find-task-in-tree (task hash-table)
-  "Return the PLAN-TREE:TREE-NODE in TREE corresponding to TASK."
-  (let ((task (strip-task-sexp task)))
-    (or
-     (gethash task hash-table)
-     (error "No plan tree node for task ~S" task))))
 
 
 (defun make-plan-tree-for-task-net (task-net parent hash-table)

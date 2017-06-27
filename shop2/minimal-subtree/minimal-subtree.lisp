@@ -1,4 +1,13 @@
 (in-package :shop2-minimal-subtree)
+ 
+(defmethod find-failed-task :around ((domain symbol) plan plan-tree
+                                     executed divergence &key plan-tree-hash)
+  (when (find-if 'floatp plan)
+    ;; we haven't removed the costs
+    (setf plan (remove-costs plan)))
+  (find-failed-task (find-domain domain) plan plan-tree
+                    executed divergence
+                    :plan-tree-hash plan-tree-hash))
 
 ;;; Note: the current version of this file assumes that the primitive
 ;;; task s-expressions in PLAN and PLAN-TREE are EQ -- i.e., pointers
@@ -14,7 +23,7 @@
       (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
         (unless (typep next 'pseudo-node) ;ordered and unordered nodes
           (when (clobbered-p next divergence)
-            (return-from outer next))))))
+            (return-from find-failed-task next))))))
     nil)            ; no threatened step found
 
 (defun find-checking-path (tree-node)
@@ -47,21 +56,7 @@ checking (i.e., top-down)."
                step orig-plan))
     (finally (return plan))))    
 
-(defun find-plan-step (task plan-tree &optional plan-tree-hash)
-  (labels ((tree-search (plan-tree)
-             (etypecase plan-tree
-               (primitive-tree-node
-                (when (equalp task (tree-node-task plan-tree))
-                  plan-tree))
-               (complex-tree-node
-                (iter (for tree-node in (complex-tree-node-children plan-tree))
-                  (as result = (tree-search tree-node))
-                  (when result (return-from find-plan-step result)))))))
-    (or
-     (if plan-tree-hash
-         (shop2::find-task-in-tree task plan-tree-hash)
-         (tree-search plan-tree))
-     (error "No tree node for task ~S in ~S" task plan-tree))))
+
 
 (defun clobbered-p (tree-node divergence)
   (let ((causal-links (tree-node-dependencies tree-node)))

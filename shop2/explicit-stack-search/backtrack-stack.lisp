@@ -100,6 +100,17 @@ classes."))
     ))
   )
 
+(defclass record-expansion (stack-entry)
+  ((tree-node
+    :initarg :tree-node
+    :reader tree-node
+    ))
+  (:documentation "Record the expansion of a TASK into an EXPANDED-TASK.
+What this means is that we are recording the match of the TASK as a
+template against a standardized EXPANDED-TASK from the plan library.")
+  )
+
+
 
 
 ;;;---------------------------------------------------------------------------
@@ -146,6 +157,11 @@ classes."))
         (current-task state) (current-task entry)
         (alternatives state) (alternatives entry)))
 
+
+(defmethod do-backtrack ((entry record-expansion) (state search-state))
+  (setf (gethash (tree-node entry) (plan-tree-lookup state)) nil)
+  (setf (plan-tree:tree-node-expanded-task (tree-node entry)) nil)
+  (values))
 
 
 ;;;---------------------------------------------------------------------------
@@ -194,3 +210,5 @@ classes."))
                  :parent parent
                  :child child))
 
+(defun make-record-expansion (task-node)
+  (make-instance 'record-expansion :tree-node task-node))
