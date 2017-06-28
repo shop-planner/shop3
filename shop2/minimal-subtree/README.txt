@@ -115,6 +115,29 @@ and justifies the inclusion of the child.  So we revise:
                                     
 #+END_SRC
 
+* Test problems
+
+We build a plan as shown in 
+#+CAPTION: Test plan subtree
+[[file:figures/test-shop2-plan.pdf]]
+
+From this, given that the initial state establishes =C= and =D=, we
+can run the following test-cases:
+1. After =!OP1=, clobber =B=.  =!OP2= should be marked as first failed
+   (and not =TASK2=).
+2. After =!OP2=, clobber =B=.  =!OP3= should now be marked as the
+   first failed.
+3. Fencepost case: clobber =C= after /no/ actions.  Should cause
+   =!OP1= to fail.
+4. After =OP3=, add =C=, should cause =OP4= to fail.
+5. After =OP4=, add =C=, should cause =OP5= to fail.
+6. After =OP1=, delete =A=, should cause =TASK3= node to fail.
+7. After =OP2=, delete =A=, should cause =TASK2= node to fail.
+8. After =OP2=, add =D=, should cause =TASK5= node to fail.
+
+All of these pass in hand-tests.  Need to automate these tests.
+
+
 * Replanning
 Replanning loop will run as follows, given =FAILED-TASK=:
 #+BEGIN_SRC common-lisp
@@ -144,4 +167,47 @@ A possibility would be to use the causal links that are complete, but
 unsound, as a /prefilter/, and as part of the plan repair routine,
 check to see if there's a real plan failure, or a false positive.
 
+* Sound and complete causal links
 
+I propose the following limitation on the domain language in order to
+achieve sound and complete causal links:
+
+1. Typed STRIPS dialect of PDDL for the primitives;
+2. Conjunctive preconditions for the methods, no SHOP2 special
+   language features, just preconditions whose variables are either
+   from the task parameters or that are in the subtask parameter
+   list.
+3. All tasks should be ground when added to the plan.  That is, all
+   task parameters should be ground before the preconditions are
+   checked.
+
+** Design notes
+
+What we want to achieve is that when a task fails, we can
+unambiguously specify where to begin replanning.
+
+So, consider a primitive (STRIPS PDDL task): since the task is ground
+when it's instantiated, there will be no unbound variables in the
+preconditions.  This means that the above techniques for computing
+causal links will be sound and complete -- it is not possible to
+replan the primitive operator without replanning the parent method
+that introduced it into the plan.
+
+The method preconditions are more problematic.  We must allow method
+preconditions with unbound variables, or we cannot have plans that
+feature a choice of variable bindings anywhere.  But this means that
+if we start replanning from a method's parents, we could have missed
+an opportunity to just replan the method (by re-binding variables for
+its children).  That would make this incomplete (we fail to detect
+that there's a replanning opportunity at the method).  Alternatively,
+if we start replanning from the method, we could be unsound: it's
+possible that the method itself hasn't really failed.
+
+One possibility that is messy, but would be sound and complete, would
+be to treat preconditions with bound variables different from
+preconditions with unbound variables.  These would be two different
+"colors" of preconditions.  The preconditions for bound variables
+would work as for operator preconditions: if they fail, then the
+parent task must be replanned.  But if preconditions for *unbound*
+variables fail, then the task node itself should be replanned
+(attempted, anyway).
