@@ -22,8 +22,10 @@
            #:make-ordered-tree-node
            #:ordered-tree-node
            #:make-dependency
+           ;; finders
            #:find-plan-step
            #:find-task-in-tree
+           #:find-tree-node-if
            ))
 
 (in-package :plan-tree)
@@ -67,7 +69,13 @@
 
 (defstruct (unordered-tree-node (:include pseudo-node)))
 
+;;; FIXME: this could probably be expanded to also emit the
+;;; PRINT-OBJECT method header, instead of just the code that goes in
+;;; it.
 (defmacro print-unreadably ((&rest args) &body body)
+  "This macro is for defining a method for printing un-readably, and
+deferring to the built-in method when trying to print readably.
+Particularly useful for structures, but could be generally applicable."
   `(if *print-readably*
        (call-next-method)
        (print-unreadable-object ,args
@@ -154,3 +162,15 @@
               (tree-search plan-tree)
               (error "No plan tree node for task ~S" task))))
           (t (error "Must pass etiher hash-table or plan-tree to FIND-TASK-IN-TREE.")))))
+
+(defun find-tree-node-if (function plan-tree)
+  (labels ((tree-search (plan-tree)
+             (if (funcall function plan-tree)
+                 plan-tree
+                 (etypecase plan-tree
+                   (primitive-tree-node nil)
+                   (complex-tree-node
+                    (iter (for tree-node in (complex-tree-node-children plan-tree))
+                      (as result = (tree-search tree-node))
+                      (when result (return-from find-tree-node-if result))))))))
+    (tree-search plan-tree)))
