@@ -167,31 +167,158 @@ A possibility would be to use the causal links that are complete, but
 unsound, as a /prefilter/, and as part of the plan repair routine,
 check to see if there's a real plan failure, or a false positive.
 
+* Definition of replanning
+
+Our definition of replanning must specify conditions for successful
+execution of an HTN plan under disturbances.  A non-trivial definition
+must explain when a repaired plan does and does not successfully
+satisfy the top level task specification.
+
+# FIXME: add formal definition of successful execution.
+
 * Sound and complete causal links
 
-I propose the following limitation on the domain language in order to
-achieve sound and complete causal links:
+This is a revision of the earlier version.  Here I introduce a very
+restricted language, and later we extend it....
+
+** "STRIPS SHOP2"
+
+The STRIPS dialect of SHOP2 is as follows:
+
+1.  Primitives are PDDL typed STRIPS operators (i.e., equivalent to
+   PDDL requirements of =:typing :negative-preconditions=).
+
+2.  The method grammar is as follows (done in the style of the PDDL
+   2.1 grammar):
+
+#+BEGIN_EXAMPLE
+<method> :: (:method <method-task>
+             :method-name <symbol>
+             :precondition <GD>
+             :task-net <task-net>)
+
+<method-task> ::= (<task-symbol> <task-arg>*)
+<task-arg> ::= <name> | [<variable> - <type>]
+<task-net> ::= ([:ordered]? <task-net-component>+) |
+               (:unordered <task-net-component>+)
+<task-net-component> ::= (<task-symbol> <method-task-arg>*)
+<method-task-arg> ::= <term>
+
+#+END_EXAMPLE
+=<GD>= and =<typed list (variable)>= are as defined in the PDDL 2.1
+grammar.  =<task-symbol>= is the same as PDDL 2.1's =<action-symbol>=,
+however additionally each =<task-symbol>= is classified as either
+/primitive/ or /complex/.  =<method-task-args>= and arguments in
+preconditions, if variables, must be elements of the parameter list.
+=<method-name>= is also equivalent to =<action-symbol>=: it designates
+a unique method for achieving the =<task-spec>=.
+
+This is equivalent to the following limitations, which ensure sound
+and complete causal links:
 
 1. Typed STRIPS dialect of PDDL for the primitives;
 2. Conjunctive preconditions for the methods, no SHOP2 special
-   language features, just preconditions whose variables are either
-   from the task parameters or that are in the subtask parameter
-   list.
-3. All tasks should be ground when added to the plan.  That is, all
+   language features, just preconditions whose variables are 
+   from the task parameters.
+3. All tasks will be ground when added to the plan.  That is, all
    task parameters should be ground before the preconditions are
    checked.
 
+*** Replanning
+
+We find the first task in the unexecuted suffix of the plan that has a
+causal link that is clobbered by one of the
+/discrepancies/[fn:discrepancies].  We refer to this as the /failed
+task/.  Replanning will be initiated at the parent of the failed task,
+if the failed task is a primitive task.  Replanning will be initiated
+at the task itself, if the failed task is a complex task.
+
+The rationale for the above is that primitive tasks cannot be
+replanned.  There is only one way that they can be executed, and if
+their preconditions are clobbered, they are not executable.  Ergo, the
+first opportunity to replan is at the parent of the failed primitive
+task.
+
+In contrast, it /is/ possible to replan a complex task since there can
+be multiple different methods for the same task.  Ergo, replanning
+begins at the failed task, when the failed task is complex.
+
+*** Soundness and completeness
+
+With respect to the above definition of replanning, our methods of
+identifying failed tasks are sound and complete.
+
+# FIXME: add proof sketch
+
+*** Remark
+
+One alternative way of specifying this dialect would be to permit
+tasks in the task network to have unbound variables, but still dictate
+that their values would have to be assigned before the tasks are added
+to the plan.  In this case it would be possible to have /some/ choice
+in how a method would be instantiated, but any such method /schema/
+would be equivalent to some finite (but possibly large) set of ground
+schemata.  In this case the above replanning approach would still be
+correct, because it wouldn't be possible to change the variable
+bindings for any subtask without replanning its parent task.  This
+might be a more congenial way to specify "STRIPS SHOP2."
+
+** "STRIPS+ SHOP2"
+
+The above dialect is extremely limited.  Unless we allow methods to
+introduce variable bindings for their task networks, we cannot have
+planning problems that feature a choice of variable bindings anywhere.
+
+So we enhance the method grammar as follows:
+
+#+BEGIN_EXAMPLE
+<method> :: (:method <method-task>
+             :method-name <symbol>
+             :variables <typed-list (variable)>
+             :precondition <GD>
+             :task-net <task-net>)
+#+END_EXAMPLE
+
+We also relax the constraint that variables appearing in the task-net
+or the preconditions must be method task parameters.  This makes it
+possible for a method to use its preconditions to bind the variables
+that do not appear in its parameters, and adds a new branching factor
+to the planning process.
+
+*** Soundness and completeness
+
+The above extension does not change the soundness or completeness of
+the causal link and failed task computation.  Note that any
+newly-introduced variables in a method expansion must be bound by the
+preconditions of the method in which they are introduced.
+Accordingly, the child tasks introduced by the method expansion will
+still be ground.  If preconditions that do /not/ bind new variables
+are clobbered, then the above discussion establishes the need to
+replan, as in STRIPS PDDL.  The only difference is that there are now
+preconditions that bind variables for child tasks.  If those
+preconditions are violated, the task introducing them will be marked
+as failing, and must be replanned.  But this is correct, because it is
+possible that the task has alternative bindings for these variables,
+or that there are alternative methods for the task.  Note that 
+a method schema with the new, expanded syntax is still equivalent
+to a finite collection of ground methods.
+
+** ADL SHOP2
+
 ** Design notes
 
-What we want to achieve is that when a task fails, we can
-unambiguously specify where to begin replanning.
+[*Note:* These are not up-to-date; the above discussion has been
+significantly rewritten without a revision of the design notes.]
 
-So, consider a primitive (STRIPS PDDL task): since the task is ground
-when it's instantiated, there will be no unbound variables in the
-preconditions.  This means that the above techniques for computing
-causal links will be sound and complete -- it is not possible to
-replan the primitive operator without replanning the parent method
-that introduced it into the plan.
+What we want to achieve is that when a task fails, we can
+unambiguously specify where to begin replanning.  In this dialect, 
+
+In the above dialect, every task is ground when it's instantiated,
+there will be no unbound variables in the preconditions.  This means
+that the above techniques for computing causal links will be sound and
+complete: It is not possible to replan a primitive operator
+without replanning the parent method that introduced it into the
+plan.  Similarly, 
 
 The method preconditions are more problematic.  We must allow method
 preconditions with unbound variables, or we cannot have plans that
@@ -211,3 +338,7 @@ would work as for operator preconditions: if they fail, then the
 parent task must be replanned.  But if preconditions for *unbound*
 variables fail, then the task node itself should be replanned
 (attempted, anyway).
+
+* Footnotes
+
+[fn:discrepancies] The term /discrepancy/ must be defined.
