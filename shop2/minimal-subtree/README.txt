@@ -305,6 +305,57 @@ to a finite collection of ground methods.
 
 ** ADL SHOP2
 
+*** Definition
+
+The ADL dialect of SHOP2 is defined as a SHOP2 dialect that uses as
+operators PDDL actions based on the ADL dialect, and permits ADL-style
+quantification in method preconditions.  So we add to the method
+preconditions grammar the ability to use =forall= and =exists=.
+
+*** Soundness and completeness via grounding
+
+One argument is that over finite domains we can simply ground the
+preconditions to compute the causal links.  =forall= clauses turn to
+conjunctions and =exists= to disjunctions.  At least in theory, we
+could turn the preconditions into CNF and record, for each clause, the
+disjunct that we choose.  This is computable, but would be exponential
+in the worst case (since the precondition problem would be SAT, and
+thus NP hard).  OTOH, checking these preconditions is already
+NP-hard, so maybe that's ok.
+
+*** Lifted approach
+
+More interestingly, since we have a lifted planner, can we compute
+these computations in a lifted form?  Consider the operators:
+
+- AND :: combine the causal links for the conjuncts;
+- OR :: take the causal links from one conjunct or another;
+- forall :: over a fixed, finite domain, as in PDDL, this is
+            effectively a macro for a conjunction.
+- exists :: over a fixed, finite domain, this is effectively a
+            disjunction.
+- imply :: this is equivalent to a disjunction.
+
+Note that the connectives here, where there is ambiguity, should be
+assumed to act like /PDDL/ connectives, not SHOP2 ones.  SHOP2's
+quantification is harder to deal with, because we can't look at the
+syntax and from it decide when a variable will be bound.
+
+**** TODO Check SHOP2 disjunction implementation
+Does SHOP2 find only one solution for a disjunction, or multiple ones?
+It's not clear that this actually matters, since either the
+disjunction is quantified (in which case the variables must be bound
+when the disjunction is checked), or the quantifier is inside the
+disjunction, as a disjunct, in which case we can ground per =forall=.
+
+**** TODO Check SHOP2 =forall= implementation
+
+Need to look into modifying it to accumulate causal links as if a
+conjunction.
+
+**** TODO Check SHOP2 =exists= implementation
+
+
 ** Design notes
 
 [*Note:* These are not up-to-date; the above discussion has been
