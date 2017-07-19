@@ -235,17 +235,36 @@
   (fiveam:with-fixture quantified-preconditions-fixtures ()
     (fiveam:is
      (equal
-      (pddl-action-precondition act)
-      '(forall (?s)
-              (:of-type segment ?s)
-              (imply
-               (and
-                (is-blocked ?s ?t ?s2 ?d2)
-                (not (= ?s ?s1)))
-               (not (occupied ?s))))))
+      '(and
+        (enforce (and (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2)))
+        (forall (?s)
+         (segment ?s)
+         (imply
+          (and
+           (is-blocked ?s ?t ?s2 ?d2)
+           (not (= ?s ?s1)))
+          (not (occupied ?s)))))
+      (pddl-action-precondition act)))
 
     (fiveam:is 
-     (equal (pddl-action-precondition
+     (equal '(and
+              (enforce (and (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2)))
+              (and
+               (has-type ?a ?t)
+               (is-moving ?a)
+               (not (= ?s1 ?s2))
+               (facing ?a ?d1)
+               (can-move ?s1 ?s2 ?d1)
+               (move-dir ?s1 ?s2 ?d2)
+               (at-segment ?a ?s1)
+               (forall (?s)
+                (segment ?s)
+                (imply
+                 (and
+                  (is-blocked ?s ?t ?s2 ?d2)
+                  (not (= ?s ?s1)))
+                 (not (occupied ?s))))))
+            (pddl-action-precondition
              (process-action domain
                              '(:action move
                                :parameters
@@ -264,25 +283,23 @@
                                   (and
                                    (is-blocked ?s ?t ?s2 ?d2)
                                    (not (= ?s ?s1)))
-                                  (not (occupied ?s))))))))
-            '(and
-              (has-type ?a ?t)
-              (is-moving ?a)
-              (not (= ?s1 ?s2))
-              (facing ?a ?d1)
-              (can-move ?s1 ?s2 ?d1)
-              (move-dir ?s1 ?s2 ?d2)
-              (at-segment ?a ?s1)
-              (forall (?s)
-               (:of-type segment ?s)
+                                  (not (occupied ?s))))))))))
+
+    (fiveam:is 
+     (equal '(and
+              (enforce
+               (and (airplane ?a) (airplanetype ?t) (direction ?d1)
+                (segment ?s1) (segment ?s2) (direction ?d2)))
+              (forall (?s ?a2)
+               (and
+                (segment ?s)
+                ( airplane ?a2))
                (imply
                 (and
                  (is-blocked ?s ?t ?s2 ?d2)
                  (not (= ?s ?s1)))
-                (not (occupied ?s)))))))
-
-    (fiveam:is 
-     (equal (pddl-action-precondition
+                (not (at ?a2 ?s)))))
+            (pddl-action-precondition
              (process-action domain
                              '(:action move
                                :parameters
@@ -293,19 +310,31 @@
                                  (and
                                   (is-blocked ?s ?t ?s2 ?d2)
                                   (not (= ?s ?s1)))
-                                 (not (at ?a2 ?s)))))))
-            '(forall (?s ?a2)
-              (and
-               (:of-type segment ?s)
-               (:of-type airplane ?a2))
-              (imply
-               (and
-                (is-blocked ?s ?t ?s2 ?d2)
-                (not (= ?s ?s1)))
-               (not (at ?a2 ?s))))))
+                                 (not (at ?a2 ?s)))))))))
 
     (fiveam:is 
-     (equal (pddl-action-precondition
+     (equal '(and
+              (enforce
+               (and (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2)))
+              (and
+               (has-type ?a ?t)
+               (is-moving ?a)
+               (not (= ?s1 ?s2))
+               (facing ?a ?d1)
+               (can-move ?s1 ?s2 ?d1)
+               (move-dir ?s1 ?s2 ?d2)
+               (at-segment ?a ?s1)
+               (not
+                (exists (?a1)
+                 (airplane ?a1)
+                 (and  (not (= ?a1 ?a))
+                  (blocked ?s2 ?a1))))
+               (forall (?s)
+                (segment ?s)
+                (imply (and (is-blocked ?s ?t ?s2 ?d2)
+                        (not (= ?s ?s1)))
+                 (not (occupied ?s))))))
+            (pddl-action-precondition
              (process-action domain
                              '(:action move
                                :parameters
@@ -349,25 +378,7 @@
                                 (when   (not (= ?d1 ?d2))
                                   (facing ?a ?d2))
                                 )
-                               )))
-            '(and
-              (has-type ?a ?t)
-              (is-moving ?a)
-              (not (= ?s1 ?s2))
-              (facing ?a ?d1)
-              (can-move ?s1 ?s2 ?d1)
-              (move-dir ?s1 ?s2 ?d2)
-              (at-segment ?a ?s1)
-              (not
-               (exists (?a1)
-                (:of-type airplane ?a1)
-                (and  (not (= ?a1 ?a))
-                      (blocked ?s2 ?a1))))
-              (forall (?s)
-               (:of-type segment ?s)
-               (imply (and (is-blocked ?s ?t ?s2 ?d2)
-                           (not (= ?s ?s1)))
-                (not (occupied ?s)))))))))
+                               )))))))
 
 (fiveam:def-fixture simple-when-fixtures ()
   (progn
@@ -446,17 +457,17 @@
                                                                      (at bag1 new-jersey)
                                                                      (at bag2 new-jersey)
                                                                      (at bag3 new-jersey)
-                                                                     (:of-type luggage bag1)
-                                                                     (:of-type luggage bag2)
-                                                                     (:of-type luggage bag3)))))
+                                                                     (luggage bag1)
+                                                                     (luggage bag2)
+                                                                     (luggage bag3)))))
           (sort (state-atoms state) 'prop-sorter)))
       '((at bag1 new-jersey)
         (at bag2 new-jersey)
         (at bag3 new-jersey)
         (at robot new-jersey)
-        (:of-type luggage bag1)
-        (:of-type luggage bag2)
-        (:of-type luggage bag3))))
+        (luggage bag1)
+        (luggage bag2)
+        (luggage bag3))))
 
     (fiveam:is 
      (equal
@@ -465,9 +476,9 @@
                                                                      (at bag1 new-jersey)
                                                                      (at bag2 new-jersey)
                                                                      (at bag3 new-jersey)
-                                                                     (:of-type luggage bag1)
-                                                                     (:of-type luggage bag2)
-                                                                     (:of-type luggage bag3)))))
+                                                                     (luggage bag1)
+                                                                     (luggage bag2)
+                                                                     (luggage bag3)))))
           (apply-action state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
@@ -477,9 +488,9 @@
         (at bag2 new-jersey)
         (at bag3 new-jersey)
         (at robot new-york)
-        (:of-type luggage bag1)
-        (:of-type luggage bag2)
-        (:of-type luggage bag3))))
+        (luggage bag1)
+        (luggage bag2)
+        (luggage bag3))))
 
     (fiveam:is 
      (equal
@@ -489,9 +500,9 @@
                                                                      (at bag2 new-jersey)
                                                                      (at bag3 new-jersey)
                                                                      (carrying robot bag1)
-                                                                     (:of-type luggage bag1)
-                                                                     (:of-type luggage bag2)
-                                                                     (:of-type luggage bag3)))))
+                                                                     (luggage bag1)
+                                                                     (luggage bag2)
+                                                                     (luggage bag3)))))
           (apply-action state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
@@ -502,9 +513,9 @@
         (at bag3 new-jersey)
         (at robot new-york)
         (carrying robot bag1)
-        (:of-type luggage bag1)
-        (:of-type luggage bag2)
-        (:of-type luggage bag3))))
+        (luggage bag1)
+        (luggage bag2)
+        (luggage bag3))))
 
     (fiveam:is 
      (equal
@@ -515,9 +526,9 @@
                                                                      (at bag3 new-jersey)
                                                                      (carrying robot bag1)
                                                                      (carrying robot bag3)
-                                                                     (:of-type luggage bag1)
-                                                                     (:of-type luggage bag2)
-                                                                     (:of-type luggage bag3)))))
+                                                                     (luggage bag1)
+                                                                     (luggage bag2)
+                                                                     (luggage bag3)))))
           (apply-action state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
@@ -529,9 +540,9 @@
         (at robot new-york)
         (carrying robot bag1)
         (carrying robot bag3)
-        (:of-type luggage bag1)
-        (:of-type luggage bag2)
-        (:of-type luggage bag3))))))
+        (luggage bag1)
+        (luggage bag2)
+        (luggage bag3))))))
 
 (in-package :shop2-user)
 
