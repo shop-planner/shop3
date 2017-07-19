@@ -507,6 +507,7 @@ breaks usage of *load-truename* by moving the FASLs.")
     (remf options :type)
     (remf options :redefine-ok)
     (remf options :noset)
+    (setf redefine-ok (or redefine-ok *define-silently*))
     ;; yuck: this should really be rewritten as a function.
     `(let ((*defdomain-pathname* ,(or *compile-file-truename*
                                       *load-truename*)))
