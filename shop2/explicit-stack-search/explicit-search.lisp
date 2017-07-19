@@ -194,7 +194,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
              (setf (plan-tree:tree-node-expanded-task node)
                    (apply-substitution (plan-tree:tree-node-expanded-task node) bindings)))
            (recurse (node)
-             (mapc 'apply-bindings-and-recurse (plan-tree:complex-tree-node-children node))))
+             (dolist (c (plan-tree:complex-tree-node-children node))
+               (apply-bindings-and-recurse c))))
     
     (apply-bindings-and-recurse plan-tree)))
 
