@@ -11,10 +11,10 @@
 ;;; the License.
 ;;;
 ;;; The Original Code is SHOP2.  ASDF system definitions developed by
-;;; Robert P. Goldman, John Maraist.  Portions created by Drs. Goldman
-;;; and Maraist are Copyright (C) 2004-2007 SIFT, LLC.  These
-;;; additions and modifications are also available under the
-;;; MPL/GPL/LGPL licensing terms.
+;;; Robert P. Goldman, John Maraist, Ugur Kuter, and other SIFT
+;;; employees.  Portions created by SIFT employees are Copyright (C)
+;;; 2004-2017 SIFT, LLC.  These additions and modifications are also
+;;; available under the MPL/GPL/LGPL licensing terms.
 ;;;
 ;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
@@ -31,7 +31,7 @@
 ;;; or the LGPL.
 ;;; ----------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
+;;; Smart Information Flow Technologies Copyright 2006-2017 Unpublished work
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
 ;;;
@@ -97,9 +97,19 @@
                              (:file "explicit-search")))
        ;; this is for the original SHOP2 plan trees.
        (:module tree
-                :pathname "planning-tree/"
-                :components ((:file "tree-accessors")
-                             (:file "tree-reductions")))
+        :pathname "planning-tree/"
+        :components ((:file "tree-accessors")
+                     (:file "tree-reductions")))
+       ;; FIXME: depends on explicit-stack-search only, I believe, but
+       ;; I don't have the energy to replace the :SERIAL t spec for
+       ;; this system with something that is more refined.
+       (:module "minimal-subtree"
+        :description "When there's an upset in plan execution, find a
+minimal affected subtree."
+         :serial t
+         :components ((:file "package")
+                      (:file "decls")
+                      (:file "minimal-subtree")))
        (:file "shop2"
               :perform (load-op :before (op c)
                                (declare (ignorable op c))
@@ -145,15 +155,7 @@
                (:file "graph-plan-tree"))
   )
 
-(defsystem :shop2/minimal-subtree
-  :description "When there's an upset in plan execution, find a
-minimal affected subtree."
-  :depends-on ("shop2") ; initially an add-on, later it will be part of shop2
-  :pathname "minimal-subtree/"
-  :serial t
-  :components ((:file "package")
-               (:file "decls")
-               (:file "minimal-subtree")))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Testing
@@ -198,6 +200,7 @@ instead of basic SHOP2."
     (call-next-method)))
 
 
+
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
@@ -212,6 +215,8 @@ instead of basic SHOP2."
                  (logistics-tests . :shop2-user)
                  (singleton-tests . :shop2-user)
                  (misc-tests . :shop2-user)
+                 (minimal-subtree-tests . :shop2-user)
+                 (enhanced-plan-tree . :shop2-user)
                  )
     :num-checks 265
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr")))
@@ -308,8 +313,16 @@ instead of basic SHOP2."
                                                                    "Log_ran_problems_45"
                                                                    "Log_ran_problems_50"
                                                                    "Log_ran_problems_55"
-                                                                   "Log_ran_problems_60"))
-                                       ))))
+                                                                   "Log_ran_problems_60"))))
+                 (:module "minimal-subtree"
+                          :components ((:file "tests")))))
+
+(defmethod asdf::num-tests :around ((obj (eql (find-system "shop2/test"))))
+  (if (symbol-value (intern (symbol-name '#:*test-explicit-state-search*) :shop2))
+      ;; there are some tests only for explicit state search...
+      (+ 10 (call-next-method))
+      (call-next-method)))
+
 
 #+ecl
 (defmethod perform :before ((op test-op)
