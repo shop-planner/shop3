@@ -379,7 +379,6 @@ shop2/examples/logistic/logistic/Log_ran_problems_55.lisp -text
 shop2/examples/logistic/logistic/Log_ran_problems_60.lisp -text
 shop2/examples/logistic/logistic/logistic.lisp -text
 shop2/examples/logistic/logistic/run.lisp -text
-shop2/examples/logistic/nst-logistic.lisp -text
 shop2/examples/logistic/plans.lisp -text
 shop2/examples/logistic/run.lisp -text
 shop2/examples/logistic/tests.lisp -text
