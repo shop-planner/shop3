@@ -131,6 +131,9 @@
              #:bagof
              #:protect
 
+             ;; top type for PDDL type hierarchy
+             #:object
+
              #:defproblem
              #:make-problem
              #:delete-problem

@@ -77,8 +77,24 @@
                 :effect (and (not (at ?v ?from))
                           (at ?v ?to)
                          (not (fuel ?v ?fbefore))
-                         (fuel ?v ?fafter)))))
-    (&body)))
+                         (fuel ?v ?fafter))))
+        (untyped-action-def '(:action drive
+                :parameters (?v - vehicle
+                             ?from ?to - location
+                             ?fbefore ?fafter)
+                :precondition (and (at ?v ?from)
+                               (accessible ?v ?from ?to)
+                               (fuel ?v ?fbefore)
+                               (next ?fbefore ?fafter))
+                :effect (and (not (at ?v ?from))
+                          (at ?v ?to)
+                         (not (fuel ?v ?fbefore))
+                         (fuel ?v ?fafter))))
+        (typelist '(?v - vehicle
+                             ?from ?to - location
+                             ?fbefore ?fafter)))
+    (locally (declare (ignorable typelist action-def untyped-action-def))
+      (&body))))
 
 (defmacro nst-def-fixtures (name options &rest defs)
   (unless (null options)
@@ -87,10 +103,22 @@
        (let* ,defs
          (&body))))
 
-(nst-def-fixtures action-test-fixtures ()
-  (domain (make-instance 'simple-pddl-domain
-            :name (gentemp (symbol-name '#:domain))))
-  (action (process-action domain action-def)))
+(fiveam:test type-list-translation
+  (fiveam:with-fixture simple-pddl-actions ()
+    (fiveam:is
+     (equalp (list '(?v ?from ?to ?fbefore ?fafter)
+                   '(vehicle location location object object))
+             (multiple-value-list
+              (typed-list-vars typelist))))))
+
+(fiveam:def-fixture action-test-fixtures ()
+  (let* ((*define-silently* t)
+         (domain (make-instance 'simple-pddl-domain
+                                :name (gentemp (symbol-name '#:domain))))
+         (action (process-action domain action-def))
+         (untyped-action (process-action domain untyped-action-def)))
+    (locally (declare (ignorable action untyped-action))
+      (&body))))
 
 (fiveam:test pddl-actions
   (fiveam:with-fixture simple-pddl-actions ()
@@ -99,9 +127,24 @@
                         (pddl-action-head action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
-      (fiveam:is (equal '(and (at ?v ?from) (accessible ?v ?from ?to)
-                          (fuel ?v ?fbefore) (next ?fbefore ?fafter))
-                        (pddl-action-precondition action)))))
+      (fiveam:is (equal '(and
+                          (enforce (and (vehicle ?v)
+                                    (location ?from)
+                                    (location ?to)
+                                    (fuel-level ?fbefore)
+                                    (fuel-level ?fafter)))
+                          (and (at ?v ?from) (accessible ?v ?from ?to)
+                           (fuel ?v ?fbefore) (next ?fbefore ?fafter)))
+                        (pddl-action-precondition action)))
+      (fiveam:is (equal '(and
+                          (enforce (and (vehicle ?v)
+                                    (location ?from)
+                                    (location ?to)
+                                    (object ?fbefore)
+                                    (object ?fafter)))
+                          (and (at ?v ?from) (accessible ?v ?from ?to)
+                           (fuel ?v ?fbefore) (next ?fbefore ?fafter)))
+                        (pddl-action-precondition untyped-action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
       (fiveam:is (equal '(and (not (at ?v ?from)) (at ?v ?to)
@@ -109,36 +152,38 @@
                         (pddl-action-effect action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
-      (fiveam:is (eql (pddl-action-cost-fun action) 1.0))))
-  (fiveam:is
-   (equal
-    '(PDDL-ACTION (!WALK ?FROM ?TO) (AT ROBOT ?FROM)
-      (AND (NOT (AT ROBOT ?FROM)) (AT ROBOT ?TO))
-      1.0)
-    (progn
-      (defdomain (#.(gentemp (symbol-name '#:domain))
-                    :type simple-pddl-domain
-                    :redefine-ok t)
-         ((:action walk
-                   :parameters (?from ?to - loc)
-                   :precondition (at robot ?from)
-                   :effect (and (not (at robot ?from))
-                                (at robot ?to)))))
-      (operator *domain* '!walk)))))
+      (fiveam:is (eql (pddl-action-cost-fun action) 1.0))
+      (fiveam:is
+       (equal
+        '(PDDL-ACTION (!WALK ?FROM ?TO)
+          (and (enforce (and (loc ?from) (loc ?to))) (AT ROBOT ?FROM))
+          (AND (NOT (AT ROBOT ?FROM)) (AT ROBOT ?TO))
+          1.0)
+        (progn
+          (defdomain (#.(gentemp (symbol-name '#:domain))
+                        :type simple-pddl-domain
+                        :redefine-ok t)
+              ((:action walk
+                :parameters (?from ?to - loc)
+                :precondition (at robot ?from)
+                :effect (and (not (at robot ?from))
+                             (at robot ?to)))))
+          (operator *domain* '!walk)))))))
 
 
 
 (fiveam:def-fixture add-del-fixtures ()
   (progn
-    (defdomain (test-add-del-domain
-                     :type simple-pddl-domain
-                     :redefine-ok t)
-            ((:action walk
-                      :parameters (?from ?to - loc)
-                      :precondition (at robot ?from)
-                      :effect (and (not (at robot ?from))
-                                   (at robot ?to)))))
-    (&body)))
+    (let ((shop2:*define-silently* t))
+      (defdomain (test-add-del-domain
+                  :type simple-pddl-domain
+                  :redefine-ok t)
+          ((:action walk
+            :parameters (?from ?to - loc)
+            :precondition (at robot ?from)
+            :effect (and (not (at robot ?from))
+                         (at robot ?to)))))
+      (&body))))
 
 (fiveam:test add-del-tests
 
@@ -495,7 +540,7 @@
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
   (fiveam:is-true (funcall (if shop2::*test-explicit-state-search* 'find-plans-stack 'find-plans)
-                           'os-sequencedstrips-p5_1)))
+                           'os-sequencedstrips-p5_1 :verbose 0)))
 
 
 

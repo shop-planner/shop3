@@ -1,6 +1,5 @@
 ;; openstacks, strips version
 (in-package :shop2-user)
-(in-package :shop2-user)
 
 (defdomain (openstacks-sequencedstrips-ADL :type pddl-domain)
     (
@@ -16,7 +15,7 @@
 
 ;;     (:functions (total-cost) - number)
      
-     (:action !make-product
+     (:action make-product
       :parameters (?p - product)
       :precondition (and (not (made ?p))
                          (forall (?o - order)
@@ -24,7 +23,7 @@
                                         (started ?o))))
       :effect (made ?p))
 
-     (:action !start-order
+     (:action start-order
       :parameters (?o - order ?avail ?new-avail - count)
       :precondition (and (waiting ?o)
                          (stacks-avail ?avail)
@@ -35,7 +34,7 @@
                    (stacks-avail ?new-avail))
               )
 
-     (:action !ship-order
+     (:action ship-order
       :parameters (?o - order ?avail ?new-avail - count)
       :precondition (and (started ?o)
                          (forall (?p - product)
@@ -48,7 +47,7 @@
                    (stacks-avail ?new-avail))
               )
 
-     (:action !open-new-stack
+     (:action open-new-stack
       :parameters (?open ?new-open - count)
       :precondition (and (stacks-avail ?open)
                          (next-count ?open ?new-open))

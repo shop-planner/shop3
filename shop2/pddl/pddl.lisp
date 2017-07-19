@@ -182,13 +182,16 @@ with unconditional actions."
     (set-variable-property domain action-def)
     (multiple-value-bind (param-vars param-types)
         (typed-list-vars parameters)
-      (declare (ignore param-types))
       (let ((precond
-             (translate-precondition domain precondition))
+              (translate-precondition domain precondition))
+            (type-precond
+              `(enforce
+                (and 
+                 ,@(of-type-exprs param-vars param-types))))
             (eff
-             (translate-effect domain effect))
+              (translate-effect domain effect))
             (head (cons action-symbol param-vars)))
-        (make-pddl-action :head head :precondition precond
+        (make-pddl-action :head head :precondition `(and ,type-precond ,precond)
                           :effect eff :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
@@ -261,7 +264,7 @@ translated."
 (defun translate-pddl-quantifier (expression quantifier)
   "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation 
 into SHOP2 quantifier notation \(and adds some
-\(:of-type <type> <var>\) conditions\)."
+\(<type> <var>\) conditions\)."
   (labels ((iter (expr)
              (cond ((and (listp expr) (eq (first expr) quantifier))
                     (rewrite-quant expr))
@@ -288,7 +291,7 @@ and their types and generate a list of distinguished propositions
 we can use in preconditions."
   (loop for v in vars
         as type in types
-        collect `(:of-type ,type ,v)))
+        collect `(,type ,v)))
   
 
 ;;; this should be fixed to check to make sure everything in the
@@ -310,9 +313,9 @@ lists of variable names and type names."
           collect (first lst) into vars
           and do (setf lst (cdr lst))
                  (incf counter)
-        ;; FIXME: check to make sure counter == 0 here. Otherwise there are
-        ;; untyped variables 
-        finally (return (values vars types))))
+        finally (return (values vars
+                                (if (= counter 0) types
+                                    (append types (make-list counter :initial-element (intern (symbol-name '#:object) :shop2))))))))
                             
 ;;;---------------------------------------------------------------------------
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
