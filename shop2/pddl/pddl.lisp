@@ -106,7 +106,14 @@ PDDL operator definitions.")
      ()
   )
 
-(defclass pddl-domain ( conditional-effects-mixin existential-precondition-mixin universal-precondition-mixin equality-mixin simple-pddl-domain )
+(defclass pddl-typing-mixin ()
+  ()
+  )
+
+
+(defclass pddl-domain ( conditional-effects-mixin existential-precondition-mixin universal-precondition-mixin equality-mixin
+                       pddl-typing-mixin
+                       simple-pddl-domain )
   ()
   (:documentation "A new class of SHOP2 domain that permits inclusion of
 PDDL operator definitions.  Right now, this approximates what happens if you have
@@ -133,6 +140,18 @@ later be compiled into find-satisfiers or something."
   (let ((equality-axiom '(:- (= ?x ?x) nil)))
     (set-variable-property domain equality-axiom)
     (call-next-method domain (cons equality-axiom items))))
+
+(defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
+  "Add the axiom that treats equality as a built-in predicate.  This should 
+later be compiled into find-satisfiers or something."
+  (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
+                               ((= ?x (nil)))
+                               ((= ?x (?c . ?rest))
+                                (enforce ?c "Parameter unbound or ill-typed: ~{ ~a ~}" ?c)
+                                (%enforce-type-constraints ?rest))))))
+    (set-variable-property domain enforcement-axioms)
+    (call-next-method domain (append enforcement-axioms items))))
+
 
 ;;; parsing PDDL action items --- for now we treat them just as
 ;;; operators, but this may get us in trouble! [2006/07/28:rpg]
@@ -185,13 +204,16 @@ with unconditional actions."
       (let ((precond
               (translate-precondition domain precondition))
             (type-precond
-              `(enforce
-                (and 
-                 ,@(of-type-exprs param-vars param-types))))
+              `(%enforce-type-constraints
+                ,@(of-type-exprs param-vars param-types)))
             (eff
               (translate-effect domain effect))
             (head (cons action-symbol param-vars)))
-        (make-pddl-action :head head :precondition `(and ,type-precond ,precond)
+        (make-pddl-action :head head
+                          :precondition
+                          (if (typep domain 'pddl-typing-mixin)
+                              `(and ,type-precond ,precond)
+                              precond)
                           :effect eff :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
