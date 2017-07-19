@@ -57,11 +57,6 @@
                    )
               )
 
-     (:method (do-orders)
-       ((:goal (and . ?goals)))
-       ((:ordered (assert-goals ?goals)
-                  (do-goals))))
-
      (:method (assert-goals nil)
        ()
        ())
@@ -72,13 +67,59 @@
                  (assert-goals ?goals))
       )
 
-     ;; Stub to check and make sure planning works at all...
-     (:method (do-goals)
+     (:method (plan)
+       ((:goal (and . ?goals)))
+       ((:ordered (assert-goals ?goals)
+                  (open-all-stacks)
+                  (plan-for-goals))))
+
+     (:method (open-all-stacks)
+       ((stacks-avail ?n)
+        (next-count ?n ?n1))
+       (:ordered (!open-new-stack ?n ?n1)
+                 (open-all-stacks))
+       ()
+       ()
+       )
+
+     (:method (plan-for-goals)
        ((goal (shipped ?order))
         (not (shipped ?order)))
-       (:ordered (do-order ?order) (do-goals))
+      (:ordered (one-step) (plan-for-goals))
+      ()
+      ((verify-orders)))
+
+     (:method (one-step)
+       ;; prefer to ship an order, if possible...
+       ((goal (shipped ?o))
+        (not (shipped ?o))
+        (forall (?p) (includes ?o ?p) (made ?p)))
+       ((ship-products ?o))
+       (:sort-by ?h
+                 (and (goal (shipped ?o))
+                      (not (shipped ?o))
+                      (includes ?o ?p)
+                      (not (made ?p))
+                      (ship-cost-heuristic ?p ?h)))
+       ((make-product ?p))
+       done
        ()
-       ((verify-orders)))
+       ()
+       )
+
+     (:method (make-product ?p)
+       ()
+       (:ordered (start-orders ?p)
+                 (!make-product ?p)))
+
+     (:method (start-orders ?p)
+       ((includes ?o ?p)
+        (not (started ?o)))
+       ((start-an-order ?o)
+        (start-orders ?p))
+       done
+       ()
+       ())
 
      (:method (verify-orders)
        ((goal (shipped ?order))
@@ -87,30 +128,10 @@
        ()
        ())
 
-     (:method (do-order ?order)
-       ()
-       (:ordered (ensure-stack-available) (start-an-order ?order) (make-products ?order) (ship-products ?order)))
-
-     (:method (ensure-stack-available)
-       ((stacks-avail ?count)
-        (not (= ?count n0)))
-       ()
-       ((stacks-avail ?count)
-        (next-count ?count ?next))
-       (!open-new-stack ?count ?next))
-
      (:method (start-an-order ?order)
        ((stacks-avail ?next)
         (next-count ?count ?next))
        ((!start-order ?order ?next ?count)))
-
-     (:method (make-products ?order)
-       ((includes ?order ?product)
-        (not (made ?product)))
-       (!make-product ?product)
-       ;; done
-       ()
-       ())
 
      (:method (ship-products ?order)
        ((stacks-avail ?count)
@@ -124,6 +145,32 @@
      (:op (!!delete ?fact)
       :delete (?fact))
 
+     (:- (ship-cost-heuristic ?p ?h)
+         ((setof ?o (and (includes ?o ?p) (not (started ?o))) ?os)
+          (order-costs ?os ?h 0))
+         )
 
+     (:- (order-costs ?os ?h ?hin)
+         ((= ?os (?o . ?os1))
+          (order-cost ?o ?h1)
+          (assign ?h2 (+ ?h1 ?hin))
+          (order-costs ?os1 ?h ?h2))
+         ((= ?os nil)
+          (= ?h ?hin)))
+
+     (:- (order-cost ?o ?h)
+         ((started ?o)
+          (product-cost ?o ?pc)
+          (assign ?h (1+ ?pc)))
+         ((not (started ?o))
+          (product-cost ?o ?h)))
+
+     (:- (product-cost ?o ?c)
+         ((setof ?p
+                 (and (includes ?o ?p)
+                      (not (made ?p)))
+                 ?ps)
+          (assign ?c (length '?ps))))
      )
   )
+

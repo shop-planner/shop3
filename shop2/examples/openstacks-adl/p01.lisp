@@ -1,3 +1,4 @@
+(in-package :shop2-user)
 (defproblem os-sequencedstrips-p5_1 
   openstacks-sequencedstrips-ADL
   ((count n0)
@@ -47,6 +48,6 @@
      (shipped o5)
      )))
 
-  (do-orders)
+  (plan)
 
   )

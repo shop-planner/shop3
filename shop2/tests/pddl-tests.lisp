@@ -560,8 +560,6 @@
 
 (in-package :shop2-user)
 
-;;; this doesn't work yet because my methods are too stupid. [2017/07/19:rpg]
-#+ignore
 (fiveam:test pddl-planning
   (let ((shop2:*define-silently* t))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))

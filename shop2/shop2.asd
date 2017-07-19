@@ -218,7 +218,7 @@ instead of basic SHOP2."
                  (minimal-subtree-tests . :shop2-user)
                  (enhanced-plan-tree . :shop2-user)
                  )
-    :num-checks 267
+    :num-checks 268
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr")))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
