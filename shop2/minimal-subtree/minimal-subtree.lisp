@@ -9,6 +9,12 @@
                     executed divergence
                     :plan-tree-hash plan-tree-hash))
 
+;;; this is needed for SBCL, which interprets the ANSI spec about
+;;; standard method combination more strictly than others.
+(defmethod find-failed-task ((domain symbol) plan plan-tree
+                             executed divergence &key plan-tree-hash)
+  (error "Around method should avoid this primary method altogether."))
+
 ;;; Note: the current version of this file assumes that the primitive
 ;;; task s-expressions in PLAN and PLAN-TREE are EQ -- i.e., pointers
 ;;; to the same lists.  If you pull the plans out of SHOP2, that will
