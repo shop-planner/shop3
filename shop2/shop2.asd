@@ -317,7 +317,7 @@ instead of basic SHOP2."
                  (:module "minimal-subtree"
                           :components ((:file "tests")))))
 
-(defmethod asdf::num-tests :around ((obj (eql (find-system "shop2/test"))))
+(defmethod asdf::num-checks :around ((obj (eql (find-system "shop2/test"))))
   (if (symbol-value (intern (symbol-name '#:*test-explicit-state-search*) :shop2))
       ;; there are some tests only for explicit state search...
       (+ 10 (call-next-method))
