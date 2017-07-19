@@ -13,6 +13,7 @@
 ;;; standard method combination more strictly than others.
 (defmethod find-failed-task ((domain symbol) plan plan-tree
                              executed divergence &key plan-tree-hash)
+  (declare (ignorable domain plan plan-tree executed divergence plan-tree-hash))
   (error "Around method should avoid this primary method altogether."))
 
 ;;; Note: the current version of this file assumes that the primitive
