@@ -192,24 +192,26 @@
   (fiveam:with-fixture add-del-fixtures ()
     (fiveam:is
      (equal
-      (let ((*state-encoding* :list))
-        (declare (special *state-encoding*))
-        (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)))))
-          (apply-action state
-                        '(!walk new-jersey new-york)
-                        (operator *domain* '!walk)
-                        nil 0 nil)
-          (state-atoms state)))
-      '((AT ROBOT NEW-YORK))))
-    (fiveam:is (eq
-                (let ((*state-encoding* :list))
-                  (declare (special *state-encoding*))
-                  (let ((state (make-initial-state *domain* *state-encoding*  nil)))
-                    (apply-action state
-                                  '(!walk new-jersey new-york)
-                                  (operator *domain* '!walk)
-                                  nil 0 nil)))
-                'fail))))
+      (sort '((AT ROBOT NEW-YORK) (loc new-york) (loc new-jersey)) 'prop-sorter)
+      (sort
+       (let ((*state-encoding* :list))
+         (declare (special *state-encoding*))
+         (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
+           (apply-action state
+                         '(!walk new-jersey new-york)
+                         (operator *domain* '!walk)
+                         nil 0 nil)
+           (state-atoms state)))
+       'prop-sorter)))
+    (fiveam:signals
+        error
+        (let ((*state-encoding* :list))
+          (declare (special *state-encoding*))
+          (let ((state (make-initial-state *domain* *state-encoding*  nil)))
+            (apply-action state
+                          '(!walk new-jersey new-york)
+                          (operator *domain* '!walk)
+                          nil 0 nil))))))
 
 
 (nst-def-fixtures quantified-preconditions-fixtures ()
