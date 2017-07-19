@@ -487,3 +487,15 @@
         (:of-type luggage bag1)
         (:of-type luggage bag2)
         (:of-type luggage bag3))))))
+
+(in-package :shop2-user)
+
+(fiveam:test pddl-planning
+  (let ((shop2:*define-silently* t))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
+  (fiveam:is-true (funcall (if shop2::*test-explicit-state-search* 'find-plans-stack 'find-plans)
+                           'os-sequencedstrips-p5_1)))
+
+
+
