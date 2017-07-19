@@ -163,6 +163,12 @@ later be compiled into find-satisfiers or something."
   (declare (ignore item))
   (values))
 
+(defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':requirements)) item)
+  "For now, simply ignore requirements.  Later we should check that they match the domain class."
+  (declare (ignorable domain item-key item))
+  (values))
+  
+
 (defmethod process-action ((domain simple-pddl-domain) action-def)
   "Processes a PDDL action.  Handles only the simplest class of actions, 
 with unconditional actions."
