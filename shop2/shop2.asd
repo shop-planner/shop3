@@ -55,10 +55,6 @@
 (in-package :shop2-asd)
 
 
-(defclass ess-test-op (test-op)
-  ()
-  (:documentation "Test the explicit state variant of SHOP2."))
-
 ;;;
 ;;; The main system.
 ;;;
@@ -69,8 +65,7 @@
                  (:version "shop2/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")
-    :in-order-to ((test-op (test-op :shop2/test))
-                  (ess-test-op (ess-test-op :shop2/test)))
+    :in-order-to ((test-op (test-op :shop2/test)))
     :components  (
        (:file "package")
        (:file "decls")
@@ -81,7 +76,10 @@
                              (:file "debugging")
                              (:file "shop-pprint")))
        (:module pddl
-                :components ((:file "pddl")))
+                :serial t
+                :components ((:file "decls")
+                             (:file "pddl")
+                             (:file "prover")))
        (:module search
                 :pathname "planning-engine/"
                 :components ((:file "protections")
@@ -192,15 +190,6 @@ shop2."
 
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
-(defmethod perform :around ((op ess-test-op) (c fiveam-tester-system))
-  "Set dynamic variable to test the explicit state variant of SHOP2
-instead of basic SHOP2."
-  (progv (list (intern (symbol-name '#:*test-explicit-state-search*) :shop2))
-      '(t)
-    (call-next-method)))
-
-
-
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
@@ -217,8 +206,9 @@ instead of basic SHOP2."
                  (misc-tests . :shop2-user)
                  (minimal-subtree-tests . :shop2-user)
                  (enhanced-plan-tree . :shop2-user)
+                 (theorem-prover-tests . :shop-theorem-prover-tests)
                  )
-    :num-checks 268
+    :num-checks 416
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr")))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
@@ -226,6 +216,8 @@ instead of basic SHOP2."
                           :components ((:file "common")))
                           
                  (:file "silent-shop-test")
+                 (:file "theorem-prover-tests"
+                        :pathname "tests/theorem-prover-tests")
                  (:module "shop-pddl-tests"
                           :pathname "tests/"
                           :components ((:file "pddl-tests")))

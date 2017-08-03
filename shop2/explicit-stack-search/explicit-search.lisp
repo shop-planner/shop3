@@ -2,10 +2,6 @@
 
 (in-package :shop2)
 
-(defvar *test-explicit-state-search* nil
-  "When testing, do we use standard SHOP2, or the explicit
-state variant?")
-
 (defvar *enhanced-plan-tree*
   nil
   "Do we build a dependency-enhanced plan tree?")

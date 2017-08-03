@@ -122,15 +122,29 @@ or all answers (nil)."
                       (t goals)))
                     (variables (extract-variables sought-goals)))
                (multiple-value-bind (answers depends)
-                   (seek-satisfiers sought-goals state variables level
-                                    (or (eq (first goals) :first) just-one)
-                                    :domain domain)
-                 (let ((satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
-                                           answers)))
+                   ;; if the preconditions use :SORT-BY, we assume that the preconditions are
+                   ;; about heuristic choice, not correctness, and don't store causal links
+                   ;; for the :SORT-BY expression. [2017/08/01:rpg]
+                   (let ((*record-dependencies-p* (if (eq (first goals) :sort-by) nil
+                                                      *record-dependencies-p*)))
+                    (seek-satisfiers sought-goals state variables level
+                                     (or (eq (first goals) :first) just-one)
+                                     :domain domain))
+                 (let* ((satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
+                                           answers))
+                       (num-satisfiers (length satisfiers)))
                                         ;(format t "~%sat: ~s~%" satisfiers) ;***
 
                    (cond ((eq (first goals) :sort-by)
-                          (if *record-dependencies-p*
+                          (values 
+                           (sort satisfiers
+                                 (if (= (length goals) 3) #'<
+                                     (eval (third goals)))
+                                 :key #'(lambda (sat)
+                                          (eval (apply-substitution (second goals) sat))))
+                           (when *record-dependencies-p* (make-list num-satisfiers :initial-element nil)))
+                          ;; see earlier comment about SORT-BY.
+                          #+ignore(if *record-dependencies-p*
                               (let* ((double-list (pairlis satisfiers
                                                           depends))
                                      (sorted
@@ -302,6 +316,12 @@ in the goal, so we ignore the extra reference."
       (standard-satisfiers-for-not domain (cdr goal) other-goals
                                    state bindings (1+ level) just1 dependencies-in)))
 
+(defmethod real-seek-satisfiers-for :before (domain (op (eql 'not)) goal other-goals state bindings level just1 dependencies-in)
+  (declare (ignorable domain op goal other-goals state bindings level just1 dependencies-in))
+  (unless (eql (length goal) 2)
+    (error 'incorrect-arity-error :expression goal :correct-arity 1 :op 'not)))
+  
+
 (def-logical-keyword (eval domain)
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-eval domain (cdr goal) other-goals
@@ -390,6 +410,7 @@ in the goal, so we ignore the extra reference."
     (DECLARE (IGNORABLE DOMAIN keyword))
     T)
 
+;; return new unifiers and dependencies (if they are being recorded), and then invokes REMAINING...
 (defun incorporate-unifiers (unifiers remaining just-one
                                       state bindings dependencies-in added-dependencies domain newlevel)
   (let (answers depends)
@@ -417,10 +438,7 @@ in the goal, so we ignore the extra reference."
 
 (defun standard-satisfiers-for-not (domain arguments other-goals
                                            state bindings newlevel just1 dependencies-in)
-  (unless (eql (length arguments) 1)
-    ;; FIXME::This probably needs to be replaced with a "real" SHOP error
-    ;; class of some sort.
-    (error "Too many arguments provided to NOT: ~s" (cdr arguments)))
+
   (when *record-dependencies-p*
     (unless (or *negation-deps-ok* (groundp (first arguments)))
       (cerror "Simply return no new dependencies."
@@ -527,19 +545,22 @@ in the goal, so we ignore the extra reference."
       (incorporate-unifiers new-answers other-goals
                             just1 state bindings dependencies-in new-dependencies domain newlevel))))
 
+(defun find-variable (tree)
+  (subst-if nil #'(lambda (x) (when (variablep x) (return-from find-variable x))) tree)
+  nil)
+
 (defun standard-satisfiers-for-imply (domain arguments other-goals
                                       state bindings newlevel just1 dependencies-in)
-  (when *record-dependencies-p*
-    (cerror "Simply return no new dependencies."
-            "We do not have correct logic for computing dependencies for IMPLY."))
   (unless (= (length arguments) 2)
     (error "Ill-formed IMPLY expression: ~S" (cons 'IMPLY arguments)))
-  (let ((conditionA (first arguments)) (conditionB (second arguments)))
-    (cond
-     ((or (not (find-satisfiers conditionA state nil 0 :domain domain))
-          (find-satisfiers conditionB state t 0 :domain domain))
-      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
-     (t nil))))
+  (destructuring-bind (conditionA conditionB) arguments
+    (unless (groundp conditionA)
+      (error 'non-ground-error :var (find-variable conditionA) :expression conditionA))
+    (multiple-value-bind (answers depends)
+        (find-satisfiers `(or (not ,conditionA) ,conditionB) state nil 0 :domain domain)
+      (cond (answers
+             (incorporate-unifiers answers other-goals just1 state bindings dependencies-in depends domain newlevel))
+            (t nil)))))
 
 (defun standard-satisfiers-for-or (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)

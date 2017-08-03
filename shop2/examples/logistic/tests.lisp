@@ -10,10 +10,34 @@
     (when plan-list
       (remove-plan-costs (first plan-list)))))
 
+(defun ess-log-plan (problem-name)
+  (logistics-domain)
+  (let ((plan-list (ess-plan-quietly problem-name)))
+    (when plan-list
+      (remove-plan-costs (first plan-list)))))
+
+(defmacro log-test-both (name &body body)
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+    `(progn
+       (fiveam:test ,name
+         (flet ((log-plan (problem-name)
+                  (logistics-domain)
+                  (let ((plan-list (plan-quietly problem-name)))
+                    (when plan-list
+                      (remove-plan-costs (first plan-list))))))
+           ,@body))
+       (fiveam:test ,ess-name  
+         (flet ((log-plan (problem-name)
+                  (logistics-domain)
+                  (let ((plan-list (ess-plan-quietly problem-name)))
+                    (when plan-list
+                      (remove-plan-costs (first plan-list))))))
+           ,@body)))))
+
 (fiveam:def-suite logistics-tests)
 (fiveam:in-suite logistics-tests)
 
-(fiveam:test log-ran-15-1
+(log-test-both log-ran-15-1
   (fiveam:is
    (equalp
     '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -142,7 +166,7 @@
       (!UNLOAD-TRUCK PACKAGE9 TRUCK4-1 LOC4-2))
     (log-plan 'LOG-RAN-15-1))))
 
-(fiveam:test log-ran-15-10
+(log-test-both log-ran-15-10
   (fiveam:is
    (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
             (!LOAD-TRUCK PACKAGE3 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
@@ -269,7 +293,7 @@
           (log-plan 'LOG-RAN-15-10))))
   
   
-(fiveam:test log-ran-15-2  
+(log-test-both log-ran-15-2  
   (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK8-1 LOC8-1))
@@ -383,7 +407,7 @@
                      (log-plan 'LOG-RAN-15-2))))
 
   
-(fiveam:test LOG-RAN-15-3
+(log-test-both LOG-RAN-15-3
   (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
@@ -509,7 +533,7 @@
                      (log-plan 'LOG-RAN-15-3))))
 
   
-(fiveam:test LOG-RAN-15-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
+(log-test-both LOG-RAN-15-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                        (!LOAD-TRUCK PACKAGE5 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
@@ -603,7 +627,7 @@
                      (log-plan 'LOG-RAN-15-4))))
 
   
-(fiveam:test LOG-RAN-15-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
+(log-test-both LOG-RAN-15-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-2 LOC1-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                        (!LOAD-TRUCK PACKAGE5 TRUCK4-1 LOC4-3)
@@ -714,7 +738,7 @@
                      (log-plan 'LOG-RAN-15-5))))
 
   
-(fiveam:test LOG-RAN-15-6
+(log-test-both LOG-RAN-15-6
   (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -815,7 +839,7 @@
                      (log-plan 'LOG-RAN-15-6))))
 
   
-(fiveam:test LOG-RAN-15-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
+(log-test-both LOG-RAN-15-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
@@ -950,7 +974,7 @@
                      (log-plan 'LOG-RAN-15-7))))
 
   
-(fiveam:test LOG-RAN-15-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
+(log-test-both LOG-RAN-15-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK2-1 LOC2-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -1059,7 +1083,7 @@
                      (log-plan 'LOG-RAN-15-8))))
 
   
-(fiveam:test LOG-RAN-15-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
+(log-test-both LOG-RAN-15-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                        (!LOAD-TRUCK PACKAGE5 TRUCK2-1 LOC2-2)
@@ -1181,7 +1205,7 @@
                      (log-plan 'LOG-RAN-15-9))))
 
   
-(fiveam:test LOG-RAN-20-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
+(log-test-both LOG-RAN-20-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-3 LOC1-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
@@ -1353,7 +1377,7 @@
                      (log-plan 'LOG-RAN-20-1))))
 
   
-(fiveam:test LOG-RAN-20-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
+(log-test-both LOG-RAN-20-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK8-1 LOC8-2))
                        (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
@@ -1531,7 +1555,7 @@
                      (log-plan 'LOG-RAN-20-10))))
 
   
-(fiveam:test LOG-RAN-20-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
+(log-test-both LOG-RAN-20-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
@@ -1721,7 +1745,7 @@
                      (log-plan 'LOG-RAN-20-2))))
 
   
-(fiveam:test LOG-RAN-20-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
+(log-test-both LOG-RAN-20-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-3 LOC8-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -1892,7 +1916,7 @@
                      (log-plan 'LOG-RAN-20-3))))
 
   
-(fiveam:test LOG-RAN-20-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
+(log-test-both LOG-RAN-20-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-2)
                        (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2) (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-2)
                        (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3) (!LOAD-TRUCK PACKAGE4 TRUCK2-1 LOC2-3)
@@ -2048,7 +2072,7 @@
                      (log-plan 'LOG-RAN-20-4))))
 
   
-(fiveam:test LOG-RAN-20-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
+(log-test-both LOG-RAN-20-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                        (!LOAD-TRUCK PACKAGE5 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
@@ -2237,7 +2261,7 @@
                      (log-plan 'LOG-RAN-20-5))))
 
   
-(fiveam:test LOG-RAN-20-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-20-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-2 LOC7-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
@@ -2424,7 +2448,7 @@
                      (log-plan 'LOG-RAN-20-6))))
 
   
-(fiveam:test LOG-RAN-20-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
+(log-test-both LOG-RAN-20-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
@@ -2601,7 +2625,7 @@
                      (log-plan 'LOG-RAN-20-7))))
 
   
-(fiveam:test LOG-RAN-20-8 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK6-1 LOC6-1))
+(log-test-both LOG-RAN-20-8 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK6-1 LOC6-1))
                        (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-1) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE5 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
@@ -2775,7 +2799,7 @@
                      (log-plan 'LOG-RAN-20-8))))
 
   
-(fiveam:test LOG-RAN-20-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
+(log-test-both LOG-RAN-20-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK8-1 LOC8-3)
@@ -2949,7 +2973,7 @@
                      (log-plan 'LOG-RAN-20-9))))
 
   
-(fiveam:test LOG-RAN-25-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
+(log-test-both LOG-RAN-25-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3)
                        (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK13-1 LOC13-2)
@@ -3182,7 +3206,7 @@
                      (log-plan 'LOG-RAN-25-1))))
 
   
-(fiveam:test LOG-RAN-25-10 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK11-1 LOC11-1))
+(log-test-both LOG-RAN-25-10 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK11-1 LOC11-1))
                        (!LOAD-TRUCK PACKAGE1 TRUCK11-1 LOC11-1)
                        (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3)
                        (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
@@ -3396,7 +3420,7 @@
                      (log-plan 'LOG-RAN-25-10))))
 
   
-(fiveam:test LOG-RAN-25-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
+(log-test-both LOG-RAN-25-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                        (!LOAD-TRUCK PACKAGE5 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-2 LOC5-3)
@@ -3617,7 +3641,7 @@
                      (log-plan 'LOG-RAN-25-2))))
 
   
-(fiveam:test LOG-RAN-25-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
+(log-test-both LOG-RAN-25-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2)
                        (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-2)
@@ -3842,7 +3866,7 @@
                      (log-plan 'LOG-RAN-25-3))))
 
   
-(fiveam:test LOG-RAN-25-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
+(log-test-both LOG-RAN-25-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2)
                        (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK12-1 LOC12-2)
@@ -4049,7 +4073,7 @@
                      (log-plan 'LOG-RAN-25-4))))
 
   
-(fiveam:test LOG-RAN-25-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
+(log-test-both LOG-RAN-25-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-3)
@@ -4290,7 +4314,7 @@
                      (log-plan 'LOG-RAN-25-5))))
 
   
-(fiveam:test LOG-RAN-25-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
+(log-test-both LOG-RAN-25-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-2)
                        (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -4521,7 +4545,7 @@
                      (log-plan 'LOG-RAN-25-6))))
 
   
-(fiveam:test LOG-RAN-25-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-25-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-3)
                        (!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3) (!LOAD-TRUCK PACKAGE3 TRUCK4-1 LOC4-3)
                        (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3) (!LOAD-TRUCK PACKAGE4 TRUCK2-1 LOC2-3)
@@ -4755,7 +4779,7 @@
                      (log-plan 'LOG-RAN-25-7))))
 
   
-(fiveam:test LOG-RAN-25-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
+(log-test-both LOG-RAN-25-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK9-1 LOC9-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK9-1 LOC9-2 LOC9-3)
                        (!LOAD-TRUCK PACKAGE5 TRUCK9-1 LOC9-3)
@@ -4969,7 +4993,7 @@
                      (log-plan 'LOG-RAN-25-8))))
 
   
-(fiveam:test LOG-RAN-25-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
+(log-test-both LOG-RAN-25-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-3)
@@ -5195,7 +5219,7 @@
                      (log-plan 'LOG-RAN-25-9))))
 
   
-(fiveam:test LOG-RAN-30-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
+(log-test-both LOG-RAN-30-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2)
                        (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
@@ -5461,7 +5485,7 @@
                      (log-plan 'LOG-RAN-30-1))))
 
   
-(fiveam:test LOG-RAN-30-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
+(log-test-both LOG-RAN-30-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK13-1 LOC13-2)
                        (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE4 TRUCK3-1 LOC3-3)
                        (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
@@ -5716,7 +5740,7 @@
                      (log-plan 'LOG-RAN-30-10))))
 
   
-(fiveam:test LOG-RAN-30-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
+(log-test-both LOG-RAN-30-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-2)
                        (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK13-1 LOC13-2)
@@ -5947,7 +5971,7 @@
                      (log-plan 'LOG-RAN-30-2))))
 
   
-(fiveam:test LOG-RAN-30-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
+(log-test-both LOG-RAN-30-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
                        (!LOAD-TRUCK PACKAGE5 TRUCK11-1 LOC11-2)
                        (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2) (!LOAD-TRUCK PACKAGE6 TRUCK8-1 LOC8-2)
                        (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2) (!LOAD-TRUCK PACKAGE7 TRUCK5-1 LOC5-2)
@@ -6208,7 +6232,7 @@
                      (log-plan 'LOG-RAN-30-3))))
 
   
-(fiveam:test LOG-RAN-30-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
+(log-test-both LOG-RAN-30-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2)
                        (!LOAD-TRUCK PACKAGE5 TRUCK9-1 LOC9-2)
                        (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
@@ -6460,7 +6484,7 @@
                      (log-plan 'LOG-RAN-30-4))))
 
   
-(fiveam:test LOG-RAN-30-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-30-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                        (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-2)
@@ -6745,7 +6769,7 @@
                      (log-plan 'LOG-RAN-30-5))))
 
   
-(fiveam:test LOG-RAN-30-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
+(log-test-both LOG-RAN-30-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-2 LOC5-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
@@ -7021,7 +7045,7 @@
                      (log-plan 'LOG-RAN-30-6))))
 
   
-(fiveam:test LOG-RAN-30-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
+(log-test-both LOG-RAN-30-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-3)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK4-1 LOC4-3))
@@ -7250,7 +7274,7 @@
                      (log-plan 'LOG-RAN-30-7))))
 
   
-(fiveam:test LOG-RAN-30-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-30-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK8-1 LOC8-3) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
@@ -7529,7 +7553,7 @@
                      (log-plan 'LOG-RAN-30-8))))
 
   
-(fiveam:test LOG-RAN-30-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
+(log-test-both LOG-RAN-30-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
                        (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                        (!LOAD-TRUCK PACKAGE4 TRUCK7-1 LOC7-2)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK7-1 LOC7-2))
@@ -7802,7 +7826,7 @@
                      (log-plan 'LOG-RAN-30-9))))
 
   
-(fiveam:test LOG-RAN-35-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-35-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                        (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-2)
@@ -8113,7 +8137,7 @@
                      (log-plan 'LOG-RAN-35-1))))
 
   
-(fiveam:test LOG-RAN-35-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
+(log-test-both LOG-RAN-35-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-3)
                        (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK14-1 LOC14-2)
@@ -8431,7 +8455,7 @@
                      (log-plan 'LOG-RAN-35-10))))
 
   
-(fiveam:test LOG-RAN-35-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
+(log-test-both LOG-RAN-35-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                        (!LOAD-TRUCK PACKAGE3 TRUCK8-1 LOC8-2)
                        (!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
@@ -8765,7 +8789,7 @@
                      (log-plan 'LOG-RAN-35-2))))
 
   
-(fiveam:test LOG-RAN-35-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-35-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK12-1 LOC12-3))
                        (!LOAD-TRUCK PACKAGE3 TRUCK12-1 LOC12-3)
@@ -9090,7 +9114,7 @@
                      (log-plan 'LOG-RAN-35-3))))
 
   
-(fiveam:test LOG-RAN-35-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-35-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                        (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2) (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-2)
                        (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-2) (!LOAD-TRUCK PACKAGE3 TRUCK9-1 LOC9-2)
@@ -9432,7 +9456,7 @@
                      (log-plan 'LOG-RAN-35-4))))
 
   
-(fiveam:test LOG-RAN-35-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-35-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                        (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                        (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-2)
                        (!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-3)
@@ -9754,7 +9778,7 @@
                      (log-plan 'LOG-RAN-35-5))))
 
   
-(fiveam:test LOG-RAN-35-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
+(log-test-both LOG-RAN-35-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                        (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                        (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-3)
                        (!ADD-PROTECTION (TRUCK-AT TRUCK10-1 LOC10-1))
@@ -10061,7 +10085,7 @@
                        (!UNLOAD-TRUCK PACKAGE31 TRUCK4-1 LOC4-3))
                      (log-plan 'LOG-RAN-35-6))))
   
-(fiveam:test LOG-RAN-35-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-3)
+(log-test-both LOG-RAN-35-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-3)
                        (!LOAD-TRUCK PACKAGE1 TRUCK18-1 LOC18-3)
                        (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3) (!LOAD-TRUCK PACKAGE2 TRUCK1-1 LOC1-3)
                        (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2) (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-2)
@@ -10373,7 +10397,7 @@
                      (log-plan 'LOG-RAN-35-7))))
 
   
-(fiveam:test LOG-RAN-35-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
+(log-test-both LOG-RAN-35-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-3) (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2)
@@ -10714,7 +10738,7 @@
     (log-plan 'LOG-RAN-35-8))))
 
   
-(fiveam:test LOG-RAN-35-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
+(log-test-both LOG-RAN-35-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-3) (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK8-1 LOC8-3) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE5 TRUCK5-1 LOC5-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-3)
@@ -11022,7 +11046,7 @@
     (log-plan 'LOG-RAN-35-9))))
 
   
-(fiveam:test LOG-RAN-40-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-40-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-3) (!LOAD-TRUCK PACKAGE2 TRUCK3-1 LOC3-3)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
@@ -11407,7 +11431,7 @@
                 (!UNLOAD-TRUCK PACKAGE30 TRUCK13-1 LOC13-3))
     (log-plan 'LOG-RAN-40-1))))
   
-(fiveam:test LOG-RAN-40-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
+(log-test-both LOG-RAN-40-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK19-1 LOC19-1 LOC19-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK19-1 LOC19-2)
@@ -11762,7 +11786,7 @@
     (log-plan 'LOG-RAN-40-10))))
 
   
-(fiveam:test LOG-RAN-40-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-40-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK5-1 LOC5-2) (!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK9-1 LOC9-3) (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
@@ -12126,7 +12150,7 @@
     (log-plan 'LOG-RAN-40-2))))
 
   
-(fiveam:test LOG-RAN-40-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
+(log-test-both LOG-RAN-40-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-3)
@@ -12490,7 +12514,7 @@
     (log-plan 'LOG-RAN-40-3))))
 
   
-(fiveam:test LOG-RAN-40-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK16-1 LOC16-1 LOC16-2)
+(log-test-both LOG-RAN-40-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK16-1 LOC16-1 LOC16-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK16-1 LOC16-2)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2)
                 (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3) (!LOAD-TRUCK PACKAGE5 TRUCK5-1 LOC5-3)
@@ -12815,7 +12839,7 @@
                 (!UNLOAD-TRUCK PACKAGE36 TRUCK12-1 LOC12-3))
     (log-plan 'LOG-RAN-40-4))))
   
-(fiveam:test LOG-RAN-40-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
+(log-test-both LOG-RAN-40-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK1-1 LOC1-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-2)
@@ -13186,7 +13210,7 @@
     (log-plan 'LOG-RAN-40-5))))
 
   
-(fiveam:test LOG-RAN-40-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
+(log-test-both LOG-RAN-40-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK20-1 LOC20-2)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK11-1 LOC11-3)
@@ -13507,7 +13531,7 @@
     (log-plan 'LOG-RAN-40-6))))
 
   
-(fiveam:test LOG-RAN-40-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-40-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-3) (!LOAD-TRUCK PACKAGE2 TRUCK2-1 LOC2-3)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2) (!LOAD-TRUCK PACKAGE3 TRUCK7-1 LOC7-2)
@@ -13875,7 +13899,7 @@
     (log-plan 'LOG-RAN-40-7))))
 
   
-(fiveam:test LOG-RAN-40-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-40-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK20-1 LOC20-2)
@@ -14245,7 +14269,7 @@
     (log-plan 'LOG-RAN-40-8))))
 
   
-(fiveam:test LOG-RAN-40-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-40-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK10-1 LOC10-3)
@@ -14575,7 +14599,7 @@
     (log-plan 'LOG-RAN-40-9))))
 
   
-(fiveam:test LOG-RAN-45-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
+(log-test-both LOG-RAN-45-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK8-1 LOC8-2)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK13-1 LOC13-3)
@@ -14981,7 +15005,7 @@
     (log-plan 'LOG-RAN-45-1))))
 
   
-(fiveam:test LOG-RAN-45-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
+(log-test-both LOG-RAN-45-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK12-1 LOC12-2)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK11-1 LOC11-3)
@@ -15396,7 +15420,7 @@
     (log-plan 'LOG-RAN-45-10))))
 
   
-(fiveam:test LOG-RAN-45-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-45-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK6-1 LOC6-2) (!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2)
@@ -15800,7 +15824,7 @@
     (log-plan 'LOG-RAN-45-2))))
 
   
-(fiveam:test LOG-RAN-45-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-3)
+(log-test-both LOG-RAN-45-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-3)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK21-1 LOC21-2)
@@ -16191,7 +16215,7 @@
     (log-plan 'LOG-RAN-45-3))))
 
   
-(fiveam:test LOG-RAN-45-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
+(log-test-both LOG-RAN-45-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-3)
                 (!DRIVE-TRUCK TRUCK1-1 LOC1-1 LOC1-2) (!LOAD-TRUCK PACKAGE3 TRUCK1-1 LOC1-2)
                 (!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-3)
@@ -16589,7 +16613,7 @@
                 (!UNLOAD-TRUCK PACKAGE42 TRUCK8-1 LOC8-2))
     (log-plan 'LOG-RAN-45-4))))
   
-(fiveam:test LOG-RAN-45-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
+(log-test-both LOG-RAN-45-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK4-1 LOC4-2)
                 (!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK23-1 LOC23-3)
@@ -16996,7 +17020,7 @@
     (log-plan 'LOG-RAN-45-5))))
 
   
-(fiveam:test LOG-RAN-45-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
+(log-test-both LOG-RAN-45-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-2)
                 (!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK17-1 LOC17-3)
@@ -17412,7 +17436,7 @@
     (log-plan 'LOG-RAN-45-6))))
 
   
-(fiveam:test LOG-RAN-45-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
+(log-test-both LOG-RAN-45-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-3)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
@@ -17813,7 +17837,7 @@
     (log-plan 'LOG-RAN-45-7))))
 
   
-(fiveam:test LOG-RAN-45-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
+(log-test-both LOG-RAN-45-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-3)
                 (!DRIVE-TRUCK TRUCK3-1 LOC3-1 LOC3-2) (!LOAD-TRUCK PACKAGE3 TRUCK3-1 LOC3-2)
                 (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3) (!LOAD-TRUCK PACKAGE4 TRUCK8-1 LOC8-3)
@@ -18217,7 +18241,7 @@
     (log-plan 'LOG-RAN-45-8))))
 
   
-(fiveam:test LOG-RAN-45-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
+(log-test-both LOG-RAN-45-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-3) (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-3)
@@ -18657,7 +18681,7 @@
     (log-plan 'LOG-RAN-45-9))))
 
   
-(fiveam:test LOG-RAN-50-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
+(log-test-both LOG-RAN-50-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK10-1 LOC10-2)
                 (!DRIVE-TRUCK TRUCK24-1 LOC24-1 LOC24-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK24-1 LOC24-3)
@@ -19113,7 +19137,7 @@
     (log-plan 'LOG-RAN-50-1))))
 
   
-(fiveam:test LOG-RAN-50-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
+(log-test-both LOG-RAN-50-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-3)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
@@ -19586,7 +19610,7 @@
     (log-plan 'LOG-RAN-50-10))))
 
   
-(fiveam:test LOG-RAN-50-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
+(log-test-both LOG-RAN-50-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK12-1 LOC12-3)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK11-1 LOC11-3)
@@ -20051,7 +20075,7 @@
 
 
   
-(fiveam:test LOG-RAN-50-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK24-1 LOC24-1 LOC24-3)
+(log-test-both LOG-RAN-50-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK24-1 LOC24-1 LOC24-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK24-1 LOC24-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-2)
@@ -20547,7 +20571,7 @@
     (log-plan 'LOG-RAN-50-3))))
 
   
-(fiveam:test LOG-RAN-50-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
+(log-test-both LOG-RAN-50-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK5-1 LOC5-2)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK21-1 LOC21-3)
@@ -21020,7 +21044,7 @@
     (log-plan 'LOG-RAN-50-4))))
 
   
-(fiveam:test LOG-RAN-50-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
+(log-test-both LOG-RAN-50-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK12-1 LOC12-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK20-1 LOC20-2)
@@ -21481,7 +21505,7 @@
     (log-plan 'LOG-RAN-50-5))))
 
   
-(fiveam:test LOG-RAN-50-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
+(log-test-both LOG-RAN-50-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK14-1 LOC14-2)
                 (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK20-1 LOC20-2)
@@ -21947,7 +21971,7 @@
 
 
   
-(fiveam:test LOG-RAN-50-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-3)
+(log-test-both LOG-RAN-50-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-3)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK12-1 LOC12-2)
@@ -22431,7 +22455,7 @@
     (log-plan 'LOG-RAN-50-7))))
 
   
-(fiveam:test LOG-RAN-50-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
+(log-test-both LOG-RAN-50-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK5-1 LOC5-3)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE6 TRUCK12-1 LOC12-2)
@@ -22864,7 +22888,7 @@
     (log-plan 'LOG-RAN-50-8))))
 
   
-(fiveam:test LOG-RAN-50-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK19-1 LOC19-1 LOC19-3)
+(log-test-both LOG-RAN-50-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK19-1 LOC19-1 LOC19-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK19-1 LOC19-3)
                 (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2) (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-3)
@@ -23318,7 +23342,7 @@
     (log-plan 'LOG-RAN-50-9))))
 
   
-(fiveam:test LOG-RAN-55-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
+(log-test-both LOG-RAN-55-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK28-1 LOC28-2)
                 (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK14-1 LOC14-3)
@@ -23835,7 +23859,7 @@
 
 
   
-(fiveam:test LOG-RAN-55-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
+(log-test-both LOG-RAN-55-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK10-1 LOC10-3)
                 (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2) (!LOAD-TRUCK PACKAGE4 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK25-1 LOC25-1 LOC25-2)
@@ -24363,7 +24387,7 @@
     (log-plan 'LOG-RAN-55-10))))
 
   
-(fiveam:test LOG-RAN-55-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
+(log-test-both LOG-RAN-55-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK15-1 LOC15-2)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-3)
@@ -24856,7 +24880,7 @@
     (log-plan 'LOG-RAN-55-2))))
 
   
-(fiveam:test LOG-RAN-55-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-55-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                 (!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK22-1 LOC22-3)
@@ -25358,7 +25382,7 @@
     (log-plan 'LOG-RAN-55-3))))
 
   
-(fiveam:test LOG-RAN-55-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
+(log-test-both LOG-RAN-55-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK2-1 LOC2-1 LOC2-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK2-1 LOC2-2)
                 (!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK28-1 LOC28-2)
@@ -25826,7 +25850,7 @@
 
 
   
-(fiveam:test LOG-RAN-55-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
+(log-test-both LOG-RAN-55-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK9-1 LOC9-1 LOC9-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK9-1 LOC9-3)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK18-1 LOC18-3)
@@ -26371,7 +26395,7 @@
     (log-plan 'LOG-RAN-55-5))))
 
   
-(fiveam:test LOG-RAN-55-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
+(log-test-both LOG-RAN-55-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK11-1 LOC11-2)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-2 LOC11-3)
@@ -26893,7 +26917,7 @@
     (log-plan 'LOG-RAN-55-6))))
 
   
-(fiveam:test LOG-RAN-55-7 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK13-1 LOC13-1))
+(log-test-both LOG-RAN-55-7 (fiveam:is (equalp '((!ADD-PROTECTION (TRUCK-AT TRUCK13-1 LOC13-1))
                 (!LOAD-TRUCK PACKAGE1 TRUCK13-1 LOC13-1)
                 (!DRIVE-TRUCK TRUCK21-1 LOC21-1 LOC21-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK21-1 LOC21-2)
@@ -27378,7 +27402,7 @@
     (log-plan 'LOG-RAN-55-7))))
 
   
-(fiveam:test LOG-RAN-55-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
+(log-test-both LOG-RAN-55-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK10-1 LOC10-2)
                 (!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-3) (!LOAD-TRUCK PACKAGE2 TRUCK7-1 LOC7-3)
                 (!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-3) (!LOAD-TRUCK PACKAGE3 TRUCK6-1 LOC6-3)
@@ -27898,7 +27922,7 @@
     (log-plan 'LOG-RAN-55-8))))
 
   
-(fiveam:test LOG-RAN-55-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK26-1 LOC26-1 LOC26-3)
+(log-test-both LOG-RAN-55-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK26-1 LOC26-1 LOC26-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK26-1 LOC26-3)
                 (!DRIVE-TRUCK TRUCK10-1 LOC10-1 LOC10-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK10-1 LOC10-2)
@@ -28398,7 +28422,7 @@
     (log-plan 'LOG-RAN-55-9))))
 
   
-(fiveam:test LOG-RAN-60-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
+(log-test-both LOG-RAN-60-1 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK23-1 LOC23-1 LOC23-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK23-1 LOC23-2)
                 (!DRIVE-TRUCK TRUCK12-1 LOC12-1 LOC12-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK12-1 LOC12-2)
@@ -28898,7 +28922,7 @@
     (log-plan 'LOG-RAN-60-1))))
 
   
-(fiveam:test LOG-RAN-60-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
+(log-test-both LOG-RAN-60-10 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK28-1 LOC28-1 LOC28-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK28-1 LOC28-2)
@@ -29459,7 +29483,7 @@
     (log-plan 'LOG-RAN-60-10))))
 
   
-(fiveam:test LOG-RAN-60-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
+(log-test-both LOG-RAN-60-2 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK20-1 LOC20-2)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-2)
                 (!LOAD-TRUCK PACKAGE3 TRUCK18-1 LOC18-2)
@@ -29998,7 +30022,7 @@
     (log-plan 'LOG-RAN-60-2))))
 
   
-(fiveam:test LOG-RAN-60-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK25-1 LOC25-1 LOC25-3)
+(log-test-both LOG-RAN-60-3 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK25-1 LOC25-1 LOC25-3)
                 (!LOAD-TRUCK PACKAGE3 TRUCK25-1 LOC25-3)
                 (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2) (!LOAD-TRUCK PACKAGE7 TRUCK8-1 LOC8-2)
                 (!DRIVE-TRUCK TRUCK11-1 LOC11-1 LOC11-2)
@@ -30556,7 +30580,7 @@
     (log-plan 'LOG-RAN-60-3))))
 
   
-(fiveam:test LOG-RAN-60-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
+(log-test-both LOG-RAN-60-4 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK4-1 LOC4-1 LOC4-3)
                 (!LOAD-TRUCK PACKAGE1 TRUCK4-1 LOC4-3)
                 (!DRIVE-TRUCK TRUCK13-1 LOC13-1 LOC13-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK13-1 LOC13-2)
@@ -31112,7 +31136,7 @@
     (log-plan 'LOG-RAN-60-4))))
 
   
-(fiveam:test LOG-RAN-60-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
+(log-test-both LOG-RAN-60-5 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK8-1 LOC8-2) (!DRIVE-TRUCK TRUCK5-1 LOC5-1 LOC5-2)
                 (!LOAD-TRUCK PACKAGE4 TRUCK5-1 LOC5-2)
                 (!DRIVE-TRUCK TRUCK15-1 LOC15-1 LOC15-2)
@@ -31628,7 +31652,7 @@
     (log-plan 'LOG-RAN-60-5))))
 
   
-(fiveam:test LOG-RAN-60-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-2)
+(log-test-both LOG-RAN-60-6 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK22-1 LOC22-1 LOC22-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK22-1 LOC22-2)
                 (!DRIVE-TRUCK TRUCK29-1 LOC29-1 LOC29-3)
                 (!LOAD-TRUCK PACKAGE2 TRUCK29-1 LOC29-3)
@@ -32218,7 +32242,7 @@
     (log-plan 'LOG-RAN-60-6))))
 
   
-(fiveam:test LOG-RAN-60-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
+(log-test-both LOG-RAN-60-7 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK7-1 LOC7-1 LOC7-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK7-1 LOC7-2)
                 (!DRIVE-TRUCK TRUCK14-1 LOC14-1 LOC14-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK14-1 LOC14-2)
@@ -32794,7 +32818,7 @@
     (log-plan 'LOG-RAN-60-7))))
 
   
-(fiveam:test LOG-RAN-60-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
+(log-test-both LOG-RAN-60-8 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK6-1 LOC6-1 LOC6-2)
                 (!LOAD-TRUCK PACKAGE1 TRUCK6-1 LOC6-2)
                 (!DRIVE-TRUCK TRUCK18-1 LOC18-1 LOC18-2)
                 (!LOAD-TRUCK PACKAGE2 TRUCK18-1 LOC18-2)
@@ -33358,7 +33382,7 @@
                 (!UNLOAD-TRUCK PACKAGE54 TRUCK3-1 LOC3-2))
     (log-plan 'LOG-RAN-60-8))))
   
-(fiveam:test LOG-RAN-60-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
+(log-test-both LOG-RAN-60-9 (fiveam:is (equalp '((!DRIVE-TRUCK TRUCK17-1 LOC17-1 LOC17-2)
                            (!LOAD-TRUCK PACKAGE1 TRUCK17-1 LOC17-2)
                            (!DRIVE-TRUCK TRUCK20-1 LOC20-1 LOC20-3)
                            (!LOAD-TRUCK PACKAGE3 TRUCK20-1 LOC20-3)

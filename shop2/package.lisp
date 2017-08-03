@@ -201,7 +201,8 @@
              #:handle-domain-options
              #:parse-domain-items
 
-             #:pddl-domain
+             #:pddl-domain    ; deprecated: this was implicitly an ADL domain
+             #:adl-domain
 
              ;; ENQ-related methods
              #:apply-operator
@@ -233,6 +234,7 @@
              #:no-method-for-task
              #:task-arity-mismatch
              #:singleton-variable
+             #:incorrect-arity-error
 
              ;; things you might want to use in your domain definitions
              #:variablep

@@ -105,16 +105,20 @@
 
 (fiveam:test type-list-translation
   (fiveam:with-fixture simple-pddl-actions ()
-    (fiveam:is
-     (equalp (list '(?v ?from ?to ?fbefore ?fafter)
-                   '(vehicle location location object object))
-             (multiple-value-list
-              (typed-list-vars typelist))))))
+    (let ((domain (make-instance 'adl-domain
+                                 :name (gentemp "DOMAIN")
+                                 :%pddl-types '(vehicle location object))))
+      (fiveam:is
+       (equalp (list '(?v ?from ?to ?fbefore ?fafter)
+                     '(vehicle location location object object))
+               (multiple-value-list
+                (typed-list-vars typelist domain)))))))
 
 (fiveam:def-fixture action-test-fixtures ()
   (let* ((*define-silently* t)
-         (domain (make-instance 'pddl-domain
-                                :name (gentemp (symbol-name '#:domain))))
+         (domain (make-instance 'adl-domain
+                                :name (gentemp (symbol-name '#:domain))
+                                :%pddl-types '(location vehicle fuel-level object)))
          (action (process-action domain action-def))
          (untyped-action (process-action domain untyped-action-def)))
     (locally (declare (ignorable action untyped-action))
@@ -127,6 +131,7 @@
                         (pddl-action-head action)))))
   (fiveam:with-fixture simple-pddl-actions ()
     (fiveam:with-fixture action-test-fixtures ()
+      #+nil(break "Domain is ~S" domain)
       (fiveam:is (equal '(and
                           (%enforce-type-constraints (vehicle ?v)
                            (location ?from)
@@ -161,9 +166,10 @@
           1.0)
         (progn
           (defdomain (#.(gentemp (symbol-name '#:domain))
-                        :type pddl-domain
+                        :type adl-domain
                         :redefine-ok t)
-              ((:action walk
+              ((:types loc)
+               (:action walk
                 :parameters (?from ?to - loc)
                 :precondition (at robot ?from)
                 :effect (and (not (at robot ?from))
@@ -178,7 +184,8 @@
       (defdomain (test-add-del-domain
                   :type pddl-domain
                   :redefine-ok t)
-          ((:action walk
+          ((:types loc)
+           (:action walk
             :parameters (?from ?to - loc)
             :precondition (at robot ?from)
             :effect (and (not (at robot ?from))
@@ -218,7 +225,7 @@
   (domain (defdomain (quantified-preconditions-domain
                       :type pddl-domain
                       :redefine-ok t)
-             nil))
+            ((:types airplane airplanetype direction segment))))
   (act (process-action domain
                        '(:action move
                          :parameters
@@ -387,14 +394,15 @@
     (defdomain (simple-when-domain
                       :type pddl-domain
                       :redefine-ok t)
-              ((:action walk
-                        :parameters (?from ?to - loc)
-                        :precondition (at robot ?from)
-                        :effect (and (not (at robot ?from))
-                                     (at robot ?to)
-                                     (when (carrying cargo)
-                                       (and (not (at cargo ?from))
-                                            (at cargo ?to)))))))
+              ((:types loc)
+               (:action walk
+                :parameters (?from ?to - loc)
+                :precondition (at robot ?from)
+                :effect (and (not (at robot ?from))
+                             (at robot ?to)
+                             (when (carrying cargo)
+                               (and (not (at cargo ?from))
+                                    (at cargo ?to)))))))
     (&body)))
 
 (defun prop-sorter (p1 p2)
@@ -444,15 +452,16 @@
   (progn (defdomain (quantified-when-domain
                       :type pddl-domain
                       :redefine-ok t)
-             ((:action walk
-                       :parameters (?from ?to - loc)
-                       :precondition (at robot ?from)
-                       :effect (and (not (at robot ?from))
-                                    (at robot ?to)
-                                    (forall (?x - luggage)
-                                            (when (carrying robot ?x)
-                                              (and (not (at ?x ?from))
-                                                   (at ?x ?to))))))))
+             ((:types loc luggage)
+              (:action walk
+               :parameters (?from ?to - loc)
+               :precondition (at robot ?from)
+               :effect (and (not (at robot ?from))
+                            (at robot ?to)
+                            (forall (?x - luggage)
+                                    (when (carrying robot ?x)
+                                      (and (not (at ?x ?from))
+                                           (at ?x ?to))))))))
          (&body)))
 
 (fiveam:test quantified-when

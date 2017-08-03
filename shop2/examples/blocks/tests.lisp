@@ -4,18 +4,32 @@
 (fiveam:in-suite blocks-tests)
 
 (defmacro nst-blocks-test (name (&key primary-result-plan) quoted-problem-name)
-  (if primary-result-plan
-      `(fiveam:test ,name
-         (define-blocks-domain)
-         (fiveam:is
-          (equalp ',primary-result-plan
-                  (remove-plan-costs
-                   (first
-                    (plan-quietly ,quoted-problem-name))))))
-      `(fiveam:test ,name
-         (define-blocks-domain)
-         (fiveam:is-true
-          (plan-quietly ,quoted-problem-name)))))
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+   (if primary-result-plan
+       `(progn
+          (fiveam:test ,name
+            (define-blocks-domain)
+            (fiveam:is
+             (equalp ',primary-result-plan
+                     (remove-plan-costs
+                      (first
+                       (plan-quietly ,quoted-problem-name))))))
+          (fiveam:test ,ess-name
+           (define-blocks-domain)
+           (fiveam:is
+            (equalp ',primary-result-plan
+                    (remove-plan-costs
+                     (first
+                      (ess-plan-quietly ,quoted-problem-name)))))))
+       `(progn
+          (fiveam:test ,name
+            (define-blocks-domain)
+            (fiveam:is-true
+             (plan-quietly ,quoted-problem-name)))
+          (fiveam:test ,name
+            (define-blocks-domain)
+            (fiveam:is-true
+             (ess-plan-quietly ,quoted-problem-name)))))))
 
 ;;; FIXME: get reference plan for this problem... [2012/09/05:rpg]
 (nst-blocks-test plan100

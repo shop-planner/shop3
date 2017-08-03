@@ -114,9 +114,29 @@
 
 (test arity-test
   (flet ((find-plans (problem &key verbose domain)
-           (if shop2::*test-explicit-state-search*
-               (find-plans-stack problem :verbose verbose :domain domain)
-               (find-plans  problem :verbose verbose :domain domain))))
+           (find-plans  problem :verbose verbose :domain domain)))
+  (with-fixture arity-domain ()
+    (with-fixture good-problem ()
+      (unfailed 
+         (find-plans 'arity-match :verbose 0 :domain dom)))
+    (with-fixture bad-problem ()
+      (signals shop2:task-arity-mismatch
+          (find-plans 'arity-mismatch :domain dom :verbose 0)))
+    (with-fixture good-problem-op ()
+      (unfailed (find-plans 'arity-match-op :verbose 0 :domain dom)))
+    (with-fixture bad-problem-op ()
+      (signals shop2:task-arity-mismatch
+               (find-plans 'arity-mismatch-op :domain dom :verbose 0)))
+    (with-fixture good-rest-problem-1 ()
+      (unfailed
+       (find-plans 'meta :verbose 0 :domain dom)))
+    (with-fixture good-rest-problem-2 ()
+      (unfailed
+       (find-plans 'meta-op :verbose 0 :domain dom))))))
+
+(test ess-arity-test
+  (flet ((find-plans (problem &key verbose domain)
+           (find-plans-stack problem :verbose verbose :domain domain)))
   (with-fixture arity-domain ()
     (with-fixture good-problem ()
       (unfailed 

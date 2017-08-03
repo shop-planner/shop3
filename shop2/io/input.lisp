@@ -579,9 +579,8 @@ to the domain with domain-name NAME."
   (values))
 
 (defmethod parse-domain-items ((domain domain) items)
-  (with-slots (axioms operators methods) domain
-    (setf axioms (make-hash-table :test 'eq)
-          operators (make-hash-table :test 'eq)
+  (with-slots (operators methods) domain
+    (setf operators (make-hash-table :test 'eq)
           methods (make-hash-table :test 'eq))
     (set-variable-property domain items)        ; set primitive and variable properties
     (dolist (x (reverse items))

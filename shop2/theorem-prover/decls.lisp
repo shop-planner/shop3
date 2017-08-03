@@ -78,7 +78,10 @@ state data structure."))
 
 (defgeneric axioms (thpr-domain predicate)
   (:documentation "Return a list of all the SHOP2
-axioms for PREDICATE in THPR-DOMAIN."))
+axioms for PREDICATE in THPR-DOMAIN.")
+  (:method (no-axioms-domain predicate)
+    (declare (ignorable no-axioms-domain predicate))
+    nil))
 
 ;;;---------------------------------------------------------------------------
 ;;; Defgenerics for functions used to tailor the theorem-prover
@@ -110,10 +113,15 @@ function!  Instead, please use the def-logical-keyword macro.")
 
 (defclass has-axioms-mixin ()
      ((axioms
-       :initarg :axioms
+       ;; axioms are hashed by predicate name...
+       :initform (make-hash-table :test 'eq)
        :reader domain-axioms
        ))
   )
+
+(defmethod axioms ((domain has-axioms-mixin) (name symbol))
+  "Return a list of axioms for for NAME as defined in DOMAIN."
+  (gethash name (domain-axioms domain)))
 
 
 ;;;(defclass domain (shop2.common:domain has-axioms-mixin)
@@ -179,6 +187,40 @@ warnings, errors, etc.")
              (format stream "incorrect.")
              (when (slot-boundp condition 'comment)
                (format stream "  ~a" (comment condition))))))
+
+(define-condition non-ground-error (error theorem-prover-condition)
+  ((var
+    :initarg :var
+    :reader var
+    )
+   (expression
+    :initarg :expression
+    :reader expression
+    ))
+  (:report (lambda (condition stream)
+             (format stream "Variable ~a is not ground in ~a, but must be."
+                     (var condition)
+                     (expression condition)))))
+
+(define-condition incorrect-arity-error (error theorem-prover-condition)
+  ((op
+    :initarg :op
+    :reader op
+    )
+   (correct-arity
+    :initarg :correct-arity
+    :reader correct-arity
+    :type fixnum
+    )
+   (expression
+    :initarg :expression
+    :reader expression
+    ))
+  (:report (lambda (condition stream)
+             (format stream "Operator ~a takes ~d arguments. Used incorrectly in ~a."
+                     (op condition)
+                     (correct-arity condition)
+                     (expression condition)))))
 
 ;;; used for the internals of IF-THEN-ELSE in the theorem-prover
 (define-condition cut-commit (condition)

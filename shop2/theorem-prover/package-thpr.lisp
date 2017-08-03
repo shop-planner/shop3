@@ -103,6 +103,7 @@
              ;; exceptions
              #:instantiation-error
              #:bad-argument
+             #:non-ground-error
              #:theorem-prover-condition
 
              ;; tracking dependencies

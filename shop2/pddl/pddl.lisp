@@ -57,6 +57,13 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
+
+;;; ----------------------------------------------------------------------
+;;; Further changes 
+;;; Copyright(c) 2017  Smart Information Flow Technologies
+;;; Air Force Research Lab Contract # FA8750-16-C-0182
+;;; Unlimited Government Rights
+;;; ----------------------------------------------------------------------
 (in-package :shop2)
 
 
@@ -89,6 +96,15 @@ This is an easier to use interface to the validator-export function, qv."
 PDDL operator definitions.")
   )
 
+(defclass negative-preconditions-mixin ()
+  ()
+  )
+
+(defclass disjunctive-preconditions-mixin ()
+  ()
+  )
+
+
 (defclass universal-precondition-mixin ()
      ()
   )
@@ -97,6 +113,9 @@ PDDL operator definitions.")
      ()
   )
 
+(defclass quantified-precondition-mixin (universal-precondition-mixin existential-precondition-mixin)
+  ()
+  )
 
 (defclass conditional-effects-mixin ()
      ()
@@ -107,11 +126,20 @@ PDDL operator definitions.")
   )
 
 (defclass pddl-typing-mixin ()
+  ((pddl-types
+    :accessor pddl-types
+    :initarg :%pddl-types              ; don't use the initform -- it's for testing.
+   )))
+
+(defclass costs-mixin ()
   ()
   )
 
+(defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-precondition-mixin conditional-effects-mixin)
+  ()
+  )
 
-(defclass pddl-domain ( conditional-effects-mixin existential-precondition-mixin universal-precondition-mixin equality-mixin
+(defclass pddl-domain ( conditional-effects-mixin quantified-precondition-mixin equality-mixin
                        pddl-typing-mixin
                        simple-pddl-domain )
   ()
@@ -119,6 +147,11 @@ PDDL operator definitions.")
 PDDL operator definitions.  Right now, this approximates what happens if you have
 the :adl flag in a PDDL domain file.")
   )
+
+(defclass adl-domain (simple-pddl-domain adl-mixin)
+  ()
+  )
+
 
 (defgeneric process-action (domain action-def)
   (:documentation "PDDL has actions \(vanilla SHOP2 has operators\), so we 
@@ -141,16 +174,24 @@ later be compiled into find-satisfiers or something."
     (set-variable-property domain equality-axiom)
     (call-next-method domain (cons equality-axiom items))))
 
+;;; add axioms for managing type constraints...
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
-  "Add the axiom that treats equality as a built-in predicate.  This should 
-later be compiled into find-satisfiers or something."
   (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
                                ((= ?x (nil)))
                                ((= ?x (?c . ?rest))
                                 (enforce ?c "Parameter unbound or ill-typed: ~{ ~a ~}" ?c)
                                 (%enforce-type-constraints ?rest))))))
     (set-variable-property domain enforcement-axioms)
-    (call-next-method domain (append enforcement-axioms items))))
+    ;; the definition of types must come before the other items we parse
+    ;; for reasons I don't understand, the items are parsed in reverse
+    ;; order, so we move the types definition to the
+    ;; end. [2017/08/02:rpg]
+    (let ((types-def (find :types items :key 'first)))
+      ;; if there's no type definition, add a trivial one.
+      (unless types-def (setf (pddl-types domain) '(object)))
+      (call-next-method domain `(,@enforcement-axioms
+                                 ,@(if types-def (remove types-def items) items)
+                                 ,@(when types-def (list types-def)))))))
 
 
 ;;; parsing PDDL action items --- for now we treat them just as
@@ -177,9 +218,15 @@ later be compiled into find-satisfiers or something."
   (declare (ignore item))
   (values))
 
-(defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':types)) item)
+(defmethod parse-domain-item ((domain pddl-typing-mixin) (item-key (eql ':types)) item)
   "For now, since SHOP doesn't typecheck, we simply ignore these declarations."
-  (declare (ignore item))
+  (assert (every 'symbolp (rest item)))
+  (multiple-value-bind (types super-types)
+      (parse-typed-list (rest item))
+    (setf (pddl-types domain) (union '(object) types))
+    (loop :for type :in types
+          :as super-type :in super-types
+          :do (parse-domain-item domain ':- `(:- (,super-type ?x) (,type ?x)))))
   (values))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':requirements)) item)
@@ -200,7 +247,7 @@ with unconditional actions."
     ;; actions [2006/08/01:rpg]
     (set-variable-property domain action-def)
     (multiple-value-bind (param-vars param-types)
-        (typed-list-vars parameters)
+        (typed-list-vars parameters domain)
       (let ((precond
               (translate-precondition domain precondition))
             (type-precond
@@ -249,7 +296,8 @@ to just leave it alone."
 slightly-different SHOP2 FORALL syntax.
 It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
 translated."
-  (let ((new-effect (translate-pddl-quantifier effect 'forall)))
+  ;;; FIXME: don't we need to translate existential variables, as well?
+  (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
     (call-next-method domain new-effect)))
 
 ;;;---------------------------------------------------------------------------
@@ -266,7 +314,7 @@ to just leave it alone."
 slightly-different SHOP2 FORALL syntax.
 It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
 translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'forall)))
+  (let ((new-expr (translate-pddl-quantifier expression 'forall domain)))
     (call-next-method domain new-expr)))
 
 (defmethod translate-precondition ((domain existential-precondition-mixin) expression)
@@ -274,7 +322,7 @@ translated."
 slightly-different SHOP2 EXISTS syntax.
 It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
 translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'exists)))
+  (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
     (call-next-method domain new-expr)))
 
 
@@ -283,7 +331,7 @@ translated."
 ;;; Helper functions
 ;;;---------------------------------------------------------------------------
 
-(defun translate-pddl-quantifier (expression quantifier)
+(defun translate-pddl-quantifier (expression quantifier &optional (domain *domain*))
   "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation 
 into SHOP2 quantifier notation \(and adds some
 \(<type> <var>\) conditions\)."
@@ -298,7 +346,7 @@ into SHOP2 quantifier notation \(and adds some
                  quant-expr
                (declare (ignore quant))
                (multiple-value-bind (vars types)
-                   (typed-list-vars typed-list)
+                   (typed-list-vars typed-list domain)
                  `(,quantifier ,vars
                           ,(let ((exprs (of-type-exprs vars types)))
                              (if (= (length exprs) 1)
@@ -316,28 +364,42 @@ we can use in preconditions."
         collect `(,type ,v)))
   
 
-;;; this should be fixed to check to make sure everything in the
-;;; return value list is really a variable.... [2006/07/28:rpg]
-;;; FIXME: If the variables are not all typed (some are implicitly OBJECT), this
-;;; will fail. [2012/10/09:rpg]
-(defun typed-list-vars (typed-list)
+(defun typed-list-vars (typed-list &optional (domain *domain*))
   "Takes a typed-list (this is a PDDL construct) as argument and 
 pulls out the variables and types and returns two parallel
 lists of variable names and type names."
+  (set-variable-property domain typed-list)
+  (multiple-value-bind (vars types)
+      (parse-typed-list typed-list)
+    (assert (every #'(lambda (x) (variable-p x)) vars))
+    (let ((undefined (remove-duplicates (remove-if #'(lambda (type) (member type (pddl-types domain))) types))))
+      (when undefined
+        (error "Reference to undefined PDDL type~P: ~S"
+               (length undefined) undefined)))
+    (values vars types)))
+
+(defun parse-typed-list (typed-list)
+  "Takes a typed-list (this is a PDDL construct) as argument and 
+pulls out the declared items and types and returns two parallel
+lists of declared names and type names."
   (loop with lst = typed-list
         with counter = 0
         until (null lst)
         if (eq (first lst) '-)
           append (make-list counter :initial-element (second lst)) into types
           and do (setf lst (cddr lst)
-                    counter 0)
+                       counter 0)
         else
-          collect (first lst) into vars
+          collect (first lst) into items
           and do (setf lst (cdr lst))
                  (incf counter)
-        finally (return (values vars
+        finally (return (values items
                                 (if (= counter 0) types
-                                    (append types (make-list counter :initial-element (intern (symbol-name '#:object) :shop2))))))))
+                                    ;; this handles the case where the
+                                    ;; end of the type list doesn't
+                                    ;; have a type declaration:
+                                    ;; defaults to OBJECT.
+                                    (append types (make-list counter :initial-element 'shop2:object)))))))
                             
 ;;;---------------------------------------------------------------------------
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla

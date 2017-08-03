@@ -305,6 +305,8 @@ to a finite collection of ground methods.
 
 ** ADL SHOP2
 
+*** TODO Expand this description to cover conditional effects
+
 *** Definition
 
 The ADL dialect of SHOP2 is defined as a SHOP2 dialect that uses as

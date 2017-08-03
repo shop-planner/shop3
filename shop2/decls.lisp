@@ -357,10 +357,7 @@ A failure can be triggered by returning NIL."))
 (defmethod operator ((domain domain) (name symbol))
   (gethash name (domain-operators domain)))
 
-(defmethod axioms ((domain domain) (name symbol))
-  "Return a list of axioms for for NAME as defined in DOMAIN."
-  (gethash name (domain-axioms domain))
-  )
+
 
 (defgeneric process-pre (domain precondition)
   (:documentation "Preprocess the PRECONDITION in accordance with

@@ -5,13 +5,22 @@
 
 (defmacro nst-depot-test (name (&key primary-result-plan) quoted-problem-name)
   (assert primary-result-plan)
-  `(fiveam:test ,name
-     (define-depot-domain)
-     (fiveam:is
-      (equalp ',primary-result-plan
-              (remove-plan-costs
-               (first
-                (plan-quietly ,quoted-problem-name)))))))
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+    `(progn
+       (fiveam:test ,name
+         (define-depot-domain)
+         (fiveam:is
+          (equalp ',primary-result-plan
+                  (remove-plan-costs
+                   (first
+                    (plan-quietly ,quoted-problem-name))))))
+       (fiveam:test ,ess-name
+         (define-depot-domain)
+         (fiveam:is
+          (equalp ',primary-result-plan
+                  (remove-plan-costs
+                   (first
+                    (ess-plan-quietly ,quoted-problem-name)))))))))
 
 
 (nst-depot-test depot-1

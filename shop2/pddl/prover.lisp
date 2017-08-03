@@ -70,14 +70,20 @@
     (pddl-satisfiers-for-exists domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
 
+(def-logical-keyword (not (domain shop2::negative-preconditions-mixin))
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
+    (pddl-satisfiers-for-not domain (cdr goal) other-goals
+                                    state bindings (1+ level) just1 dependencies-in)))
+
 
 (defun pddl-satisfiers-for-forall (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)
-  ;; in our PDDL FORALLs, the bounds are all going to be static type
-  ;; predicates, which don't need their dependencies recorded.
   (let* ((bounds (second arguments))
          (conditions (third arguments))
-         (mgu2 (find-satisfiers bounds state nil 0 :domain domain)))
+         ;; in our PDDL FORALLs, the bounds are all going to be static type
+         ;; predicates, which don't need their dependencies recorded.
+         (mgu2 (let ((*record-dependencies-p* nil))
+                 (find-satisfiers bounds state nil 0 :domain domain))))
     (dolist (m2 mgu2)
       (unless (seek-satisfiers (apply-substitution conditions m2)
                                state bindings 0 t :domain domain)
@@ -85,20 +91,61 @@
   (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
 
 (defun pddl-satisfiers-for-exists (domain arguments other-goals
-                                       state bindings newlevel just1 dependencies-in)
-   (let* ((bounds (second arguments))
+                                   state bindings newlevel just1 dependencies-in)
+  (let* ((bounds (second arguments))
          (conditions (third arguments))
-         (mgu2 (find-satisfiers bounds state nil 0 :domain domain)))
+         ;; in our PDDL EXISTS, the bounds are all going to be static type
+         ;; predicates, which don't need their dependencies recorded.
+         (mgu2 (let ((*record-dependencies-p* nil))
+                 (find-satisfiers bounds state nil 0 :domain domain))))
     (loop for m2 in mgu2
-        when (seek-satisfiers (apply-substitution conditions m2)
-                              state bindings 0 t :domain domain)
-          return t                      ; short-circuit, and move on
+          when (seek-satisfiers (apply-substitution conditions m2)
+                                state bindings 0 t :domain domain)
+            return t                      ; short-circuit, and move on
                                         ; to remaining
                                         ; goals... [2007/07/15:rpg]
-        finally ;; didn't find any value that worked
-          (return-from pddl-satisfiers-for-exists nil)))
+          finally ;; didn't find any value that worked
+                  (return-from pddl-satisfiers-for-exists nil)))
 
   ;; Satisfy other goals
   (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
 
+(defun vars-boundp (tree &optional acc)
+  (cond ((variablep tree) (member tree acc))
+        ((atom tree)                    ; atom, but not a variable
+         t)
+        ((listp tree)
+         (cond ((or (eq (first tree) 'forall)
+                    (eq (first tree) 'exists))
+                (destructuring-bind (keyword var expr) tree
+                  (declare (ignore keyword))
+                  (let ((new-acc (cons var acc)))
+                    (vars-boundp expr new-acc))))
+               (t
+                (and (vars-boundp (car tree) acc)
+                     (every #'(lambda (sexp) (vars-boundp sexp acc))
+                            (rest tree))))))
+         (t (error "Unexpected value in tree: ~S" tree))))
 
+
+(defun pddl-satisfiers-for-not (domain arguments other-goals
+                                           state bindings newlevel just1 dependencies-in)
+  (let ((argument (first arguments)))
+    (when *record-dependencies-p*
+      (unless (or (groundp argument) (vars-boundp argument))
+        (error "Negation expression in PDDL should not contain any unbound variables: ~A." `(not ,argument))))
+    ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
+    (cond
+      ((let ((*record-dependencies-p* nil))
+         (seek-satisfiers arguments state nil newlevel t :domain domain))
+       ;; the negation is falsified
+       nil)
+      (t
+       (let (newdep)
+         (when (and *record-dependencies-p* (groundp argument))
+           (setf newdep
+                 (make-raw-depend
+                  :est
+                  (dependency-for-negation argument state)
+                  :prop `(not ,argument))))
+         (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in)))))))
