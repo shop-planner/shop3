@@ -208,7 +208,7 @@ shop2."
                  (enhanced-plan-tree . :shop2-user)
                  (theorem-prover-tests . :shop-theorem-prover-tests)
                  )
-    :num-checks 422
+    :num-checks 424
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr")))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"

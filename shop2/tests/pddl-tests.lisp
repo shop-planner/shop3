@@ -574,7 +574,9 @@
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
   (fiveam:is-true (funcall 'find-plans
-                           'os-sequencedstrips-p5_1 :verbose 0)))
+                           'os-sequencedstrips-p5_1 :verbose 0))
+  (fiveam:is-true (funcall 'find-plans
+                           'os-sequencedstrips-p5_1i :verbose 0)))
 
 
 (fiveam:test ess-pddl-planning
@@ -582,4 +584,6 @@
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
   (fiveam:is-true (funcall 'find-plans-stack 
-                           'os-sequencedstrips-p5_1 :verbose 0)))
+                           'os-sequencedstrips-p5_1 :verbose 0))
+  (fiveam:is-true (funcall 'find-plans
+                           'os-sequencedstrips-p5_1i :verbose 0)))
