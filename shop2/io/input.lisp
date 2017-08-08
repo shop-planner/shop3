@@ -629,7 +629,7 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
                                      :return x)))))
       (if domain-form
           ;; return the items
-          (expand-include (third domain-form))
+          (expand-include parent-domain (third domain-form))
           (error "Did not find definition of domain named ~a in file ~a"
                  domain-name path)))))
 
