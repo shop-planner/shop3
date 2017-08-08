@@ -573,17 +573,42 @@
   (let ((shop2:*define-silently* t))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
-  (fiveam:is-true (funcall 'find-plans
-                           'os-sequencedstrips-p5_1 :verbose 0))
-  (fiveam:is-true (funcall 'find-plans
-                           'os-sequencedstrips-p5_1i :verbose 0)))
+  (fiveam:is (equalp '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
+                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
+                       (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
+                       (!SHIP-ORDER O2 N4 N5))
+                     (shorter-plan (first (find-plans
+                                           'os-sequencedstrips-p5_1 :verbose 0)))))
+  (fiveam:is (equalp '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
+                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
+                       (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
+                       (!SHIP-ORDER O2 N4 N5))
+                     (shorter-plan (first (find-plans
+                                     'os-sequencedstrips-p5_1i :verbose 0))))))
 
 
 (fiveam:test ess-pddl-planning
-  (let ((shop2:*define-silently* t))
+  (let ((shop2:*define-silently* t)
+        (plan '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
+                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
+                       (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
+                       (!SHIP-ORDER O2 N4 N5))))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
-  (fiveam:is-true (funcall 'find-plans-stack 
-                           'os-sequencedstrips-p5_1 :verbose 0))
-  (fiveam:is-true (funcall 'find-plans
-                           'os-sequencedstrips-p5_1i :verbose 0)))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp"))
+    (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
+                                                  'os-sequencedstrips-p5_1 :verbose 0)))))
+    (fiveam:is (equalp plan
+                       (shorter-plan (first (find-plans
+                                             'os-sequencedstrips-p5_1i :verbose 0)))))))
