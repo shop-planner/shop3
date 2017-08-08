@@ -174,7 +174,9 @@ later be compiled into find-satisfiers or something."
     (set-variable-property domain equality-axiom)
     (call-next-method domain (cons equality-axiom items))))
 
-;;; add axioms for managing type constraints...
+;;; FIXME: here's a problem -- this is called before we process the
+;;; includes, which means if we include the type definitions, then we
+;;; don't see them here....
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
   (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
                                ((= ?x (nil)))
@@ -324,6 +326,33 @@ It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
 translated."
   (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
     (call-next-method domain new-expr)))
+
+;;;---------------------------------------------------------------------------
+;;; Including PDDL domains in our domains...
+;;;---------------------------------------------------------------------------
+
+(defmethod domain-include-parse ((parent-domain pddl-domain) domain-name path)
+  (declare (ignorable parent-domain))
+  (flet ((string-match-symbol (sym match-me)
+           (equalp (symbol-name sym) (symbol-name match-me))))
+    (let ((domain-form
+            (with-open-file (str path :direction :input)
+              (let ((*package* *package*))
+                (iter
+                  (for x = (read str nil nil))
+                  (while x)
+                  (cond ((eq (car x) 'in-package)
+                         (set '*package* (find-package (second x))))
+                        ((and (string-match-symbol (car x) 'define)
+                              (string-match-symbol (first (second x)) 'domain)
+                              (string-match-symbol (second (second x)) domain-name))
+                         (return x)))
+                  (finally (return nil)))))))
+      (if domain-form
+          ;; return the items
+          (cddr domain-form)
+          ;; could be a SHOP2 domain you're including
+          (call-next-method)))))
 
 
 ;;;

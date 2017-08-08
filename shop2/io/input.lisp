@@ -75,30 +75,6 @@ do NOT emit singleton variable warnings.")
 ;;; Functions for creating and manipulating planning domains and problems
 ;;; ------------------------------------------------------------------------
 
-;;; MAKE-DOMAIN gives the name NAME to the planning domain whose axioms,
-;;; operators, and methods are those in in ITEMS.  More specifically, it
-;;; puts the axioms, operators, and methods onto NAME's property list under
-;;; the indicators :AXIOMS, :OPERATORS, and :METHODS, respectively
-
-;;; It scares me that we have defdomain and make-domain, they do the
-;;; same thing, and there's duplicated code.  This seems like a recipe
-;;; for pain in the future.  I believe that defdomain should be
-;;; modified to expand to a call to make-domain... [2006/07/05:rpg]
-(defun make-domain (name &optional items)
-  (warn "MAKE-DOMAIN is an obsolete, deprecated interface.  Please use DEFDOMAIN instead.")
-  (when (null items)
-    (psetf items name
-           name (gentemp (symbol-name '#:domain))))
-  ;; name is ignored -- it's there only for compatibility with SHOP 1
-  (unless *define-silently*
-    (format t "~%Defining domain ..."))
-  (let ((domain (make-instance 'domain
-                  :name name)))
-    (setq items (append '((:operator (!!inop) () () 0)) items))
-    (parse-domain-items domain items)
-    (install-domain domain)
-    (setf *domain* domain)))
-
 ;;; If the axiom has SHOP 1.x or mixed syntax, regularize-axiom will
 ;;; return it in SHOP 2 syntax.
 (defmethod regularize-axiom ((domain domain) axiom)
@@ -500,45 +476,47 @@ breaks usage of *load-truename* by moving the FASLs.")
   ;; it makes more sense to me that defdomain have a &rest argument,
   ;; instead of a single argument that's a list.... [2006/07/31:rpg]
   (push '(:operator (!!inop) () () () 0) items)
+  `(let ((*defdomain-pathname* ,(or *compile-file-truename*
+                                    *load-truename*)))
+      #+allegro (excl:without-redefinition-warnings
+                  (excl:record-source-file ',(first name-and-options) :type :shop2-domain))
+     (apply 'make-domain ',name-and-options ',items)))
+
+(defun make-domain (name-and-options &rest items)
   (destructuring-bind (name &rest options &key (type 'domain) noset redefine-ok &allow-other-keys)
-         name-and-options
+      name-and-options
+    (unless *define-silently*
+      (when *defdomain-verbose*
+        (format t "~%Defining domain ~a...~%" name)))
     (unless (subtypep type 'domain)
-         (error "Type argument to defdomain must be a subtype of DOMAIN. ~A is not acceptable." type))
+      (error "Type argument to defdomain must be a subtype of DOMAIN. ~A is not acceptable." type))
     (remf options :type)
     (remf options :redefine-ok)
     (remf options :noset)
     (setf redefine-ok (or redefine-ok *define-silently*))
-    ;; yuck: this should really be rewritten as a function.
-    `(let ((*defdomain-pathname* ,(or *compile-file-truename*
-                                      *load-truename*)))
-       (unless *define-silently*
-         (when *defdomain-verbose*
-         (format t "~%Defining domain ~a...~%" ',name)))
-       #+allegro (excl:without-redefinition-warnings
-                  (excl:record-source-file ',name :type :shop2-domain))
-       (let ((domain (apply #'make-instance ',type
-                       :name ',name
-                       ',options
-                       )))
-         ;; I suspect that this should go away and be handled by
-         ;; initialize-instance... [2006/07/31:rpg]
-         (apply #'handle-domain-options domain ',options)
-         (let (warnings)
-           (handler-bind
-               ((domain-item-parse-warning
-                 #'(lambda (c)
-                     (push c warnings)
-                     (muffle-warning c))))
-             (parse-domain-items domain ',items))
-           (when warnings
-             (let ((*print-pprint-dispatch* *shop-pprint-table*))
-               (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
-         (install-domain domain ,redefine-ok)
-         (unless ,noset
-           (setf *domain* domain))
-         ;; previous addition of noset changed the behavior of defdomain to make
-         ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
-         domain))))
+    (let ((domain (apply #'make-instance type
+                         :name name
+                         options)))
+      ;; I suspect that this should go away and be handled by
+      ;; initialize-instance... [2006/07/31:rpg]
+      (apply #'handle-domain-options domain options)
+      (setf items (expand-includes domain items))
+      (let (warnings)
+        (handler-bind
+            ((domain-item-parse-warning
+               #'(lambda (c)
+                   (push c warnings)
+                   (muffle-warning c))))
+          (parse-domain-items domain items))
+        (when warnings
+          (let ((*print-pprint-dispatch* *shop-pprint-table*))
+            (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
+      (install-domain domain redefine-ok)
+      (unless noset
+        (setf *domain* domain))
+      ;; previous addition of noset changed the behavior of defdomain to make
+      ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
+      domain)))
 
 (defmethod install-domain ((domain domain) &optional redefine-ok)
   (when (get (domain-name domain) :domain)
@@ -587,21 +565,22 @@ to the domain with domain-name NAME."
       (parse-domain-item domain (car x) x))
     (values)))
 
-(defmethod parse-domain-items :around ((domain domain) items)
-  "Handle :INCLUDE directives."
+(defun expand-includes (domain items)
+  "Handle :INCLUDE directives, return a new items list
+if any are found, otherwise the original list."
   ;; short-circuit if no include directives
-  (unless (member :include items :key 'first :test 'eq)
-    (call-next-method))
-  (call-next-method domain (expand-include items)))
+  (if (member :include items :key 'first :test 'eq)
+      (expand-include domain items)
+   items))
 
-(defun expand-include (items)
+(defun expand-include (domain items)
   (loop :for item :in items
         :if (eq (first item) :include)
-          :append (translate-include item)
+          :append (translate-include domain item)
         :else
           :collect item))
 
-(defun translate-include (include-item)
+(defun translate-include (domain include-item)
   (destructuring-bind (keyword domain-name &optional pathname)
       include-item
     (assert (eq keyword :include))
@@ -610,7 +589,7 @@ to the domain with domain-name NAME."
     (unless pathname
       (setf pathname (make-pathname :name (string-downcase (symbol-name domain-name))
                                     :type "lisp")))
-    (domain-include-parse domain-name (domain-include-search pathname))))
+    (domain-include-parse domain domain-name (domain-include-search pathname))))
 
 (defun domain-include-search (path)
   "Search for PATH relative to *COMPILE-FILE-TRUENAME*, *LOAD-TRUENAME*, the cached
@@ -632,24 +611,27 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
        nil))
    (error "No such include file: ~a" path)))
 
-(defun domain-include-parse (domain-name path)
-  (let ((domain-form
-         (with-open-file (str path :direction :input)
-             (let ((*package* *package*))
-               (loop :for x = (read str nil nil)
-                     :while x
-                     :with name
-                     :if (eq (car x) 'in-package)
-                     :do (set '*package* (find-package (second x)))
-                     :else :if (eq (car x) 'defdomain)
-                     :do (setf name (if (listp (second x)) (first (second x)) (second x)))
-                     :and :when (equalp (symbol-name name) (symbol-name domain-name))
-                     :return x)))))
-    (if domain-form
-        ;; return the items
-        (expand-include (third domain-form))
-      (error "Did not find definition of domain named ~a in file ~a"
-             domain-name path))))
+(defgeneric domain-include-parse (parent-domain domain-name path)
+  (:documentation "Return domain items from including DOMAIN-NAME found in PATH.")
+  (:method ((parent-domain domain) domain-name path)
+    (declare (ignorable parent-domain))
+    (let ((domain-form
+            (with-open-file (str path :direction :input)
+              (let ((*package* *package*))
+                (loop :for x = (read str nil nil)
+                      :while x
+                      :with name
+                      :if (eq (car x) 'in-package)
+                        :do (set '*package* (find-package (second x)))
+                      :else :if (eq (car x) 'defdomain)
+                              :do (setf name (if (listp (second x)) (first (second x)) (second x)))
+                              :and :when (equalp (symbol-name name) (symbol-name domain-name))
+                                     :return x)))))
+      (if domain-form
+          ;; return the items
+          (expand-include (third domain-form))
+          (error "Did not find definition of domain named ~a in file ~a"
+                 domain-name path)))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Parse-domain-item methods
