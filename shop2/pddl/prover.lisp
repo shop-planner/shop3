@@ -78,17 +78,27 @@
 
 (defun pddl-satisfiers-for-forall (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)
+  (assert (= (length arguments) 3))
   (let* ((bounds (second arguments))
          (conditions (third arguments))
          ;; in our PDDL FORALLs, the bounds are all going to be static type
          ;; predicates, which don't need their dependencies recorded.
          (mgu2 (let ((*record-dependencies-p* nil))
-                 (find-satisfiers bounds state nil 0 :domain domain))))
+                 (find-satisfiers bounds state nil (1+ newlevel) :domain domain)))
+         answers depends)
     (dolist (m2 mgu2)
-      (unless (seek-satisfiers (apply-substitution conditions m2)
-                               state bindings 0 t :domain domain)
-        (return-from pddl-satisfiers-for-forall nil))))
-  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
+      (multiple-value-bind (new-answer new-depends)
+          (find-satisfiers (apply-substitution conditions m2)
+                                  state t (1+ newlevel) :domain domain)
+        ;; all of the conditions must pass
+        (unless new-answer 
+          (return-from pddl-satisfiers-for-forall nil))
+        (multiple-value-setq (answers depends)
+          (answer-set-union new-answer answers new-depends depends))))
+    ;; I wonder if the following is necessary, since there's no way
+    ;; for bindings here to "leak out," or if we should just be
+    ;; invoking seek-satisfiers.
+    (incorporate-unifiers answers other-goals just1 state bindings dependencies-in depends domain newlevel)))
 
 (defun pddl-satisfiers-for-exists (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)

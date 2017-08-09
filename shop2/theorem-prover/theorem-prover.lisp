@@ -68,8 +68,8 @@
 ;;;  find-satisfiers and some compilers want all macros to be defined before
 ;;;  any code which invokes them.
 (defmacro seek-satisfiers (goals state bindings level just1
-                                 &key (domain nil domain-supp-p)
-                                 dependencies)
+                           &key (domain nil domain-supp-p)
+                             dependencies)
   "Find satisfying assignments to variables in GOALS, using STATE and
 BINDINGS.  Find just one assignment if JUST1 is non-NIL.
    BINDINGS is *NOT* a list of binding structures! It is a list made
@@ -82,8 +82,8 @@ will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
            (values (list ,bindings) (list ,dependencies))
-         (real-seek-satisfiers ,d ,goals ,state
-                               ,bindings ,level ,just1 ,dependencies)))))
+           (real-seek-satisfiers ,d ,goals ,state
+                                 ,bindings ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain)
   (:documentation 
@@ -99,7 +99,7 @@ is properly set in GOALS.")
   ;; this is necessary because SBCL (correctly) hates the use of OPTIONAL and
   ;; KEY together.
 
-         (defun find-satisfiers (goals state &optional just-one (level 0)
+  (defun find-satisfiers (goals state &optional just-one (level 0)
                                        &key (domain *domain*))
            "Find and return a list of binding lists that represents the answer to
 goals \(a list representation of a deductive query\), where
@@ -411,6 +411,8 @@ in the goal, so we ignore the extra reference."
     T)
 
 ;; return new unifiers and dependencies (if they are being recorded), and then invokes REMAINING...
+;;; FIXME: if REMAINING is NIL, then (APPLY-SUBSTITUTION REMAINING
+;;; UNIFIER) will crash.  It's not clear whether this was intended.
 (defun incorporate-unifiers (unifiers remaining just-one
                                       state bindings dependencies-in added-dependencies domain newlevel)
   (let (answers depends)
@@ -452,6 +454,7 @@ in the goal, so we ignore the extra reference."
      nil)
    (t
     (let (newdep)
+      ;; FIXME: this really only works if we convert the preconditions to negation normal form.
       (when (and *record-dependencies-p* (groundp (first arguments)))
         (setf newdep
               (make-raw-depend
@@ -461,6 +464,9 @@ in the goal, so we ignore the extra reference."
       (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in))))))
 
 (defun dependency-for-negation (positive-literal state)
+  ;; FIXME: we should check that positive-literal is, in fact, a
+  ;; positive literal but, oh dear -- SHOP2 doesn't really support
+  ;; this.
   (last-establisher state `(not ,positive-literal)))
 
 (defun standard-satisfiers-for-eval (domain arguments other-goals
@@ -557,7 +563,7 @@ in the goal, so we ignore the extra reference."
     (unless (groundp conditionA)
       (error 'non-ground-error :var (find-variable conditionA) :expression conditionA))
     (multiple-value-bind (answers depends)
-        (find-satisfiers `(or (not ,conditionA) ,conditionB) state nil 0 :domain domain)
+        (find-satisfiers `(or (not ,conditionA) ,conditionB) state nil newlevel :domain domain)
       (cond (answers
              (incorporate-unifiers answers other-goals just1 state bindings dependencies-in depends domain newlevel))
             (t nil)))))
