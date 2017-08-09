@@ -174,9 +174,6 @@ later be compiled into find-satisfiers or something."
     (set-variable-property domain equality-axiom)
     (call-next-method domain (cons equality-axiom items))))
 
-;;; FIXME: here's a problem -- this is called before we process the
-;;; includes, which means if we include the type definitions, then we
-;;; don't see them here....
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
   (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
                                ((= ?x (nil)))
@@ -331,7 +328,7 @@ translated."
 ;;; Including PDDL domains in our domains...
 ;;;---------------------------------------------------------------------------
 
-(defmethod domain-include-parse ((parent-domain pddl-domain) domain-name path)
+(defmethod domain-include-parse ((parent-domain simple-pddl-domain) domain-name path)
   (declare (ignorable parent-domain))
   (flet ((string-match-symbol (sym match-me)
            (equalp (symbol-name sym) (symbol-name match-me))))
