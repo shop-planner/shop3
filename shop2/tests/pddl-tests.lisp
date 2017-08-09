@@ -610,5 +610,5 @@
     (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
                                                   'os-sequencedstrips-p5_1 :verbose 0)))))
     (fiveam:is (equalp plan
-                       (shorter-plan (first (find-plans
+                       (shorter-plan (first (find-plans-stack
                                              'os-sequencedstrips-p5_1i :verbose 0)))))))
