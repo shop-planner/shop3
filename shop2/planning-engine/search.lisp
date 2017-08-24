@@ -375,9 +375,11 @@ of SHOP2."
     (if (and *optimize-cost* acceptable-cost
              (eq which-plans :first)
              (equal *optimal-cost* partial-plan-cost))
-        (trace-print :plans nil state
-                     "~4TAlready have a plan with identical cost.~%")
-        ;; old body of the UNLESS
+        (progn
+          (trace-print :plans nil state
+                       "~4TAlready have a plan with identical cost.~%")
+          nil)
+        ;; ELSE
         (progn
           (if (and *optimize-cost* acceptable-cost)
               (progn
@@ -412,10 +414,7 @@ of SHOP2."
           (when acceptable-cost
             (trace-print :plans nil state "~4TStoring new plan in *plans-found*~%")
             (store-plan! final-plan state unifier))
-            )))
-
-    ;; should this better be (values)? [2004/02/11:rpg]
-    nil)
+            ))))
 
 (defun store-plan! (plan state unifier)
   (push-last plan *plans-found*)
@@ -459,19 +458,20 @@ we use to return plans."
       (return-from get-immediate-list (list obj))))
   (return-from get-immediate-list nil))
 
-;;;---------------------------------------------------------------------------
-;;; This should only be called on plans with COSTS IN THEM!!!!!
-;;;---------------------------------------------------------------------------
 (defun shorter-plan (plan)
   "Removes the internal operators from a plan sequence, and
 returns the resulting new sequence.  AFAICT, this also removes the costs.
 Non-destructive."
-  (cond
-   ((null plan) nil)
-   ((internal-operator-p (first (first plan)))
-    (shorter-plan (rest (rest plan))))
-   (t
-    (cons (first plan) (shorter-plan (rest (rest plan)))))))
+  (flet ((rest-of-plan (plan)
+           (if (numberp (second plan))
+                      (rest (rest plan))
+                      (rest plan))))
+    (cond
+      ((null plan) nil)
+      ((internal-operator-p (first (first plan)))
+       (shorter-plan (rest-of-plan plan)))
+      (t
+       (cons (first plan) (shorter-plan (rest-of-plan plan)))))))
 
 (defun remove-costs (plan-and-costs)
   "The SHOP2 plans come with the operators interspersed with their costs.
