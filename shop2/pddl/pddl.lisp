@@ -431,8 +431,10 @@ lists of declared names and type names."
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
 ;;; SHOP2.
 ;;;---------------------------------------------------------------------------
+;;; FIXME: this function should probably take the DOMAIN as argument,
+;;; too, and pass it to find-satisfiers, at least.
 (defun apply-action (state task-body action protections depth
-                           in-unifier)
+                     in-unifier)
   "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then 
 APPLY-ACTION returns five values:
 1.  the operator as applied, with all bindings;
@@ -465,7 +467,7 @@ Otherwise it returns FAIL."
     (let ((action-unifier (unify head (apply-substitution task-body in-unifier))))
 
       (when (eql action-unifier 'fail)
-        (values 'fail protections 0))
+        (return-from apply-action 'fail))
 
       ;; everything below is "if action-unifier != fail"
       
@@ -473,25 +475,26 @@ Otherwise it returns FAIL."
             (compose-substitutions action-unifier in-unifier))
       ;; first check the preconditions, if any
       (if preconditions
-        (let ((pre (apply-substitution preconditions action-unifier)))
+          (let ((pre (apply-substitution preconditions action-unifier)))
           
-          ;; need to specially handle the preconditions, since the
-          ;; syntax of PDDL preconditions are different from
-          ;; SHOP2. [2006/07/31:rpg]
-          (multiple-value-bind (pu pd)
-              (shopthpr:find-satisfiers pre state t)
-            (unless pu
-              (trace-print :operators (first head) state
-                           "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
-                           depth
-                           (first head)
-                           (apply-substitution task-body unifier)
-                           pre
-                           )
-              (return-from apply-action (values 'fail preconditions 0)))
-            (setf unifier (compose-substitutions action-unifier (first pu))
-                  depends (first pd))))
-        (setq unifier action-unifier)))
+            ;; need to specially handle the preconditions, since the
+            ;; syntax of PDDL preconditions are different from
+            ;; SHOP2. [2006/07/31:rpg]
+            (multiple-value-bind (pu pd)
+                (find-satisfiers pre state t 0)
+              (unless pu
+                (trace-print :operators (first head) state
+                             "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
+                             depth
+                             (first head)
+                             (apply-substitution task-body unifier)
+                             pre
+                             )
+                (return-from apply-action 'fail))
+              (setf unifier (compose-substitutions action-unifier (first pu))
+                    ;; FIXME: why FIRST pd?
+                    depends (first pd))))
+          (setq unifier action-unifier)))
     ;; end of scope for action-unifier...
 
     ;; all this stuff below here must be revised since we have an EFFECT,
@@ -499,8 +502,8 @@ Otherwise it returns FAIL."
     (let* ((effect-subbed (apply-substitution effect unifier))
            (head-subbed (apply-substitution head unifier))
            (cost-value
-            (eval (apply-substitution
-                   (pddl-action-cost-fun standardized-action) unifier)))
+             (eval (apply-substitution
+                    (pddl-action-cost-fun standardized-action) unifier)))
            (cost-number (if (numberp cost-value) cost-value 1.0)))
 
 
@@ -515,9 +518,9 @@ Otherwise it returns FAIL."
                                     (mapcar #'list
                                             (rest (second action))
                                             (rest head-subbed)))
-                              :explanation
-                              ,(shopthpr:explain-satisfier (apply-substitution preconditions unifier)
-                                state)))
+                            :explanation
+                            ,(shopthpr:explain-satisfier (apply-substitution preconditions unifier)
+                                                         state)))
         )
       (trace-print :operators (first head) state
                    "~2%Depth ~s, applying PDDL action ~s~%      task ~s~%       effect ~s"
@@ -557,7 +560,7 @@ Otherwise it returns FAIL."
              (retract-state-changes state statetag)
              ;; I don't understand why we need to return more than one
              ;; value here. [2006/07/31:rpg]
-             (return-from apply-action (values 'fail 'fail protections 0))))
+             (return-from apply-action 'fail)))
 
           ;; protections just added are not checked immediately...
           (dolist (a final-adds)
