@@ -19,4 +19,5 @@ by FIND-PLANS-STACK) indexing tasks into the plan-tree.  If
 available, enables quicker lookup.
   Returns:
   Leftmost, minimal task (plan subtree) that has one or more
-broken causal links."))
+broken causal links."
+))

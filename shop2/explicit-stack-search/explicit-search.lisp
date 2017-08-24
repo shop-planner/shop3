@@ -9,8 +9,15 @@
   NIL
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
+(defvar *repairable*
+  NIL
+  "Variable used internally to keep track of whether the plan must be repairable.")
 
-(defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*) (no-dependencies nil))
+
+
+(defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
+                                   (no-dependencies nil)
+                                   repairable)
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
@@ -67,10 +74,11 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
         (prepare-state-tag-decoder)))
     (set-variable-property domain tasks)
     (unwind-protect
-        (seek-plans-stack search-state domain)
-      (delete-state-tag-decoder))))
+        (seek-plans-stack search-state domain :which :first :repairable repairable)
+      (unless repairable
+        (delete-state-tag-decoder)))))
 
-(defun seek-plans-stack (state domain &optional (which-plans :first))
+(defun seek-plans-stack (state domain &key (which :first) repairable)
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP2 search
 virtual machine, cycling through different virtual instructions depending
 on the value of the MODE slot of STATE.
@@ -80,7 +88,7 @@ List of PLANS -- currently there is always only one, but this complies
 List of PLAN-TREES -- optional
 List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
     supplied."
-  (declare (ignorable which-plans))
+  (declare (ignorable which))
   ;; kick off the stack VM
   (setf (mode state) 'check-for-done)
   (catch 'search-failed
@@ -162,7 +170,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                (incf (depth state)))
              (stack-backtrack state)))
         (extract-plan
-         (let ((plan (check-plans-found state)))
+         (let ((plan (check-plans-found state :repairable repairable)))
            (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
            (return
@@ -172,7 +180,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                             (plan-tree state)))
                      (when *enhanced-plan-tree*
                        (list
-                        (plan-tree-lookup state)))))))))))
+                        (plan-tree-lookup state)))
+                     state))))))))
 
 ;;; Traverse the plan tree, applying the bindings to the
 ;;; EXPANDED-TASKs everywhere in the tree.
@@ -387,12 +396,14 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 ;;; FIXME: for now we just extract the plan -- as if we only are
 ;;; finding the first plan.  Simplification to get things done
 ;;; more quickly.
-(defun check-plans-found (state)
+(defun check-plans-found (state &key repairable)
   (with-slots (partial-plan) state
     (when partial-plan
       (list ; comply with FIND-PLANS return type by returning a list of plans
        ;; in this case always a singleton or nil.
-       (strip-NOPs (reverse partial-plan))))))
+       (if repairable
+           (reverse partial-plan)
+           (strip-NOPs (reverse partial-plan)))))))
 (defun prepare-choose-immediate-task-state (state)
   (let ((immediates (immediate-tasks state)))
     (setf (alternatives state) immediates)
@@ -409,7 +420,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (backtrack-stack state))
       state)))
 (defun stack-backtrack (state)
-  "Chronological backtracking only, for now."
+  "Chronological backtracking only, for now.
+Return the CHOICE-ENTRY where you stopped."
   (verbose-format "~&Backtracking:~%")
   (iter (for entry = (pop (backtrack-stack state)))
     (verbose-format "~T~a~%" entry)
@@ -417,7 +429,13 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
       (throw 'search-failed nil))
     (do-backtrack entry state)
     (when (typep entry 'choice-entry)
-      (return t))))
+      (return entry))))
+
+(defun stack-backjump (state target)
+  (assert (typep target 'choice-entry))
+  (iter (for entry = (stack-backtrack state))
+    (when (eq entry target)
+      (return target))))
 
 (defun remove-subtree-from-table (hash-table subtree)
   (assert (typep subtree 'plan-tree:tree-node))

@@ -108,6 +108,9 @@ minimal affected subtree."
          :components ((:file "package")
                       (:file "decls")
                       (:file "minimal-subtree")))
+       (:file "plan-repair"
+              :pathname "explicit-stack-search/plan-repair"
+              :depends-on ("tree" "explicit-stack-search"))
        (:file "shop2"
               :perform (load-op :before (op c)
                                (declare (ignorable op c))

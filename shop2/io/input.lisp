@@ -116,9 +116,8 @@ do NOT emit singleton variable warnings.")
 (defvar *make-problem-silently* nil
   "If this variable is bound to t, make-problem will NOT print a message.")
 
-(defun make-problem (problem-name-etc state tasks &rest extras &aux domain-name)
-  ;; ever nastier contortions to be backward-compatible with the
-  ;; optional, ignored domain-name :-( [2008/01/28:rpg]
+(defun make-problem (problem-name-etc state tasks &rest extras
+                     &aux domain-name)
   (let ((extra (unless (keywordp (first extras)) (pop extras))))
     ;; if extra is given, then the args are problem-name, domain-name, state, tasks
     ;; in that case, we want to ignore domain-name
@@ -126,29 +125,27 @@ do NOT emit singleton variable warnings.")
       (setf domain-name state
             state tasks
             tasks extra))
-    (let (type problem-name options)
-      (cond ((listp problem-name-etc)
-             (setf problem-name (pop problem-name-etc)
-                   type (getf problem-name-etc :type))
-             (remf problem-name-etc :type)
-             (setf options problem-name-etc)
-             (when options
-               (error "Do not yet have logic for handling problem options.")))
-            (t (setf problem-name problem-name-etc
-                     type 'problem)))
-      (unless *make-problem-silently*
-        (unless *define-silently*
-          (format t "~%Defining problem ~s ...~%" problem-name)))
-      (let ((problem-inst (make-instance type
-                            :domain-name domain-name
-                            :name problem-name
-                            )))
-        (apply 'initialize-problem problem-inst :state state
-               :tasks tasks extras)
-        (setf *problem* problem-name)
-        #+allegro
-        (excl:record-source-file problem-name :type :shop2-problem)
-        problem-inst))))
+    (unless (listp problem-name-etc)
+      (setf problem-name-etc (list problem-name-etc)))
+    (destructuring-bind (problem-name &rest options
+                         &key (type 'problem) domain &allow-other-keys)
+        problem-name-etc
+      (let ((options (copy-tree options)))
+        (remf options :type)
+        (remf options :domain)
+        (when domain (setf domain-name domain))
+        (unless *make-problem-silently*
+          (unless *define-silently*
+            (format t "~%Defining problem ~s ...~%" problem-name)))
+        (let ((problem-inst (make-instance type
+                                           :domain-name domain-name
+                                           :name problem-name)))
+          (apply 'initialize-problem problem-inst :state state
+                                                  :tasks tasks extras)
+          (setf *problem* problem-name)
+          #+allegro
+          (excl:record-source-file problem-name :type :shop2-problem)
+          problem-inst)))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
   (delete-problem (name problem))        ;get rid of old problem definition
@@ -440,10 +437,9 @@ context, becasue this relies on VARIABLEP working."
 ;;;---------------------------------------------------------------------------
 #+allegro (excl::define-simple-parser defproblem second :shop2-problem)
 (defmacro defproblem (problem-name &rest args)
-  "\(DEFPROBLEM <name> <state> <tasks>\)
+  "\(DEFPROBLEM {<name>|<name-and-options>} <state> <tasks>\)
 For backward compatibility, will support also
-   \(DEFPROBLEM <name> <domain-name> <state> <tasks>\)
-but <domain-name> will be ignored."
+   \(DEFPROBLEM <name> <domain-name> <state> <tasks>\)."
   ;; ARGS normally are state tasks
   ;; if extra arg is given, then the args are problem-name, domain-name, state,
   ;; and tasks respectively. in that case, we want to ignore domain-name
