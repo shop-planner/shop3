@@ -63,6 +63,7 @@
     :default-component-class cl-file-with-defconstants
     :depends-on ((:version "shop2/common" (:read-file-form "shop-version.lisp-expr"))
                  (:version "shop2/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
+                 :alexandria
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")
     :in-order-to ((test-op (test-op :shop2/test)))
