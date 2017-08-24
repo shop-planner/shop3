@@ -442,16 +442,18 @@ Otherwise it returns FAIL."
 
 ;;; This is a hack to pull out the !NOP operations Jason stuck in to get around
 ;;; another problem.
+;;; FIXME: for long plans an iterative solution or properly tail-recursive version
+;;; of this function will be better. [2017/08/23:rpg]
 (defun strip-NOPs (plan)
   (cond ((null plan) nil)
-  ((and
-    (listp (first plan))
-    (eq '!!inop (first (first plan))))
-   (strip-NOPs (rest (rest plan))))
-  (t
-   (cons (first plan)
-         (cons (second plan)
-         (strip-NOPs (rest (rest plan))))))))
+        ((and
+          (listp (first plan))
+          (eq '!!inop (first (first plan))))
+         (strip-NOPs (rest (rest plan))))
+        (t
+         (cons (first plan)
+               (cons (second plan)
+                     (strip-NOPs (rest (rest plan))))))))
 
 
 
