@@ -98,9 +98,11 @@ using MAKE-INITIAL-STATE.")
 ;;; retracted instead.
 
 (defstruct (tagged-state (:include state) (:constructor nil) (:copier nil))
-  (tags-info (list (list 0))))
+  (tags-info (list (list 0)))
+  ;; from this point back, can't undo...
+  (block-at 0 :type fixnum))
 
-(deftype action-type () '(member add delete))
+(deftype action-type () '(member add delete redundant-add redundant-delete))
 
 (defstruct state-update
   (action 'add :type action-type)
@@ -156,16 +158,26 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod retract-state-changes ((st tagged-state) tag)
   (multiple-value-bind (new-tags-info changes)
-      (pull-tag-info (tagged-state-tags-info st) tag)
+      (pull-tag-info (tagged-state-tags-info st) tag (tagged-state-block-at st))
     (setf (tagged-state-tags-info st) new-tags-info)
     (dolist (change changes)
-      (undo-state-update (state-update-action change) change st))))
+      (undo-state-update (state-update-action change) change st)))
+  (values))
 
 (defmethod undo-state-update ((keyword (eql 'add)) change state)
   (remove-atom (state-update-literal change) state))
 
 (defmethod undo-state-update ((keyword (eql 'delete)) change state)
   (insert-atom (state-update-literal change) state))
+
+(defmethod undo-state-update ((keyword (eql 'redundant-add)) change state)
+  (declare (ignorable keyword change state))
+  (values))
+
+(defmethod undo-state-update ((keyword (eql 'redundant-delete)) change state)
+  (declare (ignorable keyword change state))
+  (values))
+
 
 (defmethod add-atom-to-state (atom (st tagged-state) depth operator)
 ;;;  (let ((shop2::state st))
@@ -194,16 +206,25 @@ using MAKE-INITIAL-STATE.")
         (*state-tag-map*
          (include-in-tag 'redundant-delete atom st))))
 
-(defun pull-tag-info (tags-info tag)
+;;; FIXME: replace non-tail recursion with iteration.
+;;; TAGS-INFO is the tags-info list of a tagged-state, TAG is the
+;;; state to roll back to, and STOP-AT can be used to record how much
+;;; of the plan has been executed, because we can't roll back past
+;;; this point.
+(defun pull-tag-info (tags-info tag &optional (stop-at 0))
   (if (null tags-info)
       (error "Attempt to retract to nonexistent state")
-    (let ((first-info (first tags-info)))
-      (if (= tag (first first-info))
-        (values (rest tags-info) (rest first-info))
-      (multiple-value-bind
-        (rest-info rest-changes)
-        (pull-tag-info (rest tags-info) (rest first-info))
-        (values (cons first-info rest-info) rest-changes))))))
+      (let* ((first-info (first tags-info))
+             (this-tag (first first-info)))
+        (if (or (= this-tag tag)
+                (= this-tag stop-at))
+            (values (rest tags-info) (rest first-info))
+            (multiple-value-bind (rest-info rest-changes)
+                ;; NOTE: I have no idea why this recursive call
+                ;; doesn't pass TAG through, instead of (REST
+                ;; FIRST-INFO).
+                (pull-tag-info (rest tags-info) tag stop-at)
+              (values (cons first-info rest-info) rest-changes))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "list-state" class
