@@ -29,10 +29,19 @@ before the insertion of FAILED into the plan tree.")
       (find-if #'(lambda (x) (typep x 'choice-entry)) stack-suffix))))
 
 
-(defun replan-from-failure (domain failed-tree-node search-state)
-  (let ((failed-choice-node (find-failed-choice-entry failed-tree-node search-state)))
-    (stack-backjump search-state failed-choice-node)
-    (seek-plans-stack search-state domain)))
+(defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
+  (let ((*verbose* verbose))
+    (when (>= *verbose* 2)
+        (format t "~&World state before backjump is:~%")
+        (pprint (state-atoms (world-state search-state))))
+    (let ((failed-choice-node (find-failed-choice-entry failed-tree-node search-state)))
+      (when (>= *verbose* 1)
+        (format t "~&Backjumping to ~A~%"))
+      (stack-backjump search-state failed-choice-node)
+      (when (>= *verbose* 2)
+        (format t "~&World state after backjump is:~%")
+        (pprint (state-atoms (world-state search-state))))
+      (seek-plans-stack search-state domain))))
 
 (defun freeze-state (executed divergence search-state)
   "Arguments:
@@ -54,13 +63,11 @@ Modified search state object."
     (shop2.common:retract-state-changes new-state-obj (1+ world-state-tag))
     ;; now put the divergences into effect....
     (iter (for (op fact) in divergence)
-      (shop2.common::include-in-tag
-       (ecase op
-         (:add 'shop2.common::add)
-         (:delete 'shop2.common::delete))
-       fact new-state-obj))
+      (ecase op
+        (:add (shop2.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
+        (:delete (shop2.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
     ;; now make it impossible to backtrack before this point...
-    (setf (shop2.common::tagged-state-block-at new-state-obj) world-state-tag)
+    (setf (shop2.common::tagged-state-block-at new-state-obj) (1+ world-state-tag))
     ;; now roll forward again
     (let ((suffix (copy-seq (rest (member world-state-tag (shop2.common::tagged-state-tags-info world-state)
                                      :key 'first)))))
