@@ -4,55 +4,62 @@ I now can find the correct defeated node in a PDDL-based plan (using
 the ADL dialect).  Here's a quick test:
 #+BEGIN_SRC lisp
 
-  (asdf:load-system "shop2/test")         ;gets my example loaded right
-  (in-package :shop-user)
-  (fiveam:run! 'shop2::pddl-tests)
-  (defvar *r*)
-  (defvar *plan*)
-  (defvar *plan-tree*)
-  (defvar *plan-tree-hash*)
-  (defvar *failed*)
-  (defvar *search-state*)
-  (defvar *new-search-state*)
-  (defvar *executed*)
-  ;;; This turns out to be a terrible example, because the replanning action is
-  ;;; simply to repeat the !MAKE-PRODUCT action.
-  (defun setup-repair ()
-    (setf *r* (multiple-value-list (find-plans-stack
-                                    'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
-    (setf *plan* (shop::remove-costs (first (first *r*)))
-          ,*plan-tree* (first (second *r*))
-          ,*plan-tree-hash* (first (third *r*))
-          ,*search-state* (fourth *r*))
-    (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
-    (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
-    (let ((divergence '((:delete (made p4)))))
-      (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
-                                               divergence))
-      (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
+  ;;  (asdf:load-system "shop2/test")         ;gets my example loaded right
+    (in-package :shop-user)
+    ;;(fiveam:run! 'shop2::pddl-tests)
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp"))
+    (defvar *r*)
+    (defvar *plan*)
+    (defvar *plan-tree*)
+    (defvar *plan-tree-hash*)
+    (defvar *failed*)
+    (defvar *search-state*)
+    (defvar *new-search-state*)
+    (defvar *executed*)
+    ;;; This turns out to be a terrible example, because the replanning action is
+    ;;; simply to repeat the !MAKE-PRODUCT action.
+    (defun setup-repair ()
+      (setf *r* (multiple-value-list (find-plans-stack
+                                      'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
+      (setf *plan* (shop::remove-costs (first (first *r*)))
+            ,*plan-tree* (first (second *r*))
+            ,*plan-tree-hash* (first (third *r*))
+            ,*search-state* (fourth *r*))
+      (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
+      (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+      (let ((divergence '((:delete (made p4)))))
+        (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
+                                                 divergence))
+        (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
 
 
-  (defun setup-repair2 ()
-    (setf *r* (multiple-value-list (find-plans-stack
-                                    'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
-    (setf *plan* (shop::remove-costs (first (first *r*)))
-          ,*plan-tree* (first (second *r*))
-          ,*plan-tree-hash* (first (third *r*))
-          ,*search-state* (fourth *r*))
-    (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
-    (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
-    (let ((divergence '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
-      (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
-                                               divergence))
-      (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
+    (defun setup-repair2 ()
+      (shop-untrace)
+      (setf *r* (multiple-value-list (find-plans-stack
+                                      'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
+      (unless (first *r*) (error "Failed to generate a plan for openstacks problem."))
+      (setf *plan* (shop::remove-costs (first (first *r*)))
+            ,*plan-tree* (first (second *r*))
+            ,*plan-tree-hash* (first (third *r*))
+            ,*search-state* (fourth *r*))
+      (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
+      (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+      (let ((divergence '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
+        (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
+                                                 divergence))
+        (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
 
-  (defun do-replan ()
-    (setf *replan-results* (multiple-value-list (replan-from-failure *domain* *failed* *new-search-state*)))
-    (setf *new-plan* (shop2::shorter-plan (caar *replan-results*))))
+    (defun do-replan ()
+      (shop-trace :all)
+      (setf *replan-results* (multiple-value-list (replan-from-failure *domain* *failed* *new-search-state* :verbose 2)))
+      (setf *new-plan* (shop2::shorter-plan (caar *replan-results*))))
+
+      (defparameter *ready-to-go* t)
 #+END_SRC 
 
 #+RESULTS:
-: SETUP-REPAIR
+: DO-REPLAN
 
 For this trivial example, where we can repair the plan just by trying
 again, we generate the right replan, which is identical to the
@@ -68,3 +75,16 @@ suffix of the new plan.
 It would be able to backtrack into parts of the state that have
 already been executed.  But we can't really do that: we need to reset
 the planning process to start where we left off.
+
+* More testing
+
+I'm not getting the alternatives regenerated right.  To see what's
+wrong, try the following
+#+BEGIN_SRC lisp
+  (in-package :shop-user)
+  (progn
+    (setup-repair2)
+    (setf *choice-node* (shop2::find-failed-choice-entry *failed* *search-state*))
+    (setf *stack-tail* (member *choice-node* (shop2::world-state *search-state*))))
+
+#+END_SRC
