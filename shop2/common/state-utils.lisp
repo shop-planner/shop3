@@ -206,25 +206,20 @@ using MAKE-INITIAL-STATE.")
         (*state-tag-map*
          (include-in-tag 'redundant-delete atom st))))
 
-;;; FIXME: replace non-tail recursion with iteration.
 ;;; TAGS-INFO is the tags-info list of a tagged-state, TAG is the
 ;;; state to roll back to, and STOP-AT can be used to record how much
 ;;; of the plan has been executed, because we can't roll back past
 ;;; this point.
 (defun pull-tag-info (tags-info tag &optional (stop-at 0))
-  (if (null tags-info)
-      (error "Attempt to retract to nonexistent state")
-      (let* ((first-info (first tags-info))
-             (this-tag (first first-info)))
-        (if (or (= this-tag tag)
-                (= this-tag stop-at))
-            (values (rest tags-info) (rest first-info))
-            (multiple-value-bind (rest-info rest-changes)
-                ;; NOTE: I have no idea why this recursive call
-                ;; doesn't pass TAG through, instead of (REST
-                ;; FIRST-INFO).
-                (pull-tag-info (rest tags-info) tag stop-at)
-              (values (cons first-info rest-info) rest-changes))))))
+  (iter (for (first-info . rest-info) on tags-info)
+    (as this-tag = (first first-info))
+    (when (null first-info)
+      (error "Attempt to retract to nonexistent tag ~d" tag))
+    (until (or (= this-tag tag)
+               (= this-tag stop-at)))
+    (appending (rest first-info) into undone)
+    (finally (return-from pull-tag-info
+               (values (cons first-info rest-info) undone)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "list-state" class
