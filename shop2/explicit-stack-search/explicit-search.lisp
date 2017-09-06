@@ -170,11 +170,11 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                (incf (depth state)))
              (stack-backtrack state)))
         (extract-plan
-         (let ((plan (test-plans-found state :repairable repairable)))
+         (let ((plans (test-plans-found state :repairable repairable)))
            (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
            (return
-             (values plan
+             (values plans
                      (when *enhanced-plan-tree*
                        (list
                             (plan-tree state)))
