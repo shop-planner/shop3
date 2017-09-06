@@ -257,10 +257,12 @@
        )
 
      (:op (!!assert ?fact)
-      :add (?fact))
+      :add (?fact)
+      :cost 0.0)
 
      (:op (!!delete ?fact)
-      :delete (?fact))
+      :delete (?fact)
+      :cost 0.0)
 
      (:- (ship-cost-heuristic ?p ?h)
          ((setof ?o (and (includes ?o ?p) (not (started ?o))) ?os)
