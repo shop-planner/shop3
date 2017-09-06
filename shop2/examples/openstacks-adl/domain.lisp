@@ -188,9 +188,9 @@
 
      (:method (plan)
        ((:goal (and . ?goals)))
-       ((:ordered (assert-goals ?goals)
-                  (open-all-stacks)
-                  (plan-for-goals))))
+       ((assert-goals ?goals)
+        (open-all-stacks)
+        (plan-for-goals)))
 
      (:method (open-all-stacks)
        ((stacks-avail ?n)
@@ -209,22 +209,20 @@
        ((verify-orders)))
 
      (:method (one-step)
+       ship-order
        ;; prefer to ship an order, if possible...
        ((goal (shipped ?o))
         (not (shipped ?o))
         (forall (?p) (includes ?o ?p) (made ?p)))
        ((ship-products ?o))
+       make-product
        (:sort-by ?h
                  (and (goal (shipped ?o))
                       (not (shipped ?o))
                       (includes ?o ?p)
                       (not (made ?p))
                       (ship-cost-heuristic ?p ?h)))
-       ((make-product ?p))
-       done
-       ()
-       ()
-       )
+       ((make-product ?p)))
 
      (:method (make-product ?p)
        ()
@@ -268,6 +266,9 @@
          ((setof ?o (and (includes ?o ?p) (not (started ?o))) ?os)
           (order-costs ?os ?h 0))
          )
+
+     (:- (ship-cost-heuristic ?p 0)
+         ((forall ?o (order ?o) (imply (includes ?o ?p) (started ?o)))))
 
      (:- (order-costs ?os ?h ?hin)
          ((= ?os (?o . ?os1))
