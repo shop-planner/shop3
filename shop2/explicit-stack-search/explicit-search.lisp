@@ -90,22 +90,22 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
     supplied."
   (declare (ignorable which))
   ;; kick off the stack VM
-  (setf (mode state) 'check-for-done)
+  (setf (mode state) 'test-for-done)
   (catch 'search-failed
     (iter
       (when *enhanced-plan-tree* (unless (plan-tree state)
                                    (error "Search state object should have a PLAN-TREE.")))
       (verbose-format "~&State is: ~a. Mode is: ~a.~%" state (mode state))
       (ecase (mode state)
-        (check-for-done
+        (test-for-done
          (if (empty-p state)
              ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
              (setf (mode state) 'extract-plan)
-             ;; (cond ((check-for-done state which-plans)
+             ;; (cond ((test-for-done state which-plans)
              ;;        (setf (mode state) 'extract-plan))
              ;;       (t (stack-backtrack state))))
-             (setf (mode state) 'check-for-immediate-task)))
-        (check-for-immediate-task
+             (setf (mode state) 'look-for-immediate-task)))
+        (look-for-immediate-task
          (cond ((immediate-tasks state)
                 (let ((state (prepare-choose-immediate-task-state state)))
                   (setf (mode state) 'pop-immediate-task)))
@@ -136,7 +136,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
         (expand-primitive-task
          (if (expand-primitive-state state domain)
              (progn
-               (setf (mode state) 'check-for-done)
+               (setf (mode state) 'test-for-done)
                (incf (depth state)))
              (with-slots (current-task depth world-state) state
                (trace-print :tasks (get-task-name current-task) world-state
@@ -166,11 +166,11 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
         (choose-method-bindings
          (if (choose-method-bindings-state state)
              (progn
-               (setf (mode state) 'check-for-done)
+               (setf (mode state) 'test-for-done)
                (incf (depth state)))
              (stack-backtrack state)))
         (extract-plan
-         (let ((plan (check-plans-found state :repairable repairable)))
+         (let ((plan (test-plans-found state :repairable repairable)))
            (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
            (return
@@ -375,6 +375,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 
 ;;; end stubs
 
+;;; PRECONDITION: The alternatives for the state must be populated with the set of candidate tasks.
 (defun CHOOSE-TOPLEVEL-TASK (state)
   (when (alternatives state)
     (with-slots (current-task alternatives) state
@@ -387,7 +388,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
       state)))
 (defun IMMEDIATE-TASKS (state)
   (get-immediate-list (top-tasks state)))
-(defun CHECK-FOR-DONE (state which-plans)
+(defun TEST-FOR-DONE (state which-plans)
   (let ((*plans-found* (plans-found state)))
     (when-done t)))
 (defun EMPTY-P (state)
@@ -396,7 +397,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 ;;; FIXME: for now we just extract the plan -- as if we only are
 ;;; finding the first plan.  Simplification to get things done
 ;;; more quickly.
-(defun check-plans-found (state &key repairable)
+(defun test-plans-found (state &key repairable)
   (with-slots (partial-plan) state
     (when partial-plan
       (list ; comply with FIND-PLANS return type by returning a list of plans
