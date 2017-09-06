@@ -1,65 +1,75 @@
 Working on the plan repair code.
 
 I now can find the correct defeated node in a PDDL-based plan (using
-the ADL dialect).  Here's a quick test:
 #+BEGIN_SRC lisp
-
-  ;;  (asdf:load-system "shop2/test")         ;gets my example loaded right
-    (in-package :shop-user)
-    ;;(fiveam:run! 'shop2::pddl-tests)
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp"))
-    (defvar *r*)
-    (defvar *plan*)
-    (defvar *plan-tree*)
-    (defvar *plan-tree-hash*)
-    (defvar *failed*)
-    (defvar *search-state*)
-    (defvar *new-search-state*)
-    (defvar *executed*)
-    ;;; This turns out to be a terrible example, because the replanning action is
-    ;;; simply to repeat the !MAKE-PRODUCT action.
-    (defun setup-repair ()
-      (setf *r* (multiple-value-list (find-plans-stack
-                                      'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
-      (setf *plan* (shop::remove-costs (first (first *r*)))
-            ,*plan-tree* (first (second *r*))
-            ,*plan-tree-hash* (first (third *r*))
-            ,*search-state* (fourth *r*))
-      (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
-      (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
-      (let ((divergence '((:delete (made p4)))))
-        (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
-                                                 divergence))
-        (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
+  (let ((*package* (find-package :shop-user)))
+      (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+      (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp"))
+      (defvar *r*)
+      (defvar *plan*)
+      (defvar *plan-tree*)
+      (defvar *plan-tree-hash*)
+      (defvar *failed*)
+      (defvar *search-state*)
+      (defvar *new-search-state*)
+      (defvar *executed*)
+      ;;; This turns out to be a terrible example, because the replanning action is
+      ;;; simply to repeat the !MAKE-PRODUCT action.
+      (defun setup-repair ()
+        (setf *r* (multiple-value-list (find-plans-stack
+                                        'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
+        (setf *plan* (shop::remove-costs (first (first *r*)))
+              ,*plan-tree* (first (second *r*))
+              ,*plan-tree-hash* (first (third *r*))
+              ,*search-state* (fourth *r*))
+        (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
+        (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+        (let ((divergence '((:delete (made p4)))))
+          (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
+                                                   divergence))
+          (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
 
 
-    (defun setup-repair2 ()
-      (shop-untrace)
-      (setf *r* (multiple-value-list (find-plans-stack
-                                      'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
-      (unless (first *r*) (error "Failed to generate a plan for openstacks problem."))
-      (setf *plan* (shop::remove-costs (first (first *r*)))
-            ,*plan-tree* (first (second *r*))
-            ,*plan-tree-hash* (first (third *r*))
-            ,*search-state* (fourth *r*))
-      (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
-      (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
-      (let ((divergence '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
-        (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
-                                                 divergence))
-        (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
+      (defun setup-repair2 ()
+        (shop-untrace)
+        (setf *r* (multiple-value-list (find-plans-stack
+                                        'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t)))
+        (unless (first *r*) (error "Failed to generate a plan for openstacks problem."))
+        (setf *plan* (shop::remove-costs (first (first *r*)))
+              ,*plan-tree* (first (second *r*))
+              ,*plan-tree-hash* (first (third *r*))
+              ,*search-state* (fourth *r*))
+        (setf *executed* (reverse (member '(!make-product p4) (reverse *plan*) :test 'equalp)))
+        (setf *domain* (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+        (let ((divergence '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
+          (setf *failed* (subtree:find-failed-task *domain* *plan* *plan-tree* *executed*
+                                                   divergence))
+          (setf *new-search-state* (shop2::freeze-state *executed* divergence *search-state*))))
 
-    (defun do-replan ()
-      (shop-trace :all)
-      (setf *replan-results* (multiple-value-list (replan-from-failure *domain* *failed* *new-search-state* :verbose 2)))
-      (setf *new-plan* (shop2::shorter-plan (caar *replan-results*))))
+      (defun do-replan ()
+        (shop-trace :all)
+        ;; (shop-untrace :goals)
+        (setf *replan-results* (multiple-value-list (replan-from-failure *domain* *failed* *new-search-state* :verbose 2)))
+        (setf *new-plan* (shop2::shorter-plan (caar *replan-results*))))
 
-      (defparameter *ready-to-go* t)
+        (defparameter *ready-to-go* t))
+#+END_SRC
+
+#+BEGIN_SRC
+    (defun test-replan ()
+      (let ((r (multiple-value-list (find-plans-stack
+                                       'os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t))))
+        (unless (first r) (error "Failed to generate a plan for openstacks problem."))
+        (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
+            r
+          (let ((executed (reverse (member '(!make-product p4) (reverse plan) :test 'equalp)))
+                (domain (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+                (divergence '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
+            (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)))))
 #+END_SRC 
 
 #+RESULTS:
-: DO-REPLAN
+: *READY-TO-GO*
 
 For this trivial example, where we can repair the plan just by trying
 again, we generate the right replan, which is identical to the
@@ -81,10 +91,346 @@ the planning process to start where we left off.
 I'm not getting the alternatives regenerated right.  To see what's
 wrong, try the following
 #+BEGIN_SRC lisp
-  (in-package :shop-user)
-  (progn
+  (let ((*package* (find-package :shop-user)))
     (setup-repair2)
     (setf *choice-node* (shop2::find-failed-choice-entry *failed* *search-state*))
-    (setf *stack-tail* (member *choice-node* (shop2::world-state *search-state*))))
+    (setf *stack-tail* (member *choice-node* (shop2::backtrack-stack *search-state*))))
 
 #+END_SRC
+
+#+RESULTS:
+#+begin_example
+(#<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e5e602>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e5e3c2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e5c972>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !SHIP-ORDER O3 N3 N4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e5c7a2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e5c6b2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O3)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e5c5d2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O3)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e5bf32>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e5be32>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e5bd52>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e5b262>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e5b112>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e5b032>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e5a962>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e5a822>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e597b2>
+ #<SHOP2::CHOICE-ENTRY (TASK !MAKE-PRODUCT P3)>
+ #<SHOP2::STATE-TAG @ #x1002e596c2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e59662>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e595e2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!INOP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e594f2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e59402>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P3)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e59322>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P3)>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P3)>
+ #<SHOP2::STATE-TAG @ #x1002e58df2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e58bb2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e57542>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !START-ORDER O3 N4 N3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e57372>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e57282>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O3)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e571a2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O3)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e56a82>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e56932>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P3)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e56852>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P3)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e562c2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e56182>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P3)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e560a2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P3)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e55dd2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e55cd2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e55bf2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e464f2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e463a2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e462c2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e45bf2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e45ab2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e44a42>
+ #<SHOP2::CHOICE-ENTRY (TASK !MAKE-PRODUCT P4)>
+ #<SHOP2::STATE-TAG @ #x1002e44952>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e448f2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e44872>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!INOP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e44782>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e44692>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P4)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e445b2>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P4)>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P4)>
+ #<SHOP2::STATE-TAG @ #x1002e440b2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e43e72>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e42802>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !START-ORDER O4 N5 N4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e42632>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e42542>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O4)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e42462>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O4)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e41d42>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e41bf2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P4)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e41b12>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P4)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e415b2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e41472>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P4)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e41392>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P4)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e410c2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e40fc2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e40ee2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e2c6f2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e2c5a2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e2c4c2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e2bdf2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e2bbb2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e2a1c2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !SHIP-ORDER O5 N4 N5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e29ff2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e29f02>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O5)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e29e22>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O5)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE SHIP-PRODUCTS O5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e29782>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e29682>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e295a2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e28af2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e289a2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e288c2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e272a2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e27162>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e260f2>
+ #<SHOP2::CHOICE-ENTRY (TASK !MAKE-PRODUCT P5)>
+ #<SHOP2::STATE-TAG @ #x1002e26002>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e25fa2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e25f22>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!INOP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e25e32>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e25d42>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P5)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e25c62>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P5)>
+ #<SHOP2::CHOICE-ENTRY (TASK START-ORDERS P5)>
+ #<SHOP2::STATE-TAG @ #x1002e25762>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e25522>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e23eb2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !START-ORDER O5 N5 N4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e23ce2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e23bf2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O5)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e23b12>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O5)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-AN-ORDER O5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e233f2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e232a2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P5)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e231c2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P5)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE START-ORDERS P5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e22c62>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e22b22>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P5)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e22a42>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P5)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE MAKE-PRODUCT P5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e22772>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e22672>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e22592>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE ONE-STEP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e0b642>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e0b4f2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e0b412>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN-FOR-GOALS)>
+ #<SHOP2::STATE-TAG @ #x1002e0aca2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e0ac42>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e0abc2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!INOP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e0aad2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e0a9e2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e0a902>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e0a542>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e0a382>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e08eb2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !OPEN-NEW-STACK N4 N5)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e08ce2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e08ba2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e08ac2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e08642>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e08482>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e06fb2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !OPEN-NEW-STACK N3 N4)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e06de2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e06ca2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e06bc2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e06742>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e06582>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e050b2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !OPEN-NEW-STACK N2 N3)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e04ee2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e04da2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e04cc2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e04842>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e04682>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e031b2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !OPEN-NEW-STACK N1 N2)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e02fe2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e02ea2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e02dc2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e02942>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e02782>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e012b2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !OPEN-NEW-STACK N0 N1)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e010e2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e00fa2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e00ec2>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::CHOICE-ENTRY (TASK OPEN-ALL-STACKS)>
+ #<SHOP2::STATE-TAG @ #x1002e00a42>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e009e2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e00962>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!INOP)>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e00872>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e00782>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS NIL)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e006a2>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS NIL)>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS NIL)>
+ #<SHOP2::STATE-TAG @ #x1002e004b2>
+ #<SHOP2::RECORD-EXPANSION @ #x1002e00452>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002e002b2>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!ASSERT (GOAL (SHIPPED O5)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002e001c2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002e00082>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O5)))>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfffa2>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O5)))>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O5)))>
+ #<SHOP2::STATE-TAG @ #x1002dffb22>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dffac2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002dff922>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!ASSERT (GOAL (SHIPPED O4)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002dff832>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002dff6f2>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dff612>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::CHOICE-ENTRY (TASK ASSERT-GOALS ((SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::STATE-TAG @ #x1002dff192>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dff132>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002dfef92>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!ASSERT (GOAL (SHIPPED O3)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002dfeea2>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002dfed62>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS ((SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfec82>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS ((SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS ((SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::STATE-TAG @ #x1002dfe802>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfe7a2>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002dfe602>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!ASSERT (GOAL (SHIPPED O2)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002dfe512>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002dfe3d2>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS
+    ((SHIPPED O2) (SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfe2f2>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS
+    ((SHIPPED O2) (SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK ASSERT-GOALS
+    ((SHIPPED O2) (SHIPPED O3) (SHIPPED O4) (SHIPPED O5)))>
+ #<SHOP2::STATE-TAG @ #x1002dfde72>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfde12>
+ #<SHOP2::PRIM-STATE-EXPAND @ #x1002dfdc72>
+ #<SHOP2::CHOICE-ENTRY (TASK IMMEDIATE !!ASSERT (GOAL (SHIPPED O1)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002dfdb82>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002dfda42>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK IMMEDIATE ASSERT-GOALS
+    ((SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
+     (SHIPPED O5)))>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfd962>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK IMMEDIATE ASSERT-GOALS
+    ((SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
+     (SHIPPED O5)))>
+ #<SHOP2::CHOICE-ENTRY
+   (TASK IMMEDIATE ASSERT-GOALS
+    ((SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
+     (SHIPPED O5)))>
+ #<SHOP2::ADD-CHILD-TO-TREE @ #x1002dfd442>
+ #<SHOP2::METHOD-INSTANTIATION @ #x1002dfd2a2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN)>
+ #<SHOP2::RECORD-EXPANSION @ #x1002dfd1c2>
+ #<SHOP2::CHOICE-ENTRY (TASK PLAN)> #<SHOP2::CHOICE-ENTRY (TASK PLAN)>
+ #<SHOP2::BOTTOM-OF-STACK @ #x1002dfbe32>)
+#+end_example
