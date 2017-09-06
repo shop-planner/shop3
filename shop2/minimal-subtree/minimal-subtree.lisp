@@ -27,10 +27,11 @@
   "Default method for FIND-FAILED-TASK."
   (let ((plan-suffix (find-plan-suffix plan executed)))
     (iter outer (for plan-step in plan-suffix)
-      (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
-        (unless (typep next 'pseudo-node) ;ordered and unordered nodes
-          (when (clobbered-p next divergence)
-            (return-from find-failed-task next))))))
+      (unless (numberp plan-step)       ; skip costs
+        (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
+          (unless (typep next 'pseudo-node) ;ordered and unordered nodes
+            (when (clobbered-p next divergence)
+              (return-from find-failed-task next)))))))
     nil)            ; no threatened step found
 
 (defun find-checking-path (tree-node)
@@ -57,11 +58,15 @@ checking (i.e., top-down)."
 (defun find-plan-suffix (orig-plan executed-prefix)
   (iter (for step in executed-prefix)
     (with plan = orig-plan)
+    ;; remove costs, if necessary...
+    (when (numberp step) (next-iteration))
+    (when (numberp (first plan))
+      (setf plan (rest plan)))
     (if (equalp step (first plan))
         (setf plan (rest plan))
         (error "Executed plan step ~S is not part of plan: ~S"
                step orig-plan))
-    (finally (return plan))))    
+    (finally (return plan))))
 
 
 
