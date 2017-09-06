@@ -1,5 +1,25 @@
 (in-package :shop2)
 
+(defun repair-plan (domain plan plan-tree executed divergence search-state &key (verbose 1) plan-tree-hash)
+  "Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
+\(3\) plan tree lookup table (4) search-state object."
+  (let ((failed (subtree:find-failed-task domain plan plan-tree executed
+                                                 divergence :plan-tree-hash plan-tree-hash))
+        (new-search-state (shop2::freeze-state executed divergence search-state)))
+    (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
+        (replan-from-failure domain failed new-search-state :verbose verbose)
+      (let ((new-plan (first new-plans))
+            (new-plan-tree (first new-plan-trees))
+            (new-lookup-table (first lookup-tables)))
+        (values
+         ;; new plan sequence
+         (append executed
+                 (list (cons :divergence divergence) 0.0)
+                 (remove-if #'(lambda (x) (member x executed)) new-plan))
+         new-plan-tree
+         new-lookup-table
+         final-search-state)))))
+
 (defgeneric find-failed-stack-entry (failed obj)
   (:documentation "Find and return the stack entry that corresponds
 to adding FAILED to the plan tree.")

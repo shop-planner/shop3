@@ -144,7 +144,7 @@
 
              #:find-plans
              #:find-plans-stack         ; explicit stack version
-             #:replan-from-failure
+             #:repair-plan
              #:do-problems
              #:shop-trace
              #:shop-untrace
