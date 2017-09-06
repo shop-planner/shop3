@@ -26,21 +26,30 @@ before the insertion of FAILED into the plan tree.")
     (let* ((tree-addition (find-failed-stack-entry failed stack))
            ;; stack elements below tree-addition
            (stack-suffix (member tree-addition stack)))
-      (find-if #'(lambda (x) (typep x 'choice-entry)) stack-suffix))))
+      (find-if #'(lambda (x) (and (typep x 'choice-entry)
+                                  (eq (mode x) 'pop-toplevel-task)))
+               stack-suffix))))
 
 
 (defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
   (let ((*verbose* verbose))
     (when (>= *verbose* 2)
-        (format t "~&World state before backjump is:~%")
-        (pprint (state-atoms (world-state search-state))))
+      (format t "~&World state before backjump is:~%")
+      (pprint (state-atoms (world-state search-state))))
     (let ((failed-choice-node (find-failed-choice-entry failed-tree-node search-state)))
       (when (>= *verbose* 1)
         (format t "~&Backjumping to ~A~%" failed-choice-node))
       (stack-backjump search-state failed-choice-node)
-      (when (>= *verbose* 2)
-        (format t "~&World state after backjump is:~%")
-        (pprint (state-atoms (world-state search-state))))
+      (cond ((>= *verbose* 2)
+             (format t "~&Beginning plan repair~%World state after backjump is:~%")
+             (pprint (state-atoms (world-state search-state))))
+            ((= *verbose* 1)
+             (format t "~&Beginning plan repair~%")))
+      ;; at this point, we have a backtrack state where we have popped
+      ;; a toplevel task, and if we restart here, we lose the possible
+      ;; choices.  So what we need to do is to reset the alternatives
+      ;; for solving this task, not find a different task.
+      (setf (mode search-state) 'expand-task)
       (seek-plans-stack search-state domain))))
 
 (defun freeze-state (executed divergence search-state)
