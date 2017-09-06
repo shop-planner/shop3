@@ -28,6 +28,20 @@ classes."))
     ))
   )
 
+(defmethod print-object ((obj choice-entry) str)
+  (cond ((>= *verbose* 2)
+         (print-unreadable-object (obj str :type t)
+           (format str "~A alternatives: ~A"
+                   (current-task obj) (alternatives obj))))
+        ((= *verbose* 1)
+         (print-unreadable-object (obj str :type t)
+           (format str "~A"
+                   (current-task obj))))
+        (t
+         (print-unreadable-object (obj str :type t :identity t)))))
+
+
+
 (defclass state-tag (stack-entry)
   ((tag
     :initarg :tag
