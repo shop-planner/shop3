@@ -1,7 +1,17 @@
 (in-package :shop2)
 
+;;; This is the only exported function for now, and should be used when backjumping.
 (defun repair-plan (domain plan plan-tree executed divergence search-state &key (verbose 1) plan-tree-hash)
-  "Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
+  "Arguments:
+DOMAIN: SHOP2 domain object
+PLAN: SHOP2 plan sequence (should work with costs or without, but don't remove internal operators)
+PLAN-TREE: *Enhanced* plan tree object (not classic SHOP2 plan tree)
+EXECUTED: Prefix of the PLAN
+DIVERGENCE: Divergence between the expected state after EXECUTED, specified as (([:ADD|:DELETE] <fact>)+)
+SEARCH-STATE: Search state object
+PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is optional -- we can
+  manage access anyway, but it will be slower.
+Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
 \(3\) plan tree lookup table (4) search-state object."
   (let ((failed (subtree:find-failed-task domain plan plan-tree executed
                                                  divergence :plan-tree-hash plan-tree-hash))
