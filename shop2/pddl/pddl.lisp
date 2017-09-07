@@ -83,6 +83,31 @@ This is an easier to use interface to the validator-export function, qv."
        (validator-export domain plan stream)
     (when filename (close stream))))
 
+(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (domain *domain*))
+  "Check the plan for validity. PLAN can be either lisp list
+or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
+files.  VALIDATOR-PROGNAME should be a string that names the 
+validator in a way that enables it to be found (either an absolute namestring, 
+absolute pathname, or a path-relative namestring)."
+  (flet ((validate-plan (plan-filename)
+           (multiple-value-bind (output error-output exit-code)
+               (uiop:run-program (format nil "~a ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
+                                 :ignore-error-status t
+                                 :error-output :string :output :string)
+             (declare (ignore error-output))
+             (if (zerop exit-code) t
+                 (progn
+                   (format t "Validation failed with message: ~T~A" output)
+                   nil)))))
+   (if (stringp plan)
+       (validate-plan plan)
+       (let (validated)
+         (uiop:with-temporary-file (:stream str :pathname path :keep (not validated))
+           (write-pddl-plan plan :domain domain :stream str)
+           :close-stream
+           (setf validated (validate-plan path))
+           validated)))))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Class definitions for domains, used to control processing of PDDL

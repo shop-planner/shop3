@@ -243,6 +243,9 @@
              ;; other utilities
              #:shop-union
 
+             ;; check a plan from a PDDL domain/problem for correctness
+             #:validate-plan
+
              ;; exporting for val
              #:validator-export
              #:write-pddl-plan
