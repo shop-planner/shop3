@@ -97,7 +97,7 @@ absolute pathname, or a path-relative namestring)."
              (declare (ignore error-output))
              (if (zerop exit-code) t
                  (progn
-                   (format t "Validation failed with message: ~T~A" output)
+                   (format t "Validation failed with message: ~T~A" (string-left-trim (list #\return) output))
                    nil)))))
    (if (stringp plan)
        (validate-plan plan)
