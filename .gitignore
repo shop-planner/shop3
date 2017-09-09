@@ -1,3 +1,7 @@
+jenkins/VAL/*.dSYM
+jenkins/VAL/*.o
+jenkins/VAL/tan
+jenkins/VAL/validate
 jenkins/log
 jenkins/shopdir.lisp
 jenkins/tmp
