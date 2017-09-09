@@ -1,6 +1,6 @@
 (in-package :shop-user)
 
-#.(make-problem 'OS-SEQUENCEDSTRIPS-P5_1 'OPENSTACKS-SEQUENCEDSTRIPS-ADL-INCLUDED '((NEXT-COUNT
+#.(make-problem 'OS-SEQUENCEDSTRIPS-P5_3 'OPENSTACKS-SEQUENCEDSTRIPS-ADL-INCLUDED '((NEXT-COUNT
                                                                                      N0
                                                                                      N1)
                                                                                     (NEXT-COUNT
@@ -21,33 +21,30 @@
                                                                                      O1)
                                                                                     (INCLUDES
                                                                                      O1
-                                                                                     P2)
+                                                                                     P3)
                                                                                     (WAITING
                                                                                      O2)
                                                                                     (INCLUDES
                                                                                      O2
-                                                                                     P1)
-                                                                                    (INCLUDES
-                                                                                     O2
-                                                                                     P2)
+                                                                                     P4)
                                                                                     (WAITING
                                                                                      O3)
                                                                                     (INCLUDES
                                                                                      O3
-                                                                                     P3)
+                                                                                     P4)
                                                                                     (WAITING
                                                                                      O4)
                                                                                     (INCLUDES
                                                                                      O4
-                                                                                     P3)
+                                                                                     P2)
                                                                                     (INCLUDES
                                                                                      O4
-                                                                                     P4)
+                                                                                     P5)
                                                                                     (WAITING
                                                                                      O5)
                                                                                     (INCLUDES
                                                                                      O5
-                                                                                     P5)
+                                                                                     P1)
                                                                                     (=
                                                                                      (TOTAL-COST)
                                                                                      0)
