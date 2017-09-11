@@ -165,7 +165,6 @@ jenkins/VAL/src/lex.yy.cc -text
 jenkins/VAL/src/main.cpp svneol=native#text/x-cpp-source
 jenkins/VAL/src/oldCausalGraph.cpp svneol=native#text/x-cpp-source
 jenkins/VAL/src/parse.cpp svneol=native#text/x-cpp-source
-jenkins/VAL/src/pddl+.cpp svneol=native#text/x-cpp-source
 jenkins/VAL/src/pddl+.lex -text
 jenkins/VAL/src/pddl+.yacc -text
 jenkins/VAL/src/pddlplus.cpp svneol=native#text/x-cpp-source

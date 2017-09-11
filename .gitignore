@@ -1,5 +1,6 @@
 jenkins/VAL/*.dSYM
 jenkins/VAL/*.o
+jenkins/VAL/src/pddl+.cpp
 jenkins/VAL/tan
 jenkins/VAL/validate
 jenkins/log
