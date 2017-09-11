@@ -254,5 +254,7 @@
 (defpackage :shop2-user
     (:nicknames :shop-user)
     (:use :shop2 :common-lisp)
+    ;; FIXME: I have no idea why these are here, but a "-user" package
+    ;; should definitely not export anything, because it's a sandbox. [2017/09/07:rpg]
     (:export #:explain-satisfier
              #:find-satisfiers))
