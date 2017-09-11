@@ -182,7 +182,6 @@ SHOP2DIR="$(cd ../shop2 ; /bin/pwd)"
 THISDIR="$(pwd)"
 export CL_SOURCE_REGISTRY="${SHOP2DIR}:${THISDIR}//"
 export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP2DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
-env | grep asdf
 
 command="$command $flags"
 if [ -z "${DEBUG_ASDF_TEST}" ] ; then
