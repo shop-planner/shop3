@@ -61,9 +61,7 @@
 ;;; markings.
 (in-package :shop2)
 
-(fiveam:def-suite pddl-tests)
-
-(fiveam:in-suite pddl-tests)
+(fiveam:def-suite* pddl-tests)
 
 (fiveam:def-fixture simple-pddl-actions ()
   (let ((action-def '(:action drive
@@ -93,15 +91,8 @@
         (typelist '(?v - vehicle
                              ?from ?to - location
                              ?fbefore ?fafter)))
-    (locally (declare (ignorable typelist action-def untyped-action-def))
-      (&body))))
-
-(defmacro nst-def-fixtures (name options &rest defs)
-  (unless (null options)
-    (warn "Don't know how to translate ~s" options))
-  `(fiveam:def-fixture ,name ()
-       (let* ,defs
-         (&body))))
+    (declare (ignorable typelist action-def untyped-action-def))
+    (&body)))
 
 (fiveam:test type-list-translation
   (fiveam:with-fixture simple-pddl-actions ()
@@ -221,24 +212,25 @@
                           nil 0 nil))))))
 
 
-(nst-def-fixtures quantified-preconditions-fixtures ()
-  (domain (defdomain (quantified-preconditions-domain
-                      :type pddl-domain
-                      :redefine-ok t)
-            ((:types airplane airplanetype direction segment))))
-  (act (process-action domain
-                       '(:action move
-                         :parameters
-                         (?a - airplane ?t - airplanetype
-                          ?d1 - direction ?s1 ?s2  - segment
-                          ?d2 - direction)
-                         :precondition
-                         (forall (?s - segment)
-                          (imply
-                           (and
-                            (is-blocked ?s ?t ?s2 ?d2)
-                            (not (= ?s ?s1)))
-                           (not (occupied ?s))))))))
+(fiveam:def-fixture quantified-preconditions-fixtures ()
+  (let* ((domain (defdomain (quantified-preconditions-domain
+                             :type pddl-domain
+                             :redefine-ok t)
+                   ((:types airplane airplanetype direction segment))))
+         (act (process-action domain
+                              '(:action move
+                                        :parameters
+                                        (?a - airplane ?t - airplanetype
+                                            ?d1 - direction ?s1 ?s2  - segment
+                                            ?d2 - direction)
+                                        :precondition
+                                        (forall (?s - segment)
+                                                (imply
+                                                 (and
+                                                  (is-blocked ?s ?t ?s2 ?d2)
+                                                  (not (= ?s ?s1)))
+                                                 (not (occupied ?s))))))))
+    (&body)))
 
 (fiveam:test quantified-preconditions
   (fiveam:with-fixture quantified-preconditions-fixtures ()
@@ -568,6 +560,7 @@
           (sort (state-atoms state) 'prop-sorter)))))))
 
 (in-package :shop2-user)
+(fiveam:def-suite* plan-openstacks :in shop2::pddl-tests)
 
 (fiveam:test pddl-planning
   (let ((shop2:*define-silently* t))
@@ -612,3 +605,54 @@
     (fiveam:is (equalp plan
                        (shorter-plan (first (find-plans-stack
                                              'os-sequencedstrips-p5_1i :verbose 0)))))))
+
+
+
+(defconstant +openstacks-domain-name+ 'openstacks-sequencedstrips-ADL-included)
+
+(defun typed-object-list->facts (list)
+  "List *must be* canonicalized.  Returns a list of (<type> <instance>) facts."
+  (loop :for (var dash type . nil) :on list :by #'cdddr
+        :do (assert (eq dash '-))
+        :collecting `(,type ,var)))
+
+(defun translate-openstacks-problem (problem-file)
+  (let ((pddl-utils:*pddl-package* :shop-user))
+    (let ((problem 
+            (pddl-utils:read-pddl-file problem-file)))
+      (make-problem (pddl-utils:problem-name problem)
+                    +openstacks-domain-name+
+                    ;; state
+                    (append
+                     (pddl-utils:problem-state problem)
+                     (typed-object-list->facts
+                      (pddl-utils:canonicalize-types
+                       (pddl-utils:problem-objects problem)))
+                     `((:goal ,(pddl-utils:problem-goal problem))))
+                    ;; tasks
+                    '(plan)))))
+
+(fiveam:test test-openstacks-adl
+  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+  (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+    (loop :for i from 1 :to 30
+          :as probfilename = (format nil "p~2,'0d.pddl" i)
+          :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+          :as problem = (translate-openstacks-problem problem-file)
+          :as standard-plan = (first (find-plans problem :verbose 0))
+          :do (fiveam:is-true (and (or standard-plan
+                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
+                                   (validate-plan standard-plan domain-file problem-file))))))
+
+
+(fiveam:test test-openstacks-adl-explicit-stack-search
+  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+  (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+    (loop :for i from 1 :to 30
+          :as probfilename = (format nil "p~2,'0d.pddl" i)
+          :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+          :as problem = (translate-openstacks-problem problem-file)
+          :as standard-plan = (first (find-plans-stack problem :verbose 0))
+          :do (fiveam:is-true (and (or standard-plan
+                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
+                                   (validate-plan standard-plan domain-file problem-file))))))
