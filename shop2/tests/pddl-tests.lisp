@@ -199,7 +199,7 @@
   (fiveam:with-fixture add-del-fixtures ()
     (fiveam:is
      (equal
-      (sort '((AT ROBOT NEW-YORK) (loc new-york) (loc new-jersey)) 'prop-sorter)
+      (sort (copy-list'((AT ROBOT NEW-YORK) (loc new-york) (loc new-jersey))) 'prop-sorter)
       (sort
        (let ((*state-encoding* :list))
          (declare (special *state-encoding*))
@@ -418,7 +418,7 @@
     (fiveam:is 
      (equal
       (sort 
-       '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york))
+       (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
        'prop-sorter)
       (sort
        (let ((*state-encoding* :list))
@@ -572,7 +572,7 @@
 (fiveam:test pddl-planning
   (let ((shop2:*define-silently* t))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp")))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp")))
   (fiveam:is (equalp '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
                        (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
                        (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
@@ -606,7 +606,7 @@
                        (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
                        (!SHIP-ORDER O2 N4 N5))))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.lisp"))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp"))
     (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
                                                   'os-sequencedstrips-p5_1 :verbose 0)))))
     (fiveam:is (equalp plan
