@@ -215,9 +215,9 @@ using MAKE-INITIAL-STATE.")
     (as this-tag = (first first-info))
     (when (null first-info)
       (error "Attempt to retract to nonexistent tag ~d" tag))
+    (appending (rest first-info) into undone)
     (until (or (= this-tag tag)
                (= this-tag stop-at)))
-    (appending (rest first-info) into undone)
     (finally (return-from pull-tag-info
                (values (cons first-info rest-info) undone)))))
 
