@@ -83,7 +83,8 @@ This is an easier to use interface to the validator-export function, qv."
        (validator-export domain plan stream)
     (when filename (close stream))))
 
-(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (domain *domain*))
+(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (domain *domain*)
+                                                      (verbose *verbose*))
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
 files.  VALIDATOR-PROGNAME should be a string that names the 
@@ -95,9 +96,13 @@ absolute pathname, or a path-relative namestring)."
                                  :ignore-error-status t
                                  :error-output :string :output :string)
              (declare (ignore error-output))
-             (if (zerop exit-code) t
+             (setf output (string-left-trim (list #\return) output))
+             (if (zerop exit-code)
+                 (progn (when (> verbose 1)
+                          (format t "Validator output was: ~a~% Exit code was: ~d" output exit-code))
+                        t)
                  (progn
-                   (format t "Validation failed with message: ~T~A" (string-left-trim (list #\return) output))
+                   (format t "Validation failed with message: ~T~A" output)
                    nil)))))
    (if (stringp plan)
        (validate-plan plan)
@@ -666,7 +671,7 @@ two values."
             ;; now the first element will be a list, which isn't
             ;; entirely desirable, but helps us avoid package
             ;; issues. [2007/07/17:rpg]
-            (subseq (symbol-name (first list)) 1)
+            (string-left-trim (list #\!) (symbol-name (first list)))
             (rest list))))
     (let ((massaged-plan
            (mapcar #'de-shopify
