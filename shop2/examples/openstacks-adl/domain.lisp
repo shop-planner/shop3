@@ -1,5 +1,5 @@
 ;; openstacks, strips version
-(in-package :shop2-user)
+(in-package :shop-openstacks)
 
 (defdomain (openstacks-sequencedstrips-ADL :type pddl-domain)
     (
@@ -74,10 +74,12 @@
                   (plan-for-goals))))
 
      (:method (open-all-stacks)
+       open-one-stack
        ((stacks-avail ?n)
         (next-count ?n ?n1))
        (:ordered (!open-new-stack ?n ?n1)
                  (open-all-stacks))
+       done
        ()
        ()
        )

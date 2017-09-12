@@ -157,6 +157,10 @@ minimal affected subtree."
                (:file "graph-plan-tree"))
   )
 
+(defsystem "shop2/pddl-helpers"
+    :depends-on ("shop2" "pddl-utils")
+  :pathname "pddl/"
+  :components ((:file "pddl-helpers")))
 
 
 ;;;---------------------------------------------------------------------------
@@ -194,6 +198,13 @@ shop2."
 
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
+(defsystem shop2/openstacks
+    :depends-on (:shop2)
+  :serial t
+  :pathname "examples/openstacks-adl/"
+  :components ((:file "package")
+               (:file "domain")))
+
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
@@ -214,6 +225,8 @@ shop2."
                  )
     :num-checks 484
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
+                 "shop2/openstacks"
+                 "shop2/pddl-helpers"
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"

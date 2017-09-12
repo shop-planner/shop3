@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-openstacks)
 (defproblem os-sequencedstrips-p5_1 
   openstacks-sequencedstrips-ADL
   ((count n0)

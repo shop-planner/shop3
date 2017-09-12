@@ -1,4 +1,4 @@
-(in-package :shop-user)
+(in-package :shop-openstacks)
 
 #.(make-problem 'OS-SEQUENCEDSTRIPS-P30_1 'OPENSTACKS-SEQUENCEDSTRIPS-ADL-INCLUDED '((NEXT-COUNT
                                                                                       N0

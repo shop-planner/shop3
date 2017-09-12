@@ -559,7 +559,7 @@
                         nil 0 nil)
           (sort (state-atoms state) 'prop-sorter)))))))
 
-(in-package :shop2-user)
+(in-package :shop2-openstacks)
 (fiveam:def-suite* plan-openstacks :in shop2::pddl-tests)
 
 (fiveam:test pddl-planning
@@ -608,29 +608,8 @@
 
 
 
-(defconstant +openstacks-domain-name+ 'openstacks-sequencedstrips-ADL-included)
 
-(defun typed-object-list->facts (list)
-  "List *must be* canonicalized.  Returns a list of (<type> <instance>) facts."
-  (loop :for (var dash type . nil) :on list :by #'cdddr
-        :do (assert (eq dash '-))
-        :collecting `(,type ,var)))
 
-(defun translate-openstacks-problem (problem-file)
-  (let ((pddl-utils:*pddl-package* :shop-user))
-    (let ((problem 
-            (pddl-utils:read-pddl-file problem-file)))
-      (make-problem (pddl-utils:problem-name problem)
-                    +openstacks-domain-name+
-                    ;; state
-                    (append
-                     (pddl-utils:problem-state problem)
-                     (typed-object-list->facts
-                      (pddl-utils:canonicalize-types
-                       (pddl-utils:problem-objects problem)))
-                     `((:goal ,(pddl-utils:problem-goal problem))))
-                    ;; tasks
-                    '(plan)))))
 
 (fiveam:test test-openstacks-adl
   (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
@@ -638,7 +617,7 @@
     (loop :for i from 1 :to 30
           :as probfilename = (format nil "p~2,'0d.pddl" i)
           :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-          :as problem = (translate-openstacks-problem problem-file)
+          :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
           :as standard-plan = (first (find-plans problem :verbose 0))
           :do (fiveam:is-true (and (or standard-plan
                                        (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
@@ -651,7 +630,7 @@
     (loop :for i from 1 :to 30
           :as probfilename = (format nil "p~2,'0d.pddl" i)
           :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-          :as problem = (translate-openstacks-problem problem-file)
+          :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
           :as standard-plan = (first (find-plans-stack problem :verbose 0))
           :do (fiveam:is-true (and (or standard-plan
                                        (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
