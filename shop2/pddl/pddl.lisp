@@ -83,7 +83,7 @@ This is an easier to use interface to the validator-export function, qv."
        (validator-export domain plan stream)
     (when filename (close stream))))
 
-(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (domain *domain*)
+(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (shop2-domain *domain*)
                                                       (verbose *verbose*))
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
@@ -108,7 +108,7 @@ absolute pathname, or a path-relative namestring)."
        (validate-plan plan)
        (let (validated)
          (uiop:with-temporary-file (:stream str :pathname path :keep (not validated))
-           (write-pddl-plan plan :domain domain :stream str)
+           (write-pddl-plan plan :domain shop2-domain :stream str)
            :close-stream
            (setf validated (validate-plan path))
            validated)))))
@@ -668,7 +668,7 @@ two values."
     (setf plan (remove-costs plan)))
   (flet ((de-shopify (list)
            (cons
-            ;; now the first element will be a list, which isn't
+            ;; now the first element will be a string, which isn't
             ;; entirely desirable, but helps us avoid package
             ;; issues. [2007/07/17:rpg]
             (string-left-trim (list #\!) (symbol-name (first list)))
