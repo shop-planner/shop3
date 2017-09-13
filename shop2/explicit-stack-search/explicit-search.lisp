@@ -53,6 +53,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                        (*domain* *domain*)
                        (t
                         (error "Domain not supplied and problem does not specify domain."))))
+         (*domain* domain)
          (world-state (apply 'make-initial-state domain
                              (default-state-type domain)
                              (problem->state domain problem)))
