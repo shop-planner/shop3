@@ -268,6 +268,8 @@ using MAKE-INITIAL-STATE.")
     (setf (state-body the-copy) (copy-tree (state-body st)))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
+    (setf (tagged-state-block-at the-copy)
+     (tagged-state-block-at st))
     the-copy))
 
 ;;; Unlike for MIXED, HASH, and BIT encodings, LIST-insert-atom-into-statebody and
@@ -365,6 +367,8 @@ using MAKE-INITIAL-STATE.")
     (setf (state-body the-copy) (copy-hash-table (state-body st)))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
+        (setf (tagged-state-block-at the-copy)
+     (tagged-state-block-at st))
     the-copy))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -429,6 +433,8 @@ using MAKE-INITIAL-STATE.")
     (setf (state-body the-copy) (copy-hash-table (state-body st)))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
+    (setf (tagged-state-block-at the-copy)
+     (tagged-state-block-at st))
     the-copy))
 
 ; If we don't trust that copy-hash-table copies a mixed-state correctly, we can
@@ -617,6 +623,8 @@ using MAKE-INITIAL-STATE.")
   (let ((the-copy (make-bit-state (state-atoms st))))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
+    (setf (tagged-state-block-at the-copy)
+          (tagged-state-block-at st))
     the-copy))
 
 ;;; I don't know what these next two functions do, so I left them as defuns
@@ -673,11 +681,41 @@ using MAKE-INITIAL-STATE.")
              H1)
     H2))
 
-(defmethod state-trajectory ((st tagged-state))
+(defun prop-sorter (p1 p2)
+  (flet ((elem< (p1 p2)
+           (cond ((numberp p1)
+                  (if (numberp p2)
+                      (< p1 p2)
+                      t))
+                 ((numberp p2)            ;only p2 is a number
+                  nil)
+                 ((symbolp p1)
+                  (if (symbolp p2)
+                      (cond 
+                        ((string-lessp p1 p2) t)
+                        ((string-lessp p2 p1) (values nil t))
+                        (t (values nil nil)))
+                      ;; p1 is a symbol and p2 is something weird; put p2 first
+                      nil))
+                 ;; arbitrary
+                 (t t))))
+    (cond ((and p1 p2)
+           (multiple-value-bind (lessp known)
+               (elem< (first p1) (first p2))
+             (cond (lessp t)
+                   (known nil)
+                   (t
+                    (prop-sorter (rest p1) (rest p2))))))
+          (p1 nil)
+          (t t))))
+
+(defmethod state-trajectory ((st tagged-state) &key sorted)
   (let ((state (copy-state st)))
-    (loop for state-info in (tagged-state-tags-info state)
-        for state-list = (state-atoms state)
-        with trajectory
-        do (push state-list trajectory)
-           (retract-state-changes state (first state-info))
-        finally (return trajectory))))
+    (loop :for state-info :in (tagged-state-tags-info state)
+          :for state-list = (state-atoms state)
+          :with trajectory
+          :when sorted
+            :do (setf state-list (sort state-list 'prop-sorter))
+          :do (push state-list trajectory)
+              (retract-state-changes state (first state-info))
+          :finally (return trajectory))))
