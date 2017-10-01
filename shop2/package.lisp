@@ -181,6 +181,8 @@
              ;; this function is designed for use in debugging SHOP
              ;; domains and problems.
              #:print-current-state
+             #:state-trajectory
+             #:prop-sorter
 
              ;; accessors to problems and domains...
              #:get-state

@@ -69,6 +69,9 @@
              #:name
              #:state
 
+             #:state-trajectory
+             #:prop-sorter
+
              #:*current-state* #:*inferences* #:*external-access*
              #:*attribution-list* #:*state-encoding*
 

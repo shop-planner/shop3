@@ -117,7 +117,7 @@ in state.")
   )
 
 ;;; this needs a better description of what a trajectory object is...
-(defgeneric state-trajectory (state)
+(defgeneric state-trajectory (state &key sorted)
   (:documentation "Any state in SHOP implicitly defines a trajectory ---
 the sequence of states, starting from the initial state, and terminating at
 this state.  This function returns a trajectory leading to STATE.")
