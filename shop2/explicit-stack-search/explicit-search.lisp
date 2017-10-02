@@ -86,6 +86,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
       (unless repairable
         (delete-state-tag-decoder)))
 
+    #|
     (setq total-run-time (- (get-internal-run-time) *start-run-time*)
           total-real-time (- (get-internal-real-time)
 			     *start-real-time*))
@@ -95,7 +96,9 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
 
     (print-stats-header "Totals:" out-stream)
     (print-stats "" *plans-found* total-expansions total-inferences
-		 total-run-time total-real-time out-stream)))
+		 total-run-time total-real-time out-stream)
+    |#
+    ))
       
       
 (defun seek-plans-stack (state domain &key (which :first) repairable)
