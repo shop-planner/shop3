@@ -78,15 +78,16 @@
   (format nil "~%~A" (make-string indentation :initial-element #\space))
   (apply #'format (cons nil body)))
 
-(defun print-stats-header (label)
+(defun print-stats-header (label &optional (stream t))
   (if *print-stats*
-    (format t
+    (format stream
             "~%~7@a Plans Mincost Maxcost Expansions Inferences  CPU time  Real time"
             label)))
 
-(defun print-stats (depth plans tasks inferences runtime realtime)
+(defun print-stats (depth plans tasks inferences runtime realtime
+		    &optional (stream t))
   (when *print-stats*
-    (format t "~%~6@a~6@a ~7@a ~7@a~11@s~11@s~10,3f~11,3f~%"
+    (format stream "~%~6@a~6@a ~7@a ~7@a~11@s~11@s~10,3f~11,3f~%"
             depth (length plans)
             (if plans (to-string (apply #'min (mapcar #'plan-cost plans)) 2) "-")
             (if plans (to-string (apply #'max (mapcar #'plan-cost plans)) 2) "-")

@@ -92,7 +92,7 @@ functions."
     )
    ))
 
-(defmacro verbose-format (&rest args)
+(defmacro verbose-format (&rest args )
   (let ((threshold (if (integerp (first args))
                        (pop args)
                        1)))

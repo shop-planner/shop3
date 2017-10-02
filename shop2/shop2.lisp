@@ -583,17 +583,18 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; Top-level calls to the planner
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
-                   &key domain (which *which*) (verbose *verbose*)
-                        (gc *gc*) (pp *pp*)
-                        (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
-                        (collect-state *collect-state*)
-                        (time-limit *time-limit*) (explanation *explanation*)
-                        (depth-cutoff *depth-cutoff*)
-                        ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
-                        (state *state-encoding* state-supplied-p)
-                        (state-type nil state-type-supplied-p)
-                        hand-steer leashed
-                        )
+                   &key
+		     domain (which *which*) (verbose *verbose*)
+		     (gc *gc*) (pp *pp*)
+		     (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
+		     (collect-state *collect-state*)
+		     (time-limit *time-limit*) (explanation *explanation*)
+		     (depth-cutoff *depth-cutoff*)
+		     ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
+		     (state *state-encoding* state-supplied-p)
+		     (state-type nil state-type-supplied-p)
+		     hand-steer leashed
+		     (out-stream t))
   "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
    The keyword arguments are as follows:
      :WHICH tells what kind of search to do.  Its possible values are:
@@ -699,10 +700,10 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*leashed* leashed)
          (*domain* domain)
          )
-    (find-plans-1 domain state tasks which problem)
+    (find-plans-1 domain state tasks which problem out-stream)
     ))
 
-(defun find-plans-1 (domain state tasks which &optional problem)
+(defun find-plans-1 (domain state tasks which &optional problem out-stream)
   (let ((total-expansions 0) (total-inferences 0)
          (old-expansions 0) (old-inferences 0)
          (total-run-time 0) (total-real-time 0)
@@ -786,9 +787,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (setq total-run-time (- (get-internal-run-time) *start-run-time*)
           total-real-time (- (get-internal-real-time) *start-real-time*))
 
-    (print-stats-header "Totals:")
+    (print-stats-header "Totals:" out-stream)
     (print-stats "" *plans-found* total-expansions total-inferences
-                 total-run-time total-real-time)
+                 total-run-time total-real-time out-stream)
     (let ((plan-trees
            (when *plan-tree*
              (extract-trees *plans-found* *unifiers-found*))))
