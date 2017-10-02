@@ -17,6 +17,7 @@
                                    (no-dependencies nil)
                                    repairable
 				   (out-stream t))
+  (declare (ignore out-stream))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
@@ -72,8 +73,11 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree)))
 
+	 #|
 	 total-run-time total-real-time
-	 total-expansions total-inferences)
+	 total-expansions total-inferences
+	 |#
+	 )
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
