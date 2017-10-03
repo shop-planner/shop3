@@ -23,10 +23,13 @@
     (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
         r
       (let* ((executed (executed-prefix 'shop2-openstacks::(!make-product p4) plan))
-             (domain (find-domain (shop2::domain-name (find-problem 'os-sequencedstrips-p5_1i))))
+             (domain )
              (divergence 'shop2-openstacks::((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
         ;;(list executed plan)
-        (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)))))
+        (values  (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
+                 executed
+                 domain
+                 divergence)))))
 
 (defun find-divergence (shop-plan)
   (find-if #'(lambda (x) (when (listp x) ; ignore costs, if present
@@ -72,7 +75,13 @@
                             :output '(:string :stripped t)
                             :error-output '(:string :stripped t))
         (if (zerop exit-code)
-            t
+            ;; only delete the files if the validation was successful.
+            (progn
+              (uiop:delete-file-if-exists pddl-plan-filename)
+              (uiop:delete-file-if-exists pddl-domain-filename)
+              (when (typep pddl-problem 'pddl-utils:problem)
+                (uiop:delete-file-if-exists pddl-problem-filename))
+              t)
             (progn 
               (format t "Validation failed with error code ~d~%Command: ~a~%Error output:~%~T~A~%Output:~%~T~A~%"
                       exit-code validation-command error-output output)
@@ -83,7 +92,7 @@
     (unless pos (error "No :DIVERGENCE in the replan."))
     (let ((new-plan (copy-list repaired-plan)))
       (setf (nth pos new-plan)
-            (list (intern :divergence package)))
+            (list (intern (string :divergence) package)))
       (pddl-utils:pddlify-tree (shop2::pddl-plan shop-domain  new-plan)))))
 
 (defun pddl-domain-for-replan (divergence pddl-problem pddl-domain)

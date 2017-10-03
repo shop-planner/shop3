@@ -325,7 +325,8 @@ shop2."
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
                  (:module "minimal-subtree"
-                          :components ((:file "tests")))))
+                          :components ((:file "tests")))
+                 (:file "replan-tests" :pathname "tests/replan-tests")))
 
 #+ecl
 (defmethod perform :before ((op test-op)
