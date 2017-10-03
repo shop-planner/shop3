@@ -161,7 +161,7 @@ p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p
 (waiting o50)
 (includes o50 p11)(includes o50 p39)
 
-(= (total-cost) 0)
+;;(= (total-cost) 0)
 
 )
 

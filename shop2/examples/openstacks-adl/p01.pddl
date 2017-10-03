@@ -26,7 +26,7 @@ p1 p2 p3 p4 p5  - product
 (waiting o5)
 (includes o5 p5)
 
-(= (total-cost) 0)
+;;(= (total-cost) 0)
 
 )
 
