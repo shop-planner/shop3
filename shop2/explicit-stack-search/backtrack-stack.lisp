@@ -131,7 +131,9 @@ template against a standardized EXPANDED-TASK from the plan library.")
 ;;; DO-BACKTRACK methods
 ;;;---------------------------------------------------------------------------
 (defmethod do-backtrack ((entry state-tag) (state search-state))
-  (retract-state-changes (world-state state) (tag entry))
+  ;; we need to retract to one entry *before* the tag on the entry,
+  ;; because the tag marks the point AFTER the change has been applied
+  (retract-state-changes (world-state state) (1- (tag entry)))
   (when *record-dependencies-p*
     (delete-tag-map (tag entry))))
 
