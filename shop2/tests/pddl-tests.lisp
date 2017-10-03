@@ -397,14 +397,6 @@
                                     (at cargo ?to)))))))
     (&body)))
 
-(defun prop-sorter (p1 p2)
-  (cond ((and p1 p2)
-         (or (string-lessp (first p1) (first p2))
-             (and (not (string-lessp (first p2) (first p1)))
-                  (prop-sorter (cdr p1) (cdr p2)))))
-        ;; if p1 is longer, it's greater --- this should never happen!
-        (p1 nil)))
-
 (fiveam:test simple-when
   (fiveam:with-fixture simple-when-fixtures ()
     (fiveam:is 
@@ -620,7 +612,7 @@
           :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
           :as standard-plan = (first (find-plans problem :verbose 0))
           :do (fiveam:is-true (and (or standard-plan
-                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
+                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
                                    (validate-plan standard-plan domain-file problem-file))))))
 
 
@@ -633,5 +625,5 @@
           :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
           :as standard-plan = (first (find-plans-stack problem :verbose 0))
           :do (fiveam:is-true (and (or standard-plan
-                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2::problem-name problem)))
+                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
                                    (validate-plan standard-plan domain-file problem-file))))))
