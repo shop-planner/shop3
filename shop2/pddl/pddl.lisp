@@ -71,7 +71,7 @@
   (:documentation "Print a plan in a way that it can be consumed by
 the VAL validator."))
 
-(defun write-pddl-plan (plan &key (domain *domain*) (stream t stream-supplied-p) (filename nil))
+(defun write-pddl-plan (shop-plan &key (domain *domain*) (stream t stream-supplied-p) (filename nil))
   "Write the plan argument \(in a way sensitive to the domain type\)
 to the FILENAME or STREAM in a format that it can be checked by the validator.
 This is an easier to use interface to the validator-export function, qv."
@@ -80,7 +80,7 @@ This is an easier to use interface to the validator-export function, qv."
   (when filename
     (setf stream (open filename :direction :output)))
   (unwind-protect
-       (validator-export domain plan stream)
+       (validator-export domain shop-plan stream)
     (when filename (close stream))))
 
 (defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (shop2-domain *domain*)
@@ -92,10 +92,11 @@ validator in a way that enables it to be found (either an absolute namestring,
 absolute pathname, or a path-relative namestring)."
   (flet ((validate-plan (plan-filename)
            (multiple-value-bind (output error-output exit-code)
-               (uiop:run-program (format nil "~a ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
+               ;; -x option needed to exit with non-zero exit code on bad plan.
+               (uiop:run-program (format nil "~a -x ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
                                  :ignore-error-status t
                                  :error-output :string :output :string)
-             (declare (ignore error-output))
+             (declare (ignore error-output)) ; VAL seems not to use stderr.
              (setf output (string-left-trim (list #\return) output))
              (if (zerop exit-code)
                  (progn (when (> verbose 1)
@@ -663,7 +664,12 @@ two values."
         
 
 (defmethod validator-export ((domain simple-pddl-domain) (plan list) stream)
-  ;; first check to see if there are costs in the plan...
+  (loop :for x :in (pddl-plan domain plan)
+        :as i :from 0
+        :do (format stream "~d: ~a~%" i x)))
+
+(defmethod pddl-plan ((domain simple-pddl-domain) (plan cons) &key (package *package*))
+    ;; first check to see if there are costs in the plan...
   (when (numberp (second plan))
     (setf plan (remove-costs plan)))
   (flet ((de-shopify (list)
@@ -671,11 +677,8 @@ two values."
             ;; now the first element will be a string, which isn't
             ;; entirely desirable, but helps us avoid package
             ;; issues. [2007/07/17:rpg]
-            (string-left-trim (list #\!) (symbol-name (first list)))
+            (intern (string-left-trim (list #\!) (symbol-name (first list))) package)
             (rest list))))
-    (let ((massaged-plan
-           (mapcar #'de-shopify
+    (mapcar #'de-shopify
             (remove-if #'internal-operator-p plan :key 'first))))
-      (loop for x in massaged-plan
-            as i from 0
-            do (format stream "~d: ~a~%" i x)))))
+
