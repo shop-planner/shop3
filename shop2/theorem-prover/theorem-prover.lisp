@@ -484,6 +484,7 @@ in the goal, so we ignore the extra reference."
      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
     (t nil)))
 
+;;; FIXME: according to SBCL, there's dead code in here.  See bottom of file -- message is very cryptic
 (defun standard-satisfiers-for-assign* (domain arguments other-goals
                                         state bindings newlevel just1 dependencies-in)
   ;; it's possible that the VAR part of (ASSIGN VAR ANS) will already
@@ -498,7 +499,7 @@ in the goal, so we ignore the extra reference."
           (with new-depends)
         (when (or (variablep var)
                ;; trivial unification --- probably wrong, should be true unification
-               (equalp var ans))
+                  (equalp var ans))
           (multiple-value-setq (new-answers new-depends)
              (seek-satisfiers
               (apply-substitution other-goals
@@ -1175,3 +1176,76 @@ also remove the corresponding entry from DEPENDENCY-LIST.
   (string-equal
    (subseq string1 0 (position #\Space string1))
    (subseq string2 0 (position #\Space string2))))
+
+
+
+;;; SBCL compiler notes re FIXME above in STANDARD-SATISFIERS-FOR-ASSIGN* [2017/10/03:rpg]
+;;; Possibly to understand this need to first macroexpand the ITER form.
+
+; file: /Users/rpg/projects/laplata/lmco-laplata/planner_distro/ext/shop2/theorem-prover/theorem-prover.lisp
+; in: DEFUN STANDARD-SATISFIERS-FOR-ASSIGN*
+;     (ITERATE:ITER
+;       (ITERATE:FOR SHOP2.THEOREM-PROVER::ANS ITERATE:IN
+;        SHOP2.THEOREM-PROVER::ANSWERS)
+;       (ITERATE:WITH SHOP2.THEOREM-PROVER::RESULTING-ANSWERS)
+;       (ITERATE:WITH SHOP2.THEOREM-PROVER::NEW-ANSWERS)
+;       (ITERATE:WITH SHOP2.THEOREM-PROVER::RESULTING-DEPENDS)
+;       (ITERATE:WITH SHOP2.THEOREM-PROVER::NEW-DEPENDS)
+;       (WHEN
+;           (OR (SHOP2.UNIFIER:VARIABLEP SHOP2.THEOREM-PROVER::VAR)
+;               (EQUALP SHOP2.THEOREM-PROVER::VAR SHOP2.THEOREM-PROVER::ANS))
+;         (MULTIPLE-VALUE-SETQ
+;             (SHOP2.THEOREM-PROVER::NEW-ANSWERS SHOP2.THEOREM-PROVER::NEW-DEPENDS)
+;           (SHOP2.THEOREM-PROVER::SEEK-SATISFIERS
+;            (SHOP2.UNIFIER:APPLY-SUBSTITUTION SHOP2.THEOREM-PROVER::OTHER-GOALS #)
+;            SHOP2.COMMON:STATE
+;            (SHOP2.UNIFIER:APPLY-SUBSTITUTION SHOP2.THEOREM-PROVER::BINDINGS #)
+;            SHOP2.THEOREM-PROVER::NEWLEVEL SHOP2.THEOREM-PROVER::JUST1 :DOMAIN
+;            SHOP2.COMMON:DOMAIN :DEPENDENCIES
+;            SHOP2.THEOREM-PROVER::DEPENDENCIES-IN)))
+;       (WHEN SHOP2.THEOREM-PROVER::NEW-ANSWERS
+;         (IF SHOP2.THEOREM-PROVER::JUST1
+;             (RETURN-FROM SHOP2.THEOREM-PROVER::STANDARD-SATISFIERS-FOR-ASSIGN*
+;               (VALUES SHOP2.THEOREM-PROVER::NEW-ANSWERS
+;                       SHOP2.THEOREM-PROVER::NEW-DEPENDS))
+;             (MULTIPLE-VALUE-SETQ
+;                 (SHOP2.THEOREM-PROVER::RESULTING-ANSWERS
+;                  SHOP2.THEOREM-PROVER::RESULTING-DEPENDS)
+;               (SHOP2.THEOREM-PROVER::ANSWER-SET-UNION
+;                SHOP2.THEOREM-PROVER::NEW-ANSWERS
+;                SHOP2.THEOREM-PROVER::RESULTING-ANSWERS
+;                SHOP2.THEOREM-PROVER::NEW-DEPENDS
+;                SHOP2.THEOREM-PROVER::RESULTING-DEPENDS))))
+;       (ITERATE:FINALLY
+;        (RETURN-FROM SHOP2.THEOREM-PROVER::STANDARD-SATISFIERS-FOR-ASSIGN*
+;          (VALUES SHOP2.THEOREM-PROVER::RESULTING-ANSWERS
+;                  SHOP2.THEOREM-PROVER::RESULTING-DEPENDS))))
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF NULL IF IF 
+; ==>
+;   SHOP2.THEOREM-PROVER::OTHER-GOALS
+; 
+; note: deleting unreachable code
+
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF VALUES LIST 
+; --> CONS IF 
+; ==>
+;   SHOP2.THEOREM-PROVER::BINDINGS
+; 
+; note: deleting unreachable code
+
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF 
+; --> SHOP2.THEOREM-PROVER::REAL-SEEK-SATISFIERS IF 
+; ==>
+;   SHOP2.THEOREM-PROVER::OTHER-GOALS
+; 
+; note: deleting unreachable code
+
+; ==>
+;   SHOP2.THEOREM-PROVER::BINDINGS
+; 
+; note: deleting unreachable code
+
+; compiling (DEFUN STANDARD-SATISFIERS-FOR-ASSIGN ...)
