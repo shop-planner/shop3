@@ -169,7 +169,7 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod undo-state-update ((keyword (eql 'delete)) change state)
   ;; FIXME: delete this!!!!
-  (assert (not (member (state-update-literal change) (state-atoms state) :test 'equalp)))
+  #+ignore(assert (not (member (state-update-literal change) (state-atoms state) :test 'equalp)))
   (insert-atom (state-update-literal change) state))
 
 (defmethod undo-state-update ((keyword (eql 'redundant-add)) change state)
@@ -217,7 +217,7 @@ using MAKE-INITIAL-STATE.")
     (as this-tag = (first first-info))
     (when (null first-info)
       (error "Attempt to retract to nonexistent tag ~d" tag))
-    (until (or (= this-tag tag)
+    (until (or (< this-tag tag)
                (= this-tag stop-at)))
     (appending (rest first-info) into undone)
     (finally (return-from pull-tag-info

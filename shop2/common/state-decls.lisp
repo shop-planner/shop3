@@ -89,9 +89,9 @@ provide information about how to backtrack over state updates.")
 performed with ATOM \(a literal\) as operand."))
 
 (defgeneric retract-state-changes (state tag)
-  (:documentation "Restore STATE to its contents at the time of
-TAG.  Side-effecting function:  will undo individual changes 
-step-by-step.  Returns nothing of interest."))
+  (:documentation "Restore STATE to its contents *before* the 
+changes added by TAG.  Side-effecting function:  will undo
+individual changes step-by-step.  Returns nothing of interest."))
 
 ;;; this function is designed this way for backward compatibility.
 ;;; Eventually, instead of doing eql dispatch on the keyword, we
