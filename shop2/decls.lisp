@@ -483,6 +483,13 @@ of SHOP2 extensions to extend or override the normal problem-building.")
      (setf *all-problems*
            (delete problem *all-problems*))))
 
+(defgeneric pddl-plan (domain plan &optional package)
+  (:documentation "Return a PDDL plan representation of PLAN for
+DOMAIN (a SHOP2 ddomain).  When PACKAGE is supplied, put the 
+symbols into that package (instead of into the value of *PACKAGE*,
+which should be the default)."))
+
+
 
 ;;; ERRORP defaults to NIL only for backwards compatibility.  It might be better
 ;;; to make T be the default. [2015/01/01:rpg]
