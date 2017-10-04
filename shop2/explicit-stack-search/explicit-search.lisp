@@ -14,9 +14,9 @@
   "Variable used internally to keep track of whether the plan must be repairable.")
 
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
-                                   (no-dependencies nil)
-                                   repairable
-				   (out-stream t))
+                                 (no-dependencies nil)
+                                 repairable
+                                 (out-stream t))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
@@ -36,10 +36,10 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
   #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks ecl)
   (when gc (cerror "Just continue, skip GC."
                    "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
-  (let* ((*start-run-time* (get-internal-run-time))
-         (*start-real-time* (get-internal-real-time))
-	 (*plan-tree* nil)
-	 (*plans-found* nil)
+  (let* ((start-run-time (get-internal-run-time))
+         (start-real-time (get-internal-real-time))
+         (*plan-tree* nil)
+         (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
@@ -61,19 +61,18 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                              (problem->state domain problem)))
          (tasks (get-tasks problem))
          (search-state (make-instance 'search-state
-                         :world-state world-state
-                         :tasks tasks
-                         ;; tree will be NIL if we aren't returning a plan tree.
-                         :top-tasks (get-top-tasks tasks)))
+                                      :world-state world-state
+                                      :tasks tasks
+                                      ;; tree will be NIL if we aren't returning a plan tree.
+                                      :top-tasks (get-top-tasks tasks)))
          (tree  (when plan-tree
                   (let ((tree (plan-tree:make-top-node
                                :task 'TOP
                                :lookup-table (plan-tree-lookup search-state))))
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree)))
-
-	 total-run-time total-real-time
-	 total-expansions total-inferences)
+         total-run-time total-real-time
+         total-expansions total-inferences)
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
@@ -82,23 +81,21 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
     (set-variable-property domain tasks)
 
     (unwind-protect
-        (prog1
-	  (seek-plans-stack search-state domain :which :first
-			    :repairable repairable)
-	  (setq total-run-time (- (get-internal-run-time) *start-run-time*)
-		total-real-time (- (get-internal-real-time)
-				   *start-real-time*))
-	  
-	  (setq total-expansions *expansions*
-		total-inferences *inferences*)
-	  
-	  (print-stats-header "Totals:" out-stream)
-	  (print-stats "" *plans-found* total-expansions total-inferences
-		       total-run-time total-real-time out-stream))
-	  
+        (seek-plans-stack search-state domain :which :first
+                          :repairable repairable)
+      (setq total-run-time (- (get-internal-run-time) start-run-time)
+            total-real-time (- (get-internal-real-time)
+                               start-real-time))
+      
+      (setq total-expansions *expansions*
+            total-inferences *inferences*)
+      
+      (print-stats-header "Totals:" out-stream)
+      (print-stats "" *plans-found* total-expansions total-inferences
+                   total-run-time total-real-time out-stream)
+      
       (unless repairable
         (delete-state-tag-decoder)))))
-      
       
 (defun seek-plans-stack (state domain &key (which :first) repairable)
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP2 search
@@ -195,7 +192,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
          (let ((plans (test-plans-found state :repairable repairable)))
            (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
-	   (setf *plans-found* (append plans *plans-found*))
+           (setf *plans-found* (append plans *plans-found*))
            (return
              (values plans
                      (when *enhanced-plan-tree*
@@ -411,9 +408,11 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
       state)))
 (defun IMMEDIATE-TASKS (state)
   (get-immediate-list (top-tasks state)))
-(defun TEST-FOR-DONE (state which-plans)
+#+ignore (defun TEST-FOR-DONE (state which-plans)
   (let ((*plans-found* (plans-found state)))
     (when-done t)))
+;;; I wish I knew why TOP-TASKS = '(NIL) instead of just NIL when there
+;;; are no top-tasks.  I just copied this over from mainstream SHOP2.
 (defun EMPTY-P (state)
   (with-slots (top-tasks) state
     (or (null top-tasks) (equal top-tasks '(NIL)))))
