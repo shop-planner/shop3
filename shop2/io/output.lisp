@@ -79,13 +79,13 @@
   (apply #'format (cons nil body)))
 
 (defun print-stats-header (label &optional (stream t))
-  (if *print-stats*
+  (when *print-stats*
     (format stream
             "~%~7@a Plans Mincost Maxcost Expansions Inferences  CPU time  Real time"
             label)))
 
 (defun print-stats (depth plans tasks inferences runtime realtime
-		    &optional (stream t))
+                    &optional (stream t))
   (when *print-stats*
     (format stream "~%~6@a~6@a ~7@a ~7@a~11@s~11@s~10,3f~11,3f~%"
             depth (length plans)
