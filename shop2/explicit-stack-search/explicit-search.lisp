@@ -17,7 +17,6 @@
                                    (no-dependencies nil)
                                    repairable
 				   (out-stream t))
-  (declare (ignore out-stream))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
