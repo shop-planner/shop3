@@ -15,16 +15,25 @@
                 (+ 2 pos)
                 (1+ pos)))))
 
-(defun test-replan ()
+(in-package :shop2-openstacks)
+;;; work around bug in CCL reader -- at least for the version I have.
+(defparameter shop-replan-tests::*sample-failed-action*
+  '(!make-product p4))
+(defparameter shop-replan-tests::*sample-divergence*
+  '((:delete (made p4)) (:add (waiting o4)) (:delete (started o4))))
+(in-package :shop-replan-tests)
+
+
+(defun test-replan (&optional (problem 'shop2-openstacks::os-sequencedstrips-p5_1i))
   (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp"))
   (let ((r (multiple-value-list (find-plans-stack
-                                 'shop2-openstacks::os-sequencedstrips-p5_1i :verbose 0 :plan-tree t :repairable t))))
+                                 problem :verbose 0 :plan-tree t :repairable t))))
     (unless (first r) (error "Failed to generate a plan for openstacks problem."))
     (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
         r
-      (let* ((executed (executed-prefix 'shop2-openstacks::(!make-product p4) plan))
-             (domain )
-             (divergence 'shop2-openstacks::((:delete (made p4)) (:add (waiting o4)) (:delete (started o4)))))
+     (let* ((executed (executed-prefix *sample-failed-action* plan))
+             (domain (shop2::find-domain (shop2::domain-name problem)))
+             (divergence *sample-divergence*))
         ;;(list executed plan)
         (values  (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
                  executed
