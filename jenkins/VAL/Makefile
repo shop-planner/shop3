@@ -49,6 +49,26 @@ LOADLIBES :=
 LEX	?= flex
 YACC	?= bison
 
+# C/C++/Eiffel/FORTRAN linker
+
+LINKER    := $(CXX) -g
+LDFLAGS    = 
+LOADLIBES := 
+
+# LEX generator
+LEX	?= flex
+YACC	?= bison
+
+# C/C++/Eiffel/FORTRAN linker
+
+LINKER    := $(CXX) -g
+LDFLAGS    = 
+LOADLIBES := 
+
+# LEX generator
+LEX	?= flex
+YACC	?= bison
+
 %.o : %.cc
 	${CXX} ${CPPFLAGS} ${CXXFLAGS} -c $< -o $@
 

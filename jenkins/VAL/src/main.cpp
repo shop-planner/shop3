@@ -91,6 +91,7 @@ bool InvariantWarnings;
 bool LaTeX;
 
 ostream * report = &cout;
+bool failOnBadPlan; // keep default behavior
 
 
 };
@@ -116,6 +117,7 @@ void usage()
 		     << "    -rd <x>    -- Set distribution for robustness testing: x = u, uniform; x = n, normal; x = p, psuedo-normal. (default x = u).\n"
 		     << "    -j         -- When varying the values of PNEs also vary for event preconditions. (default = false)\n"
 		     << "    -v         -- Verbose reporting of plan check progress.\n"
+		     << "    -x         -- Fail with non-zero exit code if plan fails to parse.\n"
 		     << "    -l         -- Verbose LaTeX reporting of plan check progress.\n"
 		     << "    -a         -- Do not output plan repair advice when Verbose is on.\n"
 		     << "    -g         -- Use graphplan length where no metric specified.\n"
@@ -153,7 +155,12 @@ plan * getPlan(int & argc,char * argv[],int & argcount,TypeChecker & tc,vector<s
 	    {
 	    	failed.push_back(name);
 	    	*report << "Bad plan file!\n";
-	    	the_plan = 0; return the_plan;
+	    	the_plan = 0;
+                if ( VAL::failOnBadPlan ) {
+                  exit(2);
+                } else {
+                  return the_plan;
+                }
 	    };
 
 	    yfl = new yyFlexLexer(&planFile,&cout);
@@ -169,11 +176,15 @@ plan * getPlan(int & argc,char * argv[],int & argcount,TypeChecker & tc,vector<s
 	    	if(Silent < 2) *report << "Bad plan description!\n";
 	    	if(Silent > 1) *report << "failed\n";
 	    	delete the_plan;
-	    	the_plan = 0; return the_plan;
+	    	the_plan = 0;
+                if ( VAL::failOnBadPlan ) {
+                  exit(1);
+                  } else {
+                  return the_plan;
+                }
 	    };
 
 		if(the_plan->getTime() >= 0) {name += " - Planner run time: "; name += toString(the_plan->getTime());};
-
     return the_plan;
 
 };
@@ -605,6 +616,7 @@ int main(int argc,char * argv[])
 	stepLengthDefault = false;
    bool CheckDPs = true;
    bool giveAdvice = true;
+   VAL::failOnBadPlan = false; // keep default behavior
 
 	double tolerance = 0.01;
 	bool lengthDefault = true;
@@ -614,6 +626,7 @@ int main(int argc,char * argv[])
   bool calculatePNERobustness = false;
   RobustMetric robustMetric = MAX;
   RobustDist robustDist = UNIFORM;
+
 
 	string s;
 	bool ganttObjectsGot = false;
@@ -807,6 +820,11 @@ int main(int argc,char * argv[])
 	    		giveAdvice = false;
  	    		++argcount;
 	    		break;
+	    	case 'x':
+	    		failOnBadPlan = true;
+ 	    		++argcount;
+	    		break;
+
 	    	case 'f':
 	    		{
 	    			LaTeX = true;

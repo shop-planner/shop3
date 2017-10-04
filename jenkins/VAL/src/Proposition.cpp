@@ -3074,8 +3074,9 @@ string Comparison::getExprnString(const expression * e,const Environment & bs) c
 		s += ")";
 
 
-      if(LaTeX) return "\\exprn{"+ s + "}";
-		return s;
+      if(LaTeX)
+        return "\\exprn{"+ s + "}";
+      return s;
 
 	};
 
