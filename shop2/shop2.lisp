@@ -584,17 +584,17 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
                    &key
-		     domain (which *which*) (verbose *verbose*)
-		     (gc *gc*) (pp *pp*)
-		     (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
-		     (collect-state *collect-state*)
-		     (time-limit *time-limit*) (explanation *explanation*)
-		     (depth-cutoff *depth-cutoff*)
-		     ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
-		     (state *state-encoding* state-supplied-p)
-		     (state-type nil state-type-supplied-p)
-		     hand-steer leashed
-		     (out-stream t))
+                     domain (which *which*) (verbose *verbose*)
+                     (gc *gc*) (pp *pp*)
+                     (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
+                     (collect-state *collect-state*)
+                     (time-limit *time-limit*) (explanation *explanation*)
+                     (depth-cutoff *depth-cutoff*)
+                     ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
+                     (state *state-encoding* state-supplied-p)
+                     (state-type nil state-type-supplied-p)
+                     hand-steer leashed
+                     (out-stream t))
   "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
    The keyword arguments are as follows:
      :WHICH tells what kind of search to do.  Its possible values are:
@@ -700,10 +700,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*leashed* leashed)
          (*domain* domain)
          )
-    (find-plans-1 domain state tasks which problem out-stream)
-    ))
+    (find-plans-1 domain state tasks which problem out-stream)))
 
-(defun find-plans-1 (domain state tasks which &optional problem out-stream)
+(defun find-plans-1 (domain state tasks which &optional problem (out-stream t))
   (let ((total-expansions 0) (total-inferences 0)
          (old-expansions 0) (old-inferences 0)
          (total-run-time 0) (total-real-time 0)
@@ -720,17 +719,18 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     ;;    (format t "~%Top-Tasks: ~a" top-tasks)
     (determine-verbosity *verbose*)
 
+    ;; FIXME: the format calls in here should probably be PRINT-STATS or PRINT-STATS-HEADER.
     (when *print-stats*
-      (format t "~&---------------------------------------------------------------------------")
-      (format t "~%~@[Problem ~s with ~]:WHICH = ~s, :VERBOSE = ~s" problem which *verbose*)
+      (format out-stream "~&---------------------------------------------------------------------------")
+      (format out-stream "~%~@[Problem ~s with ~]:WHICH = ~s, :VERBOSE = ~s" problem which *verbose*)
       (when *optimize-cost*
-          (format t ", OPTIMIZE-COST = ~s" *optimize-cost*))
+          (format out-stream ", OPTIMIZE-COST = ~s" *optimize-cost*))
       (terpri))
     ;; if *hand-steer* allows the user to abort planning.
     (catch 'user-done
       (ecase which
         ((:id-first :id-all)
-         (print-stats-header "Depth")
+         (print-stats-header "Depth" out-stream)
          (do ((*depth-cutoff* 0 (1+ *depth-cutoff*)))
              ((or (time-expired-p)      ;need to check here for expired time....
                   (and *plans-found*
@@ -754,7 +754,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                  total-expansions (+ total-expansions *expansions*)
                  total-inferences (+ total-inferences *inferences*))
            (print-stats *depth-cutoff* *plans-found* *expansions*
-                        *inferences* new-run-time new-real-time)
+                        *inferences* new-run-time new-real-time out-stream)
            (and (equal *expansions* old-expansions)
                 (equal *inferences* old-inferences)
                 (progn (format t "~&Ending at depth ~D: no new expansions or inferences.~%"
@@ -769,8 +769,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (catch-internal-time
           (seek-plans domain state tasks top-tasks nil 0 0 which nil
                       ;; unifier
-                      nil
-                      ))
+                      nil))
          (setq total-expansions *expansions*
                total-inferences *inferences*))))
 
