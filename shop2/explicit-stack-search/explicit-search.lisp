@@ -86,23 +86,22 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
     (set-variable-property domain tasks)
 
     (unwind-protect
-        (seek-plans-stack search-state domain :which :first :repairable repairable)
+        (prog1
+	  (seek-plans-stack search-state domain :which :first
+			    :repairable repairable)
+	  (setq total-run-time (- (get-internal-run-time) *start-run-time*)
+		total-real-time (- (get-internal-real-time)
+				   *start-real-time*))
+	  
+	  (setq total-expansions *expansions*
+		total-inferences *inferences*)
+	  
+	  (print-stats-header "Totals:" out-stream)
+	  (print-stats "" *plans-found* total-expansions total-inferences
+		       total-run-time total-real-time out-stream))
+	  
       (unless repairable
-        (delete-state-tag-decoder)))
-
-    #|
-    (setq total-run-time (- (get-internal-run-time) *start-run-time*)
-          total-real-time (- (get-internal-real-time)
-			     *start-real-time*))
-
-    (setq total-expansions *expansions*
-	  total-inferences *inferences*)
-
-    (print-stats-header "Totals:" out-stream)
-    (print-stats "" *plans-found* total-expansions total-inferences
-		 total-run-time total-real-time out-stream)
-    |#
-    ))
+        (delete-state-tag-decoder)))))
       
       
 (defun seek-plans-stack (state domain &key (which :first) repairable)
