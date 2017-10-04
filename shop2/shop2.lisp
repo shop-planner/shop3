@@ -702,7 +702,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          )
     (find-plans-1 domain state tasks which problem out-stream)))
 
-(defun find-plans-1 (domain state tasks which &optional problem (out-stream t))
+(defun find-plans-1 (domain state tasks which problem &optional (out-stream t))
   (let ((total-expansions 0) (total-inferences 0)
          (old-expansions 0) (old-inferences 0)
          (total-run-time 0) (total-real-time 0)
