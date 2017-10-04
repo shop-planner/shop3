@@ -483,7 +483,7 @@ of SHOP2 extensions to extend or override the normal problem-building.")
      (setf *all-problems*
            (delete problem *all-problems*))))
 
-(defgeneric pddl-plan (domain plan &optional package)
+(defgeneric pddl-plan (domain plan &key package)
   (:documentation "Return a PDDL plan representation of PLAN for
 DOMAIN (a SHOP2 ddomain).  When PACKAGE is supplied, put the 
 symbols into that package (instead of into the value of *PACKAGE*,
