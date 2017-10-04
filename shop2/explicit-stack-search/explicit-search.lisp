@@ -73,11 +73,8 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree)))
 
-	 #|
 	 total-run-time total-real-time
-	 total-expansions total-inferences
-	 |#
-	 )
+	 total-expansions total-inferences)
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
