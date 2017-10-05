@@ -161,7 +161,6 @@ Modified search state object."
       (setf (shop2.common::tagged-state-tags-info new-state-obj)
             ;; NCONC is safe because SUBSEQ creates fresh copy.
             (nconc suffix (shop2.common::tagged-state-tags-info new-state-obj))))
-    (break "Inspect NEW-STATE-OBJ.")
     ;; now put the new world state in place...
     (setf (world-state search-state) new-state-obj)
     search-state)) 
