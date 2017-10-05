@@ -94,7 +94,7 @@
 
 (defvar *print-plans*)              ; whether to print out the plans we find
 (defvar *pshort*)  ; whether to skip ops that begin with !! when printing plans
-(defvar *print-stats*)              ; whether to print statistics
+(defvar *print-stats* nil)              ; whether to print statistics
 (defparameter *current-plan* nil)  ; current plan
 (defparameter *current-tasks* nil) ; current task
 
