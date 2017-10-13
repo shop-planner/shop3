@@ -13,26 +13,29 @@ PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is
   manage access anyway, but it will be slower.
 Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
 \(3\) plan tree lookup table (4) search-state object."
-  (let ((failed (subtree:find-failed-task domain plan plan-tree executed
-                                                 divergence :plan-tree-hash plan-tree-hash))
-        (new-search-state (freeze-state executed divergence search-state)))
-    #+nil(break "Inspect NEW-SEARCH-STATE.")
-    (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-        (replan-from-failure domain failed new-search-state :verbose verbose)
-      (when new-plans
-        (let ((new-plan (first new-plans))
-               (new-plan-tree (first new-plan-trees))
-               (new-lookup-table (first lookup-tables)))
-          (multiple-value-bind (prefix suffix)
-              (extract-suffix new-plan executed)
-           (values
-            ;; new plan sequence
-            (append prefix
-                    (list (cons :divergence divergence) 0.0)
-                    suffix)
-            new-plan-tree
-            new-lookup-table
-            final-search-state)))))))
+  #+ignore(break "starting to repair plan")
+  (multiple-value-bind (failed ; tree node
+                        failed-action)
+      (subtree:find-failed-task domain plan plan-tree executed
+                                divergence :plan-tree-hash plan-tree-hash)
+    (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
+      #+nil(break "Inspect NEW-SEARCH-STATE.")
+      (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
+          (replan-from-failure domain failed new-search-state :verbose verbose)
+        (when new-plans
+          (let ((new-plan (first new-plans))
+                (new-plan-tree (first new-plan-trees))
+                (new-lookup-table (first lookup-tables)))
+            (multiple-value-bind (prefix suffix)
+                (extract-suffix new-plan executed)
+              (values
+               ;; new plan sequence
+               (append prefix
+                       (list (cons :divergence divergence) 0.0)
+                       suffix)
+               new-plan-tree
+               new-lookup-table
+               final-search-state))))))))
 
 (defgeneric find-failed-stack-entry (failed obj)
   (:documentation "Find and return the stack entry that corresponds
@@ -66,7 +69,8 @@ before the insertion of FAILED into the plan tree.")
 
 
 (defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
-  (let ((*verbose* verbose))
+  (let ((*verbose* verbose)
+        (*domain* domain))
     (when (>= *verbose* 2)
       (format t "~&World state before backjump is:~%")
       (pprint (state-atoms (world-state search-state))))
@@ -123,10 +127,12 @@ before the insertion of FAILED into the plan tree.")
       (return
         (values new-prefix plan-copy))))))
 
-(defun freeze-state (executed divergence search-state)
+(defun freeze-state (executed failed-action divergence search-state)
   "Arguments:
 PLAN: sequence of primitive actions.
 EXECUTED: Prefix of the plan that has been executed.
+FAILED-ACTION: First action whose preconditions are clobbered,
+          if any.
 DIVERGENCE: Divergence between the expected state after
       EXECUTED, specified as (([:ADD|:DELETE] <fact>)+)
 SEARCH-STATE: Search state object.
@@ -137,30 +143,56 @@ Modified search state object."
          ;; this is the tag or the "failed" action -- really the one
          ;; that gave an unexpected result.  So we want to undo all the
          ;; actions AFTER this one
-         (world-state-tag (if (some #'numberp executed)
-                              (/ (length executed) 2)
-                              (length executed)))
+         (world-state-tag (* (if (some #'numberp executed)
+                               (/ (length executed) 2)
+                               (length executed))
+                             ;; magic constant for the tag increment per
+                             ;; operator.
+                             2))
+         ;; can't correctly apply state updates beyond here
+         (failed-action-tag (tag-for-action failed-action))
          (new-state-obj (shop2.common::copy-state world-state)))
     (assert (integerp world-state-tag))
-    #+NIL(break "Inside FREEZE-STATE")
+    #+nil(break "Inside FREEZE-STATE")
     ;; this gives us the state right after the execution of the "failed" action.
-    (shop2.common:retract-state-changes new-state-obj world-state-tag)
-    ;; now put the divergences into effect....
-    (iter (for (op fact) in divergence)
-      (ecase op
-        (:add (shop2.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
-        (:delete (shop2.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
-    ;; now make it impossible to backtrack before this point...
-    (setf (shop2.common::tagged-state-block-at new-state-obj) world-state-tag)
-    ;; now roll forward again
-    (let ((suffix 
-            (subseq (shop2.common::tagged-state-tags-info world-state) 0
-                    (or (position world-state-tag (shop2.common::tagged-state-tags-info world-state)
-                                  :key 'first)
-                        (error "Couldn't find world state tag ~D in state" world-state-tag)))))
-      (setf (shop2.common::tagged-state-tags-info new-state-obj)
-            ;; NCONC is safe because SUBSEQ creates fresh copy.
-            (nconc suffix (shop2.common::tagged-state-tags-info new-state-obj))))
-    ;; now put the new world state in place...
-    (setf (world-state search-state) new-state-obj)
-    search-state)) 
+    (shop2.common:retract-state-changes new-state-obj (1+ world-state-tag))
+    #+ignore(break "Inside FREEZE-STATE, before adding divergences, world state is: ~S" new-state-obj)
+    ;; now put the divergences into effect, taking sleazy advantage of the fact that the
+    ;; world state tag increments by two.
+    (let ((new-tag 
+            (shop2.common:tag-state new-state-obj 1)))
+      (iter (for (op fact) in divergence)
+        (ecase op
+          (:add (shop2.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
+          (:delete (shop2.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
+      ;; now make it impossible to backtrack before this point...
+      (setf (shop2.common::tagged-state-block-at new-state-obj) new-tag))
+      #+ignore(break "After freezing, before rolling forward, state is: ~s" new-state-obj)
+    ;; now roll forward again.  Note that the world state changes are a *stack*, so we need to
+    ;; push them back on....  So this is *semantically* a "suffix" but syntactically a prefix.
+    (let ((suffix
+            (reverse
+             (subseq (shop2.common::tagged-state-tags-info world-state)
+                     0
+                     (or (position world-state-tag (shop2.common::tagged-state-tags-info world-state)
+                                   :key 'first)
+                         (error "Couldn't find world state tag ~D in state" world-state-tag))))))
+      #+ignore(break "Suffix of state tags is: ~S" suffix)
+      ;; Redo the state updates...
+      (replay-state-changes new-state-obj suffix failed-action-tag)
+
+      ;; now put the new world state in place...
+      (setf (world-state search-state) new-state-obj)
+      (format t "At start of plan repair, state is: ~%")
+      (print-current-state :state new-state-obj
+                           :sorted t)
+      #+nil (break "Check it out..." )
+
+      search-state)))
+
+#+ignore
+(progn
+  (defvar *saved-state* nil)
+  (excl:def-fwrapper save-frozen-state (&rest args)
+    (setf *saved-state* (excl:call-next-fwrapper)))
+  (excl:fwrap 'freeze-state 'save-frozen-state 'save-frozen-state))
