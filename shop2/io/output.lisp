@@ -147,8 +147,8 @@
 (defun query-current-state (first-symbol)
   (state-all-atoms-for-predicate *current-state* first-symbol))
 
-(defun print-current-state ()
-  (format t "~%~A~%" (state-atoms *current-state*))
+(defun print-current-state (&key sorted (state *current-state*))
+  (format t "~%~{~t~A~%~}~%" (if sorted (sort (copy-seq  (state-atoms state)) 'prop-sorter) (state-atoms state)))
   t)
 
 (defun print-current-tasks ()
