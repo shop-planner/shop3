@@ -182,14 +182,15 @@ using MAKE-INITIAL-STATE.")
   (values))
 
 (defmethod replay-state-changes ((st tagged-state) tags-info-list &optional stop-at)
-  (iter (for tagged-updates in tags-info-list)
-    (destructuring-bind (tag . updates) tagged-updates
-      (assert (> tag (tagged-state-tags-info-tag st)))
-      (when (and stop-at (= stop-at tag))
-          (leave))
-      (iter (for update in updates)
-        (redo-state-update (state-update-action update) update st)))
-    (push tagged-updates (tagged-state-tags-info st)))
+  (catch 'stop-replay
+    (dolist (tagged-updates tags-info-list)
+      (destructuring-bind (tag . updates) tagged-updates
+        (assert (> tag (tagged-state-tags-info-tag st)))
+        (when (and stop-at (= stop-at tag))
+          (throw 'stop-replay nil))
+        (dolist (update updates)
+          (redo-state-update (state-update-action update) update st)))
+      (push tagged-updates (tagged-state-tags-info st))))
   (values))
 
 (defmethod undo-state-update ((keyword (eql 'add)) change state)
