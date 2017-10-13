@@ -1,10 +1,7 @@
 (in-package :shop2-minimal-subtree)
- 
+
 (defmethod find-failed-task :around ((domain symbol) plan plan-tree
                                      executed divergence &key plan-tree-hash)
-  (when (find-if 'floatp plan)
-    ;; we haven't removed the costs
-    (setf plan (remove-costs plan)))
   (find-failed-task (find-domain domain) plan plan-tree
                     executed divergence
                     :plan-tree-hash plan-tree-hash))
@@ -25,18 +22,20 @@
                              (plan-tree plan-tree:tree-node) executed divergence
                              &key plan-tree-hash)
   "Default method for FIND-FAILED-TASK."
+  (when (find-if 'numberp plan)
+    ;; we haven't removed the costs
+    (setf plan (remove-costs plan)))
   (let ((plan-suffix (find-plan-suffix plan executed)))
     (iter outer (for plan-step in plan-suffix)
-      (unless (numberp plan-step)       ; skip costs
-        (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
-          (unless (typep next 'pseudo-node) ;ordered and unordered nodes
-            (when (clobbered-p next divergence)
-              (return-from find-failed-task next)))))))
+      (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
+        (unless (typep next 'pseudo-node) ;ordered and unordered nodes
+          (when (clobbered-p next divergence)
+            (return-from find-failed-task (values next plan-step)))))))
     nil)            ; no threatened step found
 
 (defun find-checking-path (tree-node)
   "Find and return the series of tree nodes that should be
-checked above of PLAN-STEP.  Returns a list in order of
+checked above TREE-NODE.  Returns a list in order of
 checking (i.e., top-down)."
   (iter (with next = tree-node)
     (with retval = nil)
@@ -62,7 +61,9 @@ checking (i.e., top-down)."
     (when (numberp step) (next-iteration))
     (when (numberp (first plan))
       (setf plan (rest plan)))
-    (if (equalp step (first plan))
+    ;; testing here must be EQ, because there can be multiple copies
+    ;; of a single ground action in the plan sequence
+    (if (eq step (first plan))
         (setf plan (rest plan))
         (error "Executed plan step ~S is not part of plan: ~S"
                step orig-plan))
