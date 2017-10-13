@@ -288,13 +288,6 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                       (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
             t))))))
 
-;;; FIXME: severe problem in the tree building here.  The problem is
-;;; that there is a newly-consed instantiated action, PLANNED-ACTION
-;;; that is added to the plan sequence, which is NOT eq to the
-;;; CURRENT-TASK, which is how the PLAN-TREE object is populated.  I
-;;; think I *could* replace the TASK in the existing tree-node, but
-;;; that's an obscure side-effecting sort of thing to do, and might
-;;; behave oddly on backtracking. [2017/06/26:rpg]
 (defun EXPAND-PRIMITIVE-STATE (state domain)
   ;; first we need to record what we will need to pop...
   (with-slots (top-tasks tasks protections partial-plan
@@ -328,7 +321,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
                 (make-add-dependencies depends))))
-          (make-tag-map tag current-task))
+          (make-tag-map tag current-task planned-action))
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
         t))))
 
