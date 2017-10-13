@@ -131,9 +131,13 @@ template against a standardized EXPANDED-TASK from the plan library.")
 ;;; DO-BACKTRACK methods
 ;;;---------------------------------------------------------------------------
 (defmethod do-backtrack ((entry state-tag) (state search-state))
-  ;; we need to retract to one entry *before* the tag on the entry,
-  ;; because the tag marks the point AFTER the change has been applied
+  #+ignore(format t "~&Before retracting state tag ~D world state tag is ~d and state is:"
+          (tag entry) (shop2.common::tagged-state-tags-info-tag (shop2::world-state state)))
+  #+ignore(shop2:print-current-state :state (world-state state) :sorted t)
   (retract-state-changes (world-state state) (tag entry))
+  #+ignore(format t "~&After retracting state tag ~D world state tag is ~d and state is:"
+          (tag entry) (shop2.common::tagged-state-tags-info-tag (shop2::world-state state)))
+  #+ignore(shop2:print-current-state :state (world-state state) :sorted t)
   (when *record-dependencies-p*
     (delete-tag-map (tag entry))))
 
