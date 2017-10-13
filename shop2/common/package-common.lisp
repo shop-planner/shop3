@@ -84,8 +84,11 @@
              #:delete-atom-from-state
              #:tag-state
              #:make-state
+             #:replay-state-changes
 
              ;; recording establishers
+             #:decode-tag
+             #:tag-for-action
              #:last-establisher
              #:prepare-state-tag-decoder
              #:delete-state-tag-decoder 

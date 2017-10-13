@@ -102,14 +102,17 @@ using MAKE-INITIAL-STATE.")
   ;; from this point back, can't undo...
   (block-at 0 :type fixnum))
 
+(defun tagged-state-tags-info-tag (tagged-state)
+  (caar (tagged-state-tags-info tagged-state)))
+
 (deftype action-type () '(member add delete redundant-add redundant-delete))
 
 (defstruct state-update
   (action 'add :type action-type)
   (literal nil :type list))
 
-(defmethod tag-state ((st tagged-state))
-  (let ((new-tag (1+ (first (first (tagged-state-tags-info st))))))
+(defmethod tag-state ((st tagged-state) &optional (increment 2))
+  (let ((new-tag (+ increment (tagged-state-tags-info-tag st))))
     (push (list new-tag) (tagged-state-tags-info st))
     new-tag))
 
@@ -131,22 +134,36 @@ using MAKE-INITIAL-STATE.")
     :init))
 
 (defun decode-tag (tag)
-  (or (gethash tag *state-tag-map*)
+  (or (let ((hash-val (gethash tag *state-tag-map*)))
+        (when hash-val
+          (first hash-val)))            ;task
       (error "No action/operator instance stored for state update tag ~A" tag)))
 
+(defun tag-for-action (action)
+  (or (gethash action *action-to-tag-map*)
+      (error "No tag instance stored for action ~A" action)))
+
 (defun prepare-state-tag-decoder ()
-  (setf *state-tag-map* (make-hash-table :test 'eq)))
+  (setf *state-tag-map* (make-hash-table :test 'eq))
+  (setf *action-to-tag-map* (make-hash-table :test 'eq)))
 
 (defun delete-state-tag-decoder ()
-  (setf *state-tag-map* nil))
+  (setf *state-tag-map* nil
+        *action-to-tag-map* nil))
 
-(defun make-tag-map (tag operator)
+(defun make-tag-map (tag task primitive)
   "Record association of TAG with operator/action instance OPERATOR."
-  (setf (gethash tag *state-tag-map*) operator))
+  (setf (gethash tag *state-tag-map*) (list task primitive)
+        (gethash primitive *action-to-tag-map*) tag))
 
 (defun delete-tag-map (tag)
   "Erase association of TAG with its operator/action instance."
-  (remhash tag *state-tag-map*))
+  (multiple-value-bind (op prim) (decode-tag tag)
+    (declare (ignore op))
+    (assert prim)
+    (remhash tag *state-tag-map*)
+    (remhash prim *action-to-tag-map*)
+    (values)))
 
 
 
@@ -164,12 +181,23 @@ using MAKE-INITIAL-STATE.")
       (undo-state-update (state-update-action change) change st)))
   (values))
 
+(defmethod replay-state-changes ((st tagged-state) tags-info-list &optional stop-at)
+  (iter (for tagged-updates in tags-info-list)
+    (destructuring-bind (tag . updates) tagged-updates
+      (assert (> tag (tagged-state-tags-info-tag st)))
+      (when (and stop-at (= stop-at tag))
+          (leave))
+      (iter (for update in updates)
+        (redo-state-update (state-update-action update) update st)))
+    (push tagged-updates (tagged-state-tags-info st)))
+  (values))
+
 (defmethod undo-state-update ((keyword (eql 'add)) change state)
   (remove-atom (state-update-literal change) state))
 
 (defmethod undo-state-update ((keyword (eql 'delete)) change state)
   ;; FIXME: delete this!!!!
-  #+ignore(assert (not (member (state-update-literal change) (state-atoms state) :test 'equalp)))
+  (assert (not (member (state-update-literal change) (state-atoms state) :test 'equalp)))
   (insert-atom (state-update-literal change) state))
 
 (defmethod undo-state-update ((keyword (eql 'redundant-add)) change state)
@@ -179,6 +207,22 @@ using MAKE-INITIAL-STATE.")
 (defmethod undo-state-update ((keyword (eql 'redundant-delete)) change state)
   (declare (ignorable keyword change state))
   (values))
+
+(defmethod redo-state-update ((keyword (eql 'add)) change state)
+  (assert (not (atom-in-state-p (state-update-literal change) state)))
+  (insert-atom (state-update-literal change) state))
+
+(defmethod redo-state-update ((keyword (eql 'delete)) change state)
+  (remove-atom (state-update-literal change) state))
+
+(defmethod redo-state-update ((keyword (eql 'redundant-add)) change state)
+  (declare (ignorable keyword change state))
+  (values))
+
+(defmethod redo-state-update ((keyword (eql 'redundant-delete)) change state)
+  (declare (ignorable keyword change state))
+  (values))
+
 
 
 (defmethod add-atom-to-state (atom (st tagged-state) depth operator)
@@ -392,7 +436,7 @@ using MAKE-INITIAL-STATE.")
     st))
 
 (defmethod insert-atom (atom (st mixed-state))
-  (push (rest atom) (gethash (first atom) (state-body st))))
+  (pushnew (rest atom) (gethash (first atom) (state-body st)) :test 'equalp))
 
 (defmethod remove-atom (atom (st mixed-state))
   (let ((statebody (state-body st)))

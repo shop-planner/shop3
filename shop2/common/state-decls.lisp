@@ -79,7 +79,7 @@ keyword arguments for additional state components."))
 (defgeneric copy-state (state)
   (:documentation "Return a copy of the state"))
 
-(defgeneric tag-state (state)
+(defgeneric tag-state (state &optional increment)
   (:documentation "Add a tag to a state; used to make tagged-states, which 
 provide information about how to backtrack over state updates.")
   )
@@ -101,6 +101,13 @@ individual changes step-by-step.  Returns nothing of interest."))
   (:documentation "Undo the state update instantiated in state-update.
 Chooses how to do this based on state-update-keyword.  Side-effecting.
 Used inside RETRACT-STATE-CHANGES."))
+
+(defgeneric redo-state-update (state-update-keyword state-update state)
+  (:documentation "Redo the state update instantiated in state-update.
+Chooses how to do this based on state-update-keyword.  Side-effecting.
+Used in plan repair."))
+
+(defgeneric replay-state-changes (state update-list &optional stop-at))
 
 (defgeneric add-atom-to-state (atom state depth operator)
   (:documentation "Destructively modifies STATE by adding ATOM 
@@ -126,6 +133,10 @@ this state.  This function returns a trajectory leading to STATE.")
 (defvar *state-tag-map* nil
   "Will be bound to a hash table to look up an operator/action instance
 from a tag.")
+(defvar *action-to-tag-map* nil
+  "Will be bound to a hash table to look up a numerical tag from an operator/action
+instance.")
+
 
 (defgeneric last-establisher (state literal)
   (:documentation "Return the action that last established LITERAL
