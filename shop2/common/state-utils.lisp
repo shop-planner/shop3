@@ -134,10 +134,10 @@ using MAKE-INITIAL-STATE.")
     :init))
 
 (defun decode-tag (tag)
-  (or (let ((hash-val (gethash tag *state-tag-map*)))
-        (when hash-val
-          (first hash-val)))            ;task
-      (error "No action/operator instance stored for state update tag ~A" tag)))
+  (let ((hash-val (gethash tag *state-tag-map*)))
+       (if hash-val
+           (values-list hash-val)            ;task
+           (error "No action/operator instance stored for state update tag ~A" tag))))
 
 (defun tag-for-action (action)
   (or (gethash action *action-to-tag-map*)
@@ -158,8 +158,7 @@ using MAKE-INITIAL-STATE.")
 
 (defun delete-tag-map (tag)
   "Erase association of TAG with its operator/action instance."
-  (multiple-value-bind (op prim) (decode-tag tag)
-    (declare (ignore op))
+  (let ((prim (nth-value 1 (decode-tag tag))))
     (assert prim)
     (remhash tag *state-tag-map*)
     (remhash prim *action-to-tag-map*)
