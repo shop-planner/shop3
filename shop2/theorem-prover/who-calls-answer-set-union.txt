@@ -1,0 +1,59 @@
+# -*- mode:org; -*-
+
+* Issue
+We encounter a new issue with dependency-checking for SHOP2's new
+dependency trees.  Previously, when we found multiple solutions to a
+query in the theorem-prover, all SHOP2 cared about was the binding
+lists.  This led me to (erroneously) treat dependency records
+(pointers from establisher actions to consumers) as if they were only
+interesting when they introduced new bindings.  This was clearly wrong
+and needs to be revised.
+
+This file holds notes concerning fixing this issue of dependency tracking.
+
+* Checking =ANSWER-SET-UNION=
+Uses of =ANSWER-SET-UNION= that need to be checked to see if their
+context is truly disjunctive.
+
+** =shop2/theorem-prover/theorem-prover.lisp=:
+1. [[file:theorem-prover.lisp::defun standard-satisfiers-for-assign*][(:OPERATOR STANDARD-SATISFIERS-FOR-ASSIGN*)]] -- this is a
+   disjunctive context, so the use of =ASU= is fine.
+2. [[file:theorem-prover.lisp::defun incorporate-unifiers][(:OPERATOR INCORPORATE-UNIFIERS)]] -- This function is used in a
+   large number of places.  Need to check and verify if it is used
+   correctly.  See [[INCORPORATE-UNIFIERS]].
+3. [[file:theorem-prover.lisp::defun standard-satisfiers-for-or][(:OPERATOR STANDARD-SATISFIERS-FOR-OR)]] -- here the treatment is
+   acceptable.  If the OR introduces different bindings (in classic
+   SHOP2), then we want different dependencies for different
+   bindings.  If we are /not/ introducing different bindings (as in
+   PDDL), then we only want one dependency set.  That provides
+   complete, but unsound, detection of dependency violations, because
+   sometimes although the recorded dependency is broken, there will be
+   some other dependency (unrecorded), which is not broken.
+4. [[file:theorem-prover.lisp::defun do-conjunct][(:OPERATOR DO-CONJUNCT)]] -- This is disjunctive in just the way we
+   described immediately above, since in classic SHOP2, we try to find
+   all bindings of the free variables for the conjunct.  Put
+   differently, any non-ground term in classic SHOP2 is implicitly a
+   disjunction over the bindings of its free variables.
+5. [[file:theorem-prover.lisp::defun do-conjunct-from-atoms][(:OPERATOR DO-CONJUNCT-FROM-ATOMS)]] -- As above; also implicitly a
+   disjunction.
+6. [[file:theorem-prover.lisp::defun do-conjunct-from-axioms][(:OPERATOR DO-CONJUNCT-FROM-AXIOMS)]] -- As above; also implicitly a
+   disjunction.
+
+** Tail calls in =DO-CONJUNCT= functions
+
+These conjuncts not only collect new bindings for their goal
+(=GOAL1=); they /also/ recursively invoke =SEEK-SATISFIERS= to solve
+the /remaining/ goals (if any).  Dependencies accumulated in these
+recursive calls must be handled /conjunctively/, and not added using
+=ANSWER-SET-UNION=.
+
+
+** =shop2/pddl/prover.lisp=
+
+1. [[file:../pddl/prover.lisp::defun pddl-satisfiers-for-forall][(:OPERATOR PDDL-SATISFIERS-FOR-FORALL)]] -- PDDL forall is implicitly
+   a /conjunction/, and it's dependencies must be treated accordingly.
+2. [[../pddl/prover.lisp::defun pddl-satisfiers-for-exists][PDDL-SATISFIERS-FOR-EXISTS]] -- This was wrong for a related reason
+   -- we simply weren't collecting /any/ dependency records.  Fixed
+   this, too.
+
+* Checking =INCORPORATE-UNIFIERS= <<INCORPORATE-UNIFIERS>>
