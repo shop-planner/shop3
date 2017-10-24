@@ -100,77 +100,77 @@ is properly set in GOALS.")
   ;; KEY together.
 
   (defun find-satisfiers (goals state &optional just-one (level 0)
-                                       &key (domain *domain*))
-           "Find and return a list of binding lists that represents the answer to
+                          &key (domain *domain*))
+    "Find and return a list of binding lists that represents the answer to
 goals \(a list representation of a deductive query\), where
 state provides the database.  level is a non-negative integer indicating the
 current depth of inference, used in debugging prints, and
-just-one is a boolean indicating whether you want just one answer (non-nil)
+JUST-ONE is a boolean indicating whether you want just one answer (non-nil)
 or all answers (nil)."
-           (setf *current-state* state)
-           (let ((*state* state))
-             (declare (special *state*))
-             (let* ((sought-goals
-                     (cond
-                      ((eq (first goals) :first) (rest goals))
-                      ((eq (first goals) :sort-by)
-                       (if (= (length goals) 3)
-                           (third goals)
-                         (fourth goals)))
-                      ((eq (first goals) :random)
-                       (second goals))
-                      (t goals)))
-                    (variables (extract-variables sought-goals)))
-               (multiple-value-bind (answers depends)
-                   ;; if the preconditions use :SORT-BY, we assume that the preconditions are
-                   ;; about heuristic choice, not correctness, and don't store causal links
-                   ;; for the :SORT-BY expression. [2017/08/01:rpg]
-                   (let ((*record-dependencies-p* (if (eq (first goals) :sort-by) nil
-                                                      *record-dependencies-p*)))
-                    (seek-satisfiers sought-goals state variables level
-                                     (or (eq (first goals) :first) just-one)
-                                     :domain domain))
-                 (let* ((satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
-                                           answers))
-                       (num-satisfiers (length satisfiers)))
+    (setf *current-state* state)
+    (let ((*state* state))
+      (declare (special *state*))
+      (let* ((sought-goals
+               (cond
+                 ((eq (first goals) :first) (rest goals))
+                 ((eq (first goals) :sort-by)
+                  (if (= (length goals) 3)
+                      (third goals)
+                      (fourth goals)))
+                 ((eq (first goals) :random)
+                  (second goals))
+                 (t goals)))
+             (variables (extract-variables sought-goals)))
+        (multiple-value-bind (answers depends)
+            ;; if the preconditions use :SORT-BY, we assume that the preconditions are
+            ;; about heuristic choice, not correctness, and don't store causal links
+            ;; for the :SORT-BY expression. [2017/08/01:rpg]
+            (let ((*record-dependencies-p* (if (eq (first goals) :sort-by) nil
+                                               *record-dependencies-p*)))
+              (seek-satisfiers sought-goals state variables level
+                               (or (eq (first goals) :first) just-one)
+                               :domain domain))
+          (let* ((satisfiers (mapcar #'(lambda (bindings) (make-binding-list variables bindings))
+                                     answers))
+                 (num-satisfiers (length satisfiers)))
                                         ;(format t "~%sat: ~s~%" satisfiers) ;***
 
-                   (cond ((eq (first goals) :sort-by)
-                          (values 
-                           (sort satisfiers
-                                 (if (= (length goals) 3) #'<
-                                     (eval (third goals)))
-                                 :key #'(lambda (sat)
-                                          (eval (apply-substitution (second goals) sat))))
-                           (when *record-dependencies-p* (make-list num-satisfiers :initial-element nil)))
-                          ;; see earlier comment about SORT-BY.
-                          #+ignore(if *record-dependencies-p*
-                              (let* ((double-list (pairlis satisfiers
-                                                          depends))
-                                     (sorted
-                                      (sort double-list
-                                            (if (= (length goals) 3) #'<
-                                              (eval (third goals)))
-                                            :key #'(lambda (double)
-                                                     (eval (apply-substitution (second goals) (car double)))))))
-                                (values (mapcar #'car sorted) (mapcar #'cdr sorted)))
-                              ;; else
-                              (sort satisfiers
-                                    (if (= (length goals) 3) #'<
-                                      (eval (third goals)))
-                                    :key #'(lambda (sat)
-                                             (eval (apply-substitution (second goals) sat))))))
-                         ((eq (first goals) :random)
-                          (let* ((n (length satisfiers))
-                                 (r (random n)))
-                            (if (> n 0)
-                                (values
-                                 (list
-                                  (nth r satisfiers))
-                                 (nth r depends))
-                              (values satisfiers depends))))
-                         (t
-                          (values satisfiers depends)))))))))
+            (cond ((eq (first goals) :sort-by)
+                   (values 
+                    (sort satisfiers
+                          (if (= (length goals) 3) #'<
+                              (eval (third goals)))
+                          :key #'(lambda (sat)
+                                   (eval (apply-substitution (second goals) sat))))
+                    (when *record-dependencies-p* (make-list num-satisfiers :initial-element nil)))
+                   ;; see earlier comment about SORT-BY.
+                   #+ignore(if *record-dependencies-p*
+                               (let* ((double-list (pairlis satisfiers
+                                                            depends))
+                                      (sorted
+                                        (sort double-list
+                                              (if (= (length goals) 3) #'<
+                                                  (eval (third goals)))
+                                              :key #'(lambda (double)
+                                                       (eval (apply-substitution (second goals) (car double)))))))
+                                 (values (mapcar #'car sorted) (mapcar #'cdr sorted)))
+                               ;; else
+                               (sort satisfiers
+                                     (if (= (length goals) 3) #'<
+                                         (eval (third goals)))
+                                     :key #'(lambda (sat)
+                                              (eval (apply-substitution (second goals) sat))))))
+                  ((eq (first goals) :random)
+                   (let* ((n (length satisfiers))
+                          (r (random n)))
+                     (if (> n 0)
+                         (values
+                          (list
+                           (nth r satisfiers))
+                          (nth r depends))
+                         (values satisfiers depends))))
+                  (t
+                   (values satisfiers depends)))))))))
 
 ;;; EXTRACT-VARIABLES returns a list of all of the variables in EXPR
 (defun extract-variables (expr)
@@ -415,6 +415,8 @@ in the goal, so we ignore the extra reference."
 ;;; UNIFIER) will crash.  It's not clear whether this was intended.
 (defun incorporate-unifiers (unifiers remaining just-one
                                       state bindings dependencies-in added-dependencies domain newlevel)
+  (check-type dependencies-in raw-depend-list)
+  (check-type added-dependencies list-raw-depend-lists)
   (let (answers depends)
     (if *record-dependencies-p*
         (iter (for unifier in unifiers)
@@ -423,7 +425,7 @@ in the goal, so we ignore the extra reference."
                   (seek-satisfiers (apply-substitution remaining unifier)
                                    state (apply-substitution bindings unifier)
                                    newlevel just-one :domain domain
-                                   :dependencies (append dependencies-in dependency-set))
+                                   :dependencies (rd-union dependencies-in dependency-set))
                 (multiple-value-setq (answers depends)
                   (answer-set-union new-answers answers new-dependencies depends))))
       (dolist (unifier unifiers)
@@ -574,21 +576,35 @@ in the goal, so we ignore the extra reference."
   (let ((answers nil)
         (depends nil))
     (dolist (arg arguments)
-      ;; First, look for ways to satisfy arg from the atoms in STATE
-      (let ((mgu1 (find-satisfiers arg state nil newlevel :domain domain)))
+      (multiple-value-bind (mgu1 disjunct-depends)
+          (find-satisfiers arg state nil newlevel :domain domain)
         (when mgu1
-          (dolist (tempmgu mgu1)
-            (multiple-value-bind
-                (new-answers new-depends)
-                (seek-satisfiers
-                                (apply-substitution other-goals tempmgu)
-                                state (apply-substitution bindings tempmgu)
-                                newlevel just1 :domain domain :dependencies dependencies-in)
-              (when new-answers
-                (if just1
-                  (return-from standard-satisfiers-for-or (values new-answers new-depends))
-                  (multiple-value-setq (answers depends)
-                    (answer-set-union new-answers answers new-depends depends)))))))))
+          ;; this big branch is ugly, but I'm not sure how to avoid it
+          (if *record-dependencies-p*
+           (iter (for tempmgu in mgu1)
+             (as disjunct-depend in disjunct-depends)
+             (multiple-value-bind (new-answers new-depends)
+                 (seek-satisfiers
+                  (apply-substitution other-goals tempmgu)
+                  state (apply-substitution bindings tempmgu)
+                  newlevel just1 :domain domain
+                  :dependencies (rd-union disjunct-depend dependencies-in))
+               (when new-answers
+                 (if just1
+                     (return-from standard-satisfiers-for-or (values new-answers new-depends))
+                     (multiple-value-setq (answers depends)
+                       (answer-set-union new-answers answers new-depends depends))))))
+           (iter (for tempmgu in mgu1)
+             (as new-answers =
+                 (seek-satisfiers
+                  (apply-substitution other-goals tempmgu)
+                  state (apply-substitution bindings tempmgu)
+                  newlevel just1 :domain domain))
+             (when new-answers
+               (if just1
+                   (return-from standard-satisfiers-for-or new-answers)
+                   (setf answers
+                         (answer-set-union new-answers answers nil nil)))))))))
     (values answers depends)))
 
 (defun standard-satisfiers-for-forall (domain arguments other-goals
@@ -602,7 +618,7 @@ in the goal, so we ignore the extra reference."
     (dolist (m2 mgu2)
       (unless (let ((*record-dependencies-p* nil))
                 (seek-satisfiers (apply-substitution conditions m2)
-                               state bindings 0 t :domain domain))
+                                 state bindings 0 t :domain domain))
         (return-from standard-satisfiers-for-forall nil))))
   (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
 
@@ -1177,7 +1193,7 @@ also remove the corresponding entry from DEPENDENCY-LIST.
    (subseq string1 0 (position #\Space string1))
    (subseq string2 0 (position #\Space string2))))
 
-
+(defun rd-union (new-depends dependencies) (union new-depends dependencies :key #'(lambda (x) (rd-prop x)) :test 'equalp))
 
 ;;; SBCL compiler notes re FIXME above in STANDARD-SATISFIERS-FOR-ASSIGN* [2017/10/03:rpg]
 ;;; Possibly to understand this need to first macroexpand the ITER form.
