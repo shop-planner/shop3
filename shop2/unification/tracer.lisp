@@ -83,8 +83,9 @@
        (format *shop-trace-stream* ,@formats)
        ,(let ((cpack (find-package :shop2.common)))
           (when cpack
-            (let ((s-a (intern (symbol-name '#:state-atoms) cpack)))
+            (let ((s-a (intern (symbol-name '#:state-atoms) cpack))
+                  (pred (intern (symbol-name '#:prop-sorter) cpack)))
               (when (fboundp s-a)
                 `(when (member :states *shop-trace*)
                    (format *shop-trace-stream* "~%     state ~s"
-                     (,s-a ,state))))))))))
+                     (sort (,s-a ,state) ',pred))))))))))
