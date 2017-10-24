@@ -90,9 +90,10 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
       (setq total-expansions *expansions*
             total-inferences *inferences*)
       
-      (print-stats-header "Totals:" out-stream)
-      (print-stats "" *plans-found* total-expansions total-inferences
-                   total-run-time total-real-time out-stream)
+      (when (> verbose 0)
+        (print-stats-header "Totals:" out-stream)
+        (print-stats "" *plans-found* total-expansions total-inferences
+                     total-run-time total-real-time out-stream))
       
       (unless repairable
         (delete-state-tag-decoder)))))
