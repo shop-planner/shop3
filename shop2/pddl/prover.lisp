@@ -85,20 +85,23 @@
          ;; predicates, which don't need their dependencies recorded.
          (mgu2 (let ((*record-dependencies-p* nil))
                  (find-satisfiers bounds state nil (1+ newlevel) :domain domain)))
-         answers depends)
+         depends)
+    ;; now we find one satisfied disjunct...
     (dolist (m2 mgu2)
-      (multiple-value-bind (new-answer new-depends)
+      ;; but we find ALL the answers for that disjunct...
+      (multiple-value-bind (new-answers new-depends)
           (find-satisfiers (apply-substitution conditions m2)
-                                  state t (1+ newlevel) :domain domain)
+                           state t (1+ newlevel) :domain domain)
         ;; all of the conditions must pass
-        (unless new-answer 
+        (unless new-answers
           (return-from pddl-satisfiers-for-forall nil))
-        (multiple-value-setq (answers depends)
-          (answer-set-union new-answer answers new-depends depends))))
-    ;; I wonder if the following is necessary, since there's no way
-    ;; for bindings here to "leak out," or if we should just be
-    ;; invoking seek-satisfiers.
-    (incorporate-unifiers answers other-goals just1 state bindings dependencies-in depends domain newlevel)))
+        ;; there should be no free variables bound here.
+        (assert (equal new-answers '(nil)))
+        (when *record-dependencies-p*
+          (setf depends 
+                (rd-union (first new-depends) depends)))))
+    (seek-satisfiers other-goals state bindings newlevel just1 :domain domain
+                                                               :dependencies (when *record-dependencies-p* (rd-union depends dependencies-in)))))
 
 (defun pddl-satisfiers-for-exists (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)
@@ -107,18 +110,20 @@
          ;; in our PDDL EXISTS, the bounds are all going to be static type
          ;; predicates, which don't need their dependencies recorded.
          (mgu2 (let ((*record-dependencies-p* nil))
-                 (find-satisfiers bounds state nil 0 :domain domain))))
-    (loop for m2 in mgu2
-          when (seek-satisfiers (apply-substitution conditions m2)
-                                state bindings 0 t :domain domain)
-            return t                      ; short-circuit, and move on
-                                        ; to remaining
-                                        ; goals... [2007/07/15:rpg]
-          finally ;; didn't find any value that worked
-                  (return-from pddl-satisfiers-for-exists nil)))
+                 (find-satisfiers bounds state nil 0 :domain domain)))
+         dependencies)
+    (iter (for m2 in mgu2)
+      (multiple-value-bind (answers new-depends)
+          (seek-satisfiers (apply-substitution conditions m2)
+                           state bindings 0 t :domain domain)
+        (when answers
+          (setf dependencies
+                (union new-depends dependencies-in :key #'(lambda (x) (rd-prop x)) :test 'equalp))
+          (return t))
+        (finally (return-from pddl-satisfiers-for-exists nil))))
 
-  ;; Satisfy other goals
-  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
+    ;; Satisfy other goals
+    (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies)))
 
 (defun vars-boundp (tree &optional acc)
   (cond ((variablep tree) (member tree acc))
