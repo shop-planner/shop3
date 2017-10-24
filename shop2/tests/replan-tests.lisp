@@ -36,13 +36,15 @@
                             (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
                          (shop-untrace))))
         ;;(list executed plan)
-        (validate-replan repaired :shop-domain domain :package :shop2-openstacks
-                                  :pddl-domain (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")
-                                  :pddl-problem (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.pddl"))
-        (values  repaired
-                 executed
-                 domain
-                 divergence)))))
+        (values
+         (validate-replan repaired :shop-domain domain :package :shop2-openstacks
+                                   :pddl-domain (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")
+                                   :pddl-problem (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.pddl"))
+
+         repaired
+         executed
+         domain
+         divergence)))))
 
 (defun make-initial-plan (&key (problem 'shop2-openstacks::os-sequencedstrips-p5_1i)
                             (problem-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp")))
@@ -147,3 +149,6 @@
       (pddl-utils:add-to-domain-constants new-domain new-constants)
       new-domain)))
 
+(def-suite* test-plan-repair)
+(test test-simple-openstacks-repair
+  (is-true (test-replan)))
