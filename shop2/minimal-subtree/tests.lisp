@@ -74,7 +74,7 @@
 
 (fiveam:test find-flaw-shop2-tests
   (let* ((res (multiple-value-list
-               (find-plans-stack 'find-flaw-test-problem :plan-tree t)))
+               (find-plans-stack 'find-flaw-test-problem :plan-tree t :verbose 0)))
          (plan-tree (first (second res)))
          (plan (remove-costs (first (first res))))
          (hash-table (first (third res))))
@@ -82,12 +82,33 @@
              (shop2-minimal-subtree:find-failed-task 'test-flaw-detection
                                                      plan plan-tree
                                                      prefix divergence
-                                                     :plan-tree-hash hash-table)))
-      (fiveam:is
-       (eq
-        (plan-tree:find-task-in-tree (second plan) ; OP2
-                                     hash-table plan-tree)
-        (find-failed-task (subseq plan 0 1) '((:delete (b))))))
+                                                     :plan-tree-hash hash-table))
+           (complex-parent (tree-node)
+             (loop :while (or (typep tree-node 'plan-tree:primitive-tree-node)
+                              (typep tree-node 'plan-tree:pseudo-node))
+                   :do (setf tree-node (plan-tree:tree-node-parent tree-node))
+                   :finally (return tree-node))))
+      (macrolet ((flaw-finding-check (expected prefix divergence)
+                   `(let ((expected-parent-task
+                            (complex-parent
+                             (plan-tree:find-task-in-tree ,expected
+                                                          hash-table plan-tree))))
+                      (multiple-value-bind (replan-parent failed-action)
+                           (find-failed-task ,prefix ',divergence)
+                        (fiveam:is
+                         (eq ,expected failed-action))
+                        (fiveam:is
+                         (eq expected-parent-task replan-parent))))))
+        (flaw-finding-check (second plan) (subseq plan 0 1) ((:delete (b))))
+        (flaw-finding-check (third plan) (subseq plan 0 2) ((:delete (b))))
+        (flaw-finding-check (first plan) nil ((:delete (c))))
+        (flaw-finding-check (fourth plan) (subseq plan 0 3) ((:add (c))))
+        (flaw-finding-check (fifth plan) (subseq plan 0 4) ((:add (c))))
+#|       (fiveam:is
+        (eq
+         (plan-tree:find-task-in-tree (second plan) ; OP2
+                                      hash-table plan-tree)
+         (find-failed-task (subseq plan 0 1) '((:delete (b)))))))
       (fiveam:is
        (eq
         (plan-tree:find-task-in-tree (third plan) ; OP3
@@ -114,7 +135,7 @@
          #'(lambda (node)
              (equalp (plan-tree:tree-node-task node) '(task3)))
          plan-tree)
-        (find-failed-task (subseq plan 0 1) '((:delete (a))))))
+        (find-failed-task (subseq plan 0 1) '((:delete (a))))))|#
       (fiveam:is
        (eq
         (plan-tree:find-tree-node-if
@@ -128,7 +149,7 @@
          #'(lambda (node)
              (equalp (plan-tree:tree-node-task node) '(task5)))
          plan-tree)
-        (find-failed-task (subseq plan 0 2) '((:add (d)))))))))
+        (find-failed-task (subseq plan 0 2) '((:add (d))))))))))
      
 
 ;;; check to make sure that variable bindings will be reflected in the
