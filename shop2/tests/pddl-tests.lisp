@@ -627,3 +627,32 @@
           :do (fiveam:is-true (and (or standard-plan
                                        (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
                                    (validate-plan standard-plan domain-file problem-file))))))
+
+
+(fiveam:test test-forall-dependencies
+  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+  (make-problem 'test-quantified-precondition-dependencies 'openstacks-sequencedstrips-ADL-included
+                ;; from problem 1 and modified
+                '((NEXT-COUNT N0 N1) (NEXT-COUNT N1 N2) (NEXT-COUNT N2 N3)
+                  (NEXT-COUNT N3 N4) (NEXT-COUNT N4 N5)
+                  (STACKS-AVAIL N5) ; (STACKS-AVAIL N0)
+                  (WAITING O1) (INCLUDES O1 P2)
+                  (WAITING O2) (INCLUDES O2 P1) (INCLUDES O2 P2)
+                  (WAITING O3) (INCLUDES O3 P3) (WAITING O4) (INCLUDES O4 P3)
+                  (INCLUDES O4 P4) (WAITING O5) (INCLUDES O5 P5) (= (TOTAL-COST) 0)
+                  (COUNT N0) (COUNT N1) (COUNT N2) (COUNT N3) (COUNT N4) (COUNT N5)
+                  (ORDER O1) (ORDER O2) (ORDER O3) (ORDER O4) (ORDER O5) (PRODUCT P1)
+                  (PRODUCT P2) (PRODUCT P3) (PRODUCT P4) (PRODUCT P5)
+                  (:GOAL
+                   (AND (SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
+                    (SHIPPED O5))))
+                '(:ordered (!start-order o1 ?avail ?avail1) (!start-order o2 ?avail1 ?avail2) (!make-product p2)))
+  (multiple-value-bind (plans plan-trees plan-tree-hashes)
+      (shop:find-plans-stack 'test-quantified-precondition-dependencies :plan-tree t)
+    (fiveam:is-true plans)
+    (when plans
+      (let ((plan (shop:remove-costs (first plans))))
+        (fiveam:is
+         (eql 7
+              (length (plan-tree:tree-node-dependencies
+                       (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes))))))))))
