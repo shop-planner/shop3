@@ -57,3 +57,20 @@ recursive calls must be handled /conjunctively/, and not added using
    this, too.
 
 * Checking =INCORPORATE-UNIFIERS= <<INCORPORATE-UNIFIERS>>
+** How does =INCORPORATE-UNIFIERS= function?
+For all the incoming binding sets, finds the solution for the remaining goals,
+and unions it together with the previous solutions, collecting only dependencies
+that correspond to different (in terms of bindings) solutions of the remaining
+goals.  That is fine in the context of a conjunction, where each path through
+the conjunction should either give different bindings, or is simply redundant.
+
+** =shop2/theorem-prover/theorem-prover.lisp=
+All of these functions use =INCORPORATE-UNIFIERS= only in tail call; acceptable.
+
+1. [[file:theorem-prover.lisp::(defun standard-satisfiers-for-imply][(:OPERATOR STANDARD-SATISFIERS-FOR-IMPLY)]] 
+2. [[file:theorem-prover.lisp::(defun standard-satisfiers-for-enforce][(:OPERATOR STANDARD-SATISFIERS-FOR-ENFORCE)]]
+3. [[file:theorem-prover.lisp::(defun standard-satisfiers-for-external][(:OPERATOR STANDARD-SATISFIERS-FOR-EXTERNAL)]]
+4. [[file:theorem-prover.lisp::(defun standard-satisfiers-for-and][(:OPERATOR STANDARD-SATISFIERS-FOR-AND)]]
+
+** =shop2/pddl/prover.lisp=
+1. [[file:../pddl/prover.lisp::(defun pddl-satisfiers-for-forall][(:OPERATOR PDDL-SATISFIERS-FOR-FORALL)]]
