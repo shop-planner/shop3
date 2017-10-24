@@ -226,8 +226,20 @@ warnings, errors, etc.")
 (define-condition cut-commit (condition)
   ())
 
+(deftype raw-depend-list ()
+  `(and (satisfies listp) (satisfies all-raw-depends-p)))
+
+(deftype list-raw-depend-lists ()
+  `(and (satisfies listp) (satisfies all-raw-depends-lists-p)))
+
 (defstruct (raw-depend (:conc-name rd-))
   "Raw dependency record, computed by the theorem-prover before
 using it to build dependency records in the enhanced plan trees."
   prop
   est)
+
+(defun all-raw-depends-p (list)
+  (every #'(lambda (x) (typep x 'raw-depend)) list))
+
+(defun all-raw-depends-lists-p (list)
+  (every #'(lambda (x) (typep x 'raw-depend-list)) list))
