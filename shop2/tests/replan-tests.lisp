@@ -98,6 +98,8 @@
         (if (zerop exit-code)
             ;; only delete the files if the validation was successful.
             (progn
+              (when (> shop::*verbose* 0)
+                (format t "Validate output is:~%~T~A~%" output))
               (uiop:delete-file-if-exists pddl-plan-filename)
               (uiop:delete-file-if-exists pddl-domain-filename)
               (when (typep pddl-problem 'pddl-utils:problem)

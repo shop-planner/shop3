@@ -30,6 +30,11 @@
       (iter (for next in (find-checking-path (find-plan-step plan-step plan-tree plan-tree-hash)))
         (unless (typep next 'pseudo-node) ;ordered and unordered nodes
           (when (clobbered-p next divergence)
+            ;; we can't replan from primitives, so if we find a failing
+            ;; primitive, return its parent
+            (iter (while (or (typep next 'primitive-tree-node)
+                              (typep next 'pseudo-node)))
+              (setf next (tree-node-parent next)))
             (return-from find-failed-task (values next plan-step)))))))
     nil)            ; no threatened step found
 
