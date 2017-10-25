@@ -57,13 +57,16 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
       next-node)))
          
 (defvar *label-depends*)
+(defvar *show-depends*)
 
 (defun graph-enhanced-plan-tree (plan-tree &key 
                                          (graph-object (make-instance 'enhanced-plan-tree-graph))
-                                         label-dependencies)
+                                             label-dependencies
+                                             (show-dependencies t))
   "Takes an enhanced SHOP2 plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
-  (let ((*label-depends* label-dependencies))
-    (cl-dot:generate-graph-from-roots graph-object (list plan-tree :init))))
+  (let ((*label-depends* label-dependencies)
+        (*show-depends* show-dependencies))
+    (cl-dot:generate-graph-from-roots graph-object `(,plan-tree ,@(when show-dependencies '(:init))))))
 
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:complex-tree-node))
@@ -75,20 +78,21 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
   nil)
 
 (defmethod cl-dot:graph-object-pointed-to-by ((g enhanced-plan-tree-graph)(obj plan-tree:tree-node))
-  (mapcar #'(lambda (x)
-              (let ((est (plan-tree:establisher x)))
-                (assert (typep est '(or (eql :init) plan-tree:primitive-tree-node)))
-                (make-instance 'cl-dot:attributed
-                               :object est
-                               :attributes `(,(if *label-depends* :label :edgetooltip)
-                                             ,(format nil "~a" (plan-tree:prop x))
-                                             ,@(when *label-depends* (list :labelfontcolor :blue))
-                                             :penwidth 2.0
-                                             :style :dashed
-                                             ;; don't increase the depth -- cross edge
-                                             :constraint nil
-                                             :color :blue))))
-          (plan-tree:tree-node-dependencies obj)))
+  (when *show-depends*
+   (mapcar #'(lambda (x)
+               (let ((est (plan-tree:establisher x)))
+                 (assert (typep est '(or (eql :init) plan-tree:primitive-tree-node)))
+                 (make-instance 'cl-dot:attributed
+                                :object est
+                                :attributes `(,(if *label-depends* :label :edgetooltip)
+                                              ,(format nil "~a" (plan-tree:prop x))
+                                              ,@(when *label-depends* (list :labelfontcolor :blue))
+                                              :penwidth 2.0
+                                              :style :dashed
+                                              ;; don't increase the depth -- cross edge
+                                              :constraint nil
+                                              :color :blue))))
+           (plan-tree:tree-node-dependencies obj))))
 
 (defmethod cl-dot:graph-object-node ((g enhanced-plan-tree-graph) (obj plan-tree:complex-tree-node))
   (declare (ignorable g))
