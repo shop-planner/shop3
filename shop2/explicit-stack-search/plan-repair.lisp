@@ -21,7 +21,9 @@ Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP 
     (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
       #+nil(break "Inspect NEW-SEARCH-STATE.")
       (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-          (replan-from-failure domain failed new-search-state :verbose verbose)
+          (let ((*plan-tree* t)
+                (*enhanced-plan-tree* t))
+           (replan-from-failure domain failed new-search-state :verbose verbose))
         (when new-plans
           (let ((new-plan (first new-plans))
                 (new-plan-tree (first new-plan-trees))
@@ -91,41 +93,51 @@ before the insertion of FAILED into the plan tree.")
       ;; must be "repairable" so that we don't strip NOPs.
       (seek-plans-stack search-state domain :repairable t))))
 
+;;; This is a very messy function: it's supposed to grab fresh copies
+;;; of actions (i.e., the actions in the PLAN, which is a replan) in
+;;; the prefix, whenever possible.  But there can be divergences
+;;; (i.e., actions that are not EQ), so we need to copy some actions
+;;; from the prefix.  Yuck.
 (defun extract-suffix (plan prefix)
   ;; hardened to handle costs... yuck
   (let ((plan-copy (copy-list plan)))
-   (iter (for x in prefix)
-     (as y = (first plan-copy))
-     (if (numberp x)
-         (cond ((eql x y)               ; match a number
-                (pop plan-copy)
-                (collecting y into new-prefix))
-               ((listp y) ; x is a cost but y is an action - do nothing
-                )
-               (t (error "Mismatching prefix ~s of ~s" x plan-copy)))
-         ;; x is an operator/action
-         (cond ((eq x y)
-                (pop plan-copy)
-                (collecting y into new-prefix))                     ; match
-               ((numberp y)
-                (pop plan-copy)
-                (let ((y (first plan-copy)))
-                  (if (eq x y)
-                      (progn (pop plan-copy)
-                             (collecting y into new-prefix))
-                      (error "Mismatch in plan: ~s ~s" x plan-copy))))
-               (t (error "Mismatching prefix ~s of ~s" x plan-copy))))
-     (finally
-      (cond ((and (numberp (first plan-copy))
-                   (some 'numberp (rest plan-copy)))
-             ;; move cost of last executed action
-             (let ((last-cost (pop plan-copy)))
-               (setf new-prefix (append new-prefix (list last-cost)))))
-            ((numberp (first plan-copy))
-             ;; there are no more numbers in the plan
-             (pop plan-copy)))
-      (return
-        (values new-prefix plan-copy))))))
+    (iter (for (x . rest) on prefix)
+      (as y = (first plan-copy))
+      (with unmatched-prefix = nil)
+      (if (numberp x)
+          (cond ((eql x y)              ; match a number
+                 (pop plan-copy)
+                 (collecting y into new-prefix))
+                ((listp y) ; x is a cost but y is an action - do nothing
+                 )
+                (t (error "Unmatched cost in plan: ~D doesn't match ~D" x y)))
+          ;; x is an operator/action
+          (cond ((eq x y)
+                 (pop plan-copy)
+                 (collecting y into new-prefix)) ; match
+                ((numberp y)
+                 (pop plan-copy)
+                 (let ((next (first plan-copy)))
+                   (if (eq x next)
+                       (progn (pop plan-copy)
+                              (collecting next into new-prefix))
+                       (progn (setf unmatched-prefix (cons x rest))
+                              (finish)))))
+                (t (setf unmatched-prefix (cons x rest))
+                   (finish))))
+      (finally
+       (setf new-prefix (append new-prefix unmatched-prefix))
+       (cond ((and (numberp (first plan-copy))
+                   (some 'numberp (rest plan-copy))
+                   (not unmatched-prefix))
+              ;; move cost of last executed action
+              (let ((last-cost (pop plan-copy)))
+                (setf new-prefix (append new-prefix (list last-cost)))))
+             ((numberp (first plan-copy))
+              ;; there are no more numbers in the plan
+              (pop plan-copy)))
+       (return
+         (values new-prefix plan-copy))))))
 
 (defun freeze-state (executed failed-action divergence search-state)
   "Arguments:

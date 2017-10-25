@@ -83,42 +83,9 @@
                             ,@effects)))
      constants)))
 
-;;; FIXME: later make KEEP default to NIL
-(defun check-repair (orig-domain orig-problem repaired-plan &key (package *package*) (keep t)
+;;; this function is now obsolete, because of easier-to-use validate-replan.
+(defun check-repair (orig-domain orig-problem repaired-plan &key (package *package*) keep
                                                               (shop2-domain *domain*))
-  (let ((pddl-utils:*pddl-package* package))
-    (let* ((domain (if (or (stringp orig-domain) (pathnamep orig-domain))
-                       (read-pddl-file orig-domain)
-                       ;; don't need to copy here, because INSERT-DOMAIN-ACTIONS takes care of that
-                       orig-domain))
-           (divergence-pos (position :divergence repaired-plan
-                                     :key #'(lambda (x) (and (listp x) (first x)))))
-           (divergence (nth divergence-pos repaired-plan)))
-      (multiple-value-bind (divergence-op-def divergence-args)
-          (make-divergence-operator divergence)
-        (let ((repaired-plan (let ((new (copy-list repaired-plan)))
-                               (setf (nth divergence-pos new)
-                                     (cons (uiop:Intern* '#:divergence package)
-                                           divergence-args))
-                               new))
-              (problem-file
-                (if (or (stringp orig-problem) (pathnamep orig-problem))
-                    orig-problem
-                    (uiop:with-temporary-file (:stream str :pathname path :keep t)
-                      (pprint-pddl orig-problem str)
-                      path)))
-              (domain-file
-                (uiop:with-temporary-file (:stream str :pathname path :keep t)
-                  (let ((expanded 
-                          (insert-domain-actions domain (list divergence-op-def))))
-                    (pprint-pddl expanded str))
-                  path)))
-          (unwind-protect
-               (values
-                (validate-plan repaired-plan domain-file problem-file :shop2-domain shop2-domain)
-                problem-file
-                domain-file)
-            (unless keep
-              (uiop:delete-file-if-exists domain-file)
-              (unless (or (stringp orig-problem) (pathnamep orig-problem))
-                (uiop:delete-file-if-exists problem-file)))))))))
+  (declare (ignore keep))
+  (validate-replan repaired-plan :shop-domain shop2-domain :package package :pddl-domain orig-domain
+                   :pddl-problem orig-problem))
