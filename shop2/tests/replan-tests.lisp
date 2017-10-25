@@ -28,7 +28,7 @@
   (let ((r (make-initial-plan :problem problem)))
     (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
         r
-      (shop-trace :tasks :states)
+      ;; (shop-trace :tasks :states)
       (let* ((executed (executed-prefix *sample-failed-action* plan))
              (domain (shop2::find-domain (shop2::domain-name problem)))
              (divergence *sample-divergence*)
