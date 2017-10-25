@@ -75,25 +75,30 @@
 
 (def-suite* test-plan-repair)
 (test test-simple-openstacks-repair
-  (is-true (test-replan))
-  (is-true (test-replan
-            :failed-action 'shop2-openstacks::(!START-ORDER O3 N4 N3)
-            :divergence 'shop2-openstacks::((:delete (started o3))
-                                            (:delete (stacks-avail n3))
-                                            (:add (stacks-avail n4))
-                                            (:add (waiting o3))
-                                            (:add (waiting o4))
-                                            (:delete (started o4)))))
-  (is-true (test-replan
-            :failed-action 'shop2-openstacks::(!START-ORDER O3 N4 N3)
-            :divergence 'shop2-openstacks::((:delete (started o3))
-                                            (:delete (stacks-avail n3))
-                                            (:add (stacks-avail n4))
-                                            (:add (waiting o3))
-                                            (:add (waiting o4))
-                                            (:delete (started o4))
-                                            (:delete (shipped o5))
-                                            (:add (started o5))))))
+  (flet ((put-in-package (sexp)
+           (let ((pddl-utils:*pddl-package* (find-package 'shop2-openstacks)))
+             (pddl-utils:pddlify-tree sexp))))
+    (is-true (test-replan))
+    (is-true (test-replan
+              :failed-action (put-in-package '(!START-ORDER O3 N4 N3))
+              :divergence (put-in-package
+                           '((:delete (started o3))
+                             (:delete (stacks-avail n3))
+                             (:add (stacks-avail n4))
+                             (:add (waiting o3))
+                             (:add (waiting o4))
+                             (:delete (started o4))))))
+    (is-true (test-replan
+              :failed-action (put-in-package '(!START-ORDER O3 N4 N3))
+              :divergence (put-in-package
+                           '((:delete (started o3))
+                             (:delete (stacks-avail n3))
+                             (:add (stacks-avail n4))
+                             (:add (waiting o3))
+                             (:add (waiting o4))
+                             (:delete (started o4))
+                             (:delete (shipped o5))
+                             (:add (started o5))))))))
 
 #+nil (test-replan) ;; 3 divergences
 ; cpu time (non-gc) 0.022090 sec user, 0.000336 sec system
