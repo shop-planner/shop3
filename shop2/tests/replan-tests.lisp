@@ -24,7 +24,7 @@
 (in-package :shop-replan-tests)
 
 
-(defun test-replan (&optional (problem 'shop2-openstacks::os-sequencedstrips-p5_1i))
+(defun test-replan (&key (problem 'shop2-openstacks::os-sequencedstrips-p5_1i) (on-failure :error))
   (let ((r (make-initial-plan :problem problem)))
     (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
         r
@@ -35,11 +35,14 @@
              (repaired (unwind-protect
                             (shop2:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
                          (shop-untrace))))
+        
+        
         ;;(list executed plan)
         (values
          (validate-replan repaired :shop-domain domain :package :shop2-openstacks
                                    :pddl-domain (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")
-                                   :pddl-problem (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.pddl"))
+                                   :pddl-problem (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01.pddl")
+                                   :on-failure on-failure)
 
          repaired
          executed
@@ -68,7 +71,8 @@
     (cons pddl-argument)
     ((or string pathname) (pddl-utils:read-pddl-file pddl-argument))))
 
-(defun validate-replan (repaired-plan &key (shop-domain *domain*) (package *package*) pddl-domain pddl-problem)
+(defun validate-replan (repaired-plan &key (shop-domain *domain*) (package *package*) pddl-domain pddl-problem
+                                        (on-failure nil))
   (let* ((pddl-domain (coerce-pddl-argument pddl-domain))
          (pddl-problem (coerce-pddl-argument pddl-problem))
          (pddl-plan-sexp (pddl-plan-for-replan repaired-plan :shop-domain shop-domain :package package))
@@ -97,20 +101,24 @@
                             :ignore-error-status t
                             :output '(:string :stripped t)
                             :error-output '(:string :stripped t))
-        (if (zerop exit-code)
-            ;; only delete the files if the validation was successful.
-            (progn
-              (when (> shop::*verbose* 0)
-                (format t "Validate output is:~%~T~A~%" output))
-              (uiop:delete-file-if-exists pddl-plan-filename)
-              (uiop:delete-file-if-exists pddl-domain-filename)
-              (when (typep pddl-problem 'pddl-utils:problem)
-                (uiop:delete-file-if-exists pddl-problem-filename))
-              t)
-            (progn 
-              (format t "Validation failed with error code ~d~%Command: ~a~%Error output:~%~T~A~%Output:~%~T~A~%"
-                      exit-code validation-command error-output output)
-              nil))))))
+        (cond ((zerop exit-code)
+               ;; only delete the files if the validation was successful.
+               (when (> shop::*verbose* 0)
+                 (format t "Validate output is:~%~T~A~%" output))
+               (uiop:delete-file-if-exists pddl-plan-filename)
+               (uiop:delete-file-if-exists pddl-domain-filename)
+               (when (typep pddl-problem 'pddl-utils:problem)
+                 (uiop:delete-file-if-exists pddl-problem-filename))
+               t)
+              ((eq on-failure :error)
+               (cerror "Continue, returning nil"
+                       "Validation failed with error code ~d~%Command: ~a~%Error output:~%~T~A~%Output:~%~T~A~%"
+                       exit-code validation-command error-output output)
+               nil)
+              (t
+               (format t "Validation failed with error code ~d~%Command: ~a~%Error output:~%~T~A~%Output:~%~T~A~%"
+                       exit-code validation-command error-output output)
+               nil))))))
 
 (defun pddl-plan-for-replan (repaired-plan &key (shop-domain *domain*) (package *package*))
   (let ((pos (position :divergence repaired-plan :key #'(lambda (x) (and (listp x) (first x))))))
