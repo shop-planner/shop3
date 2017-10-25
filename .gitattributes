@@ -643,6 +643,7 @@ shop2/pddl/decls.lisp svneol=native#text/x-lisp
 shop2/pddl/pddl-helpers.lisp svneol=native#text/x-lisp
 shop2/pddl/pddl.lisp -text
 shop2/pddl/prover.lisp svneol=native#text/x-lisp
+shop2/pddl/validate-repairs.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/decls.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/graph-plan-tree.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/package.lisp svneol=native#text/x-lisp

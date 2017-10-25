@@ -22,6 +22,7 @@
   (:export #:typed-object-list->facts
            #:translate-openstacks-problem
            #:check-repair
+           #:validate-replan
            #:make-divergence-operator))
 
 (in-package #:shop2-pddl-helpers)

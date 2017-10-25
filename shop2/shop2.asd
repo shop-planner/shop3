@@ -160,7 +160,9 @@ minimal affected subtree."
 (defsystem "shop2/pddl-helpers"
     :depends-on ("shop2" "pddl-utils")
   :pathname "pddl/"
-  :components ((:file "pddl-helpers")))
+  :serial t                             ; pddl-helpers contains defpackage
+  :components ((:file "pddl-helpers")
+               (:file "validate-repairs")))
 
 
 ;;;---------------------------------------------------------------------------
