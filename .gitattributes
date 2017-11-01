@@ -542,6 +542,7 @@ shop2/examples/logistic/plans.lisp -text
 shop2/examples/logistic/run.lisp -text
 shop2/examples/logistic/tests.lisp -text
 shop2/examples/openstacks-adl/README.txt svneol=native#text/plain
+shop2/examples/openstacks-adl/domain-nocosts-repairable.pddl -text
 shop2/examples/openstacks-adl/domain-nocosts.pddl -text
 shop2/examples/openstacks-adl/domain.lisp -text
 shop2/examples/openstacks-adl/domain.pddl -text
