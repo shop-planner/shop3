@@ -205,7 +205,9 @@ or all answers (nil)."
       ;; list goals.  We make this explicit, so that "and" can be
       ;; redefined in the methods.
       (when (listp (car goal1))
-        (setf goal1 (cons 'and goal1))))
+        (setf goal1 (if (= (length goal1) 1)
+                        (first goal1)
+                        (cons 'and goal1)))))
 
     (real-seek-satisfiers-for domain (car goal1) goal1 remaining
                               state bindings level just1 dependencies-in)))
