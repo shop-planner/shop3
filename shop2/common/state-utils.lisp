@@ -112,6 +112,7 @@ using MAKE-INITIAL-STATE.")
   (literal nil :type list))
 
 (defmethod tag-state ((st tagged-state) &optional (increment 2))
+  ;; bumped this by TWO instead of one to permit special increments for plan repair.
   (let ((new-tag (+ increment (tagged-state-tags-info-tag st))))
     (push (list new-tag) (tagged-state-tags-info st))
     new-tag))
