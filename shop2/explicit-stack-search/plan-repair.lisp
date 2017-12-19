@@ -13,31 +13,47 @@ PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is
   manage access anyway, but it will be slower.
 Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
 \(3\) plan tree lookup table (4) search-state object."
-  #+ignore(break "starting to repair plan")
-  (multiple-value-bind (failed ; tree node
+  (multiple-value-bind (failed           ; tree node
                         failed-action)
       (subtree:find-failed-task domain plan plan-tree executed
                                 divergence :plan-tree-hash plan-tree-hash)
-    (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
-      #+nil(break "Inspect NEW-SEARCH-STATE.")
-      (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-          (let ((*plan-tree* t)
-                (*enhanced-plan-tree* t))
-           (replan-from-failure domain failed new-search-state :verbose verbose))
-        (when new-plans
-          (let ((new-plan (first new-plans))
-                (new-plan-tree (first new-plan-trees))
-                (new-lookup-table (first lookup-tables)))
-            (multiple-value-bind (prefix suffix)
-                (extract-suffix new-plan executed)
-              (values
-               ;; new plan sequence
-               (append prefix
+    (if failed
+        (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
+          #+nil(break "Inspect NEW-SEARCH-STATE.")
+          (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
+              (let ((*plan-tree* t)
+                    (*enhanced-plan-tree* t))
+                (replan-from-failure domain failed new-search-state :verbose verbose))
+            (when new-plans
+              (let ((new-plan (first new-plans))
+                    (new-plan-tree (first new-plan-trees))
+                    (new-lookup-table (first lookup-tables))
+                    (plan-has-costs (numberp (second (first new-plans)))))
+                (multiple-value-bind (prefix suffix)
+                    (extract-suffix new-plan executed)
+                  (values
+                   ;; new plan sequence
+                   (append prefix
+                           (if plan-has-costs
+                               (list (cons :divergence divergence) 0.0)
+                               (list (cons :divergence divergence)))
+                           suffix)
+                   new-plan-tree
+                   new-lookup-table
+                   final-search-state))))))
+        ;; the old plan is good
+        (multiple-value-bind (prefix suffix)
+            (extract-suffix plan executed)
+          (format t "~&Divergence does not cause plan failure. Returning initial plan with divergence.~%")
+          (values
+           (append prefix
+                   (if (numberp (second plan)) ;plan with costs?
                        (list (cons :divergence divergence) 0.0)
-                       suffix)
-               new-plan-tree
-               new-lookup-table
-               final-search-state))))))))
+                       (list (cons :divergence divergence)))
+                   suffix)
+           plan-tree
+           plan-tree-hash
+           search-state)))))
 
 (defgeneric find-failed-stack-entry (failed obj)
   (:documentation "Find and return the stack entry that corresponds
@@ -52,7 +68,7 @@ to adding FAILED to the plan tree.")
                       (let ((child (child s)))
                         (member failed
                                 (plan-tree:complex-tree-node-children child)))))
-                    stack)))
+             stack)))
 
 (defgeneric find-failed-choice-entry (failed obj)
   (:documentation "Find and return the stack entry for the choice
