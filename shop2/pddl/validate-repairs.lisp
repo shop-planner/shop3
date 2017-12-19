@@ -17,7 +17,10 @@
 
 (defun validate-replan (repaired-plan &key (shop-domain *domain*) (package *package*) pddl-domain pddl-problem
                                         (on-failure nil))
-  (let* ((pddl-domain (coerce-pddl-argument pddl-domain))
+  (let* ((shop-domain (etypecase shop-domain
+                        (symbol (shop2:find-domain shop-domain))
+                        (shop2::domain shop-domain)))
+         (pddl-domain (coerce-pddl-argument pddl-domain))
          (pddl-problem (coerce-pddl-argument pddl-problem))
          (pddl-plan-sexp (pddl-plan-for-replan repaired-plan :shop-domain shop-domain :package package))
          (divergence (find-divergence repaired-plan))
