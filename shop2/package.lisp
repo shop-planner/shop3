@@ -247,6 +247,7 @@
 
              ;; check a plan from a PDDL domain/problem for correctness
              #:validate-plan
+             #:source-pddl-domain       ; domain accessor -- helper for validation...
 
              ;; exporting for val
              #:validator-export

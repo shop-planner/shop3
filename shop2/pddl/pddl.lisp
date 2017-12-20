@@ -96,14 +96,13 @@ absolute pathname, or a path-relative namestring)."
                (uiop:run-program (format nil "~a -x ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
                                  :ignore-error-status t
                                  :error-output :string :output :string)
-             (declare (ignore error-output)) ; VAL seems not to use stderr.
              (setf output (string-left-trim (list #\return) output))
              (if (zerop exit-code)
                  (progn (when (> verbose 1)
                           (format t "Validator output was: ~a~% Exit code was: ~d" output exit-code))
                         t)
                  (progn
-                   (format t "Validation failed with message: ~T~A" output)
+                   (format t "Validation failed with messages:~%~T~A~%~T~A" output error-output)
                    nil)))))
    (if (stringp plan)
        (validate-plan plan)
@@ -122,7 +121,10 @@ absolute pathname, or a path-relative namestring)."
 
 
 (defclass simple-pddl-domain ( domain )
-  ()
+  ((source-pddl-domain
+    :initarg :source-pddl-domain
+    :reader source-pddl-domain
+    ))
   (:documentation "A new class of SHOP2 domain that permits inclusion of
 PDDL operator definitions.")
   )
