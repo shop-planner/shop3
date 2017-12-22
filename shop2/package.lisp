@@ -73,7 +73,7 @@
              ;; Packages :use'ing shop2 should *not* also :use
              ;; shop-common.
 
-             #:domain #:domain-axioms #:domain-name
+             #:domain-axioms #:domain-name
              #:domain-operators #:domain-methods
              #:axioms #:operators #:methods #:name
 
@@ -204,8 +204,24 @@
              #:handle-domain-options
              #:parse-domain-items
 
+             ;; subclasses of domain for PDDL support
              #:pddl-domain    ; deprecated: this was implicitly an ADL domain
+             #:simple-pddl-domain
+             #:negative-preconditions-mixin
+             #:disjunctive-preconditions-mixin
+             #:universal-preconditions-mixin
+             #:existential-preconditions-mixin
+             #:quantified-preconditions-mixin ;; inherits from the above 2 mixins
+             #:conditional-effects-mixin
+             #:equality-mixin
+             #:pddl-typing-mixin
+             #:costs-mixin
+             #:adl-mixin
              #:adl-domain
+             
+
+             ;; MIXIN
+             #:pure-logic-domain
 
              ;; ENQ-related methods
              #:apply-operator
