@@ -70,7 +70,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          total-run-time total-real-time
          total-expansions total-inferences)
 
-    (when repairable (clrhash *analogical-replay-table*))
+    #+ignore (when repairable (clrhash *analogical-replay-table*))
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
