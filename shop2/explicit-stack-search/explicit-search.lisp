@@ -9,10 +9,6 @@
   NIL
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
-(defvar *repairable*
-  NIL
-  "Variable used internally to keep track of whether the plan must be repairable.")
-
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                  (no-dependencies nil)
                                  repairable
@@ -73,6 +69,8 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                     tree)))
          total-run-time total-real-time
          total-expansions total-inferences)
+
+    (when repairable (clrhash *analogical-replay-table*))
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
@@ -183,6 +181,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                               depth
                               task1))
                (stack-backtrack state))))
+        ;; the alternatives here are triples of (expansions unifiers dependencies)
         (choose-method-bindings
          (if (choose-method-bindings-state state)
              (progn
