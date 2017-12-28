@@ -221,7 +221,8 @@
              
 
              ;; MIXIN
-             #:pure-logic-domain
+             #:pure-logic-domain-mixin
+             #:static-predicates-mixin
 
              ;; ENQ-related methods
              #:apply-operator
