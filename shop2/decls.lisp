@@ -222,6 +222,11 @@ will consult the user even in these cases.")
   (:documentation "An object representing a SHOP2 domain.")
   )
 
+(defclass pure-logic-domain-mixin ()
+  ()
+  (:documentation "A MIXIN indicating that a domain should not use
+IF-THEN-ELSE semantics in methods."))
+
 (defmethod print-object ((obj domain) str)
   (print-unreadable-object (obj str :type t)
     (handler-case
