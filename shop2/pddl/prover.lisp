@@ -60,12 +60,12 @@
 
 (in-package :shop2.theorem-prover)
 
-(def-logical-keyword (forall (domain shop2::universal-precondition-mixin))
+(def-logical-keyword (forall (domain shop2::universal-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-forall domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
 
-(def-logical-keyword (exists (domain shop2::existential-precondition-mixin))
+(def-logical-keyword (exists (domain shop2::existential-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-exists domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
@@ -95,14 +95,15 @@
         ;; all of the conditions must pass
         (unless new-answers
           (return-from pddl-satisfiers-for-forall nil))
-        ;; there should be no free variables bound here.
-        (assert (equal new-answers '(nil)))
+        ;; there should be no free variables bound here -- actually, because of the syntax of PDDL methods, this may not be true....
+        ;; (assert (equal new-answers '(nil)))
         (when *record-dependencies-p*
           (setf depends 
                 (rd-union (first new-depends) depends)))))
     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain
                                                                :dependencies (when *record-dependencies-p* (rd-union depends dependencies-in)))))
 
+;; FIXME: we should be stripping out bindings for the existential variable(s)
 (defun pddl-satisfiers-for-exists (domain arguments other-goals
                                    state bindings newlevel just1 dependencies-in)
   (let* ((bounds (second arguments))
@@ -117,10 +118,18 @@
           (seek-satisfiers (apply-substitution conditions m2)
                            state bindings 0 t :domain domain)
         (when answers
-          (setf dependencies
-                (union new-depends dependencies-in :key #'(lambda (x) (rd-prop x)) :test 'equalp))
+          (when *record-dependencies-p*
+            (setf dependencies
+                  ;; (first new-depends) because there should be only one answer to the exists query --
+                  ;; we passed t to JUST1 in SEEK-SATISFIERS
+                  (union (first new-depends) dependencies-in :key #'(lambda (x) (rd-prop x)) :test 'equalp)))
           (return t))
         (finally (return-from pddl-satisfiers-for-exists nil))))
+
+    ;; FIXME: the binding list in here should have the binding for the
+    ;; variables (first arguments) ripped out, since they should not
+    ;; be visible outside the bounds.  This isn't really important,
+    ;; though.  Also, note that the binding for the existential variable(s) will always be vacuous (i.e., another variable).
 
     ;; Satisfy other goals
     (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies)))
