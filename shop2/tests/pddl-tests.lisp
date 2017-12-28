@@ -112,8 +112,8 @@
                                 :%pddl-types '(location vehicle fuel-level object)))
          (action (process-action domain action-def))
          (untyped-action (process-action domain untyped-action-def)))
-    (locally (declare (ignorable action untyped-action))
-      (&body))))
+    (declare (ignorable action untyped-action))
+    (&body)))
 
 (fiveam:test pddl-actions
   (fiveam:with-fixture simple-pddl-actions ()
