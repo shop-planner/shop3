@@ -88,6 +88,7 @@
 
              ;; expression syntax
              #:call #:imply #:forall #:exists #:assign #:enforce
+             #:shop-forall
              #:assign*                  ; possibly non-canonical
                                         ; addition
              #:setof                    ; all-solutions predicate
@@ -99,6 +100,12 @@
              #:thpr-domain #:domain-axioms
              #:axioms
              #:default-state-type
+
+             ;; static predicates
+             #:static-predicates-mixin
+             #:has-static-preds-p
+             #:static-preds
+
 
              ;; exceptions
              #:instantiation-error

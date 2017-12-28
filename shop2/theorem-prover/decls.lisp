@@ -66,6 +66,10 @@
   "Do we record dependencies when we find literals in the theorem
 prover.  If so, see *LITERALS* and *ESTABLISHERS*.")
 
+(defvar *optimize-first-retrieval* NIL
+  "In some cases we can optimize solutions to :FIRST to find only
+the first match.")
+
 (defvar *literals*)
 (defvar *establishers*)
 
@@ -82,6 +86,10 @@ axioms for PREDICATE in THPR-DOMAIN.")
   (:method (no-axioms-domain predicate)
     (declare (ignorable no-axioms-domain predicate))
     nil))
+
+(defgeneric static-preds (domain)
+  (:documentation "Return a list of predicate names for static predicates."))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Defgenerics for functions used to tailor the theorem-prover
@@ -140,6 +148,16 @@ function!  Instead, please use the def-logical-keyword macro.")
    )
   (:documentation "An object representing a SHOP2 theorem prover domain.")
   )
+
+(defclass static-predicates-mixin ()
+  ((static-preds
+    :initarg :static-preds
+    :reader static-preds
+    :initform nil
+    ))
+  (:documentation "Add this to domain classes that should have 
+static predicates defined."))
+
 
 (define-condition theorem-prover-condition ()
      ()
@@ -243,3 +261,16 @@ using it to build dependency records in the enhanced plan trees."
 
 (defun all-raw-depends-lists-p (list)
   (every #'(lambda (x) (typep x 'raw-depend-list)) list))
+
+;;;---------------------------------------------------------------------------
+;;; Starting work on static predicates
+;;;---------------------------------------------------------------------------
+;; FIXME: Replace with CLASS slot?
+(defgeneric has-static-preds-p (domain)
+  (:method (domain)
+    (declare (ignorable domain))
+    nil)
+  (:method ((domain static-predicates-mixin))
+    t))
+
+

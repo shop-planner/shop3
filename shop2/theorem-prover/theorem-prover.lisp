@@ -85,14 +85,15 @@ will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
            (real-seek-satisfiers ,d ,goals ,state
                                  ,bindings ,level ,just1 ,dependencies)))))
 
-(defgeneric query (goals state &key just-one domain)
+(defgeneric query (goals state &key just-one domain record-dependencies)
   (:documentation 
    "More convenient top-level alternative to FIND-SATISFIERS.
 Manages optional arguments and ensures that the variable property
 is properly set in GOALS.")
-  (:method (goals state &key just-one (domain *domain*))
+  (:method (goals state &key just-one (domain *domain*) (record-dependencies *record-dependencies-p*))
     (set-variable-property domain goals)
-    (find-satisfiers goals state just-one 0 :domain domain)))
+    (let ((*record-dependencies-p* record-dependencies))
+      (find-satisfiers goals state just-one 0 :domain domain))))
 
 ;;; FIND-SATISFIERS returns a list of all satisfiers of GOALS in AXIOMS
 (locally (declare #+sbcl (sb-ext:muffle-conditions sb-int:simple-style-warning))
@@ -112,6 +113,7 @@ or all answers (nil)."
       (declare (special *state*))
       (let* ((sought-goals
                (cond
+                 ;; optimize the singleton case for FIRST...
                  ((eq (first goals) :first) (rest goals))
                  ((eq (first goals) :sort-by)
                   (if (= (length goals) 3)
@@ -358,6 +360,12 @@ in the goal, so we ignore the extra reference."
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (standard-satisfiers-for-forall domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
+
+(def-logical-keyword (shop-forall domain)
+  (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
+    (standard-satisfiers-for-forall domain (cdr goal) other-goals
+                                    state bindings (1+ level) just1 dependencies-in)))
+
 
 (def-logical-keyword (exists domain)
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
@@ -609,20 +617,57 @@ in the goal, so we ignore the extra reference."
                          (answer-set-union new-answers answers nil nil)))))))))
     (values answers depends)))
 
+
+(defun static-bounds-p (domain logical-expr)
+  (when (has-static-preds-p domain)
+    ;; walk the logical expression: :-(
+    (flet ((static-pred (p)
+             (member p (static-preds domain))))
+      (labels ((walk (x)
+                 (case (first x)
+                   ((forall exists)
+                    (and (walk (third x)) (walk (fourth x))))
+                   ((and or imply)
+                    (iter (for sub in (rest x))
+                      (always (walk sub))))
+                   (otherwise (static-pred (first x))))))
+        (walk logical-expr)))))
+
 (defun standard-satisfiers-for-forall (domain arguments other-goals
-                                       state bindings newlevel just1 dependencies-in)
-  (when *record-dependencies-p*
+                                       state bindings newlevel just1 dependencies-in
+                                       &aux new-dependencies)
+  ;; DEPENDENCIES in is a single set of dependencies.
+  (when (and
+         *record-dependencies-p*
+         (not (static-bounds-p domain (second arguments))))
     (cerror "Simply return no new dependencies."
             "We do not have correct logic for computing dependencies for FORALL."))
   (let* ((bounds (second arguments))
          (conditions (third arguments))
-         (mgu2 (find-satisfiers bounds state nil 0 :domain domain)))
+         (mgu2
+           ;; when we check the bounds, they must be static, so we don't record dependencies.
+           (let ((*record-dependencies-p* nil))
+             (find-satisfiers bounds state nil (1+ newlevel) :domain domain))))
+    ;; here I have started to 
     (dolist (m2 mgu2)
-      (unless (let ((*record-dependencies-p* nil))
-                (seek-satisfiers (apply-substitution conditions m2)
-                                 state bindings 0 t :domain domain))
-        (return-from standard-satisfiers-for-forall nil))))
-  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies dependencies-in))
+      (multiple-value-bind (success new-depends)
+          ;; FIXME: I have my doubts that this is actually correct.
+          ;; If there are unbound variables inside a FORALL
+          ;; expression's condition, like when you are trying to find
+          ;; an X such that all of its components are on the table, it
+          ;; is unlikely, but possible that there will be a free
+          ;; variable (that X) in the condition that will be bound as
+          ;; a side effect of evaluating the FORALL expression. So I
+          ;; think the following use of JUST1 is erroneous
+          ;; [2017/12/27:rpg]
+          (seek-satisfiers (apply-substitution conditions m2)
+                           state bindings (1+ newlevel) t :domain domain)
+        (unless success
+          (return-from standard-satisfiers-for-forall nil))
+        (when *record-dependencies-p*
+          (setf new-dependencies (rd-union (first new-depends) new-dependencies))))))
+  (seek-satisfiers other-goals state bindings newlevel just1 :domain domain
+                                                             :dependencies (rd-union new-dependencies dependencies-in)))
 
 (defun standard-satisfiers-for-exists (domain arguments other-goals
                                        state bindings newlevel just1 dependencies-in)

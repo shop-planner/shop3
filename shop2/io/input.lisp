@@ -207,14 +207,14 @@ looks through the preconditions finding the forall
            (error "Ill-formed IMPLY expression: ~s" pre))
          (cons 'imply (process-pre domain  (cdr pre))))
         (:first (cons :first (process-pre domain  (cdr pre))))
-        (forall
+        ((shop-forall forall)
          (unless (and (listp (second pre)) (every #'(lambda (x) (variablep x)) (second pre)))
            (error "The first argument to a FORALL expression should be a LIST of variables in ~S"
                   pre))
          (unless (= (length pre) 4)
            (error "Ill-formed FORALL expression: ~s" pre))
          (multiple-value-bind (alist vlist) (get-alist (second pre))
-           `(forall ,vlist
+           `(,pre1 ,vlist
                  ,(process-pre domain  (apply-substitution (third pre) alist))
                  ,(process-pre domain  (apply-substitution (fourth pre) alist)))))
         (otherwise pre)))))
@@ -232,6 +232,10 @@ looks through the preconditions finding the forall
              ;; this is a bunch of stuff for processing the task net which
              ;; I am sorry to say I don't fully understand.  I don't know
              ;; why this is quoted, honestly. [2010/05/19:rpg]
+             ;; I have just figured this out -- it's because you can
+             ;; write code to *call a function* at task expansion time
+             ;; to generate (part of) the task network on the fly. See
+             ;; the use of EVAL in APPLY-METHOD [2017/12/22:rpg]
              (let ((first-of-clause (first clause)))
                (cond
                  ;; check to see if there is a quote or
@@ -284,13 +288,31 @@ looks through the preconditions finding the forall
                                                    :construct-name method-name
                                                    :construct method
                                                    :branch-number (unless singleton (1+ branch-counter)))
-                collect (process-pre domain pre)
+                collect (process-pre domain
+                                     ;; we have to disambiguate
+                                     ;; preconditions if we are in a
+                                     ;; universal-preconditions-mixin,
+                                     ;; but are using SHOP2
+                                     ;; quantification instead of PDDL
+                                     ;; quantification (yuck) -- wish I could think of something better.
+                                     (if (typep domain 'universal-preconditions-mixin)
+                                         (subst 'shop-forall 'forall pre)
+                                         pre))
                 collect (massage-task-net task-net)))
         ;; just before returning, check for singletons in the method's head
         (check-for-singletons task-variables :context-tables body-var-tables
                                              :construct-type (first method)
                                              :construct-name method-name
                                              :construct method)))))
+
+(defmethod process-method :before ((domain pure-logic-domain-mixin) method)
+  (declare (ignorable domain))
+  (let* ((method-body (cddr method))
+         (body-without-first-label (if (symbolp (first method-body))
+                                       (rest method-body)
+                                       method-body)))
+    (when (> (length body-without-first-label) 2)
+      (error "Error in method definition:~%~T~A~%It is not acceptable to use methods with IF-THEN-ELSE semantics in a pure-logic-domain-mixin." method))))
 
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
@@ -532,9 +554,11 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
           (t if-not-found))))
 
 ;;; make QUERY easier to use
-(defmethod shop2.theorem-prover:query :around (goals state &key just-one (domain *domain*))
+(defmethod shop2.theorem-prover:query :around (goals state &key just-one (domain *domain*)
+                                                             (record-dependencies *record-dependencies-p*))
   (if (symbolp domain)
-      (call-next-method goals state :just-one just-one :domain (find-domain domain))
+      (call-next-method goals state :just-one just-one :domain (find-domain domain)
+                        :record-dependencies record-dependencies)
       (call-next-method)))
   
 
@@ -687,8 +711,10 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
     regularized))
 
           
-  
-
+(defmethod parse-domain-item ((d static-predicates-mixin) (keyword (eql :static)) static-decl)
+  (declare (ignorable keyword))
+  (mapc #'(lambda (x) (pushnew x (slot-value d 'static-preds)))
+        (rest static-decl)))
 
 
 
