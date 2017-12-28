@@ -137,16 +137,15 @@ PDDL operator definitions.")
   ()
   )
 
-
-(defclass universal-precondition-mixin ()
+(defclass universal-preconditions-mixin ()
      ()
   )
 
-(defclass existential-precondition-mixin ()
+(defclass existential-preconditions-mixin ()
      ()
   )
 
-(defclass quantified-precondition-mixin (universal-precondition-mixin existential-precondition-mixin)
+(defclass quantified-preconditions-mixin (universal-preconditions-mixin existential-preconditions-mixin)
   ()
   )
 
@@ -158,6 +157,7 @@ PDDL operator definitions.")
      ()
   )
 
+;; FIXME: any domain with PDDL types has the types as static predicates...
 (defclass pddl-typing-mixin ()
   ((pddl-types
     :accessor pddl-types
@@ -168,11 +168,12 @@ PDDL operator definitions.")
   ()
   )
 
-(defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-precondition-mixin conditional-effects-mixin)
+(defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-preconditions-mixin conditional-effects-mixin)
   ()
   )
 
-(defclass pddl-domain ( conditional-effects-mixin quantified-precondition-mixin equality-mixin
+(defclass pddl-domain ( conditional-effects-mixin quantified-preconditions-mixin equality-mixin
+                       static-predicates-mixin
                        pddl-typing-mixin
                        simple-pddl-domain )
   ()
@@ -244,6 +245,11 @@ later be compiled into find-satisfiers or something."
       (when (gethash op-name operators)
         (error "There is more than one operator named ~s" op-name))
       (setf (gethash op-name operators) (process-action domain item)))))
+
+;;; default method so we don't try to parse constructs inappropriately
+(defmethod parse-domain-item ((domain domain) (item-key (eql :pddl-method)) item)
+  (declare (ignorable domain item-key item))
+  (error "This domain is not a subclass of SIMPLE-PDDL-DOMAIN, so PDDL-methods cannot be used."))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':predicates)) item)
   "For now, since SHOP doesn't typecheck, we simply ignore these declarations."
@@ -341,7 +347,7 @@ translated."
 to just leave it alone."
   expression)
 
-(defmethod translate-precondition ((domain universal-precondition-mixin) expression)
+(defmethod translate-precondition ((domain universal-preconditions-mixin) expression)
   "This method translates any forall expressions in a PDDL precondition into the
 slightly-different SHOP2 FORALL syntax.
 It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
@@ -349,7 +355,7 @@ translated."
   (let ((new-expr (translate-pddl-quantifier expression 'forall domain)))
     (call-next-method domain new-expr)))
 
-(defmethod translate-precondition ((domain existential-precondition-mixin) expression)
+(defmethod translate-precondition ((domain existential-preconditions-mixin) expression)
   "This method translates any exists expressions in a PDDL precondition into the
 slightly-different SHOP2 EXISTS syntax.
 It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
@@ -683,4 +689,66 @@ two values."
             (rest list))))
     (mapcar #'de-shopify
             (remove-if #'internal-operator-p plan :key 'first))))
+
+(defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql :pddl-method)) method)
+  (push
+   (parse-pddl-method domain method)
+   (gethash (first (second method))
+            (slot-value domain 'methods))))
+
+(defun parse-pddl-method (domain method)
+  (let* ((method (uniquify-anonymous-variables method))
+         (method-head (second method))
+         (method-task-name (car method-head))
+         #+ignore(task-variables (harvest-variables method-head))
+         (pre (if (symbolp (third method)) (fourth method) (third method)))
+         (method-name (if (symbolp (third method))
+                          (third method)
+                          (gensym (format nil "~A"
+                                          method-task-name))))
+         (task-net (if (symbolp (third method)) (fifth method) (fourth method)))
+         ;; FIXME: later we should check singleton variables...
+         #+ignore var-table)
+    (labels ((process-task-list (tasks)
+               (cond
+                 ((null tasks) (list :ordered (list :task '!!inop)))
+                 ((member (first tasks) '(:ordered
+                                          ;; unordered not yet supported
+                                          #+ignore
+                                          :unordered))
+                  (cons (first tasks)
+                        (mapcar #'process-task-list (rest tasks))))
+                 ((eq (first tasks) :task)
+                  tasks)
+                 ((atom (first tasks))
+                  (cons :task tasks))
+                 (t
+                  (error "Illegal task network: ~S" tasks)))))
+      ;; FIXME: later we should check singleton variables...
+      #+ignore (setf var-table (harvest-variables method-head))
+      ;; now we need to harvest only FREE variables in the preconditions and task net...
+      ;; answer will be (:pddl-method <head> ...)
+      ;; here's the transformed METHOD
+      `(,(first method)
+        ,method-head
+        ,method-name
+        ,(process-pddl-method-pre domain pre)
+        (quote ,(process-task-list task-net)))
+      ;; FIXME: just before returning, check for singletons in the method's head
+      #+ignore
+      (check-for-singletons task-variables :context-tables body-var-tables
+                                           :construct-type (first method)
+                                           :construct-name method-task-name
+                                           :construct method))))
+
+(defun process-pddl-method-pre (domain pre)
+  "This is the main function that does the pre-processing, it
+looks through the preconditions finding the forall
+ conditions and replacing the variables in that condition."
+  (if (eq (first pre) :sort-by)
+      (ecase (length pre)
+        ;; FIXME: PROCESS-PRE is the wrong function here...
+        (3 `(:sort-by ,(second pre) ,(translate-precondition domain (third pre))))
+        (4 `(:sort-by ,(second pre) ,(third pre) ,(translate-precondition domain (fourth pre)))))
+      (translate-precondition domain pre)))
 
