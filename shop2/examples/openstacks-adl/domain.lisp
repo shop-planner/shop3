@@ -178,6 +178,7 @@
 
 (defdomain (openstacks-sequencedstrips-ADL-included :type pddl-domain)
     ((:include  openstacks-sequencedstrips-ADL-nocosts "domain-nocosts.pddl")
+     (:static includes)
      (:method (assert-goals nil)
        ()
        ())
