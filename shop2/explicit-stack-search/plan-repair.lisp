@@ -65,9 +65,11 @@ to adding FAILED to the plan tree.")
             (stack list))
     (find-if #'(lambda (s)
                  (and (typep s 'add-child-to-tree)
+                      ;; I think we pull the child out here because it's either an :ORDERED or an :UNORDERED node.
                       (let ((child (child s)))
-                        (member failed
-                                (plan-tree:complex-tree-node-children child)))))
+                        (and (typep child 'plan-tree:complex-tree-node)
+                             (member failed
+                                     (plan-tree:complex-tree-node-children child))))))
              stack)))
 
 (defgeneric find-failed-choice-entry (failed obj)
@@ -211,7 +213,7 @@ Modified search state object."
 
       ;; now put the new world state in place...
       (setf (world-state search-state) new-state-obj)
-      (format t "At start of plan repair, state is: ~%")
+      (format t "~&At start of plan repair, state is: ~%")
       (print-current-state :state new-state-obj
                            :sorted t)
       #+nil (break "Check it out..." )
