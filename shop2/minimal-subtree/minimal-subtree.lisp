@@ -1,5 +1,6 @@
 (in-package :shop2-minimal-subtree)
 
+;;; if necessary, look up the domain from its name.
 (defmethod find-failed-task :around ((domain symbol) plan plan-tree
                                      executed divergence &key plan-tree-hash)
   (find-failed-task (find-domain domain) plan plan-tree
@@ -59,6 +60,7 @@ checking (i.e., top-down)."
       (let ((sibling-list (complex-tree-node-children parent)))
         (zerop (position tree-node sibling-list))))))
 
+;;; FIND-PLAN-SUFFIX will return a suffix that has costs in it.
 (defun find-plan-suffix (orig-plan executed-prefix)
   (iter (for step in executed-prefix)
     (with plan = orig-plan)
