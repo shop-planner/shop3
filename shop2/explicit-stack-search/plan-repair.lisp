@@ -17,6 +17,7 @@ Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP 
                         failed-action)
       (subtree:find-failed-task domain plan plan-tree executed
                                 divergence :plan-tree-hash plan-tree-hash)
+    (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
     (if failed
         (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
           #+nil(break "Inspect NEW-SEARCH-STATE.")
@@ -63,18 +64,19 @@ to adding FAILED to the plan tree.")
     (find-failed-stack-entry failed (backtrack-stack obj)))
   (:method ((failed plan-tree::complex-tree-node)
             (stack list))
-    (find-if #'(lambda (s)
-                 (and (typep s 'add-child-to-tree)
-                      ;; I think we pull the child out here because it's either an :ORDERED or an :UNORDERED node.
-                      (let ((child (child s)))
-                        (and (typep child 'plan-tree:complex-tree-node)
-                             (member failed
-                                     (plan-tree:complex-tree-node-children child))))))
-             stack)))
+    (or
+     (find-if #'(lambda (s)
+                  (and (typep s 'add-child-to-tree)
+                       (let ((child (child s)))
+                         (and (typep child 'plan-tree:complex-tree-node)
+                              (member failed
+                                      (plan-tree:complex-tree-node-children child))))))
+              stack)
+     (error "Unable to find stack entry for adding ~a to plan tree." failed))))
 
 (defgeneric find-failed-choice-entry (failed obj)
   (:documentation "Find and return the stack entry for the choice
-before the insertion of FAILED into the plan tree.")
+BEFORE the insertion of FAILED into the plan tree.")
   (:method ((failed plan-tree::complex-tree-node)
             (obj search-state))
     (find-failed-choice-entry failed (backtrack-stack obj)))
@@ -83,9 +85,11 @@ before the insertion of FAILED into the plan tree.")
     (let* ((tree-addition (find-failed-stack-entry failed stack))
            ;; stack elements below tree-addition
            (stack-suffix (member tree-addition stack)))
-      (find-if #'(lambda (x) (and (typep x 'choice-entry)
-                                  (eq (mode x) 'pop-toplevel-task)))
-               stack-suffix))))
+      (or
+       (find-if #'(lambda (x) (and (typep x 'choice-entry)
+                                   (eq (mode x) 'pop-toplevel-task)))
+                stack-suffix)
+       (error "Unable to find a stack entry for failed node ~A" failed)))))
 
 
 (defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
