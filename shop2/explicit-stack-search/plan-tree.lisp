@@ -128,12 +128,13 @@ Particularly useful for structures, but could be generally applicable."
   (labels ((tree-search (plan-tree)
              (etypecase plan-tree
                (primitive-tree-node
-                (when (equalp task (tree-node-task plan-tree))
+                (when (eq task (tree-node-task plan-tree))
                   plan-tree))
                (complex-tree-node
                 (iter (for tree-node in (complex-tree-node-children plan-tree))
                   (as result = (tree-search tree-node))
-                  (when result (return-from find-plan-step result)))))))
+                  (when result (return result))
+                  (finally (return nil)))))))
     (or
      (if plan-tree-hash
          (find-task-in-tree task plan-tree-hash)
@@ -161,7 +162,7 @@ Particularly useful for structures, but could be generally applicable."
              (or
               (tree-search plan-tree)
               (error "No plan tree node for task ~S" task))))
-          (t (error "Must pass etiher hash-table or plan-tree to FIND-TASK-IN-TREE.")))))
+          (t (error "Must pass either hash-table or plan-tree to FIND-TASK-IN-TREE.")))))
 
 (defun find-tree-node-if (function plan-tree)
   (labels ((tree-search (plan-tree)
