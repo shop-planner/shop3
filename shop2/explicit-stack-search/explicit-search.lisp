@@ -70,7 +70,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          total-run-time total-real-time
          total-expansions total-inferences)
 
-    #+ignore (when repairable (clrhash *analogical-replay-table*))
+    (when repairable (clrhash *analogical-replay-table*))
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
@@ -113,7 +113,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
     (iter
       (when *enhanced-plan-tree* (unless (plan-tree state)
                                    (error "Search state object should have a PLAN-TREE.")))
-      (verbose-format "~&State is: ~a. Mode is: ~a.~%" state (mode state))
+      ;; bumped the verbose for this to be printed, because it's really not useful
+      (when (>= *verbose* 2)
+        (format t "~&State is: ~a. Mode is: ~a.~%" state (mode state)))
       (ecase (mode state)
         (test-for-done
          (if (empty-p state)
@@ -438,9 +440,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 (defun stack-backtrack (state)
   "Chronological backtracking only, for now.
 Return the CHOICE-ENTRY where you stopped."
-  (verbose-format "~&Backtracking:~%")
+  (verbose-format 2 "~&Backtracking:~%")
   (iter (for entry = (pop (backtrack-stack state)))
-    (verbose-format "~T~a~%" entry)
+    (verbose-format 2 "~T~a~%" entry)
     (when (typep entry 'bottom-of-stack)
       (throw 'search-failed nil))
     (do-backtrack entry state)
