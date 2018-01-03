@@ -691,6 +691,7 @@ shop2/pddl/validate-repairs.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/decls.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/graph-plan-tree.lisp svneol=native#text/x-lisp
 shop2/plan-grapher/package.lisp svneol=native#text/x-lisp
+shop2/plan-printer.lisp svneol=native#text/x-lisp
 shop2/planning-engine/protections.lisp -text
 shop2/planning-engine/search.lisp -text
 shop2/planning-engine/task-reductions.lisp -text

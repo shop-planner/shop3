@@ -821,10 +821,13 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                            internal-time-units-per-second))))))))
 
 (defun extract-trees (plans-found unifiers-found)
+  (assert (= (length plans-found) (length unifiers-found)))
   (loop for plan in plans-found
         for unifier in unifiers-found
         for tree = (extract-tree plan)
         collect (apply-substitution tree unifier)))
+
+
 
 (format t "~2%SHOP2 version ~a~%~a~%" *shop-version* +shopyright+)
 

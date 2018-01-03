@@ -117,7 +117,9 @@ minimal affected subtree."
                                (declare (ignorable op c))
                                (set (intern (symbol-name '#:*shop-version*)
                                             (find-package :shop2))
-                                    (asdf:component-version (asdf:find-system "shop2")))))))
+                                    (asdf:component-version (asdf:find-system "shop2")))))
+       (:file "plan-printer" :depends-on ("package"
+                                           "decls"))))
 
 (defsystem :shop2/common
     :serial t
