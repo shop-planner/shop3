@@ -653,6 +653,7 @@ shop2/examples/rovers/strips/pfile7.lisp -text
 shop2/examples/rovers/strips/pfile8.lisp -text
 shop2/examples/rovers/strips/pfile9.lisp -text
 shop2/examples/satellite/strips/adlSat-cleaned.lisp -text
+shop2/examples/satellite/strips/adlSat.pddl -text
 shop2/examples/satellite/strips/pfile1 -text
 shop2/examples/satellite/strips/pfile1.lisp -text
 shop2/examples/satellite/strips/pfile10 -text
