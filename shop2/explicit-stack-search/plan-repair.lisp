@@ -13,8 +13,9 @@ PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is
   manage access anyway, but it will be slower.
 Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
 \(3\) plan tree lookup table (4) search-state object."
-  (multiple-value-bind (failed           ; tree node
-                        failed-action)
+  (multiple-value-bind (failed           ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.  It's the *parent* of the node that has actually failed.
+                        failed-action)  ; The failed action is EITHER the first action whose dependencies are broken OR the leftmost leaf child of the leftmost broken complex task
+      ;; we find the failed tree node by looking UP from the actions in the plan.
       (subtree:find-failed-task domain plan plan-tree executed
                                 divergence :plan-tree-hash plan-tree-hash)
     (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
@@ -68,9 +69,10 @@ to adding FAILED to the plan tree.")
      (find-if #'(lambda (s)
                   (and (typep s 'add-child-to-tree)
                        (let ((child (child s)))
-                         (and (typep child 'plan-tree:complex-tree-node)
-                              (member failed
-                                      (plan-tree:complex-tree-node-children child))))))
+                         (or (eq child failed)
+                             (and (typep child 'plan-tree:pseudo-node)
+                                  (member failed
+                                          (plan-tree:complex-tree-node-children child)))))))
               stack)
      (error "Unable to find stack entry for adding ~a to plan tree." failed))))
 
@@ -166,7 +168,8 @@ BEFORE the insertion of FAILED into the plan tree.")
 PLAN: sequence of primitive actions.
 EXECUTED: Prefix of the plan that has been executed.
 FAILED-ACTION: First action whose preconditions are clobbered,
-          if any.
+          or the leftmost leaf child of the first non-primitive
+          task whose preconditions are broken.
 DIVERGENCE: Divergence between the expected state after
       EXECUTED, specified as (([:ADD|:DELETE] <fact>)+)
 SEARCH-STATE: Search state object.
@@ -174,9 +177,6 @@ SEARCH-STATE: Search state object.
   Returns:
 Modified search state object."
   (let* ((world-state (world-state search-state))
-         ;; this is the tag or the "failed" action -- really the one
-         ;; that gave an unexpected result.  So we want to undo all the
-         ;; actions AFTER this one
          (world-state-tag (* (if (some #'numberp executed)
                                (/ (length executed) 2)
                                (length executed))
