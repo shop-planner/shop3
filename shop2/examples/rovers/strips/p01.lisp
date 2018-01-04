@@ -1,3 +1,4 @@
+(in-package :shop2-rovers)
 (defproblem pfile1 ROVER 
   (
     ;;;
@@ -74,7 +75,7 @@
   ;;; goals
   ;;;
 (:ordered 
-  (:task !!set-connectivity-info  "pfile1.lisp" )  
+  (:task !!set-connectivity-info  "p01.lisp" )  
   (:task achieve-goals
     ((COMMUNICATED_SOIL_DATA WAYPOINT2) (COMMUNICATED_ROCK_DATA WAYPOINT3) (COMMUNICATED_IMAGE_DATA OBJECTIVE1 HIGH_RES))
  ) )
