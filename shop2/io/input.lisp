@@ -437,12 +437,15 @@ context, becasue this relies on VARIABLEP working."
       (iter sexp)
       retval)))
 
+;;;  This function returns a transformed task list, applying various
+;;; defaults.  Empty lists are turned into singleton lists with a no-op
+;;; in them.  Task expressions get the :TASK prefix added.
 (defun process-task-list (tasks)
   (cond
    ((null tasks) (list :ordered (list :task '!!inop)))
    ((member (first tasks) '(:ordered :unordered))
     (cons (first tasks)
-    (mapcar #'process-task-list (rest tasks))))
+          (mapcar #'process-task-list (rest tasks))))
    ((eq (first tasks) :task)
     tasks)
    ((atom (first tasks))
