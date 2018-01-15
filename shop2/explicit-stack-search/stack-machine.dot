@@ -1,5 +1,5 @@
 digraph shop2_stack_machine {
-        "START" [color="blue",shape="rectangle",peripheries=2];
+        "START" [fontname="bold",color="blue",shape="rectangle",peripheries=2];
         "TEST-FOR-DONE";
         "LOOK-FOR-IMMEDIATE-TASK";
         "POP-IMMEDIATE-TASK";
@@ -12,8 +12,13 @@ digraph shop2_stack_machine {
         "CHOOSE-METHOD";
         "CHOOSE-METHOD-BINDINGS";
         "EXTRACT-PLAN";
-        "Backtrack" [color=red,shape="rectangle",peripheries=2];
-        "Done" [shape="rectangle",peripheries=2];
+        {
+                node[fontname="bold"];
+                
+                "BACKTRACK" [color=red,shape="rectangle",peripheries=2];
+                "DONE" [color="blue",shape="rectangle",peripheries=2];
+        }
+        
         
         subgraph {
                 edge [labelfontcolor="blue"];
@@ -23,10 +28,10 @@ digraph shop2_stack_machine {
                 "LOOK-FOR-IMMEDIATE-TASK" -> "POP-IMMEDIATE-TASK";
                 "LOOK-FOR-IMMEDIATE-TASK" -> "PREPARE-TO-CHOOSE-TOPLEVEL-TASK";
                 "POP-IMMEDIATE-TASK" -> "EXPAND-TASK";
-                "POP-IMMEDIATE-TASK" -> "Backtrack";
+                "POP-IMMEDIATE-TASK" -> "BACKTRACK";
                 "PREPARE-TO-CHOOSE-TOPLEVEL-TASK" -> "POP-TOPLEVEL-TASK";
                 "POP-TOPLEVEL-TASK" -> "EXPAND-TASK";
-                "POP-TOPLEVEL-TASK" -> "Backtrack";
+                "POP-TOPLEVEL-TASK" -> "BACKTRACK";
                 {
                         edge [labelfontcolor="blue"];
                         
@@ -39,15 +44,15 @@ digraph shop2_stack_machine {
                 }
         
                 "UNFOLD-LOOPING-TASK" -> "TEST-FOR-DONE";
-                "UNFOLD-LOOPING-TASK" -> "Backtrack";
+                "UNFOLD-LOOPING-TASK" -> "BACKTRACK";
                 "EXPAND-PRIMITIVE-TASK" -> "TEST-FOR-DONE";
-                "EXPAND-PRIMITIVE-TASK" -> "Backtrack";
+                "EXPAND-PRIMITIVE-TASK" -> "BACKTRACK";
                 "PREPARE-TO-CHOOSE-METHOD" -> "CHOOSE-METHOD";
                 "CHOOSE-METHOD" -> "CHOOSE-METHOD-BINDINGS";
-                "CHOOSE-METHOD" -> "Backtrack";
+                "CHOOSE-METHOD" -> "BACKTRACK";
                 "CHOOSE-METHOD-BINDINGS" -> "TEST-FOR-DONE";
-                "CHOOSE-METHOD-BINDINGS" -> "Backtrack";
-                "EXTRACT-PLAN" -> "Done";
+                "CHOOSE-METHOD-BINDINGS" -> "BACKTRACK";
+                "EXTRACT-PLAN" -> "DONE";
                 
         }
 
