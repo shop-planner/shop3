@@ -1,4 +1,6 @@
 digraph shop2_stack_machine {
+        node [shape="rectangle"];
+        
         "START" [fontname="bold",color="blue",shape="rectangle",peripheries=2];
         "TEST-FOR-DONE";
         "LOOK-FOR-IMMEDIATE-TASK";
