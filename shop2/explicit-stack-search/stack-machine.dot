@@ -1,0 +1,61 @@
+digraph shop2_stack_machine {
+        "START" [color="blue",shape="rectangle",peripheries=2];
+        "TEST-FOR-DONE";
+        "LOOK-FOR-IMMEDIATE-TASK";
+        "POP-IMMEDIATE-TASK";
+        "PREPARE-TO-CHOOSE-TOPLEVEL-TASK";
+        "POP-TOPLEVEL-TASK";
+        "EXPAND-TASK";
+        "UNFOLD-LOOPING-TASK";
+        "EXPAND-PRIMITIVE-TASK";
+        "PREPARE-TO-CHOOSE-METHOD";
+        "CHOOSE-METHOD";
+        "CHOOSE-METHOD-BINDINGS";
+        "EXTRACT-PLAN";
+        "Backtrack" [color=red,shape="rectangle",peripheries=2];
+        "Done" [shape="rectangle",peripheries=2];
+        
+        subgraph {
+                edge [labelfontcolor="blue"];
+
+                "START" -> "TEST-FOR-DONE";
+                
+                "LOOK-FOR-IMMEDIATE-TASK" -> "POP-IMMEDIATE-TASK";
+                "LOOK-FOR-IMMEDIATE-TASK" -> "PREPARE-TO-CHOOSE-TOPLEVEL-TASK";
+                "POP-IMMEDIATE-TASK" -> "EXPAND-TASK";
+                "POP-IMMEDIATE-TASK" -> "Backtrack";
+                "PREPARE-TO-CHOOSE-TOPLEVEL-TASK" -> "POP-TOPLEVEL-TASK";
+                "POP-TOPLEVEL-TASK" -> "EXPAND-TASK";
+                "POP-TOPLEVEL-TASK" -> "Backtrack";
+                {
+                        edge [labelfontcolor="blue"];
+                        
+                        "EXPAND-TASK" -> "EXPAND-PRIMITIVE-TASK" [taillabel="   primitive task"];
+                        "EXPAND-TASK" -> "UNFOLD-LOOPING-TASK" [taillabel="loop task",xlp="-20"];
+                        "EXPAND-TASK" -> "PREPARE-TO-CHOOSE-METHOD" [taillabel="complex task"];
+
+                        "TEST-FOR-DONE" -> "EXTRACT-PLAN" [taillabel="all tasks planned"];
+                        "TEST-FOR-DONE" -> "LOOK-FOR-IMMEDIATE-TASK" [taillabel="unplanned tasks remain"];
+                }
+        
+                "UNFOLD-LOOPING-TASK" -> "TEST-FOR-DONE";
+                "UNFOLD-LOOPING-TASK" -> "Backtrack";
+                "EXPAND-PRIMITIVE-TASK" -> "TEST-FOR-DONE";
+                "EXPAND-PRIMITIVE-TASK" -> "Backtrack";
+                "PREPARE-TO-CHOOSE-METHOD" -> "CHOOSE-METHOD";
+                "CHOOSE-METHOD" -> "CHOOSE-METHOD-BINDINGS";
+                "CHOOSE-METHOD" -> "Backtrack";
+                "CHOOSE-METHOD-BINDINGS" -> "TEST-FOR-DONE";
+                "CHOOSE-METHOD-BINDINGS" -> "Backtrack";
+                "EXTRACT-PLAN" -> "Done";
+                
+        }
+
+        
+        
+        
+        
+
+        
+        
+}
