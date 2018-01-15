@@ -154,15 +154,15 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         (depth state)
                         (apply-substitution task (unifier state)))
            (cond
-	     ((primitivep (get-task-name task))
-	      (setf (mode state) 'expand-primitive-task))
-	     ((eql (get-task-name task) :loop)
-	      (setf (mode state) 'unfold-looping-task))
-	     (t ; original nonprimitive:
-	      (setf (mode state) 'prepare-to-choose-method)))))
+             ((primitivep (get-task-name task))
+              (setf (mode state) 'expand-primitive-task))
+             ((eql (get-task-name task) :loop)
+              (setf (mode state) 'unfold-looping-task))
+             (t ; original nonprimitive:
+              (setf (mode state) 'prepare-to-choose-method)))))
 
-	(unfold-looping-task
-	 (if (unfold-loop-task domain state)
+        (unfold-looping-task
+         (if (unfold-loop-task domain state)
              (progn
                (setf (mode state) 'test-for-done)
                (incf (depth state)))
@@ -313,6 +313,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                       (mapcar #'list expansions unifiers dependencies)
                       (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
             t))))))
+
+(defgeneric expand-primitive-state (state domain))
 
 (defmethod EXPAND-PRIMITIVE-STATE (state (domain domain))
   ;; first we need to record what we will need to pop...
