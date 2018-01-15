@@ -281,7 +281,7 @@ of SHOP2."
                            unifier))
           ;; pddl action
           (pddl-action
-           (apply-action state task-body m protections depth
+           (apply-action domain state task-body m protections depth
                          unifier)))
       (when (eql planned-action 'fail)
         (return-from seek-plans-primitive-1 nil))

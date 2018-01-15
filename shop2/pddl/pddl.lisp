@@ -472,15 +472,17 @@ lists of declared names and type names."
 ;;;---------------------------------------------------------------------------
 ;;; FIXME: this function should probably take the DOMAIN as argument,
 ;;; too, and pass it to find-satisfiers, at least.
-(defun apply-action (state task-body action protections depth
+(defun apply-action (domain state task-body action protections depth
                      in-unifier)
   "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then 
-APPLY-ACTION returns five values:
+APPLY-ACTION returns six values:
 1.  the operator as applied, with all bindings;
 2.  a state tag, for backtracking purposes;
 3.  a new set of protections;
 4.  the cost of the new operator;
-5.  unifier.
+5.  unifier;
+6.  dependencies for primary and secondary effects, if *record-dependencies-p* 
+    is true.
 This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."
   (let* ((standardized-action (standardize action))
@@ -520,7 +522,13 @@ Otherwise it returns FAIL."
             ;; syntax of PDDL preconditions are different from
             ;; SHOP2. [2006/07/31:rpg]
             (multiple-value-bind (pu pd)
-                (find-satisfiers pre state t 0)
+                ;; finding only one satisfier for the preconditions is
+                ;; justified by the syntactic constraint that PDDL
+                ;; preconditions cannot introduce any new variables
+                ;; scoped over the effects, and the (not enforced)
+                ;; constraint that all actions should be ground when
+                ;; introduced into the plan by SHOP2.
+                (find-satisfiers pre state t (1+ depth) :domain domain)
               (unless pu
                 (trace-print :operators (first head) state
                              "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
@@ -531,13 +539,11 @@ Otherwise it returns FAIL."
                              )
                 (return-from apply-action 'fail))
               (setf unifier (compose-substitutions action-unifier (first pu))
-                    ;; FIXME: why FIRST pd?
+                    ;; first of pd and pu because we find only one satisfier of the preconditions.
                     depends (first pd))))
           (setq unifier action-unifier)))
     ;; end of scope for action-unifier...
 
-    ;; all this stuff below here must be revised since we have an EFFECT,
-    ;; instead of add and delete lists... [2006/07/30:rpg]
     (let* ((effect-subbed (apply-substitution effect unifier))
            (head-subbed (apply-substitution head unifier))
            (cost-value
@@ -568,8 +574,9 @@ Otherwise it returns FAIL."
                    (apply-substitution task-body unifier)
                    effect-subbed)
 
-      (multiple-value-bind (final-adds final-dels)
-          (extract-adds-and-deletes effect-subbed state)
+      (multiple-value-bind (final-adds final-dels
+                            secondary-depends) ; dependencies for secondary preconditions
+          (extract-adds-and-deletes domain effect-subbed state (1+ depth))
 
 
         (let ((protections1 protections)               
@@ -612,26 +619,29 @@ Otherwise it returns FAIL."
 
           (values head-subbed statetag 
                   protections cost-number
-                  unifier depends))))))
+                  unifier (shop.theorem-prover::rd-union depends secondary-depends)))))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Helpers for apply-action
 ;;;---------------------------------------------------------------------------
-(defun extract-adds-and-deletes (effect-expr state)
+(defun extract-adds-and-deletes (domain effect-expr state depth)
   "This function is intended for use on a PDDL :effect expression.
 It partitions the effects into adds and deletes and returns these
 two values."
   (case (first effect-expr)
     (and
-     (loop for effect in (rest effect-expr)
-           with add and delete
-           do (multiple-value-setq (add delete)
-                  (extract-adds-and-deletes effect state))
-           when add
-             append add into recursive-adds
-           when delete
-             append delete into recursive-deletes
-           finally (return (values recursive-adds recursive-deletes))))
+     (iter (for effect in (rest effect-expr))
+       (with recursive-deps)
+       (multiple-value-bind (add delete deps)
+           (extract-adds-and-deletes domain effect state (1+ depth))
+         (appending add into recursive-adds)
+         (appending delete into recursive-deletes)
+         (when (and deps *record-dependencies-p*)
+           (setf recursive-deps
+                 (shop2.theorem-prover::rd-union recursive-deps deps))))
+       (finally
+        (return
+          (values recursive-adds recursive-deletes recursive-deps)))))
     (not
      ;; add something to deletes
      (values nil (list (second effect-expr))))
@@ -640,32 +650,34 @@ two values."
          effect-expr
        (declare (ignore forall vars))
        (let ((unifiers
-              (shopthpr:find-satisfiers restr state)))
+               (shopthpr:find-satisfiers restr state)))
          (when unifiers
-           (loop for unifier in unifiers
-                 with new-adds and new-deletes
-                 do (multiple-value-setq (new-adds new-deletes)
-                        (extract-adds-and-deletes
-                         (apply-substitution consequent unifier)
-                         state))
-                 append new-adds into adds
-                 append new-deletes into dels
-                 finally (return (values adds dels)))))))
+           (iter (for unifier in unifiers)
+             (with depends)
+             (multiple-value-bind (new-adds new-deletes new-depends)
+                 (extract-adds-and-deletes
+                  domain
+                  (apply-substitution consequent unifier)
+                  state (1+ depth))
+               (appending new-adds into adds)
+               (appending new-deletes into dels)
+               (when (and new-depends *record-dependencies-p*)
+                 (setf depends (shop2.theorem-prover::rd-union depends new-depends))))
+             (finally (return (values adds dels depends))))))))
     (when
-        (when *record-dependencies-p*
-          (cerror "Simply continue without recording secondary preconditions"
-                  "Do not correctly compute dependencies for PDDL conditional effects."))
         (destructuring-bind (when antecedent consequent)
             effect-expr
           (declare (ignore when))
-          (let ((result (shopthpr:find-satisfiers antecedent state t)))
+          (multiple-value-bind (result sp-dependencies) ;secondary precondition dependencies
+              (shopthpr:find-satisfiers antecedent state t (1+ depth) :domain domain)
             (when result
               (let ((unifier (first result)))
-                (multiple-value-bind (new-adds new-deletes)
-                    (extract-adds-and-deletes
-                     (apply-substitution consequent unifier)
-                     state)
-                  (values new-adds new-deletes)))))))
+                (multiple-value-bind (new-adds new-deletes new-depends)
+                    (extract-adds-and-deletes domain
+                                              (apply-substitution consequent unifier)
+                                              state (1+ depth))
+                  (values new-adds new-deletes (when *record-dependencies-p*
+                                                 (shop2.theorem-prover::rd-union (first sp-dependencies) new-depends)))))))))
     (otherwise                          ;includes :protection
      ;; normal expression
      (values (list effect-expr) nil))))

@@ -195,7 +195,7 @@
        (let ((*state-encoding* :list))
          (declare (special *state-encoding*))
          (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
-           (apply-action state
+           (apply-action *domain* state
                          '(!walk new-jersey new-york)
                          (operator *domain* '!walk)
                          nil 0 nil)
@@ -206,17 +206,18 @@
         (let ((*state-encoding* :list))
           (declare (special *state-encoding*))
           (let ((state (make-initial-state *domain* *state-encoding*  nil)))
-            (apply-action state
+            (apply-action *domain* state
                           '(!walk new-jersey new-york)
                           (operator *domain* '!walk)
                           nil 0 nil))))))
 
 
 (fiveam:def-fixture quantified-preconditions-fixtures ()
-  (let* ((domain (defdomain (quantified-preconditions-domain
+  (let* ((*define-silently* t)
+         (domain (defdomain (quantified-preconditions-domain
                              :type pddl-domain
                              :redefine-ok t)
-                   ((:types airplane airplanetype direction segment))))
+                     ((:types airplane airplanetype direction segment))))
          (act (process-action domain
                               '(:action move
                                         :parameters
@@ -383,18 +384,19 @@
 
 (fiveam:def-fixture simple-when-fixtures ()
   (progn
-    (defdomain (simple-when-domain
-                      :type pddl-domain
-                      :redefine-ok t)
-              ((:types loc)
-               (:action walk
-                :parameters (?from ?to - loc)
-                :precondition (at robot ?from)
-                :effect (and (not (at robot ?from))
-                             (at robot ?to)
-                             (when (carrying cargo)
-                               (and (not (at cargo ?from))
-                                    (at cargo ?to)))))))
+    (let ((*define-silently* t))
+      (defdomain (simple-when-domain
+                  :type pddl-domain
+                  :redefine-ok t)
+          ((:types loc)
+           (:action walk
+            :parameters (?from ?to - loc)
+            :precondition (at robot ?from)
+            :effect (and (not (at robot ?from))
+                         (at robot ?to)
+                         (when (carrying cargo)
+                           (and (not (at cargo ?from))
+                                (at cargo ?to))))))))
     (&body)))
 
 (fiveam:test simple-when
@@ -408,7 +410,7 @@
        (let ((*state-encoding* :list))
          (declare (special *state-encoding*))
          (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
-           (apply-action state
+           (apply-action *domain* state
                          '(!walk new-jersey new-york)
                          (operator *domain* '!walk)
                          nil 0 nil)
@@ -425,27 +427,84 @@
                                                                       (loc new-jersey) (loc new-york)
                                                                      (carrying cargo)))))
 
-          (apply-action state
+          (apply-action *domain* state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
                         nil 0 nil)
           (sort (state-atoms state)
                 'prop-sorter)))))))
 
+(fiveam:test simple-when-with-deps
+  (fiveam:with-fixture simple-when-fixtures ()
+    (let ((*state-encoding* :list) (*record-dependencies-p* t))
+      (declare (special *state-encoding*))
+      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
+        (multiple-value-bind (op tag protections cost unifier deps)
+            (apply-action *domain* state
+                          '(!walk new-jersey new-york)
+                          (operator *domain* '!walk)
+                          nil 0 nil)
+          (declare (ignore op tag protections cost unifier))
+          (fiveam:is 
+           (equal
+            (sort 
+             (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
+             'prop-sorter)
+            (sort
+             (state-atoms state)
+             'prop-sorter)))
+          (fiveam:is
+           (equal
+            (sort
+             (copy-list '((at robot new-jersey) (loc new-jersey) (loc new-york)))
+             'prop-sorter)
+            (sort
+             (mapcar #'shop2.theorem-prover::rd-prop deps)
+             'prop-sorter))))))
+
+    (let ((*state-encoding* :list)(*record-dependencies-p* t))
+      (declare (special *state-encoding*))
+      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                   (loc new-jersey) (loc new-york)
+                                                                   (carrying cargo))))
+            )
+        (multiple-value-bind (op tag protections cost unifier deps)
+            (apply-action *domain* state
+                          '(!walk new-jersey new-york)
+                          (operator *domain* '!walk)
+                          nil 0 nil)
+          (declare (ignore op tag protections cost unifier))
+          (fiveam:is 
+           (equal
+            '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
+              (CARRYING CARGO) (loc new-jersey) (loc new-york))
+            (sort (state-atoms state)
+                  'prop-sorter)))
+          (fiveam:is
+           (equal
+            (sort
+             (copy-list '((at robot new-jersey) (carrying cargo) (loc new-jersey) (loc new-york)))
+             'prop-sorter)
+            (sort
+             (mapcar #'shop2.theorem-prover::rd-prop deps)
+             'prop-sorter))))))))
+
 (fiveam:def-fixture quantified-when-fixtures ()
-  (progn (defdomain (quantified-when-domain
-                      :type pddl-domain
-                      :redefine-ok t)
-             ((:types loc luggage)
-              (:action walk
-               :parameters (?from ?to - loc)
-               :precondition (at robot ?from)
-               :effect (and (not (at robot ?from))
-                            (at robot ?to)
-                            (forall (?x - luggage)
-                                    (when (carrying robot ?x)
-                                      (and (not (at ?x ?from))
-                                           (at ?x ?to))))))))
+  (progn
+    (let ((*define-silently* t))
+     (defdomain (quantified-when-domain
+                 :type pddl-domain
+                 :redefine-ok t)
+         ((:types loc luggage)
+          (:action walk
+           :parameters (?from ?to - loc)
+           :precondition (at robot ?from)
+           :effect (and (not (at robot ?from))
+                        (at robot ?to)
+                        (forall (?x - luggage)
+                                (when (carrying robot ?x)
+                                  (and (not (at ?x ?from))
+                                       (at ?x ?to)))))))))
          (&body)))
 
 (fiveam:test quantified-when
@@ -485,15 +544,16 @@
                                                                      (at bag1 new-jersey)
                                                                      (at bag2 new-jersey)
                                                                      (at bag3 new-jersey)
-                                                                      (loc new-jersey) (loc new-york)
+                                                                     (loc new-jersey) (loc new-york)
                                                                      (luggage bag1)
                                                                      (luggage bag2)
                                                                      (luggage bag3)))))
-          (apply-action state
+          (apply-action *domain* state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
                         nil 0 nil)
           (sort (state-atoms state) 'prop-sorter)))))
+
 
     (fiveam:is 
      (equal
@@ -512,11 +572,11 @@
                                                                      (at bag2 new-jersey)
                                                                      (at bag3 new-jersey)
                                                                      (carrying robot bag1)
-                                                                      (loc new-jersey) (loc new-york)
+                                                                     (loc new-jersey) (loc new-york)
                                                                      (luggage bag1)
                                                                      (luggage bag2)
                                                                      (luggage bag3)))))
-          (apply-action state
+          (apply-action *domain* state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
                         nil 0 nil)
@@ -530,7 +590,7 @@
         (at robot new-york)
         (carrying robot bag1)
         (carrying robot bag3)
-         (loc new-jersey) (loc new-york)
+        (loc new-jersey) (loc new-york)
         (luggage bag1)
         (luggage bag2)
         (luggage bag3))
@@ -541,15 +601,88 @@
                                                                      (at bag3 new-jersey)
                                                                      (carrying robot bag1)
                                                                      (carrying robot bag3)
-                                                                      (loc new-jersey) (loc new-york)
+                                                                     (loc new-jersey) (loc new-york)
                                                                      (luggage bag1)
                                                                      (luggage bag2)
                                                                      (luggage bag3)))))
-          (apply-action state
+          (apply-action *domain* state
                         '(!walk new-jersey new-york)
                         (operator *domain* '!walk)
                         nil 0 nil)
           (sort (state-atoms state) 'prop-sorter)))))))
+
+(fiveam:test quantified-when-with-deps
+  (fiveam:with-fixture quantified-when-fixtures ()
+    (let ((*state-encoding* :list)
+          (*record-dependencies-p* t))
+      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                   (at bag1 new-jersey)
+                                                                   (at bag2 new-jersey)
+                                                                   (at bag3 new-jersey)
+                                                                   (loc new-jersey) (loc new-york)
+                                                                   (luggage bag1)
+                                                                   (luggage bag2)
+                                                                   (luggage bag3)))))
+        (multiple-value-bind (op state-tag protections cost unifier deps)
+            (apply-action *domain* state
+                          '(!walk new-jersey new-york)
+                          (operator *domain* '!walk)
+                          nil 0 nil)
+          (declare (ignore unifier state-tag op))
+          (fiveam:is 
+           (equal
+            '((at bag1 new-jersey)
+              (at bag2 new-jersey)
+              (at bag3 new-jersey)
+              (at robot new-york)
+              (loc new-jersey)
+              (loc new-york)
+              (luggage bag1)
+              (luggage bag2)
+              (luggage bag3))
+            (sort (state-atoms state) 'prop-sorter)))
+          (fiveam:is-false protections)
+          (fiveam:is
+           (eql 1.0 cost))
+          (fiveam:is
+           (equalp
+            '((at robot new-jersey) (loc new-jersey) (loc new-york))
+            (sort (mapcar #'shop2.theorem-prover::rd-prop deps) 'prop-sorter)))))
+      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                   (at bag1 new-jersey)
+                                                                   (at bag2 new-jersey)
+                                                                   (at bag3 new-jersey)
+                                                                   (loc new-jersey) (loc new-york)
+                                                                   (carrying robot bag1)
+                                                                   (luggage bag1)
+                                                                   (luggage bag2)
+                                                                   (luggage bag3)))))
+        (multiple-value-bind (op state-tag protections cost unifier deps)
+            (apply-action *domain* state
+                          '(!walk new-jersey new-york)
+                          (operator *domain* '!walk)
+                          nil 0 nil)
+          (declare (ignore unifier state-tag op))
+          (fiveam:is 
+           (equal
+            '((at bag1 new-york)
+              (at bag2 new-jersey)
+              (at bag3 new-jersey)
+              (at robot new-york)
+              (carrying robot bag1)
+              (loc new-jersey)
+              (loc new-york)
+              (luggage bag1)
+              (luggage bag2)
+              (luggage bag3))
+            (sort (state-atoms state) 'prop-sorter)))
+          (fiveam:is-false protections)
+          (fiveam:is
+           (eql 1.0 cost))
+          (fiveam:is
+           (equalp
+            '((at robot new-jersey) (carrying robot bag1) (loc new-jersey) (loc new-york))
+            (sort (mapcar #'shop2.theorem-prover::rd-prop deps) 'prop-sorter))))))))
 
 (in-package :shop2-openstacks)
 (fiveam:def-suite* plan-openstacks :in shop2::pddl-tests)
@@ -572,10 +705,10 @@
                        (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
                        (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
                        (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
-                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
-                       (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
-                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
-                       (!SHIP-ORDER O2 N4 N5))
+                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O4 N3 N4)
+                       (!SHIP-ORDER O3 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
+                       (!SHIP-ORDER O1 N4 N5))
                      (shorter-plan (first (find-plans
                                      'os-sequencedstrips-p5_1i :verbose 0))))))
 
@@ -589,12 +722,20 @@
                        (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
                        (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
                        (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
-                       (!SHIP-ORDER O2 N4 N5))))
+                       (!SHIP-ORDER O2 N4 N5)))
+        (shuffled-plan '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
+                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O4 N3 N4)
+                       (!SHIP-ORDER O3 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
+                       (!SHIP-ORDER O1 N4 N5))))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp"))
     (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
                                                   'os-sequencedstrips-p5_1 :verbose 0)))))
-    (fiveam:is (equalp plan
+    (fiveam:is (equalp shuffled-plan
                        (shorter-plan (first (find-plans-stack
                                              'os-sequencedstrips-p5_1i :verbose 0)))))))
 
@@ -604,55 +745,58 @@
 
 
 (fiveam:test test-openstacks-adl
-  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-  (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
-    (loop :for i from 1 :to 30
-          :as probfilename = (format nil "p~2,'0d.pddl" i)
-          :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-          :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
-          :as standard-plan = (first (find-plans problem :verbose 0))
-          :do (fiveam:is-true (and (or standard-plan
-                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
-                                   (validate-plan standard-plan domain-file problem-file))))))
+  (let ((shop2::*define-silently* t))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+    (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+      (loop :for i from 1 :to 30
+            :as probfilename = (format nil "p~2,'0d.pddl" i)
+            :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+            :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
+            :as standard-plan = (first (find-plans problem :verbose 0))
+            :do (fiveam:is-true (and (or standard-plan
+                                         (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
+                                     (validate-plan standard-plan domain-file problem-file)))))))
 
 
 (fiveam:test test-openstacks-adl-explicit-stack-search
-  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-  (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
-    (loop :for i from 1 :to 30
-          :as probfilename = (format nil "p~2,'0d.pddl" i)
-          :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-          :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
-          :as standard-plan = (first (find-plans-stack problem :verbose 0))
-          :do (fiveam:is-true (and (or standard-plan
-                                       (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
-                                   (validate-plan standard-plan domain-file problem-file))))))
+  (let ((shop2::*define-silently* t))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+    (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+      (loop :for i from 1 :to 30
+            :as probfilename = (format nil "p~2,'0d.pddl" i)
+            :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+            :as problem = (shop2-pddl-helpers:translate-openstacks-problem problem-file)
+            :as standard-plan = (first (find-plans-stack problem :verbose 0))
+            :do (fiveam:is-true (and (or standard-plan
+                                         (warn "Failed to SHOP2 plan for problem ~a" (shop2:name problem)))
+                                     (validate-plan standard-plan domain-file problem-file)))))))
 
 
 (fiveam:test test-forall-dependencies
-  (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-  (make-problem 'test-quantified-precondition-dependencies 'openstacks-sequencedstrips-ADL-included
-                ;; from problem 1 and modified
-                '((NEXT-COUNT N0 N1) (NEXT-COUNT N1 N2) (NEXT-COUNT N2 N3)
-                  (NEXT-COUNT N3 N4) (NEXT-COUNT N4 N5)
-                  (STACKS-AVAIL N5) ; (STACKS-AVAIL N0)
-                  (WAITING O1) (INCLUDES O1 P2)
-                  (WAITING O2) (INCLUDES O2 P1) (INCLUDES O2 P2)
-                  (WAITING O3) (INCLUDES O3 P3) (WAITING O4) (INCLUDES O4 P3)
-                  (INCLUDES O4 P4) (WAITING O5) (INCLUDES O5 P5) (= (TOTAL-COST) 0)
-                  (COUNT N0) (COUNT N1) (COUNT N2) (COUNT N3) (COUNT N4) (COUNT N5)
-                  (ORDER O1) (ORDER O2) (ORDER O3) (ORDER O4) (ORDER O5) (PRODUCT P1)
-                  (PRODUCT P2) (PRODUCT P3) (PRODUCT P4) (PRODUCT P5)
-                  (:GOAL
-                   (AND (SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
-                    (SHIPPED O5))))
-                '(:ordered (!start-order o1 ?avail ?avail1) (!start-order o2 ?avail1 ?avail2) (!make-product p2)))
-  (multiple-value-bind (plans plan-trees plan-tree-hashes)
-      (shop:find-plans-stack 'test-quantified-precondition-dependencies :plan-tree t)
-    (fiveam:is-true plans)
-    (when plans
-      (let ((plan (shop:remove-costs (first plans))))
-        (fiveam:is
-         (eql 7
-              (length (plan-tree:tree-node-dependencies
-                       (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes))))))))))
+  (let ((shop2::*define-silently* t))
+    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+    (make-problem 'test-quantified-precondition-dependencies 'openstacks-sequencedstrips-ADL-included
+                  ;; from problem 1 and modified
+                  '((NEXT-COUNT N0 N1) (NEXT-COUNT N1 N2) (NEXT-COUNT N2 N3)
+                    (NEXT-COUNT N3 N4) (NEXT-COUNT N4 N5)
+                    (STACKS-AVAIL N5)   ; (STACKS-AVAIL N0)
+                    (WAITING O1) (INCLUDES O1 P2)
+                    (WAITING O2) (INCLUDES O2 P1) (INCLUDES O2 P2)
+                    (WAITING O3) (INCLUDES O3 P3) (WAITING O4) (INCLUDES O4 P3)
+                    (INCLUDES O4 P4) (WAITING O5) (INCLUDES O5 P5) (= (TOTAL-COST) 0)
+                    (COUNT N0) (COUNT N1) (COUNT N2) (COUNT N3) (COUNT N4) (COUNT N5)
+                    (ORDER O1) (ORDER O2) (ORDER O3) (ORDER O4) (ORDER O5) (PRODUCT P1)
+                    (PRODUCT P2) (PRODUCT P3) (PRODUCT P4) (PRODUCT P5)
+                    (:GOAL
+                     (AND (SHIPPED O1) (SHIPPED O2) (SHIPPED O3) (SHIPPED O4)
+                      (SHIPPED O5))))
+                  '(:ordered (!start-order o1 ?avail ?avail1) (!start-order o2 ?avail1 ?avail2) (!make-product p2)))
+    (multiple-value-bind (plans plan-trees plan-tree-hashes)
+        (shop:find-plans-stack 'test-quantified-precondition-dependencies :plan-tree t)
+      (fiveam:is-true plans)
+      (when plans
+        (let ((plan (shop:remove-costs (first plans))))
+          (fiveam:is
+           (eql 7
+                (length (plan-tree:tree-node-dependencies
+                         (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes)))))))))))
