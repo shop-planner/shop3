@@ -9,6 +9,9 @@
   NIL
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
+(defgeneric unfold-loop-task (domain state)
+  (:documentation "Driver for the looping tasks."))
+
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                  (no-dependencies nil)
                                  repairable
@@ -242,6 +245,10 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                (apply-bindings-and-recurse c))))
     
     (apply-bindings-and-recurse plan-tree)))
+
+(defmethod unfold-loop-task ((domain domain) search-state)
+  (declare (ignore search-state))
+  (error "SHOP2 proper should not have used this instruction yet at all."))
 
 
 (defun CHOOSE-METHOD-BINDINGS-STATE (state)
