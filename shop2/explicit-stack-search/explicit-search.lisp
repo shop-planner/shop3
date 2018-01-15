@@ -150,9 +150,26 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         "~2%Depth ~s, trying task ~s"
                         (depth state)
                         (apply-substitution task (unifier state)))
-           (if (primitivep (get-task-name task))
-               (setf (mode state) 'expand-primitive-task)
-               (setf (mode state) 'prepare-to-choose-method))))
+           (cond
+	     ((primitivep (get-task-name task))
+	      (setf (mode state) 'expand-primitive-task))
+	     ((eql (get-task-name task) :loop)
+	      (setf (mode state) 'unfold-looping-task))
+	     (t ; original nonprimitive:
+	      (setf (mode state) 'prepare-to-choose-method)))))
+
+	(unfold-looping-task
+	 (if (unfold-loop-task domain state)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             (with-slots (current-task depth world-state) state
+               (trace-print :tasks (get-task-name current-task) world-state
+                            "~2%Depth ~s, backtracking from task~%      task ~s"
+                            depth
+                            current-task)
+               (stack-backtrack state))))
+
         (expand-primitive-task
          (if (expand-primitive-state state domain)
              (progn
@@ -290,7 +307,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                       (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
             t))))))
 
-(defun EXPAND-PRIMITIVE-STATE (state domain)
+(defmethod EXPAND-PRIMITIVE-STATE (state (domain domain))
   ;; first we need to record what we will need to pop...
   (with-slots (top-tasks tasks protections partial-plan
                current-task depth
