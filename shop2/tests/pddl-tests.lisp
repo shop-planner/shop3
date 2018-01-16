@@ -800,3 +800,132 @@
            (eql 7
                 (length (plan-tree:tree-node-dependencies
                          (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes)))))))))))
+
+(in-package :shop2)
+(fiveam:in-suite pddl-tests)
+
+(fiveam:test test-forall-bounds
+  (let ((*define-silently* t)
+        ;; try to make this side-effect free
+        (*domain* nil))
+    (defdomain (rover-for-test :type pddl-domain)
+        (
+         (:requirements :typing)
+         (:static
+          can_traverse
+          equipped_for_soil_analysis
+          equipped_for_rock_analysis
+          equipped_for_imaging
+          supports
+          visible
+          visible_from
+          store_of
+          on_board)
+         (:types rover waypoint store camera mode lander objective)
+         (:predicates (at ?x - rover ?y - waypoint) 
+                      (at_lander ?x - lander ?y - waypoint)
+                      (can_traverse ?r - rover ?x - waypoint ?y - waypoint)
+                      (equipped_for_soil_analysis ?r - rover)
+                      (equipped_for_rock_analysis ?r - rover)
+                      (equipped_for_imaging ?r - rover)
+                      (empty ?s - store)
+                      (have_rock_analysis ?r - rover ?w - waypoint)
+                      (have_soil_analysis ?r - rover ?w - waypoint)
+                      (full ?s - store)
+                      (calibrated ?c - camera ?r - rover) 
+                      (supports ?c - camera ?m - mode)
+                      (available ?r - rover)
+                      (visible ?w - waypoint ?p - waypoint)
+                      (have_image ?r - rover ?o - objective ?m - mode)
+                      (communicated_soil_data ?w - waypoint)
+                      (communicated_rock_data ?w - waypoint)
+                      (communicated_image_data ?o - objective ?m - mode)
+                      (at_soil_sample ?w - waypoint)
+                      (at_rock_sample ?w - waypoint)
+                      (visible_from ?o - objective ?w - waypoint)
+                      (store_of ?s - store ?r - rover)
+                      (calibration_target ?i - camera ?o - objective)
+                      (on_board ?i - camera ?r - rover)
+                      (channel_free ?l - lander)
+                      )
+         ))
+    (DEFPROBLEM test-rover-problem ROVER-for-test
+            ((OBJECTIVE OBJECTIVE1) (OBJECTIVE OBJECTIVE0)
+             (CAMERA CAMERA0) (WAYPOINT WAYPOINT3) (WAYPOINT WAYPOINT2)
+             (WAYPOINT WAYPOINT1) (WAYPOINT WAYPOINT0)
+             (STORE ROVER0STORE) (ROVER ROVER0) (MODE LOW_RES)
+             (MODE HIGH_RES) (MODE COLOUR) (LANDER GENERAL)
+             (VISIBLE WAYPOINT1 WAYPOINT0)
+             (VISIBLE WAYPOINT0 WAYPOINT1)
+             (VISIBLE WAYPOINT2 WAYPOINT0)
+             (VISIBLE WAYPOINT0 WAYPOINT2)
+             (VISIBLE WAYPOINT2 WAYPOINT1)
+             (VISIBLE WAYPOINT1 WAYPOINT2)
+             (VISIBLE WAYPOINT3 WAYPOINT0)
+             (VISIBLE WAYPOINT0 WAYPOINT3)
+             (VISIBLE WAYPOINT3 WAYPOINT1)
+             (VISIBLE WAYPOINT1 WAYPOINT3)
+             (VISIBLE WAYPOINT3 WAYPOINT2)
+             (VISIBLE WAYPOINT2 WAYPOINT3) (AT_SOIL_SAMPLE WAYPOINT0)
+             (AT_ROCK_SAMPLE WAYPOINT1) (AT_SOIL_SAMPLE WAYPOINT2)
+             (AT_ROCK_SAMPLE WAYPOINT2) (AT_SOIL_SAMPLE WAYPOINT3)
+             (AT_ROCK_SAMPLE WAYPOINT3) (AT_LANDER GENERAL WAYPOINT0)
+             (CHANNEL_FREE GENERAL) (AT ROVER0 WAYPOINT3)
+             (AVAILABLE ROVER0) (STORE_OF ROVER0STORE ROVER0)
+             (EMPTY ROVER0STORE) (EQUIPPED_FOR_SOIL_ANALYSIS ROVER0)
+             (EQUIPPED_FOR_ROCK_ANALYSIS ROVER0)
+             (EQUIPPED_FOR_IMAGING ROVER0)
+             (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT0)
+             (CAN_TRAVERSE ROVER0 WAYPOINT0 WAYPOINT3)
+             (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT1)
+             (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT3)
+             (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT2)
+             (CAN_TRAVERSE ROVER0 WAYPOINT2 WAYPOINT1)
+             (ON_BOARD CAMERA0 ROVER0)
+             (CALIBRATION_TARGET CAMERA0 OBJECTIVE1)
+             (SUPPORTS CAMERA0 COLOUR) (SUPPORTS CAMERA0 HIGH_RES)
+             (VISIBLE_FROM OBJECTIVE0 WAYPOINT0)
+             (VISIBLE_FROM OBJECTIVE0 WAYPOINT1)
+             (VISIBLE_FROM OBJECTIVE0 WAYPOINT2)
+             (VISIBLE_FROM OBJECTIVE0 WAYPOINT3)
+             (VISIBLE_FROM OBJECTIVE1 WAYPOINT0)
+             (VISIBLE_FROM OBJECTIVE1 WAYPOINT1)
+             (VISIBLE_FROM OBJECTIVE1 WAYPOINT2)
+             (VISIBLE_FROM OBJECTIVE1 WAYPOINT3)
+             (COMMUNICATE_SOIL_DATA WAYPOINT2)
+             (COMMUNICATE_ROCK_DATA WAYPOINT3)
+             (COMMUNICATE_IMAGE_DATA OBJECTIVE1 HIGH_RES)
+             )
+            (:TASK ACHIEVE-GOALS))
+    )
+  (fiveam:is-false 
+   (query (process-pddl-method-pre *domain*
+                                   '(forall (?obj - objective)
+                                     (forall (?m - mode)
+                                      (not (communicate_image_data ?obj ?m)))))
+          (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
+          :record-dependencies nil :domain *domain*))
+  (fiveam:is-true
+   (query (process-pddl-method-pre *domain*
+                                   '(forall (?obj - objective)
+                                     (forall (?m - mode)
+                                      (not (communicate_image_data ?obj ?m)))))
+          (make-initial-state *domain* :list (remove '(communicate_image_data objective1 high_res)
+                                                     (problem-state (find-problem 'test-rover-problem))
+                                                     :test 'equalp))
+          :record-dependencies nil :domain *domain*))
+  (fiveam:is-false 
+   (query (process-pddl-method-pre *domain*
+                                   '(forall (?obj - objective ?m - mode)
+                                     (not (communicate_image_data ?obj ?m))))
+          (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
+          :record-dependencies nil :domain *domain*))
+  (fiveam:is-true
+   (query (process-pddl-method-pre *domain*
+                                   '(forall (?obj - objective ?m - mode)
+                                     (not (communicate_image_data ?obj ?m))))
+          (make-initial-state *domain* :list (remove '(communicate_image_data objective1 high_res)
+                                                     (problem-state (find-problem 'test-rover-problem))
+                                                     :test 'equalp))
+          :record-dependencies nil :domain *domain*)))
+    
