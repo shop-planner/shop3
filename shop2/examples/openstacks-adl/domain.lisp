@@ -1,6 +1,12 @@
 ;; openstacks, strips version
 (in-package :shop-openstacks)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass pure-pddl-domain (pddl-domain pure-logic-domain-mixin)
+  ()
+  )
+)
+
 (defdomain (openstacks-sequencedstrips-ADL :type pddl-domain)
     (
      (:requirements :typing :adl :action-costs)
@@ -176,11 +182,10 @@
      )
   )
 
-(defclass pure-pddl-domain (pddl-domain pure-logic-domain-mixin)
-  ()
-  )
-
-(defdomain (openstacks-sequencedstrips-ADL-included :type pure-pddl-domain :source-pddl-domain #.(merge-pathnames "domain-nocosts.pddl" *load-truename*))
+(defdomain (openstacks-sequencedstrips-ADL-included
+            :type pure-pddl-domain
+            :source-pddl-domain
+            #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*)))
     ((:include  openstacks-sequencedstrips-ADL-nocosts "domain-nocosts.pddl")
      (:static includes next-count)
      
