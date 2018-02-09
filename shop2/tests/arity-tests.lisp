@@ -16,7 +16,8 @@
 (in-package :arity-test)
 
 (defun init-domain ()
-  (let (( *defdomain-verbose* nil ))
+  (let (( *defdomain-verbose* nil )
+        (shop2::*define-silently* t))
 
     (defdomain (arity-test-domain :noset t :redefine-ok t)
         (
