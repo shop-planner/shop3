@@ -19,6 +19,7 @@
   (:use #:common-lisp #:iterate #:pddl-utils #:shop2)
   (:shadowing-import-from #:shop2
                           #:domain-name #:make-problem #:domain)
+  (:shadow #:problem-name)
   (:export #:typed-object-list->facts
            #:translate-openstacks-problem
            #:check-repair
@@ -48,7 +49,7 @@
                        (pddl-utils:problem-objects problem)))
                      `((:goal ,(pddl-utils:problem-goal problem))))
                     ;; tasks
-                    '(shop2-openstacks::plan)))))
+                    `(,(uiop:intern* '#:plan :shop2-openstacks))))))
 
 (defun do-all-substitutions (alist tree)
   (let ((new-tree (copy-tree tree)))         ;now we can operate destructively
