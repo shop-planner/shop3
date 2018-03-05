@@ -208,6 +208,7 @@ later be compiled into find-satisfiers or something."
     (set-variable-property domain equality-axiom)
     (call-next-method domain (cons equality-axiom items))))
 
+;;; FIXME: replace %ENFORCE-TYPE-CONSTRAINTS by open-coding these checks.
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
   (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
                                ((= ?x (nil)))
