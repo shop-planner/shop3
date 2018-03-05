@@ -248,6 +248,7 @@ IF-THEN-ELSE semantics in methods."))
        :reader tasks)
       (name
        :initarg :name
+       :reader problem-name
        :reader name)
       (domain-name
        :initarg :domain-name
