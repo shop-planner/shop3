@@ -20,7 +20,7 @@
 ;;; This is the only exported function for now, and should be used when backjumping.
 (defun repair-plan (domain plan plan-tree executed divergence search-state
                     &key (verbose 1) plan-tree-hash
-                      (no-failed-task-is-error t))
+                      (no-failed-task nil))
   "Arguments:
 DOMAIN: SHOP2 domain object
 PLAN: SHOP2 plan sequence (should work with costs or without, but don't remove internal operators)
@@ -36,9 +36,9 @@ Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP 
   (handler-bind
       ((no-failed-task #'(lambda (nft)
                            (format t "~a" nft)
-                           (if no-failed-task-is-error
-                               (error "Divergence should cause some task failure.")
-                               (continue nft)))))
+                           (case no-failed-task
+                             (:error (cerror "Just continue and return unmodified plan" "Divergence should cause some task failure."))
+                             (:retry (return-from repair-plan :no-failed-task))))))
     (multiple-value-bind (failed ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.  It's the *parent* of the node that has actually failed.
                           failed-action) ; The failed action is EITHER the first action whose dependencies are broken OR the leftmost leaf child of the leftmost broken complex task
         ;; we find the failed tree node by looking UP from the actions in the plan.
