@@ -269,6 +269,14 @@ IF-THEN-ELSE semantics in methods."))
       (print-unreadable-object (x stream :type t)
         (princ (name x) stream))))
 
+(defgeneric copy-shop-problem (name prob &key problem-class)
+  (:method ((name symbol) (prob problem) &key (problem-class 'problem))
+    (make-instance problem-class
+                   :state-atoms (state-atoms prob)
+                   :tasks (tasks prob)
+                   :name name
+                   :domain-name (domain-name prob))))
+
 ;;;---------------------------------------------------------------------------
 ;;; OPERATORS
 ;;;---------------------------------------------------------------------------

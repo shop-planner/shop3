@@ -142,6 +142,7 @@
              #:*make-problem-silently*
              #:find-problem
              #:problem-name
+             #:copy-shop-problem
 
              #:find-plans
              #:find-plans-stack         ; explicit stack version
