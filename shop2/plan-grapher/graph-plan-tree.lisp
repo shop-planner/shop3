@@ -40,7 +40,7 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
         (next-node-index most-positive-fixnum))
     (labels ((find-next (tree)
                (cond ((complex-node-p tree)
-                      (mapc 'find-next (complex-node-children tree)))
+                      (mapc #'find-next (complex-node-children tree)))
                      ((primitive-node-p tree)
                       (let ((pos (primitive-node-position tree)))
                         (when (and (> pos index)
