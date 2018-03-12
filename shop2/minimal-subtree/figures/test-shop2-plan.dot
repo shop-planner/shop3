@@ -1,0 +1,52 @@
+digraph {
+        {
+                rank=max;
+                
+                "8" [label="INIT",shape=diamond,rank=max];
+                "7" [label="(!OP1)",id="NODE145095",shape=box,rank=max];
+                "11" [label="(!OP2)",id="NODE145105",shape=box];
+                "16" [label="(!OP3)",id="NODE145108",shape=box];
+                "17" [label="(!OP4)",id="NODE145109",shape=box];
+                "19" [label="(!OP5)",id="NODE145110",shape=box];
+        }
+
+  "10" [label="ord",id="NODE145104",shape=rarrow];
+  "9" [label="(TASK3)",shape=ellipse];
+  "6" [label="ord",id="NODE145094",shape=rarrow];
+  "5" [label="(TASK1)",shape=ellipse];
+  "15" [label="ord",id="NODE145107",shape=rarrow];
+  "14" [label="(TASK4)",shape=ellipse];
+  "18" [label="(TASK5)",shape=ellipse];
+  "13" [label="ord",id="NODE145106",shape=rarrow];
+  "12" [label="(TASK2)",shape=ellipse];
+  "4" [label="ord",id="NODE145093",shape=rarrow];
+  "3" [label="(TASK0)",shape=ellipse];
+  "2" [label="ord",id="NODE145092",shape=rarrow];
+  "1" [label="TOP",shape=ellipse];
+  "8" -> "7"[label="C & D",edgetooltip="(C)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "7" -> "11"[label="B",edgetooltip="(B)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "10" -> "11"[];
+  "9" -> "10"[];
+  "7" -> "9"[label="A",edgetooltip="(A)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "6" -> "7"[];
+  "6" -> "9"[];
+  "5" -> "6"[];
+  "7" -> "16"[label="B",edgetooltip="(B)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "11" -> "17"[label="not(C)",edgetooltip="(NOT (C))",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "15" -> "16"[];
+  "15" -> "17"[];
+  "14" -> "15"[];
+  "7" -> "19"[label="B",edgetooltip="(B)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "11" -> "19"[label="not(C)",edgetooltip="(NOT (C))",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "18" -> "19"[];
+  "11" -> "18"[label="not(C)",edgetooltip="(NOT (D))",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "13" -> "14"[];
+  "13" -> "18"[];
+  "12" -> "13"[];
+  "7" -> "12"[label="A",edgetooltip="(A)",penwidth=2.0,style=dashed,constraint=false,color="BLUE"];
+  "4" -> "5"[];
+  "4" -> "12"[];
+  "3" -> "4"[];
+  "2" -> "3"[];
+  "1" -> "2"[];
+}
