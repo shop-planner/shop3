@@ -209,6 +209,13 @@ shop2."
   :components ((:file "package")
                (:file "domain")))
 
+(defsystem shop2/rovers
+    :depends-on (:shop2)
+  :serial t
+  :pathname "examples/rovers/strips/"
+  :components ((:file "domain")))
+
+
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
