@@ -687,7 +687,9 @@ two values."
 (defmethod validator-export ((domain simple-pddl-domain) (plan list) stream)
   (loop :for x :in (pddl-plan domain plan)
         :as i :from 0
-        :do (format stream "~d: ~a~%" i x)))
+        :do (format stream "~d: " i)
+            (princ x stream)
+            (terpri stream)))
 
 (defmethod pddl-plan ((domain simple-pddl-domain) (plan cons) &key (package *package*))
     ;; first check to see if there are costs in the plan...
