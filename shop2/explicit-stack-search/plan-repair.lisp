@@ -19,8 +19,8 @@
 
 ;;; This is the only exported function for now, and should be used when backjumping.
 (defun repair-plan (domain plan plan-tree executed divergence search-state
-                    &key (verbose 1) plan-tree-hash
-                      (no-failed-task nil))
+                    &key (verbose 2) plan-tree-hash
+                      no-failed-task)
   "Arguments:
 DOMAIN: SHOP2 domain object
 PLAN: SHOP2 plan sequence (should work with costs or without, but don't remove internal operators)
@@ -33,55 +33,58 @@ PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is
 Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
 \(3\) plan tree lookup table (4) search-state object."
   (check-type divergence divergence-list)
-  (handler-bind
-      ((no-failed-task #'(lambda (nft)
-                           (format t "~a" nft)
-                           (case no-failed-task
-                             (:error (cerror "Just continue and return unmodified plan" "Divergence should cause some task failure."))
-                             (:retry (return-from repair-plan :no-failed-task))))))
-    (multiple-value-bind (failed ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.  It's the *parent* of the node that has actually failed.
-                          failed-action) ; The failed action is EITHER the first action whose dependencies are broken OR the leftmost leaf child of the leftmost broken complex task
-        ;; we find the failed tree node by looking UP from the actions in the plan.
-        (subtree:find-failed-task domain plan plan-tree executed
-                                  divergence :plan-tree-hash plan-tree-hash)
-      (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
-      (if failed
-          (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
-            #+nil(break "Inspect NEW-SEARCH-STATE.")
-            (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-                (let ((*plan-tree* t)
-                      (*enhanced-plan-tree* t))
-                  (replan-from-failure domain failed new-search-state :verbose verbose))
-              (when new-plans
-                (let ((new-plan (first new-plans))
-                      (new-plan-tree (first new-plan-trees))
-                      (new-lookup-table (first lookup-tables))
-                      (plan-has-costs (numberp (second (first new-plans)))))
-                  (multiple-value-bind (prefix suffix)
-                      (extract-suffix new-plan executed)
-                    (values
-                     ;; new plan sequence
-                     (append prefix
-                             (if plan-has-costs
-                                 (list (cons :divergence divergence) 0.0)
-                                 (list (cons :divergence divergence)))
-                             suffix)
-                     new-plan-tree
-                     new-lookup-table
-                     final-search-state))))))
-          ;; the old plan is good
-          (multiple-value-bind (prefix suffix)
-              (extract-suffix plan executed)
-            (signal 'no-failed-task)
-            (values
-             (append prefix
-                     (if (numberp (second plan)) ;plan with costs?
-                         (list (cons :divergence divergence) 0.0)
-                         (list (cons :divergence divergence)))
-                     suffix)
-             plan-tree
-             plan-tree-hash
-             search-state))))))
+  (let ((*verbose* verbose))
+   (handler-bind
+       ((no-failed-task #'(lambda (nft)
+                            (format *error-output* "Got no failed task error: ~a~%" nft)
+                            (force-output *error-output*)
+                            (case no-failed-task
+                              (:error (cerror "Just continue and return unmodified plan"
+                                              "Divergence should cause some task failure."))
+                              (:retry (return-from repair-plan :no-failed-task))))))
+     (multiple-value-bind (failed ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.  It's the *parent* of the node that has actually failed.
+                           failed-action) ; The failed action is EITHER the first action whose dependencies are broken OR the leftmost leaf child of the leftmost broken complex task
+         ;; we find the failed tree node by looking UP from the actions in the plan.
+         (subtree:find-failed-task domain plan plan-tree executed
+                                   divergence :plan-tree-hash plan-tree-hash)
+       (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
+       (if failed
+           (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
+             #+nil(break "Inspect NEW-SEARCH-STATE.")
+             (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
+                 (let ((*plan-tree* t)
+                       (*enhanced-plan-tree* t))
+                   (replan-from-failure domain failed new-search-state :verbose verbose))
+               (when new-plans
+                 (let ((new-plan (first new-plans))
+                       (new-plan-tree (first new-plan-trees))
+                       (new-lookup-table (first lookup-tables))
+                       (plan-has-costs (numberp (second (first new-plans)))))
+                   (multiple-value-bind (prefix suffix)
+                       (extract-suffix new-plan executed)
+                     (values
+                      ;; new plan sequence
+                      (append prefix
+                              (if plan-has-costs
+                                  (list (cons :divergence divergence) 0.0)
+                                  (list (cons :divergence divergence)))
+                              suffix)
+                      new-plan-tree
+                      new-lookup-table
+                      final-search-state))))))
+           ;; the old plan is good
+           (multiple-value-bind (prefix suffix)
+               (extract-suffix plan executed)
+             (signal 'no-failed-task)
+             (values
+              (append prefix
+                      (if (numberp (second plan)) ;plan with costs?
+                          (list (cons :divergence divergence) 0.0)
+                          (list (cons :divergence divergence)))
+                      suffix)
+              plan-tree
+              plan-tree-hash
+              search-state)))))))
 
 (defgeneric find-failed-stack-entry (failed obj)
   (:documentation "Find and return the stack entry that corresponds
