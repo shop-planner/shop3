@@ -91,7 +91,8 @@ of interest."))
 
 ;;; VARIABLEP returns T if X is a symbol whose name begins with "?"
 ;;; The code below is faster than checking for the ? each time, but
-;;;  assumes that all variables, have been preprocessed.
+;;;  assumes that all variables have been preprocessed.
+(declaim (inline variablep))
 (defun variablep (x)
   (and (symbolp x) (get x 'variable)))
 (defmacro variable-p (x)
@@ -142,7 +143,11 @@ variable."
   `(make-binding (quote ,(binding-var obj)) ,(binding-val obj)))
 
 (defun find-binding (target binding-list)
-  (find target binding-list :key #'binding-var))
+  (declare (type list binding-list)
+           (optimize speed))
+  (find target binding-list
+        :key #'binding-var
+        :test #'eq))
 
 (defun binding-list-value (var binding-list &optional (if-not-found :error))
   (let ((binding (find-binding var binding-list)))
@@ -188,10 +193,16 @@ variable."
 ;;; TARGET is an s-expression, which can be a propositional
 ;;; s-expression, or a unifier.
 (defun real-apply-substitution (target binding-list)
-  (cond ((atom target) 
+  (declare (optimize speed))
+  (cond ((null target)
+         nil)
+        ((variablep target)
          (let ((result (find-binding target binding-list)))
-           (if result (binding-val result) target)))
-        ((null (cdr target)) (list (real-apply-substitution (car target) binding-list)))
+           (if result
+               (binding-val result)
+               target)))
+        ((atom target)
+         target)
         (t (cons (real-apply-substitution (car target) binding-list)
                  (real-apply-substitution (cdr target) binding-list)))))
 
