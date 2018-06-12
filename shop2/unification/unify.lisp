@@ -144,10 +144,11 @@ variable."
 
 (defun find-binding (target binding-list)
   (declare (type list binding-list)
-           (optimize speed))
-  (find target binding-list
-        :key #'binding-var
-        :test #'eq))
+           (inline binding-var)
+           (optimize (speed 3) (safety 0)))
+  (loop for binding in binding-list
+        when (eq (binding-var binding) target)
+          return binding))
 
 (defun binding-list-value (var binding-list &optional (if-not-found :error))
   (let ((binding (find-binding var binding-list)))
@@ -203,8 +204,12 @@ variable."
                target)))
         ((atom target)
          target)
-        (t (cons (real-apply-substitution (car target) binding-list)
-                 (real-apply-substitution (cdr target) binding-list)))))
+        (t (let ((a (real-apply-substitution (car target) binding-list))
+                 (d (real-apply-substitution (cdr target) binding-list)))
+             (if (and (eq a (car target))
+                      (eq d (cdr target)))
+                 target
+                 (cons a d))))))
 
 #|
 (define-condition constraint-failure (error)
