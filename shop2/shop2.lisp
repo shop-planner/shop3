@@ -583,18 +583,18 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; Top-level calls to the planner
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
-                   &key
-                     domain (which *which*) (verbose *verbose*)
-                     (gc *gc*) (pp *pp*)
-                     (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
-                     (collect-state *collect-state*)
-                     (time-limit *time-limit*) (explanation *explanation*)
-                     (depth-cutoff *depth-cutoff*)
-                     ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
-                     (state *state-encoding* state-supplied-p)
-                     (state-type nil state-type-supplied-p)
-                     hand-steer leashed
-                     (out-stream t))
+                   &key domain (which *which*) (verbose *verbose*)
+                        (gc *gc*) (pp *pp*)
+                        (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
+                        (collect-state *collect-state*)
+                        (time-limit *time-limit*) (explanation *explanation*)
+                        (depth-cutoff *depth-cutoff*)
+                        ;; [mpelican:20090226.1824CST] state is obsolete, find-plans will error if it is supplied
+                        (state *state-encoding* state-supplied-p)
+                        (tasks nil tasks-supplied-p)
+                        (state-type nil state-type-supplied-p)
+                        hand-steer leashed
+                        (out-stream t))
   "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
    The keyword arguments are as follows:
      :WHICH tells what kind of search to do.  Its possible values are:
@@ -686,7 +686,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                            state-type
                          (default-state-type domain))
                        (problem->state domain problem)))
-         (tasks (get-tasks problem))
+         (tasks (if tasks-supplied-p tasks (get-tasks problem)))
          *optimal-cost*
          (*verbose* verbose)
          ;; used for tree-building code.
