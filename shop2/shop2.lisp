@@ -7,7 +7,7 @@
 
 (defconstant +shopyright+
 "Copyright (C) 2002  University of Maryland.
-Modifications by SIFT, LLC personnel Copyright (C) 2004-2016 SIFT, LLC.
+Modifications by SIFT, LLC personnel Copyright (C) 2004-2018 SIFT, LLC.
 This software is distributed on an \"AS IS\" basis, WITHOUT WARRANTY OF ANY
 KIND, either express or implied.  This software is distributed under an
 MPL/GPL/LGPL triple license.  For details, see the software source file.")
@@ -30,9 +30,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
 ;;;
-;;; Additions and modifications made by Robert P. Goldman, John
-;;; Maraist.  Portions created by Drs. Goldman and Maraist are
-;;; Copyright (C) 2004-2007 SIFT, LLC.  These additions and
+;;; Additions and modifications made by Robert P. Goldman, and other SIFT employees.
+;;; Portions created by SIFT employees
+;;; Copyright (C) 2002-2018 SIFT, LLC.  These additions and
 ;;; modifications are also available under the MPL/GPL/LGPL licensing
 ;;; terms.
 ;;;
@@ -46,6 +46,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;;    J. William Murdock (IBM Research)
 ;;;    Robert P. Goldman (SIFT, LLC)
 ;;;    John Maraist (SIFT, LLC)
+;;;    Ugur Kuter (SIFT, LLC)
+;;;    Alex Plotnick (SIFT, LLC)
 ;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
