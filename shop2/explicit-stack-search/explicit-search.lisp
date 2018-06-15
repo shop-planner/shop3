@@ -70,6 +70,8 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                                :lookup-table (plan-tree-lookup search-state))))
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree)))
+         (*expansions* 0)
+         (*inferences* 0)
          total-run-time total-real-time
          total-expansions total-inferences)
 
@@ -153,6 +155,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         "~2%Depth ~s, trying task ~s"
                         (depth state)
                         (apply-substitution task (unifier state)))
+           (incf *expansions*)
            (cond
              ((primitivep (get-task-name task))
               (setf (mode state) 'expand-primitive-task))
