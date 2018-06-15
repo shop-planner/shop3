@@ -656,6 +656,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
           (if time-limit (* time-limit
                             internal-time-units-per-second)
             nil))
+         (*which* which)
          (*internal-time-tag* (gensym))
          (*print-pretty* pp)
          ;; [mpelican:20090226.1825CST] obsolete, please use state-type arg or default-state-type slot in domain class
