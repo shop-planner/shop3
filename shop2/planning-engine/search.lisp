@@ -86,7 +86,7 @@
 ;;;                   seek-plans-nonprimitive, seek-plans-null
 (defmethod seek-plans ((domain domain) state tasks top-tasks
                        partial-plan partial-plan-cost depth
-                       which-plans protections unifier more-tasks-p)
+                       which-plans protections unifier)
   #+nil (declare (:explain :calls))     ; diagnose Allegro compilation
   (when (time-expired-p)
     (if *print-stats* (format t "~%Terminating because the time limit has expired."))
@@ -115,15 +115,13 @@
              (when task1
                (seek-plans-task domain task1 state tasks top-tasks
                                 partial-plan partial-plan-cost depth
-                                which-plans protections unifier
-                                more-tasks-p)))
+                                which-plans protections unifier)))
            ;; no :IMMEDIATE tasks, so do the rest of the tasks on the agenda
            (if *hand-steer*
                (let ((task1 (user-choose-task top-tasks unifier)))
                  (seek-plans-task domain task1 state tasks top-tasks
                                   partial-plan partial-plan-cost depth
-                                  which-plans protections unifier
-                                  more-tasks-p)
+                                  which-plans protections unifier)
                  (when-done
                    (return-from seek-plans nil))
                  (trace-print :tasks (get-task-name task1) state
@@ -139,10 +137,10 @@
                                           (task-sorter domain top-tasks unifier))))
                  (if (rest remaining-tasks)
                      (dolist (task1 remaining-tasks)
-                       (seek-plans-task domain task1 state tasks top-tasks
-                                        partial-plan partial-plan-cost depth
-                                        which-plans protections unifier
-                                        t) ; more tasks
+                       (let ((*more-tasks-p* t))
+                         (seek-plans-task domain task1 state tasks top-tasks
+                                          partial-plan partial-plan-cost depth
+                                          which-plans protections unifier))
                        (when-done
                          (return-from seek-plans nil))
                        (trace-print :tasks (get-task-name task1) state
@@ -153,8 +151,7 @@
                      (let ((task1 (first remaining-tasks)))
                        (seek-plans-task domain task1 state tasks top-tasks
                                         partial-plan partial-plan-cost depth
-                                        which-plans protections unifier
-                                        more-tasks-p))))))))))
+                                        which-plans protections unifier))))))))))
 
 (defun choose-immediate-task (immediate-tasks unifier)
   "Which of the set of IMMEDIATE-TASKS should SHOP2 work on
@@ -197,7 +194,7 @@ of SHOP2."
 
 (defmethod seek-plans-task ((domain domain) task1 state tasks top-tasks
                             partial-plan partial-plan-cost depth
-                            which-plans protections unifier more-tasks-p)
+                            which-plans protections unifier)
   (trace-print :tasks (get-task-name task1) state
                "~2%Depth ~s, trying task ~s"
                depth
@@ -206,14 +203,14 @@ of SHOP2."
   (if (primitivep (get-task-name task1))
       (seek-plans-primitive domain task1 state tasks top-tasks
                             partial-plan partial-plan-cost depth which-plans
-                            protections unifier more-tasks-p)
+                            protections unifier)
       (seek-plans-nonprimitive domain task1 state tasks top-tasks
                                partial-plan partial-plan-cost depth which-plans
-                               protections unifier more-tasks-p)))
+                               protections unifier)))
 
 (defmethod seek-plans-primitive ((domain domain) task1 state tasks top-tasks
                                  partial-plan partial-plan-cost depth which-plans
-                                 protections unifier more-tasks-p)
+                                 protections unifier)
   (let ((task-name (get-task-name task1)))
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag cost)
         (seek-plans-primitive-1 domain task1 state tasks top-tasks
@@ -233,8 +230,8 @@ of SHOP2."
                  (seek-plans domain state tasks1 top-tasks1
                              (cons cost (cons planned-action partial-plan))
                              new-cost (1+ depth) which-plans protections1
-                             unifier1 more-tasks-p)))
-          (if more-tasks-p
+                             unifier1)))
+          (if *more-tasks-p*
               (progn
                 (seek-more-plans)
                 (retract-state-changes state tag)
@@ -276,7 +273,7 @@ of SHOP2."
 
 (defmethod seek-plans-nonprimitive ((domain domain) task1 state tasks
                                     top-tasks partial-plan partial-plan-cost depth
-                                    which-plans protections in-unifier more-tasks-p)
+                                    which-plans protections in-unifier)
   (let* ((task-name (get-task-name task1))
          (task-body (get-task-body task1))
          (methods (methods domain task-name)))
@@ -304,17 +301,16 @@ of SHOP2."
                           (multiple-value-bind (top-tasks1 tasks1)
                               (apply-method-bindings task1 top-tasks tasks reduction u1)
                             (cond ((or results methods) ; is there more work to do?
-                                   (seek-plans domain state tasks1 top-tasks1 partial-plan
-                                               partial-plan-cost (1+ depth) which-plans
-                                               protections u1
-                                               t) ; yes, there is
+                                   (let ((*more-tasks-p* t)) ; yes, there is
+                                     (seek-plans domain state tasks1 top-tasks1 partial-plan
+                                                 partial-plan-cost (1+ depth) which-plans
+                                                 protections u1))
                                    (when-done
                                      (return-from seek-plans-nonprimitive nil)))
                                   (t (return-from seek-plans-nonprimitive ; no, tail call ok
                                        (seek-plans domain state tasks1 top-tasks1 partial-plan
                                                    partial-plan-cost (1+ depth) which-plans
-                                                   protections u1
-                                                   more-tasks-p)))))))))))
+                                                   protections u1)))))))))))
 
 (defun apply-method-bindings (task top-tasks tasks reduction unifier)
   (when *plan-tree*

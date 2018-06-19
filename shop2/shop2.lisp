@@ -747,7 +747,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
            (catch-internal-time
             (seek-plans domain state tasks top-tasks nil 0 0
                         (if (eq which :id-first) :first :all)
-                        nil nil nil))
+                        nil nil))
            (setq new-run-time (- (get-internal-run-time) new-run-time)
                  new-real-time (- (get-internal-real-time) new-real-time)
                  total-run-time (+ total-run-time new-run-time)
@@ -768,7 +768,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
         ((:first :all :shallowest :all-shallowest :random)
          (catch-internal-time
-          (seek-plans domain state tasks top-tasks nil 0 0 which nil nil nil))
+          (seek-plans domain state tasks top-tasks nil 0 0 which nil nil))
          (setq total-expansions *expansions*
                total-inferences *inferences*))))
 

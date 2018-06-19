@@ -114,6 +114,8 @@ will consult the user even in these cases.")
 (defvar *break-on-backtrack* nil
   "If this variable is bound to T, SHOP will enter a break loop upon backtracking.")
 
+(defvar *more-tasks-p* nil
+  "When NIL, it is safe to tail-call any plan-seeking function.")
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Compiler Directives and Macros
@@ -406,7 +408,7 @@ Otherwise it returns FAIL."))
 
 (defgeneric seek-plans-primitive (domain task1 state tasks top-tasks
                                   partial-plan partial-plan-cost depth which-plans
-                                  protections unifier more-tasks-p)
+                                  protections unifier)
   (:documentation "If there is an OPERATOR that is applicable to the primitive TASK1 in STATE,
 then SEEK-PLANS-PRIMITIVE applies that OPERATOR, generates the successor state, updates the current
 partial plan with the OPERATOR, and continues with planning by recursively calling SEEK-PLANS.
@@ -427,19 +429,19 @@ the actions in the partial plan before doing the actual SEEK-PLANS-NULL..."))
 
 (defgeneric seek-plans (domain state tasks top-tasks
                         partial-plan partial-plan-cost depth
-                        which-plans protections unifier more-tasks-p)
+                        which-plans protections unifier)
   (:documentation "Top-level task-decomposition function."))
 
 (defgeneric seek-plans-task (domain task1 state tasks top-tasks
                              partial-plan partial-plan-cost depth
-                             which-plans protections unifier more-tasks-p)
+                             which-plans protections unifier)
   (:documentation "This is a wrapper function that checks whether the current task to be decomposed is primitive or not,
                    and depending on the task's type, it invokes either SEEK-PLANS-PRIMITIVE or SEEK-PLANS-NONPRIMITIVE,
                    which are the real task-decomposition workhorses."))
 
 (defgeneric seek-plans-nonprimitive (domain task1 state tasks top-tasks
                                      partial-plan partial-plan-cost depth
-                                     which-plans protections unifier more-tasks-p)
+                                     which-plans protections unifier)
   (:documentation "Applies the HTN method to the current TASK1 and generates the subtasks of TASK.
                    Recursively calls the task-decomposition routine to decompose the subtasks. In the LTML context,
                    What should it do with the OUTPUTS and/or the RESULTS of that method? (TBD) "))
