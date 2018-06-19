@@ -405,8 +405,8 @@ This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."))
 
 (defgeneric seek-plans-primitive (domain task1 state tasks top-tasks
-                                  partial-plan partial-plan-cost depth which-plans protections
-                                  unifier)
+                                  partial-plan partial-plan-cost depth which-plans
+                                  protections unifier more-tasks-p)
   (:documentation "If there is an OPERATOR that is applicable to the primitive TASK1 in STATE,
 then SEEK-PLANS-PRIMITIVE applies that OPERATOR, generates the successor state, updates the current
 partial plan with the OPERATOR, and continues with planning by recursively calling SEEK-PLANS.
@@ -425,19 +425,21 @@ the actions in the partial plan before doing the actual SEEK-PLANS-NULL..."))
 ;;; This would also help plugging ND-SHOP2, and perhaps Yoyo, in the system, since they use their slightly different
 ;;; planner-state versions. [2006/12/28:uk]
 
-(defgeneric seek-plans (domain state tasks top-tasks partial-plan partial-plan-cost depth which-plans
-                          protections unifier)
+(defgeneric seek-plans (domain state tasks top-tasks
+                        partial-plan partial-plan-cost depth
+                        which-plans protections unifier more-tasks-p)
   (:documentation "Top-level task-decomposition function."))
 
-(defgeneric seek-plans-task (domain task1 state tasks top-tasks partial-plan
-                             partial-plan-cost depth which-plans protections unifier)
+(defgeneric seek-plans-task (domain task1 state tasks top-tasks
+                             partial-plan partial-plan-cost depth
+                             which-plans protections unifier more-tasks-p)
   (:documentation "This is a wrapper function that checks whether the current task to be decomposed is primitive or not,
                    and depending on the task's type, it invokes either SEEK-PLANS-PRIMITIVE or SEEK-PLANS-NONPRIMITIVE,
                    which are the real task-decomposition workhorses."))
 
 (defgeneric seek-plans-nonprimitive (domain task1 state tasks top-tasks
-                                     partial-plan partial-plan-cost depth which-plans protections
-                                     unifier)
+                                     partial-plan partial-plan-cost depth
+                                     which-plans protections unifier more-tasks-p)
   (:documentation "Applies the HTN method to the current TASK1 and generates the subtasks of TASK.
                    Recursively calls the task-decomposition routine to decompose the subtasks. In the LTML context,
                    What should it do with the OUTPUTS and/or the RESULTS of that method? (TBD) "))
