@@ -303,6 +303,7 @@ structure could be removed, and a true struct could be used instead."
   (:method ((domain domain) (task-name symbol))
     (gethash task-name (domain-methods domain)))
   (:method :around (domain task-name)
+    (declare (ignorable domain))
     (let ((methods (call-next-method)))
       (unless methods
         (cerror "Continue anyway." 'no-method-for-task :task-name task-name))
@@ -311,10 +312,10 @@ structure could be removed, and a true struct could be used instead."
 (defgeneric sort-methods (domain methods which-plans)
   (:documentation "Sort a list of METHODS in DOMAIN according to WHICH-PLANS.")
   (:method (domain (methods list) (which-plans symbol))
-    (declare (ignore domain))
+    (declare (ignorable domain))
     methods)
   (:method (domain (methods list) (which-plans (eql :random)))
-    (declare (ignore domain))
+    (declare (ignorable domain))
     (randomize-list methods)))
 
 (defgeneric sort-results (domain results unifiers which-plans)
@@ -322,9 +323,11 @@ structure could be removed, and a true struct could be used instead."
    "Sort lists of RESULTS and UNIFIERS in DOMAIN according to WHICH-PLANS
 and return the new RESULTS and UNIFIERS.")
   (:method (domain (results list) (unifiers list) (which-plans symbol))
+    (declare (ignorable domain))
     (values results
             unifiers))
   (:method (domain (results list) (unifiers list) (which-plans (eql :random)))
+    (declare (ignorable domain))
     (let ((results&unifiers (randomize-list (pairlis results unifiers))))
       (values (mapcar #'car results&unifiers)
               (mapcar #'cdr results&unifiers)))))
@@ -398,7 +401,7 @@ generic function (most likely using the domain argument).  Returns a
 sorted list of tasks in the order in which they should be expanded.
 A failure can be triggered by returning NIL.")
   (:method ((domain domain) tasks unifier)
-    (declare (ignore unifier))
+    (declare (ignorable unifier))
     tasks))
 
 (defgeneric sort-tasks (domain tasks unifier which-plans)
@@ -410,7 +413,7 @@ WHICH-PLANS argument for EQL-specialization.")
     (task-sorter domain tasks unifier))
   (:method (domain (tasks list) unifier (which-plans (eql :random)))
     "Uniformly randomize the list of tasks (originally for Monroe)."
-    (declare (ignore domain unifier))
+    (declare (ignorable domain unifier))
     (randomize-list tasks)))
 
 (defgeneric process-pre (domain precondition)
