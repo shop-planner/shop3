@@ -311,10 +311,10 @@ structure could be removed, and a true struct could be used instead."
 (defgeneric sort-methods (domain methods which-plans)
   (:documentation "Sort a list of METHODS in DOMAIN according to WHICH-PLANS.")
   (:method (domain (methods list) (which-plans symbol))
-    (declare (ignorable domain))
+    (declare (ignore domain))
     methods)
   (:method (domain (methods list) (which-plans (eql :random)))
-    (declare (ignorable domain))
+    (declare (ignore domain))
     (randomize-list methods)))
 
 (defgeneric sort-results (domain results unifiers which-plans)
@@ -398,7 +398,7 @@ generic function (most likely using the domain argument).  Returns a
 sorted list of tasks in the order in which they should be expanded.
 A failure can be triggered by returning NIL.")
   (:method ((domain domain) tasks unifier)
-    (declare (ignorable unifier))
+    (declare (ignore unifier))
     tasks))
 
 (defgeneric sort-tasks (domain tasks unifier which-plans)
@@ -410,7 +410,7 @@ WHICH-PLANS argument for EQL-specialization.")
     (task-sorter domain tasks unifier))
   (:method (domain (tasks list) unifier (which-plans (eql :random)))
     "Uniformly randomize the list of tasks (originally for Monroe)."
-    (declare (ignorable domain unifier))
+    (declare (ignore domain unifier))
     (randomize-list tasks)))
 
 (defgeneric process-pre (domain precondition)
