@@ -199,6 +199,9 @@
              ;; classes and methods to be specialized
              #:domain
              #:task-sorter
+             #:sort-tasks
+             #:sort-methods
+             #:sort-results
              #:process-operator
              #:process-op
              #:process-axiom

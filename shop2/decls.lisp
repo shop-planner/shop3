@@ -295,15 +295,45 @@ structure could be removed, and a true struct could be used instead."
   (cost-fun nil))
 
 ;;;------------------------------------------------------------------------------------------------------
-;;; CLOS Generic Method Definitions
+;;; CLOS Generic Function Definitions
 ;;;------------------------------------------------------------------------------------------------------
 (defgeneric methods (domain task-name)
-  (:documentation "Return a list of all the SHOP2
-methods for TASK-NAME in DOMAIN."))
+  (:documentation
+   "Return a list of all the SHOP2 methods for TASK-NAME in DOMAIN.")
+  (:method ((domain domain) (task-name symbol))
+    (gethash task-name (domain-methods domain)))
+  (:method :around (domain task-name)
+    (let ((methods (call-next-method)))
+      (unless methods
+        (cerror "Continue anyway." 'no-method-for-task :task-name task-name))
+      methods)))
+
+(defgeneric sort-methods (domain methods which-plans)
+  (:documentation "Sort a list of METHODS in DOMAIN according to WHICH-PLANS.")
+  (:method (domain (methods list) (which-plans symbol))
+    (declare (ignorable domain))
+    methods)
+  (:method (domain (methods list) (which-plans (eql :random)))
+    (declare (ignorable domain))
+    (randomize-list methods)))
+
+(defgeneric sort-results (domain results unifiers which-plans)
+  (:documentation
+   "Sort lists of RESULTS and UNIFIERS in DOMAIN according to WHICH-PLANS
+and return the new RESULTS and UNIFIERS.")
+  (:method (domain (results list) (unifiers list) (which-plans symbol))
+    (values results
+            unifiers))
+  (:method (domain (results list) (unifiers list) (which-plans (eql :random)))
+    (let ((results&unifiers (randomize-list (pairlis results unifiers))))
+      (values (mapcar #'car results&unifiers)
+              (mapcar #'cdr results&unifiers)))))
 
 (defgeneric operator (domain task-name)
   (:documentation "Return the SHOP2 operator (if any)
-defined for TASK-NAME in DOMAIN."))
+defined for TASK-NAME in DOMAIN.")
+  (:method ((domain domain) (name symbol))
+    (gethash name (domain-operators domain))))
 
 (defgeneric install-domain (domain &optional redefine-ok)
   (:documentation "Record DOMAIN for later retrieval.
@@ -366,15 +396,22 @@ installation in the axioms table of DOMAIN."))
 to expand.  SHOP2 search behavior can be changed by specializing this
 generic function (most likely using the domain argument).  Returns a
 sorted list of tasks in the order in which they should be expanded.
-A failure can be triggered by returning NIL."))
+A failure can be triggered by returning NIL.")
+  (:method ((domain domain) tasks unifier)
+    (declare (ignorable unifier))
+    tasks))
 
-(defmethod methods ((domain domain) (name symbol))
-  (gethash name (domain-methods domain)))
-
-(defmethod operator ((domain domain) (name symbol))
-  (gethash name (domain-operators domain)))
-
-
+(defgeneric sort-tasks (domain tasks unifier which-plans)
+  (:documentation "Sort the list of pending TASKS in DOMAIN.
+This is a replacement for TASK-SORTER that takes an additional
+WHICH-PLANS argument for EQL-specialization.")
+  (:method (domain tasks unifier (which-plans symbol))
+    "Call TASK-SORTER by default for backward compatibility."
+    (task-sorter domain tasks unifier))
+  (:method (domain (tasks list) unifier (which-plans (eql :random)))
+    "Uniformly randomize the list of tasks (originally for Monroe)."
+    (declare (ignorable domain unifier))
+    (randomize-list tasks)))
 
 (defgeneric process-pre (domain precondition)
   (:documentation "Preprocess the PRECONDITION in accordance with
@@ -630,9 +667,11 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 ;;;---------------------------------------------------------------------------
 ;;; Miscellaneous utilities from Monroe
 ;;;---------------------------------------------------------------------------
-(defun randomize-list (lst)
-  "Returns a copy of LST with all its members in a random order."
-  (nshuffle-list lst))
+(defun randomize-list (list)
+  "Return a copy of LIST with all its members in a random order."
+  (if (cdr list)
+      (nshuffle-list list)
+      list))
 
 (defun nshuffle-list (list)
   "Shuffle the list using an intermediate vector."

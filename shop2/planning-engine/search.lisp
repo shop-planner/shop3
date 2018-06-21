@@ -129,12 +129,7 @@
                               depth
                               task1)
                  (backtrack "Task ~S failed" task1))
-               ;; this is permutation search over the orderings of the
-               ;; TOP-TASKS, or over a randomized list of tasks if
-               ;; *WHICH* is :RANDOM (for Monroe) [2017/06/23:rpg]
-               (let ((remaining-tasks (if (eq *which* :random)
-                                          (randomize-list top-tasks)
-                                          (task-sorter domain top-tasks unifier))))
+               (let ((remaining-tasks (sort-tasks domain top-tasks unifier which-plans)))
                  (if (rest remaining-tasks)
                      (dolist (task1 remaining-tasks)
                        (let ((*more-tasks-p* t))
@@ -159,12 +154,6 @@ first?  Defaults to the first element, unless the user intervenes."
   (if *hand-steer*
       (user-choose-task immediate-tasks unifier t)
       (car immediate-tasks)))
-
-(defmethod task-sorter ((domain domain) task-list unifier)
-  "The default task-sorter method simply loops through the
-elements of task-list."
-  (declare (ignore unifier))
-  task-list)
 
 (defun user-choose-task (task-list unifier &optional (immediate nil))
   "Function called to allow a user to choose the next task for expansion, instead
@@ -274,43 +263,35 @@ of SHOP2."
 (defmethod seek-plans-nonprimitive ((domain domain) task1 state tasks
                                     top-tasks partial-plan partial-plan-cost depth
                                     which-plans protections in-unifier)
-  (let* ((task-name (get-task-name task1))
-         (task-body (get-task-body task1))
-         (methods (methods domain task-name)))
-    (unless methods
-      (error 'no-method-for-task :task-name task-name))
-    ;; for Monroe [2017/06/23:rpg]
-    (when (eq *which* :random)
-      (setf methods (randomize-list methods)))
-    (loop for (method . methods) on methods
-          do (multiple-value-bind (result1 unifier1)
-                 (apply-method domain state task-body method protections depth in-unifier)
-               (when result1
-                 ;; for Monroe [2017/06/23:rpg]
-                 (when (eq *which* :random)
-                   (setf result1 (randomize-list result1)))
-                 (loop for ((label . reduction) . results) on result1
-                       as u1 in unifier1
-                       when *plan-tree* do (record-reduction task1 reduction u1)
-                       do (trace-print :methods label state
-                                       "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
-                                       depth label task1 (fourth method) reduction)
-                          (trace-print :tasks task-name state
-                                       "~2%Depth ~s, reduced task ~s~% reduction ~s"
-                                       depth task1 reduction)
-                          (multiple-value-bind (top-tasks1 tasks1)
-                              (apply-method-bindings task1 top-tasks tasks reduction u1)
-                            (cond ((or results methods) ; is there more work to do?
-                                   (let ((*more-tasks-p* t)) ; yes, there is
+  (loop with task-name = (get-task-name task1)
+        with task-body = (get-task-body task1)
+        for (method . methods) on (sort-methods domain (methods domain task-name) which-plans)
+        do (multiple-value-bind (result1 unifier1)
+               (apply-method domain state task-body method protections depth in-unifier)
+             (multiple-value-bind (result1 unifier1)
+                 (sort-results domain result1 unifier1 which-plans)
+               (loop for ((label . reduction) . results) on result1
+                     as u1 in unifier1
+                     when *plan-tree* do (record-reduction task1 reduction u1)
+                     do (trace-print :methods label state
+                                     "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
+                                     depth label task1 (fourth method) reduction)
+                        (trace-print :tasks task-name state
+                                     "~2%Depth ~s, reduced task ~s~% reduction ~s"
+                                     depth task1 reduction)
+                        (multiple-value-bind (top-tasks1 tasks1)
+                            (apply-method-bindings task1 top-tasks tasks reduction u1)
+                          (cond ((or results methods) ; is there more work to do?
+                                 (let ((*more-tasks-p* t)) ; yes, there is
+                                   (seek-plans domain state tasks1 top-tasks1 partial-plan
+                                               partial-plan-cost (1+ depth) which-plans
+                                               protections u1))
+                                 (when-done
+                                   (return-from seek-plans-nonprimitive nil)))
+                                (t (return-from seek-plans-nonprimitive ; no, tail call ok
                                      (seek-plans domain state tasks1 top-tasks1 partial-plan
                                                  partial-plan-cost (1+ depth) which-plans
-                                                 protections u1))
-                                   (when-done
-                                     (return-from seek-plans-nonprimitive nil)))
-                                  (t (return-from seek-plans-nonprimitive ; no, tail call ok
-                                       (seek-plans domain state tasks1 top-tasks1 partial-plan
-                                                   partial-plan-cost (1+ depth) which-plans
-                                                   protections u1)))))))))))
+                                                 protections u1))))))))))
 
 (defun apply-method-bindings (task top-tasks tasks reduction unifier)
   (when *plan-tree*
