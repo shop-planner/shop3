@@ -63,7 +63,7 @@
 
 (defmacro when-done (&body body)
   `(when (and *plans-found*
-              (or (eq which-plans :first) (eq which-plans :random))
+              (or (eq which-plans :first) (eq which-plans :random) (eq which-plans :mcts))
               (not (optimize-continue-p which-plans)))
      ,@body))
 
