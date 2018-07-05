@@ -63,7 +63,9 @@
 
 (defmacro when-done (&body body)
   `(when (and *plans-found*
-              (or (eq which-plans :first) (eq which-plans :random) (eq which-plans :mcts))
+              (case which-plans
+                ((:first :random :mcts) t)
+                (otherwise nil))
               (not (optimize-continue-p which-plans)))
      ,@body))
 
@@ -440,7 +442,6 @@ This function just throws away the costs."
 
 ;;; This function returns true iff additional optimization needs to be done.
 (defun optimize-continue-p (which)
-  (assert (or (eq which :first) (eq which :random) (eq which :all)))
   (cond
    ((not *optimize-cost*) nil)
    ;; added this so that we can terminate immediately if we're
