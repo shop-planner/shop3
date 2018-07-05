@@ -334,7 +334,7 @@ Otherwise it returns FAIL."
                            task-body
                            answers)
               (return-from apply-method 
-                (values answers unifiers depends (apply-substitution (second method) task-unifier))))
+                (values answers unifiers depends (apply-substitution (second standardized-method) task-unifier))))
             (progn
               (trace-print :methods (first body) state
                          "~2%Depth ~s, inapplicable method ~s~%      task ~s"
