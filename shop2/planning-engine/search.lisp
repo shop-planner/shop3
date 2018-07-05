@@ -270,30 +270,31 @@ of SHOP2."
         for (method . methods) on (sort-methods domain (methods domain task-name) which-plans)
         do (multiple-value-bind (result1 unifier1)
                (apply-method domain state task-body method protections depth in-unifier)
-             (multiple-value-bind (result1 unifier1)
-                 (sort-results domain result1 unifier1 which-plans)
-               (loop for ((label . reduction) . results) on result1
-                     as u1 in unifier1
-                     when *plan-tree* do (record-reduction task1 reduction u1)
-                     do (trace-print :methods label state
-                                     "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
-                                     depth label task1 (fourth method) reduction)
-                        (trace-print :tasks task-name state
-                                     "~2%Depth ~s, reduced task ~s~% reduction ~s"
-                                     depth task1 reduction)
-                        (multiple-value-bind (top-tasks1 tasks1)
-                            (apply-method-bindings task1 top-tasks tasks reduction u1)
-                          (cond ((or results methods) ; is there more work to do?
-                                 (let ((*more-tasks-p* t)) ; yes, there is
-                                   (seek-plans domain state tasks1 top-tasks1 partial-plan
-                                               partial-plan-cost (1+ depth) which-plans
-                                               protections u1))
-                                 (when-done
-                                   (return-from seek-plans-nonprimitive nil)))
-                                (t (return-from seek-plans-nonprimitive ; no, tail call ok
-                                     (seek-plans domain state tasks1 top-tasks1 partial-plan
-                                                 partial-plan-cost (1+ depth) which-plans
-                                                 protections u1))))))))))
+             (when result1
+               (multiple-value-bind (result1 unifier1)
+                   (sort-results domain result1 unifier1 which-plans)
+                 (loop for ((label . reduction) . results) on result1
+                       as u1 in unifier1
+                       when *plan-tree* do (record-reduction task1 reduction u1)
+                         do (trace-print :methods label state
+                                         "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
+                                         depth label task1 (fourth method) reduction)
+                            (trace-print :tasks task-name state
+                                         "~2%Depth ~s, reduced task ~s~% reduction ~s"
+                                         depth task1 reduction)
+                            (multiple-value-bind (top-tasks1 tasks1)
+                                (apply-method-bindings task1 top-tasks tasks reduction u1)
+                              (cond ((or results methods) ; is there more work to do?
+                                     (let ((*more-tasks-p* t)) ; yes, there is
+                                       (seek-plans domain state tasks1 top-tasks1 partial-plan
+                                                   partial-plan-cost (1+ depth) which-plans
+                                                   protections u1))
+                                     (when-done
+                                       (return-from seek-plans-nonprimitive nil)))
+                                    (t (return-from seek-plans-nonprimitive ; no, tail call ok
+                                         (seek-plans domain state tasks1 top-tasks1 partial-plan
+                                                     partial-plan-cost (1+ depth) which-plans
+                                                     protections u1)))))))))))
 
 (defun apply-method-bindings (task top-tasks tasks reduction unifier)
   (when *plan-tree*
