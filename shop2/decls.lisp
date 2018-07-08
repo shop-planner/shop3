@@ -303,7 +303,7 @@ structure could be removed, and a true struct could be used instead."
   (:method ((domain domain) (task-name symbol))
     (gethash task-name (domain-methods domain)))
   (:method :around (domain task-name)
-    (declare (ignorable domain))
+    (declare (ignorable domain task-name))
     (let ((methods (call-next-method)))
       (unless methods
         (cerror "Continue anyway." 'no-method-for-task :task-name task-name))
