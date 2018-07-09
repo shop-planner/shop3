@@ -277,7 +277,9 @@
              ;; exporting for val
              #:validator-export
              #:write-pddl-plan
-             ))
+
+             ;; exporting so that it can be overridden
+             plan-value))
 
 (defpackage :shop2-user
     (:nicknames :shop-user)
