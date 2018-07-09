@@ -275,6 +275,9 @@ using MAKE-INITIAL-STATE.")
                        (:constructor makeliststate)
                        (:copier nil)))
 
+(defmethod state->state-type ((state list-state))
+  :list)
+
 
 
 
@@ -366,8 +369,10 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod make-initial-state (domain (state-encoding (eql :hash)) atoms &key)
   (declare (ignore domain))
-  (make-hash-state atoms)
-  )
+  (make-hash-state atoms))
+
+(defmethod state->state-type ((state hash-state))
+  :hash)
 
 
 (defun make-hash-state (atoms)
@@ -427,8 +432,10 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod make-initial-state (domain (state-encoding (eql :mixed)) atoms &key)
   (declare (ignore domain))
-   (make-mixed-state atoms)
-  )
+   (make-mixed-state atoms))
+
+(defmethod state->state-type ((state mixed-state))
+  :mixed)
 
 (defun make-mixed-state (atoms)
  (let ((st (makemixedstate)))
@@ -504,8 +511,10 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod make-initial-state (domain (state-encoding (eql :bit)) atoms &key)
   (declare (ignore domain))
-  (make-bit-state atoms)
-)
+  (make-bit-state atoms))
+
+(defmethod state->state-type ((state bit-state))
+  :bit)
 
 
 

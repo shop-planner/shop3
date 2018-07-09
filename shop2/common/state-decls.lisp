@@ -141,3 +141,9 @@ instance.")
 (defgeneric last-establisher (state literal)
   (:documentation "Return the action that last established LITERAL
 before STATE."))
+
+
+(defgeneric state->state-type (state)
+  (:documentation "Return the state-type keyword for STATE.")
+  (:method (state)
+    (error "No state type recorded for ~a." state)))

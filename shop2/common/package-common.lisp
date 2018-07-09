@@ -85,6 +85,7 @@
              #:tag-state
              #:make-state
              #:replay-state-changes
+             #:state->state-type
 
              ;; recording establishers
              #:decode-tag
