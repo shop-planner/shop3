@@ -15,7 +15,8 @@
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                  (no-dependencies nil)
                                  repairable
-                                 (out-stream t))
+                                 (out-stream t)
+                                 (which :first))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
@@ -43,6 +44,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          (*no-dependencies* no-dependencies)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
+         (*which* which)
          (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
@@ -84,7 +86,8 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
     (set-variable-property domain tasks)
 
     (unwind-protect
-        (seek-plans-stack search-state domain :which :first
+        (seek-plans-stack search-state domain
+                          :which which
                           :repairable repairable)
       (setq total-run-time (- (get-internal-run-time) start-run-time)
             total-real-time (- (get-internal-real-time)
@@ -111,7 +114,6 @@ List of PLANS -- currently there is always only one, but this complies
 List of PLAN-TREES -- optional
 List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
     supplied."
-  (declare (ignorable which))
   ;; kick off the stack VM
   (setf (mode state) 'test-for-done)
   (catch 'search-failed
@@ -141,7 +143,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
              (setf (mode state) 'expand-task)
              (stack-backtrack state)))
         (prepare-to-choose-toplevel-task
-         (let ((tasks (task-sorter domain (top-tasks state) (unifier state))))
+         (let ((tasks (sort-tasks domain (top-tasks state) (unifier state) which)))
            (unless tasks (error "Should never get to ~A with no top-tasks." (mode state)))
            (setf (alternatives state) tasks
                  (mode state) 'pop-toplevel-task)))
@@ -190,9 +192,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
         (prepare-to-choose-method
          (let* ((task-name (get-task-name (current-task state)))
                 (methods (methods domain task-name)))
-           ;; possibly the following should be a continuable error.
-           (unless methods (error "No methods for complex task ~a" task-name))
-           (setf (alternatives state) methods)
+           (setf (alternatives state) (sort-methods domain methods which))
            (setf (mode state) 'choose-method)))
         (choose-method
          (if (choose-method-state state domain)
@@ -314,7 +314,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (setf alternatives
                   (if *record-dependencies-p*
                       (mapcar #'list expansions unifiers dependencies)
-                      (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers)))
+                      (multiple-value-bind (expansions unifiers)
+                          (sort-results domain expansions unifiers *which*)
+                        (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers))))
             t))))))
 
 (defgeneric expand-primitive-state (state domain))
