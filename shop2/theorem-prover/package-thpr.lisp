@@ -112,7 +112,6 @@
              #:bad-argument
              #:non-ground-error
              #:theorem-prover-condition
-	     #:incomplete-dependency-error
 
              ;; tracking dependencies
              #:*record-dependencies-p*

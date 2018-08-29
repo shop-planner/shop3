@@ -82,8 +82,8 @@ will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
            (values (list ,bindings) (list ,dependencies))
-	   (real-seek-satisfiers ,d ,goals ,state
-				 ,bindings ,level ,just1 ,dependencies)))))
+           (real-seek-satisfiers ,d ,goals ,state
+                                 ,bindings ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain record-dependencies)
   (:documentation 
@@ -210,14 +210,9 @@ or all answers (nil)."
         (setf goal1 (if (= (length goal1) 1)
                         (first goal1)
                         (cons 'and goal1)))))
-    (handler-bind
-	((incomplete-dependency-error
-	  #'(lambda (c)
-	      (format t "~%Caught the INCOMPLETE-DEPENDENCY-ERROR (~s) during logical operation ~s on expression: ~s"
-		      c (logical-op c) (expression c))
-	      (continue c))))
-      (real-seek-satisfiers-for domain (car goal1) goal1 remaining
-				state bindings level just1 dependencies-in))))
+
+    (real-seek-satisfiers-for domain (car goal1) goal1 remaining
+                              state bindings level just1 dependencies-in)))
 
 (defmacro def-logical-keyword ((name domain-specializer) &body forms)
   "(def-logical-keyword name domain-specializer options &body forms) where forms
@@ -460,11 +455,9 @@ in the goal, so we ignore the extra reference."
 
   (when *record-dependencies-p*
     (unless (or *negation-deps-ok* (groundp (first arguments)))
-      (setf *negation-deps-ok* t)
-      (signal 'incomplete-dependency-error :logical-op "negation (NOT)" :expression arguments)
-      ;;		 "Simply return no new dependencies."
-      ;;		 "We do not have correct logic for computing arbitrary dependencies for negations.")
-      ))
+      (cerror "Simply return no new dependencies."
+              "We do not have correct logic for computing arbitrary dependencies for negations.")
+      (setf *negation-deps-ok* t)))
   ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
   (cond
     ((let ((*record-dependencies-p* nil))
@@ -644,8 +637,9 @@ in the goal, so we ignore the extra reference."
                                        state bindings newlevel just1 dependencies-in
                                        &aux new-dependencies)
   ;; DEPENDENCIES in is a single set of dependencies.
-  (when (and *record-dependencies-p*
-	     (not (static-bounds-p domain (second arguments))))
+  (when (and
+         *record-dependencies-p*
+         (not (static-bounds-p domain (second arguments))))
     (cerror "Simply return no new dependencies."
             "We do not have correct logic for computing dependencies for FORALL."))
   (let* ((bounds (second arguments))
@@ -700,10 +694,8 @@ in the goal, so we ignore the extra reference."
                                              state bindings newlevel just1 dependencies-in)
   ;; (setof ?var expr ?outvar)
   (when *record-dependencies-p*
-    (signal 'incomplete-dependency-error :logical-op "SETOF" :expression arguments))
-
-    ;; (cerror "Simply return no new dependencies."
-       ;;     "We do not have correct logic for computing dependencies for SETOF."))
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for SETOF."))
   (destructuring-bind (var bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
@@ -726,9 +718,8 @@ in the goal, so we ignore the extra reference."
                                              state bindings newlevel just1 dependencies-in)
   ;; (bagof ?var expr ?outvar)
   (when *record-dependencies-p*
-    (signal 'incomplete-dependency-error :logical-op "BAGOF" :expression arguments))
-    ;;(cerror "Simply return no new dependencies."
-      ;;      "We do not have correct logic for computing dependencies for BAGOF."))
+    (cerror "Simply return no new dependencies."
+            "We do not have correct logic for computing dependencies for BAGOF."))
   (destructuring-bind (var bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
