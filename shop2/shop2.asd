@@ -94,6 +94,11 @@
                              (:file "plan-tree")
                              (:file "backtrack-stack")
                              (:file "explicit-search")))
+
+       (:module "looping-tasks"
+		:serial t
+		:components ((:file "loop-extensions")))
+       
        ;; this is for the original SHOP2 plan trees.
        (:module tree
         :pathname "planning-tree/"
