@@ -240,6 +240,19 @@ warnings, errors, etc.")
                      (correct-arity condition)
                      (expression condition)))))
 
+(define-condition incomplete-dependency-error (error theorem-prover-condition)
+  ((logical-op
+    :initarg :logical-op
+    :reader logical-op
+    )
+   (expression
+    :initarg :expression
+    :reader expression))
+  (:report (lambda (condition stream)
+	     (format stream "We do not have correct logic for computing dependencies for expression ~a. Simply return no new dependencies."
+		     (expression condition)))))
+    
+
 ;;; used for the internals of IF-THEN-ELSE in the theorem-prover
 (define-condition cut-commit (condition)
   ())

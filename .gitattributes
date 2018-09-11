@@ -719,6 +719,7 @@ shop2/find-uses.bash -text
 shop2/io/debugging.lisp -text
 shop2/io/output.lisp -text
 shop2/io/shop-pprint.lisp svneol=native#text/x-lisp
+shop2/looping-tasks/loop-extensions.lisp -text
 shop2/minimal-subtree/README.txt svneol=native#text/plain
 shop2/minimal-subtree/decls.lisp svneol=native#text/x-lisp
 shop2/minimal-subtree/figures/test-shop2-plan.dot -text

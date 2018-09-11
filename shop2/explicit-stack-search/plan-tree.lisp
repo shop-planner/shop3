@@ -157,8 +157,8 @@ Particularly useful for structures, but could be generally applicable."
                             (primitive-tree-node nil)
                             (complex-tree-node
                              (iter (for tree-node in (complex-tree-node-children plan-tree))
-                               (as result = (tree-search tree-node))
-                               (when result (return-from find-task-in-tree result))))))))
+				   (as result = (tree-search tree-node))
+				   (when result (return-from find-task-in-tree result))))))))
              (or
               (tree-search plan-tree)
               (error "No plan tree node for task ~S" task))))

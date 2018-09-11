@@ -85,7 +85,6 @@ Otherwise it returns FAIL."
          operator-unifier pre protections1 tempdel tempadd statetag
          head-subbed dels-subbed adds-subbed pu pd unifier
          cost-value cost-number)
-
     ;; added rudimentary arity-checking...
     (when (and (well-formed-listp head)
                (well-formed-listp task-body))
@@ -288,7 +287,6 @@ Otherwise it returns FAIL."
         (multiple-value-setq (state-unifiers dependencies)
           (shopthpr:find-satisfiers pre state nil 0
                                     :domain domain))
-
         (if state-unifiers
             (let* ((answers-with-duplicates
                      (if *record-dependencies-p*

@@ -260,7 +260,8 @@
              #:task-arity-mismatch
              #:singleton-variable
              #:incorrect-arity-error
-
+	     #:incomplete-dependency-error
+	     
              ;; things you might want to use in your domain definitions
              #:variablep
 
