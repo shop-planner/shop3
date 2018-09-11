@@ -136,7 +136,7 @@
 							   parent (plan-tree-lookup ess-search-state))))
 
 		  ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
-#|		  (push (make-add-child-to-tree :parent
+		  (push (make-add-child-to-tree :parent
 						 (if (typep child 'plan-tree::complex-tree-node)
 						     (plan-tree::complex-tree-node-task
 						      child)
@@ -150,8 +150,6 @@
 							    child)))
 						 )
 			backtrack-stack)
-		  |#
-		  (format t "~%Not here....")
 		  ))))
 	  (format t "~%Loop task decomposed...~%")
 	  ))
