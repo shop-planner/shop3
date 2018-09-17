@@ -112,45 +112,49 @@
 ;	  (format t "~%State atoms: ~s" (state-atoms state))
 ;	  (format t "~%Pre: ~s" pre)
 ;	  (format t "~%Unifiers: ~s" unifiers)
+;	  (format t "~%In unifier: ~s" in-unifier)
 	  (iter
 	   (for u in unifiers)
 	   (let* ((u1 (compose-substitutions u in-unifier))
 		  ;(condition (apply-substitution (rest (second task-body)) u1))
-		  (subtasks (apply-substitution (rest (third task-body)) u1)))
+		  (subtasks (apply-substitution (rest (third
+						       task-body)) u1)))
+	     (format t "~%Subtasks: ~s" subtasks)
 	     (setf reductions (generate-reductions domain reductions
-						   subtasks))))
-	  (when *enhanced-plan-tree*
-	    (with-slots (backtrack-stack current-task)
-			ess-search-state
-;	       (format t "~%Current task: ~s" current-task)
-	       (setf (current-task ess-search-state)
-		     (apply-substitution current-task unifiers))
-;	       (format t "~%Reductions: ~s" reductions)
-	       (iter
-		(for reduction in reductions)
-;		(format t " ~%Reduction in the tree: ~s" reduction)
-		(let* ((parent (plan-tree:find-task-in-tree
-				(current-task ess-search-state)
-				(plan-tree-lookup ess-search-state)))
-		       (child (make-plan-tree-for-task-net reduction
-							   parent (plan-tree-lookup ess-search-state))))
-
-		  ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
-		  (push (make-add-child-to-tree :parent
-						 (if (typep child 'plan-tree::complex-tree-node)
-						     (plan-tree::complex-tree-node-task
-						      child)
-						     (plan-tree::primitive-tree-node-task
-						      child))
-						 :child
-						 (if (typep child 'plan-tree::complex-tree-node)
-						     (plan-tree::complex-tree-node-children
-						      child)
-						     (list (plan-tree::primitive-tree-node-task
-							    child)))
-						 )
-			backtrack-stack)
-		  ))))
+						   subtasks))
+	     (when *enhanced-plan-tree*
+	       (with-slots (backtrack-stack current-task)
+			   ess-search-state
+;		  (format t "~%Current task: ~s" (current-task ess-search-state))
+;		  (setf (current-task ess-search-state)
+;			(apply-substitution current-task u1))
+;		  (format t "~%Current task: ~s" (current-task ess-search-state))
+					;	       (format t "~%Reductions: ~s" reductions)
+		  (iter
+		   (for reduction in reductions)
+;		   (format t " ~%Reduction in the tree: ~s" reduction)
+		   (let* ((parent (plan-tree:find-task-in-tree
+				   (current-task ess-search-state)
+				   (plan-tree-lookup ess-search-state)))
+			  (child (make-plan-tree-for-task-net reduction
+							      parent (plan-tree-lookup ess-search-state))))
+		     
+		     ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
+		     (push (make-add-child-to-tree :parent
+						   (if (typep child 'plan-tree::complex-tree-node)
+						       (plan-tree::complex-tree-node-task
+							child)
+						       (plan-tree::primitive-tree-node-task
+							child))
+						   :child
+						   (if (typep child 'plan-tree::complex-tree-node)
+						       (plan-tree::complex-tree-node-children
+							child)
+						       (list (plan-tree::primitive-tree-node-task
+							      child)))
+						   )
+			   backtrack-stack)
+		     ))))))
 	  (format t "~%Loop task decomposed...~%")
 	  ))
      
