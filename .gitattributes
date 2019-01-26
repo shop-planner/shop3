@@ -695,6 +695,9 @@ shop2/examples/satellite/strips/p19.lisp svneol=native#text/x-lisp
 shop2/examples/satellite/strips/p19.pddl -text
 shop2/examples/satellite/strips/p20.lisp svneol=native#text/x-lisp
 shop2/examples/satellite/strips/p20.pddl -text
+shop2/examples/satellite/strips/package.lisp svneol=native#text/x-lisp
+shop2/examples/satellite/strips/translate-problems.lisp svneol=native#text/x-lisp
+shop2/examples/satellite/strips/translate-satellite-problems.asd svneol=native#text/x-lisp
 shop2/examples/shop2-test.lisp -text
 shop2/examples/test-assign-star.lisp -text
 shop2/examples/test-plan-tree.lisp -text
