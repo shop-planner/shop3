@@ -653,6 +653,7 @@ shop2/examples/rovers/strips/p20.lisp svneol=native#text/x-lisp
 shop2/examples/rovers/strips/p20.pddl -text
 shop2/examples/rovers/strips/problem-converter.lisp svneol=native#text/x-lisp
 shop2/examples/rovers/strips/rovers-problem-translator.asd svneol=native#text/x-lisp
+shop2/examples/satellite/strips/README.md -text
 shop2/examples/satellite/strips/adlSat-cleaned.lisp -text
 shop2/examples/satellite/strips/adlSat.pddl -text
 shop2/examples/satellite/strips/p01.lisp svneol=native#text/x-lisp
