@@ -74,6 +74,21 @@
   ;;; Main Method ;;;
   ;;;;;;;;;;;;;;;;;;;
 
+     ;; FIXME: this will have to be "purified" of IF-THEN-ELSE for
+     ;; plan repair
+     (:method (main)
+       ((goal-have-image ?d ?m)
+        (not (have_image ?d ?m)))
+       (have_image ?d ?m)
+       ((goal-pointing ?s ?d)
+        (not (pointing ?s ?d))
+        (pointing ?s ?d1))
+       (turn_to ?s ?d ?1)
+       ;; no goals left to achieve
+       ()
+       ()
+       )
+
      (:method (have_image ?d ?m)
        ((on_board ?i ?s))
        (:ordered
