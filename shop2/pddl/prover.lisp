@@ -149,6 +149,10 @@
                 (and (vars-boundp (car tree) acc)
                      (every #'(lambda (sexp) (vars-boundp sexp acc))
                             (rest tree))))))
+        ;; FIXME: SBCL knows the following is impossible. I don't know
+        ;; why -- maybe all values in CL are either atoms or lists?  I
+        ;; think actually that's true here, because TREE is always a
+        ;; list.  But heck if I know how SBCL knows.  [2018/04/12:rpg]
          (t (error "Unexpected value in tree: ~S" tree))))
 
 
