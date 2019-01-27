@@ -31,7 +31,7 @@
 ;;; or the LGPL.
 ;;; ----------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2017 Unpublished work
+;;; Smart Information Flow Technologies Copyright 2006-2019 Unpublished work
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
 ;;;
@@ -97,8 +97,8 @@
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
-		:serial t
-		:components ((:file "loop-extensions")))
+                :serial t
+                :components ((:file "loop-extensions")))
        
 
        ;; this is for the original SHOP2 plan trees.
@@ -346,6 +346,20 @@ shop2."
                  (:module "minimal-subtree"
                           :components ((:file "tests")))
                  (:file "replan-tests" :pathname "tests/replan-tests")))
+
+
+(defsystem shop2/test-satellite
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
+    :class shop-fiveam-tester
+    :test-names (("SATELLITE-ADL-TESTS" . "TEST-SATELLITE"))
+    :num-checks 40
+    :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
+                 "pddl-utils")
+    :version (:read-file-form "shop-version.lisp-expr")
+    :pathname "examples/satellite/strips/"
+    :serial t
+    :components ((:file "test-satellite")))
+
 
 #+ecl
 (defmethod perform :before ((op test-op)
