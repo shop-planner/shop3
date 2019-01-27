@@ -79,11 +79,14 @@
      (:method (main)
        ((goal-have-image ?d ?m)
         (not (have_image ?d ?m)))
-       (have_image ?d ?m)
+       (:ordered
+        (have_image ?d ?m)
+        (main))
        ((goal-pointing ?s ?d)
         (not (pointing ?s ?d))
         (pointing ?s ?d1))
-       (turn_to ?s ?d ?1)
+       (:ordered (!turn_to ?s ?d ?d1)
+                 (main))
        ;; no goals left to achieve
        ()
        ()
