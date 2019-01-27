@@ -471,8 +471,6 @@ lists of declared names and type names."
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
 ;;; SHOP2.
 ;;;---------------------------------------------------------------------------
-;;; FIXME: this function should probably take the DOMAIN as argument,
-;;; too, and pass it to find-satisfiers, at least.
 (defun apply-action (domain state task-body action protections depth
                      in-unifier)
   "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then 
@@ -506,6 +504,7 @@ Otherwise it returns FAIL."
       (when (member (first head) *traced-tasks*)
         (break "Applying action for ~A~%~S" (first head) task-body)))
 
+    ;; FIXME: somehow SBCL knows that the IN-UNIFIER here can't be null, but I'm not sure how.
     (let ((action-unifier (unify head (apply-substitution task-body in-unifier))))
 
       (when (eql action-unifier 'fail)
