@@ -17,6 +17,7 @@
 ;;;---------------------------------------------------------------------------
 (defpackage shop2-pddl-helpers
   (:use #:common-lisp #:iterate #:pddl-utils #:shop2)
+  (:nicknames #:shop2.pddl.helpers)
   (:shadowing-import-from #:shop2
                           #:domain-name #:make-problem #:domain)
   (:shadow #:problem-name)
@@ -57,8 +58,12 @@
       (setf new-tree (nsubst new old new-tree)))
     new-tree))
 
+;;; Expects DIVERGENCE to be a list of this form: (:DIVERGENCE (:add|:delete <atom>)*)
 (defun make-divergence-operator (divergence &key (package pddl-utils:*pddl-package*))
-  (assert (eq  (first divergence) :divergence))
+  (assert (and (eq  (first divergence) :divergence)
+               (every #'(lambda (x) (or (eq (first x) :add)
+                                        (eq (first x) :delete)))
+                      (rest divergence))))
   (let* ((effects 
            (iter (for (op literal) in (rest divergence))
              (collecting
