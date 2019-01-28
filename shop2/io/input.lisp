@@ -194,8 +194,8 @@ do NOT emit singleton variable warnings.")
 
 (defmethod process-pre (domain pre)
   "This is the main function that does the pre-processing, it
-looks through the preconditions finding the forall
- conditions and replacing the variables in that condition."
+looks through preconditions, add, and delete lists, finding the
+forall conditions and replacing the variables in them."
   (if (atom pre) pre
     (let ((pre1 (car pre)))
       (if (listp pre1)
@@ -213,7 +213,12 @@ looks through the preconditions finding the forall
                   pre))
          (unless (= (length pre) 4)
            (error "Ill-formed FORALL expression: ~s" pre))
-         (multiple-value-bind (alist vlist) (get-alist (second pre))
+         #|
+         (unless (and (listp (third pre)) (listp (first (third pre))))
+           (error "Ill-formed FORALL expression: ~s -- the bounds, ~s, should be a list of logical expressions" pre (third pre)))
+         (unless (and (listp (fourth pre)) (listp (first (fourth pre))))
+           (error "Ill-formed FORALL expression: ~s -- the consequents, ~s, should be a list of logical expressions" pre (fourth pre)))
+|#         (multiple-value-bind (alist vlist) (get-alist (second pre))
            `(,pre1 ,vlist
                  ,(process-pre domain  (apply-substitution (third pre) alist))
                  ,(process-pre domain  (apply-substitution (fourth pre) alist)))))
@@ -468,7 +473,7 @@ For backward compatibility, will support also
   ;; ARGS normally are state tasks
   ;; if extra arg is given, then the args are problem-name, domain-name, state,
   ;; and tasks respectively. in that case, we want to ignore domain-name
-  (assert (or (= (length args) 3) (= (length args) 4)))
+  (assert (or (= (length args) 2) (= (length args) 3)))
   `(apply 'make-problem ',problem-name ',args))
 
 (defmacro def-problem-set (list-name problem-list)
