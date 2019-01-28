@@ -352,7 +352,7 @@ shop2."
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
     :test-names (("SATELLITE-ADL-TESTS" . "TEST-SATELLITE"))
-    :num-checks 40
+    :num-checks 80
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
