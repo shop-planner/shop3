@@ -79,12 +79,22 @@
     (let ((bindings
             (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
                    (shop2.common:make-initial-state *domain* (default-state-type *domain*)
-                                                    '((foo a) (foo b) (bar b) (baz b))))))
-      (is (equal '(a b) (sorted-bindings '?x bindings))))
+                                                    '((foo a) (foo b) (bar b) (baz b)
+                                                      (foo c)
+                                                      (foo d) (bar d))))))
+      (is (equal '(a b c) (sorted-bindings '?x bindings))))
     ;; in this context, (NOT (BAR ?X)) has no sensible semantics.  Raise error.
     (signals non-ground-error
      (query '(and (imply (bar ?x) (baz ?x)))
             (shop2.common:make-initial-state *domain* (default-state-type *domain*)
-                                             '((foo a) (foo b) (bar b) (baz b)))))))
+                                             '((foo a) (foo b) (bar b) (baz b))))))
+  (with-fixture pddl-tp-domain ()
+    (let ((bindings
+            (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
+                   (shop2.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar b) (baz b)
+                                                      (foo c)
+                                                      (foo d) (bar d))))))
+      (is (equal '(a b c) (sorted-bindings '?x bindings))))))
 
 

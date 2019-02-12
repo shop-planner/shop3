@@ -70,10 +70,21 @@
     (pddl-satisfiers-for-exists domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
 
+
+;;; FIXME: Actually, the attachment of this inference rule is
+;;; incorrect.  negative-preconditions-mixin only enables negated
+;;; *literals*, not negated *expressions*, which require
+;;; disjunctive-preconditions
 (def-logical-keyword (not (domain shop2::negative-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-not domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
+
+(def-logical-keyword (imply (domain shop2::disjunctive-preconditions-mixin))
+    (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
+        (pddl-satisfiers-for-imply domain (cdr goal) other-goals
+                                   state bindings (1+ level) just1 dependencies-in)))
+
 
 
 (defun pddl-satisfiers-for-forall (domain arguments other-goals
@@ -177,3 +188,10 @@
                   (dependency-for-negation argument state)
                   :prop `(not ,argument))))
          (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in)))))))
+
+
+(defun pddl-satisfiers-for-imply (domain arguments other-goals
+                                   state bindings newlevel just1 dependencies-in)
+  (assert (= (length arguments) 2))
+  (seek-satisfiers `((or (not ,(first arguments)) ,(second arguments)) ,@other-goals) state bindings newlevel just1
+                   :domain domain :dependencies dependencies-in))
