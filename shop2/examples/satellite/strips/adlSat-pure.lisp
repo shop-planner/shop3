@@ -96,17 +96,13 @@
       (:ordered (!turn_to ?s ?d ?d1)
                 (main)))
 
-     ;; FIXME: this check for completion method is not working.
-     ;; I don't know if there's a bug in the handling of implies or
-     ;; something else.
      (:pddl-method (main)
         (and (forall (?d - direction ?m - mode)
-                     (or (not (goal-have-image ?d ?m))
+                     (imply (goal-have-image ?d ?m)
                          (have_image ?d ?m)))
              (forall (?s - satellite ?d - direction)
-                     (or
-                      (not
-                       (goal-pointing ?s ?d))
+                     (imply
+                      (goal-pointing ?s ?d)
                       (pointing ?s ?d))))
         ())
        
