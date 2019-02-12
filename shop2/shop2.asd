@@ -242,7 +242,7 @@ shop2."
                  (theorem-prover-tests . :shop-theorem-prover-tests)
                  (test-plan-repair . :shop-replan-tests)
                  )
-    :num-checks 549
+    :num-checks 550
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
                  "shop2/openstacks"
                  "shop2/pddl-helpers"
