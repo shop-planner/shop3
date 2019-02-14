@@ -10,6 +10,7 @@
 
 (fiveam:test test-plans
   (let ((shop2::*define-silently* t)
+        #+allegro (excl::*redefinition-warnings* (remove :shop2-problem excl:*redefinition-warnings*))
         (directory (asdf:system-relative-pathname "shop2" "examples/satellite/strips/")))
     (load (merge-pathnames "adlSat-cleaned.lisp" directory))
     (let ((domain-file (merge-pathnames "adlSat.pddl" directory)))
@@ -31,10 +32,12 @@
 
 (fiveam:test test-pure-pddl
   (let ((shop2::*define-silently* t)
+        #+allegro (excl::*redefinition-warnings* (remove :shop2-problem excl:*redefinition-warnings*))
         (directory (asdf:system-relative-pathname "shop2" "examples/satellite/strips/")))
     (load (merge-pathnames "adlSat-pure.lisp" directory))
     (let ((domain-file (merge-pathnames "adlSat.pddl" directory)))
-      (loop :for i from 1 :to 20 with standard-plan
+      (loop :for i from 1 :to 20
+            :with standard-plan
             :as probfilename = (format nil "p~2,'0d.pddl" i)
             :as shop-probfilename = (format nil "p~2,'0d.lisp" i)
             :as problem-file = (merge-pathnames probfilename directory)
