@@ -50,7 +50,8 @@
     :precondition (and (stacks-avail ?open)
 		       (next-count ?open ?new-open))
     :effect (and (not (stacks-avail ?open))
-		 (stacks-avail ?new-open) (increase (total-cost) 1))
+		 (stacks-avail ?new-open)
+                 (increase (total-cost) 1))
     )
 
   )
