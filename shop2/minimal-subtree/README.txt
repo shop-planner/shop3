@@ -16,7 +16,7 @@
 * Specification
 
 The specification for =FIND-FAILED-TASK= can be found in the doc
-string for that function (see [[minimal-subtree.lisp]]).  Currently:
+string for that function (see [[file:minimal-subtree.lisp]]).  Currently:
 
 #+BEGIN_QUOTE
    "Return the leftmost failed task in the PLAN that has a
