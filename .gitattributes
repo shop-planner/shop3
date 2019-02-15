@@ -177,6 +177,7 @@ jenkins/compile-shop2.lisp svneol=native#text/x-lisp
 jenkins/full-test-suite.asd -text
 jenkins/run-tests.sh svneol=native#text/plain
 jenkins/start-lisp.sh -text
+jenkins/test-shop-unifier.lisp svneol=native#text/x-lisp
 jenkins/test-shop2-satellite.lisp svneol=native#text/x-lisp
 jenkins/test-shop2.lisp svneol=native#text/x-lisp
 shop2/common/common.lisp -text
@@ -772,6 +773,7 @@ shop2/tests/umt-domain/axioms.lisp svneol=native#text/x-lisp
 shop2/tests/umt-domain/operators.lisp svneol=native#text/x-lisp
 shop2/tests/umt-domain/pfile1.lisp svneol=native#text/x-lisp
 shop2/tests/umt-domain/umt2-domain.lisp svneol=native#text/x-lisp
+shop2/tests/unifier-tests.lisp svneol=native#text/x-lisp
 shop2/theorem-prover/decls.lisp -text
 shop2/theorem-prover/package-thpr.lisp -text
 shop2/theorem-prover/theorem-prover-call-graph.pptx -text svneol=unset#application/vnd.openxmlformats-officedocument.presentationml.presentation

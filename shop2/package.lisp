@@ -59,10 +59,11 @@
 ;;; markings.
 (in-package :common-lisp-user)
 
-(defpackage :shop2
-    (:nicknames :shop)
+(defpackage :shop3
+    (:nicknames :shop :shop2)
     (:use :common-lisp :shop2.unifier :shop2.common :shop2.theorem-prover
           :iterate)
+    (:import-from #:shop3.unifier #:+primitive-property-name+ #:primitive-symbol-p)
     #+sbcl
     (:shadow #:defconstant)
     (:shadow #:domain)
@@ -260,8 +261,8 @@
              #:task-arity-mismatch
              #:singleton-variable
              #:incorrect-arity-error
-	     #:incomplete-dependency-error
-	     
+             #:incomplete-dependency-error
+             
              ;; things you might want to use in your domain definitions
              #:variablep
 

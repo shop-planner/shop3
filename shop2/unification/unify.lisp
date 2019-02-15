@@ -60,48 +60,51 @@
 
 (in-package :shop2.unifier)
 
+;;; these are used as property names to cache information about whether a variable names a 
+
 (defgeneric set-variable-property (domain x)
   (:documentation
    "Record facts about X being a variable, operator, or
 other special symbol.  Done for side-effects.  Returns nothing
 of interest."))
 
-;;;(defstruct constraint
-;;;  "Variables can be bound to constraints, which will be handled specially in
-;;;unification and substitution."
-;;;  op
-;;;  rhs)
-
-;;;(defstruct constraint-set
-;;;  constraint-list)
-
-;;;(defstruct attrib-variable
-;;;  name                                       ; should always be a variable symbol, at least for now... [2005/11/06:rpg]
-;;;  constraints)
-
-;;;(defmethod print-object ((av attrib-variable) str)
-;;;  (format str "<~A" (attrib-variable-name av))
-;;;  (when (attrib-variable-constraints av)
-;;;    (format str "~{ ~A~}" (attrib-variable-constraints av)))
-;;;  (format str ">"))
-
-
-;;;(defun prim-variable-p (x)
-;;;  (and (symbolp x) (get x 'variable)))
+;;; the following are symbols used as property keys for symbols to
+;;; identify whether or not they are variables, primitives, or
+;;; anonymous variables.
+(defconstant +variable-property-name+ 'variable)
+(defconstant +primitive-property-name+ 'primitive)
+(defconstant +anonymous-property-name+ 'anonymous)
 
 ;;; VARIABLEP returns T if X is a symbol whose name begins with "?"
-;;; The code below is faster than checking for the ? each time, but
-;;;  assumes that all variables have been preprocessed.
+;;; The code below is faster than checking for the ? each time.
+;;; Originally it assumed that all variables have been preprocessed,
+;;; but this has been fixed through memoization so that preprocessing
+;;; is no longer necessary (but has not yet been removed). [2019/02/14:rpg]
 (declaim (inline variablep))
 (defun variablep (x)
-  (and (symbolp x) (get x 'variable)))
+  "Is X a symbol representing a logical variable for SHOP's
+theorem-prover?"
+  (locally (declare (optimize (speed 3)))
+    (and (symbolp x)
+         (let ((cached (get x +variable-property-name+ :noval)))
+           (if (eq cached :noval)
+               (setf (get x +variable-property-name+)
+                     (variable-symbol-p x))
+               cached)))))
+
 (defmacro variable-p (x)
   "I can't remember the no-hyphen syntax for this call."
   `(variablep ,x))
 
 (defun anonymous-var-p (x)
   "Does X name an anonymous variable?"
-  (and (variablep x) (get x 'anonymous)))
+  (locally (declare (optimize (speed 3)))
+    (and (symbolp x)
+         (let ((cached (get x +anonymous-property-name+ :noval)))
+           (if (eq cached :noval)
+               (setf (get x +anonymous-property-name+)
+                     (anonymous-var-symbol-p x))
+               cached)))))
 
 (deftype shop-variable ()
     `(satisfies variablep))
@@ -336,9 +339,9 @@ if they do, or FAIL \(*NOT* nil\) if they don't."
 (defun variable-gensym (&optional base-name)
   "Return a new variable, made from BASE-NAME"
   (let ((sym (if base-name (gensym (string base-name)) (gensym "?"))))
-    (setf (get sym 'variable) t)
+    (setf (get sym +variable-property-name+) t)
     (when (eq (aref (symbol-name sym) 1) #\_)
-      (setf (get sym 'anonymous) t))
+      (setf (get sym +anonymous-property-name+) t))
     sym))
 
 ;;;---------------------------------------------------------------------------
@@ -412,14 +415,27 @@ so that all anonymous variables are distinct."
                   binding)))
           bindings))
 
+;;; NOTE: this will fail if called on an X that is not a symbol.
+(defun variable-symbol-p (x)
+  (eql (elt (symbol-name x) 0) #\?))
+
+;;; NOTE: this will fail if called on an X that is not a variable-symbol.
+(defun anonymous-var-symbol-p (x)
+  (let ((name (symbol-name x)))
+    (and (> (length name) 1)
+         (eql (elt name 1) #\_))))
+
+(defun primitive-symbol-p (x)
+  (eql (elt (symbol-name x) 0) #\!))
+
 (defmethod set-variable-property ((domain t) x)
   (cond ((symbolp x)
-         (cond ((eql (elt (symbol-name x) 0) #\?)
-                (setf (get x 'variable) t)
+         (cond ((variable-symbol-p x)
+                (setf (get x +variable-property-name+) t)
                 (when (eql (elt (symbol-name x) 1) #\_)
-                  (setf (get x 'anonymous) t)))
-               ((eql (elt (symbol-name x) 0) #\!)
-                (setf (get x 'primitive) t)))
+                  (setf (get x +anonymous-property-name+) t)))
+               ((primitive-symbol-p x)
+                (setf (get x +primitive-property-name+) t)))
          (values))
         ((atom x) (values))
         ((consp x)

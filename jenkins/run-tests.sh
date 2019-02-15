@@ -44,7 +44,7 @@ if [ x"$1" = "xhelp" ]; then
 fi
 lisp=${1:-sbcl} ; shift
 
-scripts="test-shop2.lisp test-shop2-satellite.lisp"
+scripts="test-shop2.lisp test-shop2-satellite.lisp test-shop-unifier.lisp"
 
 sok=1
 

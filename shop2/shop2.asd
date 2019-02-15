@@ -149,13 +149,15 @@ minimal affected subtree."
 
 
 (defsystem :shop2/unifier
-    :serial t
-        :pathname "unification/"
-        :depends-on ("shop-asd")
-    :version (:read-file-form "shop-version.lisp-expr")
-    :components ((:file "package-unifier")
-                 (:file "tracer")
-                 (:file "unify")))
+  :serial t
+  :pathname "unification/"
+  :depends-on ("shop-asd")
+  :in-order-to ((test-op (test-op "shop2/test-unifier")))
+  :version (:read-file-form "shop-version.lisp-expr")
+  :components ((:file "package-unifier")
+               (:file "tracer")
+               (:file "unify")))
+
 
 (defsystem :shop2/plan-grapher
   :depends-on ("shop2" "cl-dot")
@@ -360,6 +362,15 @@ shop2."
     :serial t
     :components ((:file "test-satellite")))
 
+(defsystem shop2/test-unifier
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
+    :class shop-fiveam-tester
+    :test-names (("TEST-SHOP-UNIFIER" . "SHOP-UNIFIER-TESTS"))
+    :num-checks 36
+    :depends-on ("shop2/unifier" "alexandria")
+    :pathname "tests/"
+    :serial t
+    :components ((:file "unifier-tests")))
 
 #+ecl
 (defmethod perform :before ((op test-op)
