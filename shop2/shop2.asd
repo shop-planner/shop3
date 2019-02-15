@@ -366,7 +366,7 @@ shop2."
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
     :test-names (("TEST-SHOP-UNIFIER" . "SHOP-UNIFIER-TESTS"))
-    :num-checks 22
+    :num-checks 36
     :depends-on ("shop2/unifier" "alexandria")
     :pathname "tests/"
     :serial t

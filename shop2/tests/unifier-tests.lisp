@@ -48,49 +48,31 @@
               (unify '(f ?y ?y) '(f ?x ?x))))
   (is (equalp (make-binding-list '(?y) '(?x))
               (unify '(f ?y ?x) '(f ?x ?y))))
-  (is (equalp (make-binding-list '(?x ?a) '(?y ?y))
+  (is (binding-list-equiv (make-binding-list '(?x ?a) '(?y ?y))
               (unify '(f ?x ?y ?a) '(f ?y ?x ?x))))
   (is (equalp (make-binding-list '(?z) '((g ?x ?y ?a)))
               (unify '(f (g ?x ?y ?a) (g ?x ?y ?a)) '(f ?z ?z))))
-  (is (equalp (make-binding-list '(?x ?y) '(p p))
+  (is (binding-list-equiv (make-binding-list '(?x ?y) '(p p))
               (unify '(f p ?x ?y) '(f ?x ?y ?x))))
   (is (binding-list-equiv (make-binding-list '(?x ?y) '(p p))
               (unify '(f ?y ?x ?y) '(f ?x ?y p))))
+  (is (binding-list-equiv (make-binding-list '(?x ?w ?y) '((g ?z) (h (g ?z)) ?z))
+                          (unify '(f ?x (h ?x) ?y (g ?y)) '(f (g ?z) ?w ?z ?x))))
+  (is (binding-list-equiv (make-binding-list '(?x ?y ?z) '((g a b c) c b))
+                          (unify '(f ?x ?x) '(f (g a b ?y) (g a ?z c))))))
 
+(test test-apply-substitution
+  (flet ((assert-unifier (s1 s2 result)
+           (let ((subst (unify s1 s2)))
+             (and (is-false (eq subst 'fail))
+                  (let ((sub1 (apply-substitution s1 subst))
+                        (sub2 (apply-substitution s2 subst)))
+                    (is (equalp sub1 sub2))
+                    (is (equalp sub1 result)))))))
+    (assert-unifier '(f ?x) '(f t) '(f t))
+    (assert-unifier '(f t) '(f ?x) '(f t))
+    (assert-unifier '(f ?x (h ?x) ?y (g ?y)) '(f (g a) ?w a ?x)
+                    '(f (g a) (h (g a)) a (g a)))
+    (assert-unifier '(f ?x (h ?x) ?y (g ?y)) '(f (g ?z) ?w ?z ?x)
+                    '(f (g ?z) (h (g ?z)) ?z (g ?z)))))
 
-  )
-
-#|
-    def test_basic_app(self):
-
-        self.assertUnifyResult('f(X, h(X), Y, g(Y))', 'f(g(Z), W, Z, X)',
-                {'X': App('g', (Var('Z'),)), 'W': App('h', (Var('X'),)), 'Y': Var('Z')})
-
-        self.assertUnifyResult('f(X, X)', 'f(g(a, b, Y), g(a, Z, c))',
-                {'X': App('g', (Const('a'), Const('b'), Var('Y'))),
-                 'Y': Const('c'),
-                 'Z': Const('b')})
-
-
-class TestApplyUnifier(unittest.TestCase):
-
-    def assertUnifier(self, s1, s2, result):
-        """Asserts that the unifier term of s1 and s2 is result.
-        All arguments are string representations of terms.
-        """
-        subst = unify(parse_term(s1), parse_term(s2), {})
-        if subst is None:
-            self.fail('expected {} and {} to unify'.format(s1, s2))
-        unified_s1 = apply_unifier(parse_term(s1), subst)
-        unified_s2 = apply_unifier(parse_term(s2), subst)
-        self.assertEqual(unified_s1, unified_s2)
-        self.assertEqual(unified_s1, parse_term(result))
-
-    def test_unifier(self):
-        self.assertUnifier('f(X)', 'f(t)', 'f(t)')
-        self.assertUnifier('f(t)', 'f(X)', 'f(t)')
-        self.assertUnifier('f(X, h(X), Y, g(Y))', 'f(g(a), W, a, X)',
-                           'f(g(a),h(g(a)),a,g(a))')
-        self.assertUnifier('f(X, h(X), Y, g(Y))', 'f(g(Z), W, Z, X)',
-                           'f(g(Z),h(g(Z)),Z,g(Z))')
-|#
