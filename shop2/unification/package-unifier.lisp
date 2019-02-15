@@ -1,5 +1,7 @@
 ;;; -*- Mode: common-lisp; package: common-lisp-user; -*-
 ;;;
+;;; SHOP3
+;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
 ;;; The contents of this file are subject to the Mozilla Public License
@@ -59,8 +61,8 @@
 ;;; markings.
 (in-package :common-lisp-user)
 
-(defpackage :shop2.unifier
-    (:nicknames :shopunif)
+(defpackage :shop3.unifier
+    (:nicknames :shopunif :shop2.unifier :shop.unifier)
     (:use :common-lisp)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
@@ -82,11 +84,6 @@
              #:set-variable-property
              #:variable-gensym
 
-             ;; [mpelican:20090520.2111CDT] This is a bit of a hack, but set-variable-property
-             ;; also sets primitive property which is only of interest to planner.
-             ;; primitivep which checks the primitive property lives in the shop2 package.
-             ;; So, we export this symbol for the planner's benefit.
-             #:primitive
 
              ;; utilities used internally by shop
              #:shop-union

@@ -178,8 +178,17 @@ will consult the user even in these cases.")
                                              (t (quotify (cadr y)))))))
              (cons type args)))))
 
-;;; PRIMITIVEP returns T if X is a symbol whose name begins with "!"
-(defmacro primitivep (x) `(and (symbolp ,x) (get ,x 'primitive)))
+;;;
+(declaim (inline primitivep))
+(defun primitivep (x)
+  "PRIMITIVEP returns T if X is a symbol whose name begins with #\!"
+  (locally (declare (optimize (speed 3)))
+    (and (symbolp x)
+         (let ((cached (get x +primitive-property-name+ :noval)))
+           (if (eq cached :noval)
+               (setf (get x +primitive-property-name+)
+                     (primitive-symbol-p x))
+               cached)))))
 
 
 (defmacro catch-internal-time (&rest body)
