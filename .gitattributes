@@ -177,6 +177,7 @@ jenkins/compile-shop2.lisp svneol=native#text/x-lisp
 jenkins/full-test-suite.asd -text
 jenkins/run-tests.sh svneol=native#text/plain
 jenkins/start-lisp.sh -text
+jenkins/test-shop-unifier.lisp svneol=native#text/x-lisp
 jenkins/test-shop2-satellite.lisp svneol=native#text/x-lisp
 jenkins/test-shop2.lisp svneol=native#text/x-lisp
 shop2/common/common.lisp -text
