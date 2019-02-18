@@ -45,7 +45,7 @@
                        (translate-exprs (append (rest elem) (rest goal-exprs)) acc)
                        (let ((translated (goalify elem)))
                          (translate-exprs (rest goal-exprs) (cons translated acc))))))))
-    (translate-exprs (list goal-expr) nil)))
+    (translate-exprs (list goal-expr) `((:original-goal ,goal-expr)))))
 
 (defun goalify (goal)
   (let* ((pred (symbol-name (first goal)))
