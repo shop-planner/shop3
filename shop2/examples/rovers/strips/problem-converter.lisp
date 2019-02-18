@@ -71,8 +71,8 @@
 #+nil
 (convert-problems (directory (asdf:system-relative-pathname "shop2" "examples/rovers/strips/p??.pddl"))
                   :output-defaults
-                  (make-pathname :directory (pathname-directory (asdf:system-relative-pathname "repair-experiments"
-                                                                            "rovers-plan-repair/"))
+                  (make-pathname :directory (pathname-directory (asdf:system-relative-pathname "shop2"
+                                                                            "examples/rovers/strips/"))
                                  :type "lisp"))
 
 (defun convert-problems (L &key output-defaults)
@@ -109,9 +109,10 @@
     communicate_soil_data))
 
 (defun translate-goals (expr)
-  (if (eq (car expr) 'and)
-      (mapcar #'translate-goal (rest expr))
-      (list (translate-goal expr))))
+  (cons `(:original-goal ,expr)
+        (if (eq (car expr) 'and)
+            (mapcar #'translate-goal (rest expr))
+            (list (translate-goal expr)))))
 
 (defun translate-goal (goal-list)
   (let ((goal-keyword 

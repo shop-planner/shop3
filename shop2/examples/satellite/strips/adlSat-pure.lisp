@@ -180,6 +180,8 @@
      (:- (not-member ?a ?L) ((not (eval (member '?a '?L)))))
      (:- (not-member-equal ?a ?L) ((not (eval (member '?a '?L :test #'equal)))))
      (:- (fail) ((eval nil)))
+     ;; avoid package problems in the repair code.
+     (:- (:original-goal ?g) ((original-goal ?g)))
 
      ))
 
