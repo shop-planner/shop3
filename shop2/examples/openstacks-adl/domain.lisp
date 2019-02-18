@@ -371,6 +371,8 @@
           (assign ?c (length '?ps))))
 
      (:- (ready-to-ship ?o) ((forall ?p (includes ?o ?p) (made ?p))))
+
+     (:- (:original-goal ?g) ((:goal ?g)))
      ))
 
 
