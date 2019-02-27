@@ -51,4 +51,13 @@
 		 (stacks-avail ?new-open))
     )
 
+  ;;This action should only be used during replanning to reset order status
+  ;;  (otherwise, the stack system will be offset and break the state)
+  (:action reset
+   :parameters (?o - order)
+   :precondition (and (started ?o) (not (shipped ?o)) (not (waiting ?o)))
+   :effect (and (waiting ?o) (not (started ?o)))
+   )
+
+
   )
