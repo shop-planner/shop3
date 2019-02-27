@@ -15,6 +15,7 @@
   ())
 
 (defdomain (rover :type pure-pddl-domain)
+;(defdomain (rover :type pddl-domain)
     (
      (:requirements :typing)
      (:static
@@ -221,24 +222,53 @@
        ((!navigate ?rover ?from ?first)
         (move ?rover ?first ?rest)))
 
+     ;;NEW for replanning: if already completed this communication, then remove
+     ;;  if from the goals list (cannot be replicated if resource is consumed)
      (:method (communicated_soil_data ?goal-loc ?rover)
+       already-communicated-replanning-case
+       ((communicated_soil_data ?goal-loc))
+       ((:immediate !!retract ((COMMUNICATE_SOIL_DATA ?goal-loc))))
+      )
+
+     (:method (communicated_soil_data ?goal-loc ?rover)
+       everything-ready-first-pass-case
        ((store_of ?s ?rover))
        ((navigate ?rover ?goal-loc)
         (:immediate empty-store ?s ?rover) 
         (:immediate !sample_soil ?rover ?s ?goal-loc)
         ;; FIXME: shouldn't there be a protection of the store until the communication is done?
         (:immediate communicate soil ?goal-loc ?_rover-loc ?rover)
-        (:immediate !!retract ((COMMUNICATE_SOIL_DATA ?goal-loc)))))
+        (:immediate !!retract ((COMMUNICATE_SOIL_DATA ?goal-loc))))
+       )
+
+     ;;NEW for replanning: if already completed this communication, then remove
+     ;;  if from the goals list (cannot be replicated if resource is consumed)
+     (:method (communicated_rock_data ?goal-loc ?rover)
+       already-communicated-replanning-case
+       ((communicated_rock_data ?goal-loc))
+       ((:immediate !!retract ((COMMUNICATE_ROCK_DATA ?goal-loc))))
+      )
 
      (:method (communicated_rock_data ?goal-loc ?rover)
+       everything-ready-first-pass-case
        ((store_of ?s ?rover))
        ((navigate ?rover ?goal-loc) 
         (:immediate empty-store ?s ?rover) 
         (:immediate !sample_rock ?rover ?s ?goal-loc)
         (:immediate communicate ROCK ?goal-loc ?_rover-loc ?rover)
-        (:immediate !!retract ((COMMUNICATE_ROCK_DATA ?goal-loc)))))
+        (:immediate !!retract ((COMMUNICATE_ROCK_DATA ?goal-loc))))
+       )
 
+     ;;NEW for replanning: if already completed this communication, then remove
+     ;;  if from the goals list (cannot be replicated if resource is consumed)
+    (:method (communicated_image_data ?obj ?mode ?rover)
+      already-communicated-replanning-case
+      ((communicated_image_data ?obj ?mode))
+      ((:immediate !!retract ((COMMUNICATE_IMAGE_DATA ?obj ?mode))))
+     )
+     
      (:method (communicated_image_data ?obj ?mode ?rover)
+       everything-ready-first-pass-case
        ((on_board ?camera ?rover)
         (supports ?camera ?mode)
         (at_lander ?_lander ?lander-loc))
@@ -247,7 +277,9 @@
         (!take_image ?rover ?photo-loc ?obj ?camera ?mode)
         ;; navigate to a transmission location and transmit
         (communicate-image ?photo-loc ?lander-loc ?rover ?obj ?mode)
-        (:immediate !!retract ((COMMUNICATE_IMAGE_DATA ?obj ?mode)))))
+        (:immediate !!retract ((COMMUNICATE_IMAGE_DATA ?obj ?mode))))
+       )
+    
 
      (:method (calibrate-camera ?rover ?camera)
        ((calibrated ?camera ?rover))
