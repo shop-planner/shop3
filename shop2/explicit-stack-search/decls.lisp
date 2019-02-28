@@ -1,9 +1,5 @@
 (in-package :shop2)
 
-(defvar *analogical-replay* nil)
-(defvar *analogical-replay-table* (make-hash-table :test 'eq))
-(declaim (type hash-table *analogical-replay-table*))
-
 (defclass search-state ()
   (
    (mode
