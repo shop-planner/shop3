@@ -545,6 +545,7 @@ shop2/examples/openstacks-adl/domain-nocosts-repairable.pddl -text
 shop2/examples/openstacks-adl/domain-nocosts.pddl -text
 shop2/examples/openstacks-adl/domain.lisp -text
 shop2/examples/openstacks-adl/domain.pddl -text
+shop2/examples/openstacks-adl/openstacks-problem-translator.asd svneol=native#text/x-lisp
 shop2/examples/openstacks-adl/p01-manual.lisp svneol=native#text/x-lisp
 shop2/examples/openstacks-adl/p01.lisp svneol=native#text/x-lisp
 shop2/examples/openstacks-adl/p01.pddl -text
@@ -607,6 +608,7 @@ shop2/examples/openstacks-adl/p29.pddl -text
 shop2/examples/openstacks-adl/p30.lisp svneol=native#text/x-lisp
 shop2/examples/openstacks-adl/p30.pddl -text
 shop2/examples/openstacks-adl/package.lisp svneol=native#text/x-lisp
+shop2/examples/openstacks-adl/problem-converter.lisp svneol=native#text/x-lisp
 shop2/examples/protection-test-package.lisp -text
 shop2/examples/protection-test.lisp -text
 shop2/examples/rovers/mm-graph.lisp -text

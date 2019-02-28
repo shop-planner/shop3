@@ -480,6 +480,13 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
        (if repairable
            (reverse partial-plan)
            (strip-NOPs (reverse partial-plan)))))))
+
+;;; FIXME: This will currently backtrack over all the immediate tasks.
+;;; But probably we should not do this -- if we fail to plan the first
+;;; immediate task successfully, we should backtrack immediately.  We
+;;; could do this by setting the alternatives of the state to only the
+;;; result of choose-immediate-task, rather than the list of all
+;;; immediate tasks. [2018/06/19:rpg]
 (defun prepare-choose-immediate-task-state (state)
   (let ((immediates (immediate-tasks state)))
     (setf (alternatives state) immediates)
@@ -495,6 +502,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                            :mode (mode state))
             (backtrack-stack state))
       state)))
+
+;;; end of immediate task handling.
 (defun stack-backtrack (state)
   "Chronological backtracking only, for now.
 Return the CHOICE-ENTRY where you stopped."

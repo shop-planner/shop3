@@ -15,9 +15,9 @@
 ;;;   [2017/09/12:rpg] Created.
 ;;;
 ;;;---------------------------------------------------------------------------
-(defpackage shop2-pddl-helpers
+(defpackage shop3-pddl-helpers
   (:use #:common-lisp #:iterate #:pddl-utils #:shop2)
-  (:nicknames #:shop2.pddl.helpers)
+  (:nicknames #:shop2.pddl.helpers #:shop2-pddl-helpers)
   (:shadowing-import-from #:shop2
                           #:domain-name #:make-problem #:domain)
   (:shadow #:problem-name)
@@ -27,7 +27,7 @@
            #:validate-replan
            #:make-divergence-operator))
 
-(in-package #:shop2-pddl-helpers)
+(in-package #:shop3-pddl-helpers)
 
 (defun typed-object-list->facts (list)
   "List *must be* canonicalized.  Returns a list of (<type> <instance>) facts."
@@ -35,22 +35,6 @@
         :do (assert (eq dash '-))
         :collecting `(,type ,var)))
 
-(defun translate-openstacks-problem (problem-file &key (package :shop2-openstacks) )
-  (let ((pddl-utils:*pddl-package* package))
-    (let ((problem 
-            (pddl-utils:read-pddl-file problem-file)))
-      (make-problem (pddl-utils:problem-name problem)
-                    (uiop:Intern* '#:openstacks-sequencedstrips-ADL-included
-                            package)
-                    ;; state
-                    (append
-                     (pddl-utils:problem-state problem)
-                     (typed-object-list->facts
-                      (pddl-utils:canonicalize-types
-                       (pddl-utils:problem-objects problem)))
-                     `((:goal ,(pddl-utils:problem-goal problem))))
-                    ;; tasks
-                    `(,(uiop:intern* '#:plan :shop2-openstacks))))))
 
 (defun do-all-substitutions (alist tree)
   (let ((new-tree (copy-tree tree)))         ;now we can operate destructively

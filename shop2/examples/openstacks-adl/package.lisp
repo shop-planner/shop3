@@ -1,4 +1,4 @@
-(defpackage :shop2-openstacks
-  (:nicknames #:shop-openstacks)
+(defpackage :shop3-openstacks
+  (:nicknames #:shop-openstacks #:shop2-openstacks)
   (:intern #:divergence)
   (:use #:common-lisp #:shop2))
