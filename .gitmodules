@@ -1,0 +1,21 @@
+[submodule "jenkins/ext/alexandria"]
+	path = jenkins/ext/alexandria
+	url = https://gitlab.common-lisp.net/alexandria/alexandria
+[submodule "jenkins/ext/fiveam"]
+	path = jenkins/ext/fiveam
+	url = https://github.com/cl-fiveam/fiveam.git
+[submodule "jenkins/ext/iterate"]
+	path = jenkins/ext/iterate
+	url = https://gitlab.common-lisp.net/iterate/iterate.git
+[submodule "jenkins/ext/pddl-tools"]
+	path = jenkins/ext/pddl-tools
+	url = https://github.com/rpgoldman/pddl-tools.git
+[submodule "jenkins/ext/fiveam-asdf"]
+	path = jenkins/ext/fiveam-asdf
+	url = https://github.com/rpgoldman/fiveam-asdf.git
+[submodule "jenkins/ext/asdf-flv"]
+	path = jenkins/ext/asdf-flv
+	url = https://github.com/didierverna/asdf-flv.git
+[submodule "jenkins/ext/trivial-backtrace"]
+	path = jenkins/ext/trivial-backtrace
+	url = http://common-lisp.net/project/trivial-backtrace/trivial-backtrace.git
