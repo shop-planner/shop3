@@ -99,10 +99,10 @@ absolute pathname, or a path-relative namestring)."
              (setf output (string-left-trim (list #\return) output))
              (if (zerop exit-code)
                  (progn (when (> verbose 1)
-                          (format t "Validator output was: ~a~% Exit code was: ~d" output exit-code))
+                          (format t "~&Validator output was: ~a~% Exit code was: ~d" output exit-code))
                         t)
                  (progn
-                   (format t "Validation failed with messages:~%~T~A~%~T~A" output error-output)
+                   (format t "~&Validation of plan-file ~a failed with messages:~%~T~A~%~T~A" plan-filename output error-output)
                    nil)))))
    (if (stringp plan)
        (validate-plan plan)
