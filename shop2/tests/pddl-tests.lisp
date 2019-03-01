@@ -765,9 +765,9 @@
     (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
       (loop :for i from 1 :to 30
             :as probfilename = (format nil "p~2,'0d.pddl" i)
-            :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-            :as shop-problem-file = (merge-pathnames (make-pathname :type "lisp") problem-file)
-            :as shop-problem = (progn (load shop-problem-file) shop2::*problem*)
+            :as problem-file = (merge-pathnames (make-pathname :type "lisp")
+                                                (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename)))
+            :as shop-problem = (progn (load problem-file) shop2::*problem*)
             :as standard-plan = (first (find-plans-stack shop-problem :verbose 0))
             :do (fiveam:is-true (and (or standard-plan
                                          (warn "Failed to SHOP2 plan for problem ~a" (shop2:name shop-problem)))
