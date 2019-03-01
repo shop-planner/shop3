@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -x
 
 # do_tests {lisp invocation} {scripts-regex}
 # - read lisp forms one at a time from standard input
@@ -91,9 +93,6 @@ do_tests() {
   fi
 }
 
-# terminate on error
-set -e
-
 command= flags= nodebug= eval=
 case "$lisp" in
   abcl)
@@ -180,6 +179,16 @@ fi
 
 SHOP2DIR="$(cd ../shop2 ; /bin/pwd)"
 THISDIR="$(pwd)"
+PATH=${THISDIR}/VAL:$PATH
+type -P validate 2>/dev/null
+if [[ $? != 0 ]];
+then
+    echo "validate is found in path.  Probably you haven't built it"  >&2
+    exit 44
+fi
+# terminate on error
+set -e
+
 export CL_SOURCE_REGISTRY="${SHOP2DIR}:${THISDIR}//"
 export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP2DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
 
