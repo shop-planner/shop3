@@ -385,7 +385,8 @@
 
 
 ;;pure-pddl-domain version with replanning functionality
-(defdomain (test-openstacks :type pure-pddl-domain :source-pddl-domain #.(merge-pathnames "domain-nocosts.pddl" *load-truename*))
+(defdomain (test-openstacks :type pure-pddl-domain
+                            :source-pddl-domain #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*)))
     ((:include  openstacks-sequencedstrips-ADL-nocosts "domain-nocosts.pddl")
      (:static includes next-count)
      
@@ -394,8 +395,8 @@
                (not (shipped ?o)))
        (:ordered
         (open-all-stacks)
-	;;Added for the replanning case - should map to epsilon otherwise
-	(reset-order-status)
+        ;;Added for the replanning case - should map to epsilon otherwise
+        (reset-order-status)
         (plan-for-goals)))
 
      (:pddl-method (open-all-stacks)
@@ -427,13 +428,13 @@
      (:pddl-method (reset-order-status)
        reset-an-order-and-recurse
        (and (started ?o)
-	    (not (shipped ?o)))
+            (not (shipped ?o)))
        (:ordered (!reset ?o) (reset-order-status)))
 
      (:pddl-method (reset-order-status)
        done-resetting
        (forall (?o - order)
-	       (not (started ?o)))
+               (not (started ?o)))
        ())
 
      (:pddl-method (plan-for-goals)
