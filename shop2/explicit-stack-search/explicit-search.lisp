@@ -10,17 +10,17 @@
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
 (defvar *include-rationale* nil)
-	
+        
 (defgeneric unfold-loop-task (domain state)
   (:documentation "Driver for the looping tasks."))
 
 
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
-				   (no-dependencies nil)
-				   repairable
-				   rationale
-				   (out-stream t)
-				   (which :first))
+                                   (no-dependencies nil)
+                                   repairable
+                                   rationale
+                                   (out-stream t)
+                                   (which :first))
   "Top level search function for explicit-state search in SHOP2.
 Does not support the full range of options supported by SHOP2: only
 supports finding the first solution to PROBLEM.  To comply with SHOP2,
@@ -46,7 +46,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
-	 (*include-rationale* rationale)
+         (*include-rationale* rationale)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
@@ -175,19 +175,19 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
               (setf (mode state) 'prepare-to-choose-method)))))
 
         (unfold-looping-task
-	 (format t "~%Starting to unfold the loop...")
+         (when (> *verbose* 2) (format t "~%Starting to unfold the loop..."))
          (if (unfold-loop-task domain state)
              (progn
                (setf (mode state) 'test-for-done)
                (incf (depth state)))
-	     ;; Else, 
+             ;; Else, 
              (with-slots (current-task depth world-state) state
-		(format t "~%Could not unfold the loop successfully...")
-		(trace-print :tasks (get-task-name current-task) world-state
-			     "~2%Depth ~s, backtracking from task~%      task ~s"
-			     depth
-			     current-task)
-		(stack-backtrack state))))
+                (when (> *verbose* 0) (format t "~%Could not unfold the loop successfully..."))
+                (trace-print :tasks (get-task-name current-task) world-state
+                             "~2%Depth ~s, backtracking from task~%      task ~s"
+                             depth
+                             current-task)
+                (stack-backtrack state))))
 
         (expand-primitive-task
          (if (expand-primitive-state state domain)
@@ -229,8 +229,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
            (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
            (setf *plans-found* (append plans *plans-found*))
-	   (format t "~%~%Solution plan is found successfully...:~%~a"
-		   plans)
+           (when (> *verbose* 0)
+            (format t "~%~%Solution plan is found successfully...:~%~a"
+                    plans))
            (return
              (values plans
                      (when *enhanced-plan-tree*
@@ -284,26 +285,26 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (let* ((parent (plan-tree:find-task-in-tree current-task (plan-tree-lookup state)))
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
               ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links
-	      ;; PARENT and CHILD.
-#|	      (format t "~%Subtree1: ~s"  (make-add-child-to-tree :parent (apply-substitution
-						(plan-tree::complex-tree-node-task parent) unifier)
-				       :child (apply-substitution
-						(plan-tree::complex-tree-node-children
-						 child)
-						unifier)))
-	      (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
-	      |#
+              ;; PARENT and CHILD.
+#|            (format t "~%Subtree1: ~s"  (make-add-child-to-tree :parent (apply-substitution
+                                                (plan-tree::complex-tree-node-task parent) unifier)
+                                       :child (apply-substitution
+                                                (plan-tree::complex-tree-node-children
+                                                 child)
+                                                unifier)))
+              (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
+              |#
               (push
-	       (if *include-rationale*
-		   (make-add-child-to-tree :parent (apply-substitution
-						    (plan-tree::complex-tree-node-task parent) unifier)
-					   :child (apply-substitution
-						   (plan-tree::complex-tree-node-children
-						    child)
-						   unifier))
-		   ;; else
-		   (make-add-child-to-tree :parent parent :child child))
-	       backtrack-stack)	      
+               (if *include-rationale*
+                   (make-add-child-to-tree :parent (apply-substitution
+                                                    (plan-tree::complex-tree-node-task parent) unifier)
+                                           :child (apply-substitution
+                                                   (plan-tree::complex-tree-node-children
+                                                    child)
+                                                   unifier))
+                   ;; else
+                   (make-add-child-to-tree :parent parent :child child))
+               backtrack-stack)       
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
                   (when depends
@@ -335,8 +336,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
           (when expansions
             (when *enhanced-plan-tree*
               (let ((task-node (plan-tree:find-task-in-tree
-				current-task plan-tree-lookup)))
-		
+                                current-task plan-tree-lookup)))
+                
                 (push (record-node-expansion task-node task-expansion plan-tree-lookup)
                       backtrack-stack)))
             (setf alternatives
