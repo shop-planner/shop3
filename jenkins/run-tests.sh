@@ -93,6 +93,9 @@ do_tests() {
   fi
 }
 
+# terminate on error
+set -e
+
 command= flags= nodebug= eval=
 case "$lisp" in
   abcl)
