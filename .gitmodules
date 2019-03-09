@@ -17,5 +17,5 @@
 	path = jenkins/ext/asdf-flv
 	url = https://github.com/didierverna/asdf-flv.git
 [submodule "jenkins/ext/trivial-backtrace"]
-	path = jenkins/ext/trivial-backtrace
-	url = http://common-lisp.net/project/trivial-backtrace/trivial-backtrace.git
+        path = jenkins/ext/trivial-backtrace
+        url = https://common-lisp.net/project/trivial-backtrace/trivial-backtrace.git
