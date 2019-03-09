@@ -57,7 +57,8 @@
              ((eval (error '%bad-backtrack-cond))))))))
 
 (defun bad-backtrack-problem ()
-  (let ((shop2:*define-silently* t))
+  (let ((shop2:*define-silently* t)
+        #+allegro(excl:*redefinition-warnings* nil))
     (make-problem 'bad-backtrack-problem 'test-backtrack
                 nil
                 '(example-with-backtrack 2))))
@@ -66,11 +67,13 @@
 ;;; check the bug.
 (fiveam:test check-bad-backtrack-domain
   (flet ((find-plans (problem)
-           (find-plans  problem)))
+           (find-plans  problem :verbose 0)))
     (test-backtrack-domain)
-    (make-problem 'check-bad-backtrack-domain 'test-backtrack
-                  '((bar 22))
-                  '(example-with-backtrack 2))
+    (let (#+allegro(excl:*redefinition-warnings* nil)
+          (shop2:*define-silently* t))
+     (make-problem 'check-bad-backtrack-domain 'test-backtrack
+                   '((bar 22))
+                   '(example-with-backtrack 2)))
     (unwind-protect
          (fiveam:is-true (find-plans 'check-bad-backtrack-domain))
       (shop2:delete-problem 'check-bad-backtrack-domain)
@@ -80,9 +83,11 @@
   (flet ((find-plans (problem)
            (find-plans-stack problem)))
     (test-backtrack-domain)
-    (make-problem 'check-bad-backtrack-domain 'test-backtrack
-                  '((bar 22))
-                  '(example-with-backtrack 2))
+    (let (#+allegro(excl:*redefinition-warnings* nil)
+          (shop2:*define-silently* t))
+      (make-problem 'check-bad-backtrack-domain 'test-backtrack
+                    '((bar 22))
+                    '(example-with-backtrack 2)))
     (unwind-protect
          (fiveam:is-true (find-plans 'check-bad-backtrack-domain))
       (shop2:delete-problem 'check-bad-backtrack-domain)
