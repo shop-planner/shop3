@@ -741,37 +741,24 @@
 
 
 
-
-
-
+(defmacro openstacks-test-loop (plan-form)
+  `(let ((shop2::*define-silently* t))
+     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+     (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+       (loop :for i from 1 :to 30
+             :as probfilename = (format nil "p~2,'0d.pddl" i)
+             :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+             :as shop-problem-file =(merge-pathnames (make-pathname :type "lisp") problem-file)
+             :as shop-problem = (progn (load shop-problem-file) shop2::*problem*)
+             :as standard-plan = ,plan-form
+             :do (fiveam:is-true (and (or standard-plan
+                                          (warn "Failed to SHOP2 plan for problem ~a" (shop2:name shop-problem)))
+                                      (validate-plan standard-plan domain-file problem-file)))))))
 (fiveam:test test-openstacks-adl
-  (let ((shop2::*define-silently* t))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
-      (loop :for i from 1 :to 30
-            :as probfilename = (format nil "p~2,'0d.pddl" i)
-            :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
-            :as shop-problem-file =(merge-pathnames (make-pathname :type "lisp") problem-file)
-            :as shop-problem = (progn (load shop-problem-file) shop2::*problem*)
-            :as standard-plan = (first (find-plans shop-problem :verbose 0))
-            :do (fiveam:is-true (and (or standard-plan
-                                         (warn "Failed to SHOP2 plan for problem ~a" (shop2:name shop-problem)))
-                                     (validate-plan standard-plan domain-file problem-file)))))))
-
+  (openstacks-test-loop (first (find-plans shop-problem :verbose 0))))
 
 (fiveam:test test-openstacks-adl-explicit-stack-search
-  (let ((shop2::*define-silently* t))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
-      (loop :for i from 1 :to 30
-            :as probfilename = (format nil "p~2,'0d.pddl" i)
-            :as problem-file = (merge-pathnames (make-pathname :type "lisp")
-                                                (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename)))
-            :as shop-problem = (progn (load problem-file) shop2::*problem*)
-            :as standard-plan = (first (find-plans-stack shop-problem :verbose 0))
-            :do (fiveam:is-true (and (or standard-plan
-                                         (warn "Failed to SHOP2 plan for problem ~a" (shop2:name shop-problem)))
-                                     (validate-plan standard-plan domain-file problem-file)))))))
+  (openstacks-test-loop (first (find-plans-stack shop-problem :verbose 0))))
 
 
 (fiveam:test test-forall-dependencies

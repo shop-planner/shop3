@@ -228,23 +228,23 @@ shop2."
 (defsystem shop2/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
-    :test-names ((pddl-tests . :shop2)
-                 (protection-test . :protection-test)
-                 (arity-test . :arity-test)
-                 (io-tests . :arity-test)
-                 (method-tests . :arity-test)
-                 (umt-domain-tests . :shop2-user)
-                 (blocks-tests . :shop2-user)
-                 (depot-tests . :shop2-user)
-                 (logistics-tests . :shop2-user)
-                 (singleton-tests . :shop2-user)
-                 (misc-tests . :shop2-user)
-                 (minimal-subtree-tests . :shop2-user)
-                 (enhanced-plan-tree . :shop2-user)
-                 (theorem-prover-tests . :shop-theorem-prover-tests)
-                 (test-plan-repair . :shop-replan-tests)
+    :test-names ((pddl-tests . :shop2)  ; 141
+                 (protection-test . :protection-test)  ; 16
+                 (arity-test . :arity-test) ; 6
+                 (io-tests . :arity-test) ; 25
+                 (method-tests . :arity-test) ; 2
+                 (umt-domain-tests . :shop2-user) ; 8
+                 (blocks-tests . :shop2-user) ; 5
+                 (depot-tests . :shop2-user) ; 44
+                 (logistics-tests . :shop2-user) ; 200
+                 (singleton-tests . :shop2-user) ; 44
+                 (misc-tests . :shop2-user) ; 10
+                 (minimal-subtree-tests . :shop2-user) ; 12
+                 (enhanced-plan-tree . :shop2-user) ; 2
+                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
+                 (test-plan-repair . :shop-replan-tests) ; 3
                  )
-    :num-checks 550
+    :num-checks 522
     :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
                  "shop2/openstacks"
                  "shop2/pddl-helpers"
