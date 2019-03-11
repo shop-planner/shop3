@@ -1,4 +1,4 @@
-(in-package :shop2-minimal-subtree)
+(in-package :shop3-minimal-subtree)
 
 ;;; if necessary, look up the domain from its name.
 (defmethod find-failed-task :around ((domain symbol) plan plan-tree

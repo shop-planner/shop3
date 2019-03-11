@@ -3,7 +3,7 @@
 ;; seed:1022262916
 ;;---------------------------------------------
 ;;problem_name: bw_ran_300_1    towers: 28
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (make-problem 'bw_ran_300_1 'blocks-normal
         '((arm-empty)

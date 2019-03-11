@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defun do-plan-tree-tests ()
   (load "site-lisp:shop2;examples;test-plan-tree.lisp")

@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ; This file illustrates the use of the :optimize-cost keyword argument
 ;  to SHOP2 in combination with variable cost operators (e.g., the
 ;  cost of the !pay-mortgage-interest operator below is .1 times the

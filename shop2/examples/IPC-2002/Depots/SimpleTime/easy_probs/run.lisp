@@ -7,7 +7,7 @@
                        *load-truename*))
 (load (merge-pathnames "../stdepots" *load-truename*))
 
-(in-package :shop2-user)
+(in-package :shop-user)
 (defparameter *thisfile*
   (or *compile-file-truename* *load-truename*
       (error "This file must be loaded in a context where *load-truename* or *compile-file-truename* is defined.")))
@@ -18,7 +18,7 @@
     (unless (probe-file probfile)
       (error "No SHOP2-translated version of the PDDL problem in ~a: have you run the problem-converter?"))
     (load probfile))
-  (multiple-value-bind (sol soltime) (find-plans (intern (string-upcase pname) :shop2-user))
+  (multiple-value-bind (sol soltime) (find-plans (intern (string-upcase pname) :shop-user))
     (if sol
       (progn
         (format t "~%*** Plan found in ~A seconds ***~%" soltime)

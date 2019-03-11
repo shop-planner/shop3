@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defconstant +all-depots-plans+
     '(((!!ASSERT
@@ -16707,7 +16707,7 @@
 		 common-lisp-user::*nst-default-report-stream*
 		 t)))
     (loop for i from 1 to 22
-	  as plan = (remove-costs (first (find-plans (intern (format nil "PFILE~D" i) :shop2-user))))
+	  as plan = (remove-costs (first (find-plans (intern (format nil "PFILE~D" i) :shop-user))))
 	  do (format str "~TDepot test ~D ~:[failed~; passed~]~%"
 		     i
 		     (equalp plan (nth (1- i) +all-depots-plans+)))

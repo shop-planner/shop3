@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;; 
@@ -58,14 +58,14 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(in-package :shop2.theorem-prover)
+(in-package :shop3.theorem-prover)
 
-(def-logical-keyword (forall (domain shop2::universal-preconditions-mixin))
+(def-logical-keyword (forall (domain shop3::universal-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-forall domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
 
-(def-logical-keyword (exists (domain shop2::existential-preconditions-mixin))
+(def-logical-keyword (exists (domain shop3::existential-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-exists domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
@@ -75,12 +75,12 @@
 ;;; incorrect.  negative-preconditions-mixin only enables negated
 ;;; *literals*, not negated *expressions*, which require
 ;;; disjunctive-preconditions
-(def-logical-keyword (not (domain shop2::negative-preconditions-mixin))
+(def-logical-keyword (not (domain shop3::negative-preconditions-mixin))
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
     (pddl-satisfiers-for-not domain (cdr goal) other-goals
                                     state bindings (1+ level) just1 dependencies-in)))
 
-(def-logical-keyword (imply (domain shop2::disjunctive-preconditions-mixin))
+(def-logical-keyword (imply (domain shop3::disjunctive-preconditions-mixin))
     (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
         (pddl-satisfiers-for-imply domain (cdr goal) other-goals
                                    state bindings (1+ level) just1 dependencies-in)))

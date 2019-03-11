@@ -17,7 +17,7 @@
 
 (defpackage arity-test
   (:nicknames #:at #:arity-tests)
-  (:use #:common-lisp #:shop2)
+  (:use #:common-lisp #:shop3)
   (:import-from #:fiveam
                 #:def-fixture
                 #:with-fixture

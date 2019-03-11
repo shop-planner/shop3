@@ -1,4 +1,4 @@
-(in-package :shop2-minimal-subtree)
+(in-package :shop3-minimal-subtree)
 
 (defgeneric find-failed-task (domain plan plan-tree executed divergence &key plan-tree-hash)
   (:documentation

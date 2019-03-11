@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
@@ -59,7 +59,7 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
-(in-package :shop2)
+(in-package :shop3)
 
 (fiveam:def-suite* pddl-tests)
 
@@ -171,7 +171,7 @@
 
 (fiveam:def-fixture add-del-fixtures ()
   (progn
-    (let ((shop2:*define-silently* t))
+    (let ((shop3:*define-silently* t))
       (defdomain (test-add-del-domain
                   :type pddl-domain
                   :redefine-ok t)
@@ -459,7 +459,7 @@
              (copy-list '((at robot new-jersey) (loc new-jersey) (loc new-york)))
              'prop-sorter)
             (sort
-             (mapcar #'shop2.theorem-prover::rd-prop deps)
+             (mapcar #'shop3.theorem-prover::rd-prop deps)
              'prop-sorter))))))
 
     (let ((*state-encoding* :list)(*record-dependencies-p* t))
@@ -486,7 +486,7 @@
              (copy-list '((at robot new-jersey) (carrying cargo) (loc new-jersey) (loc new-york)))
              'prop-sorter)
             (sort
-             (mapcar #'shop2.theorem-prover::rd-prop deps)
+             (mapcar #'shop3.theorem-prover::rd-prop deps)
              'prop-sorter))))))))
 
 (fiveam:def-fixture quantified-when-fixtures ()
@@ -647,7 +647,7 @@
           (fiveam:is
            (equalp
             '((at robot new-jersey) (loc new-jersey) (loc new-york))
-            (sort (mapcar #'shop2.theorem-prover::rd-prop deps) 'prop-sorter)))))
+            (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter)))))
       (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
                                                                    (at bag1 new-jersey)
                                                                    (at bag2 new-jersey)
@@ -682,15 +682,15 @@
           (fiveam:is
            (equalp
             '((at robot new-jersey) (carrying robot bag1) (loc new-jersey) (loc new-york))
-            (sort (mapcar #'shop2.theorem-prover::rd-prop deps) 'prop-sorter))))))))
+            (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter))))))))
 
-(in-package :shop2-openstacks)
-(fiveam:def-suite* plan-openstacks :in shop2::pddl-tests)
+(in-package :shop3-openstacks)
+(fiveam:def-suite* plan-openstacks :in shop3::pddl-tests)
 
 (fiveam:test pddl-planning
-  (let ((shop2:*define-silently* t))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp")))
+  (let ((shop3:*define-silently* t))
+    (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
+    (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/p01-manual.lisp")))
   (fiveam:is (equalp '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
                        (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
                        (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
@@ -714,7 +714,7 @@
 
 
 (fiveam:test ess-pddl-planning
-  (let ((shop2:*define-silently* t)
+  (let ((shop3:*define-silently* t)
         (plan '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
                        (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
                        (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
@@ -731,8 +731,8 @@
                        (!SHIP-ORDER O3 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
                        (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
                        (!SHIP-ORDER O1 N4 N5))))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/p01-manual.lisp"))
+    (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
+    (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/p01-manual.lisp"))
     (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
                                                   'os-sequencedstrips-p5_1 :verbose 0)))))
     (fiveam:is (equalp shuffled-plan
@@ -742,17 +742,17 @@
 
 
 (defmacro openstacks-test-loop (plan-form)
-  `(let ((shop2::*define-silently* t))
-     (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
-     (let ((domain-file (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.pddl")))
+  `(let ((shop3::*define-silently* t))
+     (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
+     (let ((domain-file (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.pddl")))
        (loop :for i from 1 :to 30
              :as probfilename = (format nil "p~2,'0d.pddl" i)
-             :as problem-file = (asdf:system-relative-pathname "shop2" (format nil "examples/openstacks-adl/~a" probfilename))
+             :as problem-file = (asdf:system-relative-pathname "shop3" (format nil "examples/openstacks-adl/~a" probfilename))
              :as shop-problem-file =(merge-pathnames (make-pathname :type "lisp") problem-file)
-             :as shop-problem = (progn (load shop-problem-file) shop2::*problem*)
+             :as shop-problem = (progn (load shop-problem-file) shop3::*problem*)
              :as standard-plan = ,plan-form
              :do (fiveam:is-true (and (or standard-plan
-                                          (warn "Failed to SHOP2 plan for problem ~a" (shop2:name shop-problem)))
+                                          (warn "Failed to SHOP3 plan for problem ~a" (shop3:name shop-problem)))
                                       (validate-plan standard-plan domain-file problem-file)))))))
 (fiveam:test test-openstacks-adl
   (openstacks-test-loop (first (find-plans shop-problem :verbose 0))))
@@ -762,8 +762,8 @@
 
 
 (fiveam:test test-forall-dependencies
-  (let ((shop2::*define-silently* t))
-    (load (asdf:system-relative-pathname "shop2" "examples/openstacks-adl/domain.lisp"))
+  (let ((shop3::*define-silently* t))
+    (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
     (make-problem 'test-quantified-precondition-dependencies 'openstacks-sequencedstrips-ADL-included
                   ;; from problem 1 and modified
                   '((NEXT-COUNT N0 N1) (NEXT-COUNT N1 N2) (NEXT-COUNT N2 N3)
@@ -790,7 +790,7 @@
                 (length (plan-tree:tree-node-dependencies
                          (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes)))))))))))
 
-(in-package :shop2)
+(in-package :shop3)
 (fiveam:in-suite pddl-tests)
 
 (fiveam:test test-forall-bounds
@@ -924,18 +924,18 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun def-rover-test (n)
-    `(fiveam:test ,(intern (format nil "ROVER-TEST~2,'0d" n) :shop2)
+    `(fiveam:test ,(intern (format nil "ROVER-TEST~2,'0d" n) :shop3)
        (let ((*define-silently* t))
-         (load (asdf:system-relative-pathname "shop2" "examples/rovers/strips/domain.lisp")))
-       (let ((probfile (asdf:system-relative-pathname "shop2" ,(format nil "examples/rovers/strips/p~2,'0d.lisp" n))))
+         (load (asdf:system-relative-pathname "shop3" "examples/rovers/strips/domain.lisp")))
+       (let ((probfile (asdf:system-relative-pathname "shop3" ,(format nil "examples/rovers/strips/p~2,'0d.lisp" n))))
          (load probfile)
          (let ((plans (shop:find-plans shop::*problem* :verbose 0)))
            (fiveam:is-true plans)
            (let ((valid
                    (when plans
-                     (shop2:validate-plan (first plans) 
-                                          (asdf:system-relative-pathname "shop2" "examples/rovers/strips/domain.pddl")
-                                          (asdf:system-relative-pathname "shop2" (format nil "examples/rovers/strips/~a.pddl" (pathname-name probfile)))))))
+                     (shop3:validate-plan (first plans) 
+                                          (asdf:system-relative-pathname "shop3" "examples/rovers/strips/domain.pddl")
+                                          (asdf:system-relative-pathname "shop3" (format nil "examples/rovers/strips/~a.pddl" (pathname-name probfile)))))))
              (fiveam:is-true valid)))))))
 
 

@@ -59,9 +59,9 @@
 ;;; markings.
 (in-package :common-lisp-user)
 
-(defpackage :shop2.common
-    (:nicknames :shop2cmn :shop.common)
-    (:use :common-lisp :shop2.unifier :iterate)
+(defpackage :shop3.common
+    (:nicknames #:shop3cmn #:shop.common #:shop2.common)
+    (:use :common-lisp :shop3.unifier :iterate)
     (:export #:shop-fail #:call
 
              #:domain

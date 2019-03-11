@@ -2,7 +2,7 @@
 ;; #packages: 50	#citys: NUM_CITY
 ;; #planes: 10	seed:931112302
 ;;--------------------------------------
-(in-package :shop2-user)
+(in-package :shop-user)
 (defproblem log-ran-50-1 logistics
    (
 	(AIRPLANE plane1)

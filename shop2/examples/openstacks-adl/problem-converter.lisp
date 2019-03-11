@@ -15,11 +15,11 @@
            ;; domain name
            #:openstacks-sequencedstrips-ADL-included
            )
-  (:use #:common-lisp #:shop2))
+  (:use #:common-lisp #:shop3))
 
 (defpackage openstacks-problem-converter
   (:use common-lisp iterate)
-  (:import-from #:shop2 #:defproblem #:make-problem)
+  (:import-from #:shop3 #:defproblem #:make-problem)
   (:import-from #:shop3-pddl-helpers #:typed-object-list->facts)
   (:import-from #:shop3-openstacks
                 ;; types

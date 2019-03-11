@@ -14,7 +14,7 @@
 ;;;   [2004/02/05:rpg] Created.
 ;;;
 ;;;---------------------------------------------------------------------------
-(in-package :shop2-user)
+(in-package :shop-user)
 (defdomain check-plan-tree-structure
     (
      (:method (test-task ?s ?e)

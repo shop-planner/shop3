@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ; This file illustrates the use of arguments to an operator that are
 ;  not bound in the invocation of the operator.  These arguments
 ;  become bound in the precondition of that operator, either directly

@@ -61,18 +61,13 @@
 
 (defpackage :shop3
     (:nicknames :shop :shop2)
-    (:use :common-lisp :shop2.unifier :shop2.common :shop2.theorem-prover
+    (:use :common-lisp :shop3.unifier :shop3.common :shop3.theorem-prover
           :iterate)
     (:import-from #:shop3.unifier #:+primitive-property-name+ #:primitive-symbol-p)
     #+sbcl
     (:shadow #:defconstant)
     (:shadow #:domain)
     (:export #:shop-fail
-
-             ;; The following set of symbols is defined in
-             ;; shop-common, but are replayed for one export by shop2.
-             ;; Packages :use'ing shop2 should *not* also :use
-             ;; shop-common.
 
              #:domain-axioms #:domain-name
              #:domain-operators #:domain-methods
@@ -283,10 +278,6 @@
              ;; exporting so that it can be overridden
              plan-value))
 
-(defpackage :shop2-user
-    (:nicknames :shop-user)
-    (:use :shop2 :common-lisp)
-    ;; FIXME: I have no idea why these are here, but a "-user" package
-    ;; should definitely not export anything, because it's a sandbox. [2017/09/07:rpg]
-    (:export #:explain-satisfier
-             #:find-satisfiers))
+(defpackage :shop3-user
+    (:nicknames :shop-user :shop2-user)
+    (:use :shop3 :common-lisp))

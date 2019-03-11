@@ -309,7 +309,7 @@
   (delete-problem 'problem-for-deletion-test)
   (fiveam:is-false (find-problem 'problem-for-deletion-test nil)))
 
-(in-package :shop2-user)
+(in-package :shop-user)
 (defparameter arity-test::*expected-umt-plan*
            '((!!ASSERT
            ((GOAL (CLEAR)) (GOAL (DELIVERED PACKAGE2 LOCATION5))
@@ -352,13 +352,13 @@
   
 ;;; FIXME: probably should undefine the problem and domain here.
 (test test-include-directive
-  (shop2-user::define-partitioned-umt-domain)
+  (shop-user::define-partitioned-umt-domain)
   (fiveam:is
    (equalp
-    (shop2-user::remove-plan-costs
+    (shop-user::remove-plan-costs
      (first
       (find-plans
-             'shop2-user::umt-partitioned.pfile1
+             'shop-user::umt-partitioned.pfile1
              :which :first
              :verbose 0)))
     *expected-umt-plan*)))

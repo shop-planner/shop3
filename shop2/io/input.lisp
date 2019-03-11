@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
@@ -59,16 +59,16 @@
 ;;; markings.
 
 
-(in-package :shop2)
+(in-package :shop3)
 
 (defvar *define-silently* nil
-  "Set to a non-nil value to suppress output messages printed when SHOP2 model components
-\(domains, etc.\) are defined.  When this value is NIL, SHOP2 defaults to printing
+  "Set to a non-nil value to suppress output messages printed when SHOP3 model components
+\(domains, etc.\) are defined.  When this value is NIL, SHOP3 defaults to printing
 messages when it is asked to define components.")
 
 (defvar *ignore-singleton-variables*
   nil
-  "When T -- which should only be for legacy SHOP2 domains -- 
+  "When T -- which should only be for legacy SHOP3 domains -- 
 do NOT emit singleton variable warnings.")
 
 ;;; ------------------------------------------------------------------------
@@ -108,7 +108,7 @@ do NOT emit singleton variable warnings.")
 ;;; MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
 ;;; by putting STATE and TASK onto PROBLEM-NAME's
 ;;; property list under the indicators :STATE and :TASKS.
-#+allegro (excl::define-simple-parser make-problem second :shop2-problem)
+#+allegro (excl::define-simple-parser make-problem second :shop3-problem)
 
 ;;; this must be a variable, rather than an optional argument, because
 ;;; of the unpleasant way make-problem has extra arguments for
@@ -144,7 +144,7 @@ do NOT emit singleton variable warnings.")
                                                   :tasks tasks extras)
           (setf *problem* problem-name)
           #+allegro
-          (excl:record-source-file problem-name :type :shop2-problem)
+          (excl:record-source-file problem-name :type :shop3-problem)
           problem-inst)))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
@@ -163,7 +163,7 @@ do NOT emit singleton variable warnings.")
 
 ;;;---------------------------------------------------------------------------
 ;;; I have added these two accessors to make it easier to modify the
-;;; implementation of SHOP2 problems, should we like to do it.  I
+;;; implementation of SHOP3 problems, should we like to do it.  I
 ;;; suggest that we use these instead of (get <problem-name> :state)
 ;;; and (get <problem-name> :tasks) [2004/10/27:rpg]
 ;;;---------------------------------------------------------------------------
@@ -434,7 +434,7 @@ context, becasue this relies on VARIABLEP working."
                       (iter (rest sexp)))
                      (t
                       ;; can't check for ATOM, because there might be arrays, or
-                      ;; any old stuff in the SHOP2 code.
+                      ;; any old stuff in the SHOP3 code.
                       (values))))
              (bump-entry (var-name)
                (let ((entry (gethash var-name retval 0)))
@@ -465,7 +465,7 @@ context, becasue this relies on VARIABLEP working."
 ;;; This can help us avoid the danger of having defproblem and
 ;;; make-problem diverge. [2004/02/17:rpg]
 ;;;---------------------------------------------------------------------------
-#+allegro (excl::define-simple-parser defproblem second :shop2-problem)
+#+allegro (excl::define-simple-parser defproblem second :shop3-problem)
 (defmacro defproblem (problem-name &rest args)
   "\(DEFPROBLEM {<name>|<name-and-options>} <state> <tasks>\)
 For backward compatibility, will support also
@@ -486,7 +486,7 @@ For backward compatibility, will support also
 ;;; DOMAIN manipulation functions --- these should probably be moved
 ;;; out into a file of their own at some point. [2006/07/24:rpg]
 ;;;---------------------------------------------------------------------------
-#+allegro (excl::define-simple-parser defdomain second :shop2-domain)
+#+allegro (excl::define-simple-parser defdomain second :shop3-domain)
 (defvar *defdomain-verbose* t)
 (defvar *defdomain-pathname* nil
   "Dynamic variable used to enable INCLUDE directives to find files
@@ -505,7 +505,7 @@ breaks usage of *load-truename* by moving the FASLs.")
   `(let ((*defdomain-pathname* ,(or *compile-file-truename*
                                     *load-truename*)))
       #+allegro (excl:without-redefinition-warnings
-                  (excl:record-source-file ',(first name-and-options) :type :shop2-domain))
+                  (excl:record-source-file ',(first name-and-options) :type :shop3-domain))
      (apply 'make-domain ',name-and-options ',items)))
 
 (defun make-domain (name-and-options &rest items)
@@ -562,7 +562,7 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
           (t if-not-found))))
 
 ;;; make QUERY easier to use
-(defmethod shop2.theorem-prover:query :around (goals state &key just-one (domain *domain*)
+(defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
                                                              (record-dependencies *record-dependencies-p*))
   (if (symbolp domain)
       (call-next-method goals state :just-one just-one :domain (find-domain domain)

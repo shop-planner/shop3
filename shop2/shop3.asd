@@ -51,22 +51,28 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(asdf:load-system :shop-asd)
-(in-package :shop2-asd)
-
+(defpackage :shop-asd
+    (:use :common-lisp :asdf)
+    (:nicknames :shop2-asd :shop3-asd)
+    #+(or allegro sbcl ccl clisp abcl lispworks ecl mkcl)
+    (:import-from #+allegro aclmop     #+sbcl sb-mop
+                  #+ccl ccl #+clisp clos #+cmucl pcl
+                  #+abcl mop #+(or ecl mkcl) clos
+                  #+lispworks hcl
+                  #:class-direct-superclasses))
+(in-package :shop3-asd)
 
 ;;;
 ;;; The main system.
 ;;;
-(defsystem :shop2
+(defsystem :shop3
     :serial t
-    :default-component-class cl-file-with-defconstants
-    :depends-on ((:version "shop2/common" (:read-file-form "shop-version.lisp-expr"))
-                 (:version "shop2/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
+    :depends-on ((:version "shop3/common" (:read-file-form "shop-version.lisp-expr"))
+                 (:version "shop3/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
                  :alexandria
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")
-    :in-order-to ((test-op (test-op :shop2/test)))
+    :in-order-to ((test-op (test-op :shop3/test)))
     :components  (
        (:file "package")
        (:file "decls")
@@ -101,7 +107,7 @@
                 :components ((:file "loop-extensions")))
        
 
-       ;; this is for the original SHOP2 plan trees.
+       ;; this is for the original SHOP3 plan trees.
        (:module tree
         :pathname "planning-tree/"
         :components ((:file "tree-accessors")
@@ -119,48 +125,47 @@ minimal affected subtree."
        (:file "plan-repair"
               :pathname "explicit-stack-search/plan-repair"
               :depends-on ("tree" "explicit-stack-search"))
-       (:file "shop2"
+       (:file "shop3"
               :perform (load-op :before (op c)
                                (declare (ignorable op c))
                                (set (intern (symbol-name '#:*shop-version*)
-                                            (find-package :shop2))
-                                    (asdf:component-version (asdf:find-system "shop2")))))
+                                            (find-package :shop3))
+                                    (asdf:component-version (asdf:find-system "shop3")))))
        (:file "plan-printer" :depends-on ("package"
                                            "decls"))))
 
-(defsystem :shop2/common
+(defsystem :shop3/common
     :serial t
     :pathname "common/"
     :version (:read-file-form "shop-version.lisp-expr")
-    :depends-on (:shop2/unifier :iterate)
+    :depends-on (:shop3/unifier :iterate)
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")
                  (:file "state-utils")))
 
-(defsystem :shop2/theorem-prover
+(defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop2/common" "shop2/unifier")
+    :depends-on ("shop3/common" "shop3/unifier")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")
                  (:file "theorem-prover")))
 
 
-(defsystem :shop2/unifier
+(defsystem :shop3/unifier
   :serial t
   :pathname "unification/"
-  :depends-on ("shop-asd")
-  :in-order-to ((test-op (test-op "shop2/test-unifier")))
+  :in-order-to ((test-op (test-op "shop3/test-unifier")))
   :version (:read-file-form "shop-version.lisp-expr")
   :components ((:file "package-unifier")
                (:file "tracer")
                (:file "unify")))
 
 
-(defsystem :shop2/plan-grapher
-  :depends-on ("shop2" "cl-dot")
+(defsystem :shop3/plan-grapher
+  :depends-on ("shop3" "cl-dot")
   :serial t
   :pathname "plan-grapher/"
   :components ((:file "package")
@@ -168,8 +173,8 @@ minimal affected subtree."
                (:file "graph-plan-tree"))
   )
 
-(defsystem "shop2/pddl-helpers"
-    :depends-on ("shop2" "pddl-utils")
+(defsystem "shop3/pddl-helpers"
+    :depends-on ("shop3" "pddl-utils")
   :pathname "pddl/"
   :serial t                             ; pddl-helpers contains defpackage
   :components ((:file "pddl-helpers")
@@ -182,7 +187,7 @@ minimal affected subtree."
 
 (asdf:load-system "fiveam-asdf")
 
-(defclass tester-cl-source-file ( cl-file-with-defconstants )
+(defclass tester-cl-source-file ( cl-file )
   ()
   (:documentation "Special class that will have to recompile no matter
 what..."))
@@ -192,62 +197,53 @@ what..."))
             (c tester-cl-source-file))
   "We are crushing the normal operation-done-p for compile-op, so that
 the tester files get recompiled, to take into account any changes to
-shop2."
+shop3."
   (values nil))
 
 (defclass shop-tester-mixin ()
      ()
-  (:documentation "Mixin that adds silent functioning of SHOP2."))
+  (:documentation "Mixin that adds silent functioning of SHOP3."))
 
-
-
-#+sbcl
-(defmethod perform :around ((op operation)
-                            (c cl-file-with-defconstants))
-  (handler-bind ((sb-ext:defconstant-uneql
-                     #'(lambda (c)
-                         (continue c))))
-    (call-next-method)))
 
 (defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
-(defsystem shop2/openstacks
-    :depends-on (:shop2)
+(defsystem shop3/openstacks
+    :depends-on (:shop3)
   :serial t
   :pathname "examples/openstacks-adl/"
   :components ((:file "package")
                (:file "domain")))
 
-(defsystem shop2/rovers
-    :depends-on (:shop2)
+(defsystem shop3/rovers
+    :depends-on (:shop3)
   :serial t
   :pathname "examples/rovers/strips/"
   :components ((:file "domain")))
 
 
-(defsystem shop2/test
+(defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
-    :test-names ((pddl-tests . :shop2)  ; 141
+    :test-names ((pddl-tests . :shop3)  ; 141
                  (protection-test . :protection-test)  ; 16
                  (arity-test . :arity-test) ; 6
                  (io-tests . :arity-test) ; 25
                  (method-tests . :arity-test) ; 2
-                 (umt-domain-tests . :shop2-user) ; 8
-                 (blocks-tests . :shop2-user) ; 5
-                 (depot-tests . :shop2-user) ; 44
-                 (logistics-tests . :shop2-user) ; 200
-                 (singleton-tests . :shop2-user) ; 44
-                 (misc-tests . :shop2-user) ; 10
-                 (minimal-subtree-tests . :shop2-user) ; 12
-                 (enhanced-plan-tree . :shop2-user) ; 2
+                 (umt-domain-tests . :shop3-user) ; 8
+                 (blocks-tests . :shop3-user) ; 5
+                 (depot-tests . :shop3-user) ; 44
+                 (logistics-tests . :shop3-user) ; 200
+                 (singleton-tests . :shop3-user) ; 44
+                 (misc-tests . :shop3-user) ; 10
+                 (minimal-subtree-tests . :shop3-user) ; 12
+                 (enhanced-plan-tree . :shop3-user) ; 2
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
                  (test-plan-repair . :shop-replan-tests) ; 3
                  )
     :num-checks 522
-    :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
-                 "shop2/openstacks"
-                 "shop2/pddl-helpers"
+    :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
+                 "shop3/openstacks"
+                 "shop3/pddl-helpers"
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
@@ -278,7 +274,7 @@ shop2."
                                        (:file "io-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "singleton-tests")
                                        (:file "misc")))
-                 ;;; FIXME: put these tests in a separate package, instead of in SHOP2-USER [2012/09/05:rpg]
+                 ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"
                           :components ((:file "UMT2")
@@ -350,31 +346,31 @@ shop2."
                  (:file "replan-tests" :pathname "tests/replan-tests")))
 
 
-(defsystem shop2/test-satellite
+(defsystem shop3/test-satellite
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
     :test-names (("SATELLITE-ADL-TESTS" . "TEST-SATELLITE"))
     :num-checks 80
-    :depends-on ((:version "shop2" (:read-file-form "shop-version.lisp-expr"))
+    :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
     :pathname "examples/satellite/strips/"
     :serial t
     :components ((:file "test-satellite")))
 
-(defsystem shop2/test-unifier
+(defsystem shop3/test-unifier
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
     :test-names (("TEST-SHOP-UNIFIER" . "SHOP-UNIFIER-TESTS"))
     :num-checks 36
-    :depends-on ("shop2/unifier" "alexandria")
+    :depends-on ("shop3/unifier" "alexandria")
     :pathname "tests/"
     :serial t
     :components ((:file "unifier-tests")))
 
 #+ecl
 (defmethod perform :before ((op test-op)
-                            (c (eql (asdf:find-system :shop2/test))))
+                            (c (eql (asdf:find-system :shop3/test))))
   (macrolet ((set-limit (limited limit)
                `(unless (>= (ext:get-limit ',limited) ,limit)
                   (ext:set-limit ',limited ,limit ))))

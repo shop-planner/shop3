@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
@@ -38,13 +38,14 @@
 ;;; or the LGPL.
 ;;; ----------------------------------------------------------------------
 
-(defpackage shop2-pprint
-    (:use :shop2 :common-lisp :iterate)
-    (:import-from :shop2
+(defpackage shop3-pprint
+    (:use :shop3 :common-lisp :iterate)
+    (:nicknames #:shop2-pprint)
+    (:import-from :shop3
                   #:variablep
                   #:*shop-pprint-table*))
 
-(in-package :shop2-pprint)
+(in-package :shop3-pprint)
 
 (defun method-sexp-p (lst)
   (and (listp lst)

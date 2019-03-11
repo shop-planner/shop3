@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (fiveam:def-suite singleton-tests)
 (fiveam:in-suite singleton-tests)

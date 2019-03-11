@@ -44,8 +44,8 @@
 ;;; ----------------------------------------------------------------------
 
 (defpackage shop-theorem-prover-tests
-  (:shadowing-import-from #:shop2.theorem-prover #:fail)
-  (:use common-lisp shop2.theorem-prover fiveam))
+  (:shadowing-import-from #:shop3.theorem-prover #:fail)
+  (:use common-lisp shop3.theorem-prover fiveam))
 
 (in-package #:shop-theorem-prover-tests)
 
@@ -56,7 +56,7 @@
     (&body)))
 
 (def-fixture pddl-tp-domain ()
-  (let ((*domain* (make-instance 'shop2:adl-domain)))
+  (let ((*domain* (make-instance 'shop3:adl-domain)))
     (&body)))
 
 (defun sorted-bindings (variable binding-lists)
@@ -69,7 +69,7 @@
   (with-fixture tp-domain ()
     (let ((bindings
             (query '(or (foo ?x) (bar ?x))
-                   (shop2.common:make-initial-state *domain* (default-state-type *domain*)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((foo a) (bar b))))))
       (is (equal '(a b) (sorted-bindings '?x bindings))))))
 
@@ -78,7 +78,7 @@
   (with-fixture tp-domain ()
     (let ((bindings
             (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
-                   (shop2.common:make-initial-state *domain* (default-state-type *domain*)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((foo a) (foo b) (bar b) (baz b)
                                                       (foo c)
                                                       (foo d) (bar d))))))
@@ -86,12 +86,12 @@
     ;; in this context, (NOT (BAR ?X)) has no sensible semantics.  Raise error.
     (signals non-ground-error
      (query '(and (imply (bar ?x) (baz ?x)))
-            (shop2.common:make-initial-state *domain* (default-state-type *domain*)
+            (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                              '((foo a) (foo b) (bar b) (baz b))))))
   (with-fixture pddl-tp-domain ()
     (let ((bindings
             (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
-                   (shop2.common:make-initial-state *domain* (default-state-type *domain*)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((foo a) (foo b) (bar b) (baz b)
                                                       (foo c)
                                                       (foo d) (bar d))))))

@@ -14,7 +14,7 @@
 ;;;   [2003/11/24:rpg] Created.
 ;;;
 ;;;---------------------------------------------------------------------------
-(in-package :shop2-user)
+(in-package :shop-user)
 (defdomain basic-example
     (
      (:operator (!pickup ?a) ((on-table ?a)) () ((have ?a)))

@@ -58,7 +58,7 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(in-package :shop2.theorem-prover)
+(in-package :shop3.theorem-prover)
 
 (defvar *domain* nil)
 
@@ -81,7 +81,7 @@ state inside FIND-SATISFIERS, qv., giving axioms access to the
 state data structure."))
 
 (defgeneric axioms (thpr-domain predicate)
-  (:documentation "Return a list of all the SHOP2
+  (:documentation "Return a list of all the SHOP
 axioms for PREDICATE in THPR-DOMAIN.")
   (:method (no-axioms-domain predicate)
     (declare (ignorable no-axioms-domain predicate))
@@ -132,7 +132,6 @@ function!  Instead, please use the def-logical-keyword macro.")
   (gethash name (domain-axioms domain)))
 
 
-;;;(defclass domain (shop2.common:domain has-axioms-mixin)
 (defclass thpr-domain (has-axioms-mixin)
   (
    (domain-name
@@ -146,7 +145,7 @@ function!  Instead, please use the def-logical-keyword macro.")
     ;; default default!
     :initform :mixed)
    )
-  (:documentation "An object representing a SHOP2 theorem prover domain.")
+  (:documentation "An object representing a SHOP3 theorem prover domain.")
   )
 
 (defclass static-predicates-mixin ()
@@ -249,8 +248,8 @@ warnings, errors, etc.")
     :initarg :expression
     :reader expression))
   (:report (lambda (condition stream)
-	     (format stream "We do not have correct logic for computing dependencies for expression ~a. Simply return no new dependencies."
-		     (expression condition)))))
+             (format stream "We do not have correct logic for computing dependencies for expression ~a. Simply return no new dependencies."
+                     (expression condition)))))
     
 
 ;;; used for the internals of IF-THEN-ELSE in the theorem-prover

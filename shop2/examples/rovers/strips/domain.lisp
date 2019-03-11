@@ -1,5 +1,6 @@
-(defpackage shop2-rovers
-  (:use common-lisp shop2)
+(defpackage :shop3-rovers
+  (:use common-lisp shop3)
+  (:nicknames #:shop2-rovers)
   (:intern
    #:communicated_image_data
    #:communicated_rock_data
@@ -9,7 +10,7 @@
    #:communicate_image_data
    #:communicate_rock_data
    #:communicate_soil_data))
-(in-package :shop2-rovers)
+(in-package :shop3-rovers)
 
 (defclass pure-pddl-domain (pure-logic-domain-mixin pddl-domain)
   ())

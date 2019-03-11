@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;; 
@@ -64,7 +64,7 @@
 ;;; Air Force Research Lab Contract # FA8750-16-C-0182
 ;;; Unlimited Government Rights
 ;;; ----------------------------------------------------------------------
-(in-package :shop2)
+(in-package :shop3)
 
 
 (defgeneric validator-export (domain plan stream)
@@ -83,7 +83,7 @@ This is an easier to use interface to the validator-export function, qv."
        (validator-export domain shop-plan stream)
     (when filename (close stream))))
 
-(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (shop2-domain *domain*)
+(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (shop3-domain *domain*)
                                                       (verbose *verbose*))
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
@@ -108,7 +108,7 @@ absolute pathname, or a path-relative namestring)."
        (validate-plan plan)
        (let (validated)
          (uiop:with-temporary-file (:stream str :pathname path :keep (not validated))
-           (write-pddl-plan plan :domain shop2-domain :stream str)
+           (write-pddl-plan plan :domain shop3-domain :stream str)
            :close-stream
            (setf validated (validate-plan path))
            validated)))))
@@ -125,7 +125,7 @@ absolute pathname, or a path-relative namestring)."
     :initarg :source-pddl-domain
     :reader source-pddl-domain
     ))
-  (:documentation "A new class of SHOP2 domain that permits inclusion of
+  (:documentation "A new class of SHOP3 domain that permits inclusion of
 PDDL operator definitions.")
   )
 
@@ -177,7 +177,7 @@ PDDL operator definitions.")
                        pddl-typing-mixin
                        simple-pddl-domain )
   ()
-  (:documentation "A new class of SHOP2 domain that permits inclusion of
+  (:documentation "A new class of SHOP3 domain that permits inclusion of
 PDDL operator definitions.  Right now, this approximates what happens if you have
 the :adl flag in a PDDL domain file.")
   )
@@ -188,12 +188,12 @@ the :adl flag in a PDDL domain file.")
 
 
 (defgeneric process-action (domain action-def)
-  (:documentation "PDDL has actions \(vanilla SHOP2 has operators\), so we 
+  (:documentation "PDDL has actions \(vanilla SHOP3 has operators\), so we 
 add code for processing the actions that is parallel to process-operator."))
 
 ;;;---------------------------------------------------------------------------
 ;;; Structure for PDDL actions -- plays a role akin to the role played
-;;; by the OPERATOR defstruct in vanilla shop2.
+;;; by the OPERATOR defstruct in vanilla shop3.
 ;;;---------------------------------------------------------------------------
 (defstruct (pddl-action :named (:type list))
   (head nil :type list)         
@@ -232,14 +232,14 @@ later be compiled into find-satisfiers or something."
 ;;; operators, but this may get us in trouble! [2006/07/28:rpg]
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':action)) item)
   (let ((op-name (second item)))
-    ;; do some nasty voodoo to give PDDL actions names like SHOP2
+    ;; do some nasty voodoo to give PDDL actions names like SHOP3
     ;; operators [2006/07/31:rpg]
     (unless (eql (elt (symbol-name op-name) 0) #\!)
       (setf op-name (intern (concatenate 'string
                                          "!" (symbol-name op-name))
                             (symbol-package op-name)
                             ))
-;;;      (format t "~&Making new SHOP2 operator name ~S from old name ~S.~%"
+;;;      (format t "~&Making new SHOP3 operator name ~S from old name ~S.~%"
 ;;;           op-name (second item))
       (setf (second item) op-name))
     (with-slots (operators) domain
@@ -304,20 +304,20 @@ with unconditional actions."
 
 ;;;---------------------------------------------------------------------------
 ;;; Additional generic functions, used to tailor the translation of
-;;; PDDL actions into SHOP2 syntax.  The different PDDL constructs are
+;;; PDDL actions into SHOP3 syntax.  The different PDDL constructs are
 ;;; gated by PDDL requirements flags, which are represented as mixins
 ;;; in PDDL domains.
 ;;;---------------------------------------------------------------------------
 (defgeneric translate-precondition (domain expression)
   (:documentation
    "This generic function is used to translate PDDL-style preconditions
-into SHOP2-style syntax.  The rewriting is done based on the domain so 
+into SHOP3-style syntax.  The rewriting is done based on the domain so 
 that different syntax features can be turned on and off."))
 
 (defgeneric translate-effect (domain expression)
   (:documentation
    "This generic function is used to translate PDDL-style effects
-into SHOP2-style syntax.  The rewriting is done based on the domain so 
+into SHOP3-style syntax.  The rewriting is done based on the domain so 
 that different syntax features can be turned on and off."))
 
 ;;;---------------------------------------------------------------------------
@@ -326,14 +326,14 @@ that different syntax features can be turned on and off."))
 
 
 (defmethod translate-effect ((domain simple-pddl-domain) effect)
-  "Basis method for translating a PDDL effect into SHOP2 syntax is
+  "Basis method for translating a PDDL effect into SHOP3 syntax is
 to just leave it alone."
   effect)
 
 (defmethod translate-effect ((domain conditional-effects-mixin) effect)
   "This method translates any forall expressions in a PDDL precondition into the
-slightly-different SHOP2 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
+slightly-different SHOP3 FORALL syntax.
+It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
 translated."
   ;;; FIXME: don't we need to translate existential variables, as well?
   (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
@@ -344,22 +344,22 @@ translated."
 ;;;---------------------------------------------------------------------------
 
 (defmethod translate-precondition ((domain simple-pddl-domain) expression)
-  "Basis method for translating a PDDL precondition into SHOP2 syntax is
+  "Basis method for translating a PDDL precondition into SHOP3 syntax is
 to just leave it alone."
   expression)
 
 (defmethod translate-precondition ((domain universal-preconditions-mixin) expression)
   "This method translates any forall expressions in a PDDL precondition into the
-slightly-different SHOP2 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
+slightly-different SHOP3 FORALL syntax.
+It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
 translated."
   (let ((new-expr (translate-pddl-quantifier expression 'forall domain)))
     (call-next-method domain new-expr)))
 
 (defmethod translate-precondition ((domain existential-preconditions-mixin) expression)
   "This method translates any exists expressions in a PDDL precondition into the
-slightly-different SHOP2 EXISTS syntax.
-It then invokes the next method, to insure that all PDDL - SHOP2 constructs are
+slightly-different SHOP3 EXISTS syntax.
+It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
 translated."
   (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
     (call-next-method domain new-expr)))
@@ -388,7 +388,7 @@ translated."
       (if domain-form
           ;; return the items
           (cddr domain-form)
-          ;; could be a SHOP2 domain you're including
+          ;; could be a SHOP3 domain you're including
           (call-next-method)))))
 
 
@@ -399,7 +399,7 @@ translated."
 
 (defun translate-pddl-quantifier (expression quantifier &optional (domain *domain*))
   "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation 
-into SHOP2 quantifier notation \(and adds some
+into SHOP3 quantifier notation \(and adds some
 \(<type> <var>\) conditions\)."
   (labels ((iter (expr)
              (cond ((and (listp expr) (eq (first expr) quantifier))
@@ -422,7 +422,7 @@ into SHOP2 quantifier notation \(and adds some
     (iter expression)))
 
 (defun of-type-exprs (vars types)
-  "Because SHOP2 doesn't have the same typing, we take variables
+  "Because SHOP3 doesn't have the same typing, we take variables
 and their types and generate a list of distinguished propositions 
 we can use in preconditions."
   (loop for v in vars
@@ -465,11 +465,11 @@ lists of declared names and type names."
                                     ;; end of the type list doesn't
                                     ;; have a type declaration:
                                     ;; defaults to OBJECT.
-                                    (append types (make-list counter :initial-element 'shop2:object)))))))
+                                    (append types (make-list counter :initial-element 'shop3:object)))))))
                             
 ;;;---------------------------------------------------------------------------
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
-;;; SHOP2.
+;;; SHOP3.
 ;;;---------------------------------------------------------------------------
 (defun apply-action (domain state task-body action protections depth
                      in-unifier)
@@ -520,14 +520,14 @@ Otherwise it returns FAIL."
           
             ;; need to specially handle the preconditions, since the
             ;; syntax of PDDL preconditions are different from
-            ;; SHOP2. [2006/07/31:rpg]
+            ;; SHOP3. [2006/07/31:rpg]
             (multiple-value-bind (pu pd)
                 ;; finding only one satisfier for the preconditions is
                 ;; justified by the syntactic constraint that PDDL
                 ;; preconditions cannot introduce any new variables
                 ;; scoped over the effects, and the (not enforced)
                 ;; constraint that all actions should be ground when
-                ;; introduced into the plan by SHOP2.
+                ;; introduced into the plan by SHOP3.
                 (find-satisfiers pre state t (1+ depth) :domain domain)
               (unless pu
                 (trace-print :operators (first head) state
@@ -638,7 +638,7 @@ two values."
          (appending delete into recursive-deletes)
          (when (and deps *record-dependencies-p*)
            (setf recursive-deps
-                 (shop2.theorem-prover::rd-union recursive-deps deps))))
+                 (shop3.theorem-prover::rd-union recursive-deps deps))))
        (finally
         (return
           (values recursive-adds recursive-deletes recursive-deps)))))
@@ -662,7 +662,7 @@ two values."
                (appending new-adds into adds)
                (appending new-deletes into dels)
                (when (and new-depends *record-dependencies-p*)
-                 (setf depends (shop2.theorem-prover::rd-union depends new-depends))))
+                 (setf depends (shop3.theorem-prover::rd-union depends new-depends))))
              (finally (return (values adds dels depends))))))))
     (when
         (destructuring-bind (when antecedent consequent)
@@ -677,7 +677,7 @@ two values."
                                               (apply-substitution consequent unifier)
                                               state (1+ depth))
                   (values new-adds new-deletes (when *record-dependencies-p*
-                                                 (shop2.theorem-prover::rd-union (first sp-dependencies) new-depends)))))))))
+                                                 (shop3.theorem-prover::rd-union (first sp-dependencies) new-depends)))))))))
     (otherwise                          ;includes :protection
      ;; normal expression
      (values (list effect-expr) nil))))

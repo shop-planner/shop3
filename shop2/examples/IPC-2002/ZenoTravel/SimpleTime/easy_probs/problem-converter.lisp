@@ -39,7 +39,7 @@
       (let ((pddl (read instr)))
         (with-open-file (outstr shop-file :direction :output
                          :if-exists :supersede)
-           (format outstr "(in-package :shop2-user)~%")
+           (format outstr "(in-package :shop-user)~%")
            (format outstr "(defproblem ")
            (format outstr (concatenate 'string "" problem-name))
            (format outstr " ZENOTRAVEL ~%")

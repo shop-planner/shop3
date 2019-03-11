@@ -1,5 +1,6 @@
-(defpackage shop2-rovers
-  (:use common-lisp shop2)
+(defpackage shop3-rovers
+  (:use common-lisp shop3)
+  (:nicknames #:shop2-rovers)
   (:intern
    #:communicated_image_data
    #:communicated_rock_data
@@ -21,8 +22,8 @@
 
 (defpackage rovers-problem-converter
   (:use common-lisp iterate)
-  (:import-from #:shop2 #:defproblem)
-  (:import-from #:shop2-rovers
+  (:import-from #:shop3 #:defproblem)
+  (:import-from #:shop3-rovers
                 #:communicated_image_data
                 #:communicated_rock_data
                 #:communicated_soil_data
@@ -137,7 +138,7 @@
              :test (complement test) keyword-args)))
 
 
-(defun write-SHOP2-problem (shop2-problem-filename
+(defun write-SHOP3-problem (shop3-problem-filename
                             problem-name
                             package
                             domain-name
@@ -158,7 +159,7 @@
                #+distance-table ,@graph-facts
                ,@(translate-goals goal-list))
               (:task achieve-goals))))
-    (with-open-file (outfile shop2-problem-filename :direction :output
+    (with-open-file (outfile shop3-problem-filename :direction :output
                                                     :if-exists :supersede)
 
       (let ((*print-readably* t)
@@ -166,8 +167,8 @@
         (print `(in-package ,package) outfile)
         (print problem outfile)))))
 
-(defun problem-converter (pddl-problem-filename shop2-problem-filename
-                          &key (package :shop2-rovers))
+(defun problem-converter (pddl-problem-filename shop3-problem-filename
+                          &key (package :shop3-rovers))
   (with-open-file (infile pddl-problem-filename :direction :input)
      #+ignore problem-name
     (let* ((pddl-problem (let ((*package* (find-package package))) (read infile)))
@@ -204,9 +205,9 @@
       ;; (setf domain-name  "domain-name")
 
       ;;;
-      ;;; Generate the SHOP2 problem
+      ;;; Generate the SHOP3 problem
       ;;;
-      (write-SHOP2-problem shop2-problem-filename
+      (write-SHOP3-problem shop3-problem-filename
                            problem-name
                            package
                            domain-name

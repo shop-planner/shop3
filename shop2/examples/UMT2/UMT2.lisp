@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defun define-umt-domain ()
   (let ((*define-silently* t)

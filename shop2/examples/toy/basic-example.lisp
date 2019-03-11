@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ; This extremely simple example shows some of the most essential
 ;   features of SHOP2.
 

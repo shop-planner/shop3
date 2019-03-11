@@ -1,6 +1,6 @@
-;;; -*- Mode: common-lisp; package: shop2-user; -*-
+;;; -*- Mode: common-lisp; package: shop-user; -*-
 
-(in-package :shop2-user)
+(in-package :shop-user)
 
 
 (defun remove-plan-costs (plan-and-costs)

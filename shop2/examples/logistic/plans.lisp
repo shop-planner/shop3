@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defconstant +logistics-plans+
     '((LOG-RAN-15-1 (!DRIVE-TRUCK TRUCK8-1 LOC8-1 LOC8-3)

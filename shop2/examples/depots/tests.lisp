@@ -1,11 +1,11 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (fiveam:def-suite depot-tests)
 (fiveam:in-suite depot-tests)
 
 (defmacro nst-depot-test (name (&key primary-result-plan) quoted-problem-name)
   (assert primary-result-plan)
-  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop-user)))
     `(progn
        (fiveam:test ,name
          (define-depot-domain)

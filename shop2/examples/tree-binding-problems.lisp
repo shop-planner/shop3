@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 ;;;---------------------------------------------------------------------------
 ;;; Copyright Smart Information Flow Technologies, d/b/a SIFT, LLC

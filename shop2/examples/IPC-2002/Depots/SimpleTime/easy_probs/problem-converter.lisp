@@ -17,7 +17,7 @@
                             metric-list)
   (with-open-file (outfile shop2-problem-filename :direction :output
                                                   :if-exists :supersede)
-    (format outfile "(in-package :shop2-user)~%")
+    (format outfile "(in-package :shop-user)~%")
     (format outfile  "(defproblem ~A ~A~%" problem-name domain-name)
     (format outfile "  (~%")
     (when *debug-mode*

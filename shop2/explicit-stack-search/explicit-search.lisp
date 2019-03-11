@@ -1,6 +1,6 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 
-(in-package :shop2)
+(in-package :shop3)
 
 (defvar *enhanced-plan-tree*
   nil
@@ -21,9 +21,9 @@
                                    rationale
                                    (out-stream t)
                                    (which :first))
-  "Top level search function for explicit-state search in SHOP2.
-Does not support the full range of options supported by SHOP2: only
-supports finding the first solution to PROBLEM.  To comply with SHOP2,
+  "Top level search function for explicit-state search in SHOP3.
+Does not support the full range of options supported by SHOP3: only
+supports finding the first solution to PROBLEM.  To comply with SHOP3,
 though, always returns a list of plans.
   If the PLAN-TREE keyword argument is non-NIL, will return an enhanced plan
 tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
@@ -110,12 +110,12 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
         (delete-state-tag-decoder)))))
       
 (defun seek-plans-stack (state domain &key (which :first) repairable)
-  "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP2 search
+  "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP3 search
 virtual machine, cycling through different virtual instructions depending
 on the value of the MODE slot of STATE.
    Returns three values:
 List of PLANS -- currently there is always only one, but this complies
-   with the return from conventional SHOP2.
+   with the return from conventional SHOP3.
 List of PLAN-TREES -- optional
 List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
     supplied."
@@ -400,8 +400,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 (defun make-dependencies (tree-node depend-lists hash-table)
   (iter (for depend in depend-lists)
     ;; PROP is the proposition consumed and establisher is a task name.
-    (as prop = (shop2.theorem-prover::rd-prop depend))
-    (as establisher = (shop2.theorem-prover::rd-est depend))
+    (as prop = (shop3.theorem-prover::rd-prop depend))
+    (as establisher = (shop3.theorem-prover::rd-est depend))
     (unless (and prop establisher)
       (error "Ill-formed dependency-list: ~S"  depend))
     (collecting

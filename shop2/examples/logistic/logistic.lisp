@@ -38,7 +38,7 @@
 ;;;
 
 ;;;-------------problem set 2----------------------------------------
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defun logistics-domain ()
   (let ((*define-silently* t)

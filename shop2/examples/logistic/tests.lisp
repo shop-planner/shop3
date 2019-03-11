@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (fiveam:def-fixture logistics-domain ()
   (progn (logistics-domain)
@@ -17,7 +17,7 @@
       (remove-plan-costs (first plan-list)))))
 
 (defmacro log-test-both (name &body body)
-  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop-user)))
     `(progn
        (fiveam:test ,name
          (flet ((log-plan (problem-name)

@@ -66,7 +66,7 @@
    (find-plans-stack 'find-flaw-test-problem :plan-tree t)))
 (defparameter *plan* (shorter-plan (caar *res*)))
 
-(shop2-minimal-subtree:find-failed-task 'test-flaw-detection (caar *res*) (first (second *res*)) (list (first *plan*)) '((:delete (b))))
+(shop3-minimal-subtree:find-failed-task 'test-flaw-detection (caar *res*) (first (second *res*)) (list (first *plan*)) '((:delete (b))))
 ;;; should return the node for (!op2)
 |#
 
@@ -79,7 +79,7 @@
          (plan (remove-costs (first (first res))))
          (hash-table (first (third res))))
     (flet ((find-failed-task (prefix divergence)
-             (shop2-minimal-subtree:find-failed-task 'test-flaw-detection
+             (shop3-minimal-subtree:find-failed-task 'test-flaw-detection
                                                      plan plan-tree
                                                      prefix divergence
                                                      :plan-tree-hash hash-table))

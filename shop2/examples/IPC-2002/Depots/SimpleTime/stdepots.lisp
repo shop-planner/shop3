@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 (defdomain depot
   ((:operator (!drive ?x ?y ?z ?start ?time)
               ((time ?x ?time1) (track ?x ?time2) (assign ?start (eval (max ?time1 ?time2))) (assign ?time 10) (assign ?change (eval (+ ?start ?time 0.01))))

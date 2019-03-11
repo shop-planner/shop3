@@ -59,9 +59,10 @@
 ;;; markings.
 (in-package :common-lisp-user)
 
-(defpackage :shop2.theorem-prover
+(defpackage :shop3.theorem-prover
     (:nicknames :shopthpr :shop.theorem-prover)
-    (:use :common-lisp :shop2.common :shop2.unifier :iterate)
+    (:use :common-lisp :shop3.common :shop3.unifier :iterate)
+    (:import-from #:shop3.common #:add-atom-to-state #:state-atoms)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
              #:*state*
@@ -94,7 +95,7 @@
              #:setof                    ; all-solutions predicate
              #:bagof                    ; all-solutions predicate
 
-             ;; hook routine that will later be exported through shop2 package
+             ;; hook routine that will later be exported through shop3 package
              #:external-access-hook
 
              #:thpr-domain #:domain-axioms
@@ -112,7 +113,7 @@
              #:bad-argument
              #:non-ground-error
              #:theorem-prover-condition
-	     #:incomplete-dependency-error
+             #:incomplete-dependency-error
 
              ;; tracking dependencies
              #:*record-dependencies-p*

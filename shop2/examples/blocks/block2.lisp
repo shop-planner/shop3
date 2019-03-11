@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ;;; This file contains a SHOP domain representation of the block-stacking
 ;;; algorithm from the following paper:
 ;;;    N. Gupta and D. Nau, On the complexity of blocks-world planning,

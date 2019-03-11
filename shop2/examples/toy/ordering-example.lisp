@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ; This file illustrates some uses of ordered and unordered task lists.
 ; A couple of notes about this file:
 

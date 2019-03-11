@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2; -*-
+;;; -*- Mode: common-lisp; package: shop3; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
@@ -58,7 +58,7 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(in-package :shop2)
+(in-package :shop3)
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Global Variables
@@ -106,7 +106,7 @@
 wishes to choose tasks for planning by hand.")
 (defvar *leashed* nil
   "This variable will be DYNAMICALLY bound and it will further constrain the behavior
-of SHOP2 when we hand-steer it (see *hand-steer*).  If *leashed* is NIL, SHOP2 will
+of SHOP when we hand-steer it (see *hand-steer*).  If *leashed* is NIL, SHOP will
 simply proceed when choosing tasks, if there is no choice, i.e., when there's only
 one task on the open list, or only one :immediate task.  If *leashed* is non-nil,
 will consult the user even in these cases.")
@@ -228,9 +228,9 @@ will consult the user even in these cases.")
        ))
   )
 
-(defclass domain (actions-domain-mixin shop2.theorem-prover:thpr-domain)
+(defclass domain (actions-domain-mixin shop3.theorem-prover:thpr-domain)
      ()
-  (:documentation "An object representing a SHOP2 domain.")
+  (:documentation "An object representing a SHOP domain.")
   )
 
 (defclass pure-logic-domain-mixin ()
@@ -268,7 +268,7 @@ IF-THEN-ELSE semantics in methods."))
        :documentation
        "The programmer MAY (but is not obligated to) specify that a problem
          is intended for use with a particular domain definition."))
-  (:documentation "An object representing a SHOP2 problem."))
+  (:documentation "An object representing a SHOP problem."))
 
 (defmethod domain-name ((probspec symbol))
   (domain-name (find-problem probspec t)))
@@ -308,7 +308,7 @@ structure could be removed, and a true struct could be used instead."
 ;;;------------------------------------------------------------------------------------------------------
 (defgeneric methods (domain task-name)
   (:documentation
-   "Return a list of all the SHOP2 methods for TASK-NAME in DOMAIN.")
+   "Return a list of all the SHOP methods for TASK-NAME in DOMAIN.")
   (:method ((domain domain) (task-name symbol))
     (gethash task-name (domain-methods domain)))
   (:method :around (domain task-name)
@@ -342,7 +342,7 @@ and return the new RESULTS and UNIFIERS.")
               (mapcar #'cdr results&unifiers)))))
 
 (defgeneric operator (domain task-name)
-  (:documentation "Return the SHOP2 operator (if any)
+  (:documentation "Return the SHOP operator (if any)
 defined for TASK-NAME in DOMAIN.")
   (:method ((domain domain) (name symbol))
     (gethash name (domain-operators domain))))
@@ -371,7 +371,7 @@ for the domain a list of standard axioms."))
 (defgeneric parse-domain-item (domain item-keyword item)
   (:documentation "The default method for parse-domain-items
 will invoke this method to process a single item s-expression.
-The addition of this generic function makes SHOP2's syntax
+The addition of this generic function makes SHOP's syntax
 more extensible.")
   )
 
@@ -405,7 +405,7 @@ installation in the axioms table of DOMAIN."))
 (defgeneric task-sorter (domain tasks unifier)
   (:documentation
    "This function allows customization of choice of pending task
-to expand.  SHOP2 search behavior can be changed by specializing this
+to expand.  SHOP search behavior can be changed by specializing this
 generic function (most likely using the domain argument).  Returns a
 sorted list of tasks in the order in which they should be expanded.
 A failure can be triggered by returning NIL.")
@@ -467,15 +467,6 @@ Otherwise, it returns FAIL."))
   (:documentation " This SEEK-PLANS-NULL is used with WebServices to strip the add and del lists from
 the actions in the partial plan before doing the actual SEEK-PLANS-NULL..."))
 
-;;; Below, SEEK-PLANS-XXX method definitions take as input a DOMAIN object and a LTML-PLANNER-STATE object.
-;;; Here, I would like to implement the ideas we discussed about CLOSifying SHOP2's internal planner state
-;;; and passing planner-state objects around in the SEEK-PLANS-XXX functions, instead of the current crazy
-;;; list of arguments. I am going to assume that we define a top-level PLANNER-STATE object that would
-;;; probably include the current state, the partial plan, and perhaps the current task. Then, SHOP2 would
-;;; use its inherited version SHOP2-PLANNER-STATE and here we would use our inherited version LTML-PLANNER-STATE.
-;;; This would also help plugging ND-SHOP2, and perhaps Yoyo, in the system, since they use their slightly different
-;;; planner-state versions. [2006/12/28:uk]
-
 (defgeneric seek-plans (domain state tasks top-tasks
                         partial-plan partial-plan-cost depth
                         which-plans protections unifier)
@@ -512,7 +503,7 @@ a simple list of atoms."))
 
 (defgeneric initialize-problem (problem &key)
   (:documentation "Function that does the work of populating a problem.  Allows the programmer
-of SHOP2 extensions to extend or override the normal problem-building.")
+of SHOP extensions to extend or override the normal problem-building.")
   )
 
 
@@ -553,7 +544,7 @@ of SHOP2 extensions to extend or override the normal problem-building.")
 
 (defgeneric pddl-plan (domain plan &key package)
   (:documentation "Return a PDDL plan representation of PLAN for
-DOMAIN (a SHOP2 ddomain).  When PACKAGE is supplied, put the 
+DOMAIN (a SHOP ddomain).  When PACKAGE is supplied, put the 
 symbols into that package (instead of into the value of *PACKAGE*,
 which should be the default)."))
 
@@ -582,7 +573,7 @@ which should be the default)."))
 ;;;---------------------------------------------------------------------------
 (define-condition shop-condition ()
   ()
-  (:documentation "A condition that should be added to all conditions defined in SHOP2.")
+  (:documentation "A condition that should be added to all conditions defined in SHOP.")
   )
 
 (define-condition shop-error (shop-condition error)

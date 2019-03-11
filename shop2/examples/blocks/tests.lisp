@@ -1,10 +1,10 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (fiveam:def-suite blocks-tests)
 (fiveam:in-suite blocks-tests)
 
 (defmacro nst-blocks-test (name (&key primary-result-plan) quoted-problem-name)
-  (let ((ess-name (intern (format nil "~a-STACK" name) :shop2-user)))
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop-user)))
    (if primary-result-plan
        `(progn
           (fiveam:test ,name

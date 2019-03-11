@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 ; This file illustrates the use of the :sort-by keyword in SHOP2.
 ;  When that keyword is used, alternative possible bindings for a given
 ;  method are sorted by the value bound to the specified variable.

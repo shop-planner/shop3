@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 (defproblem umt.pfile3 UM-TRANSLOG-2
   (
     ;;;

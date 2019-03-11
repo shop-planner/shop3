@@ -1,4 +1,4 @@
-;;; -*- Mode: common-lisp; package: shop2.theorem-prover; -*-
+;;; -*- Mode: common-lisp; package: shop3.theorem-prover; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
@@ -58,7 +58,7 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(in-package :shop2.theorem-prover)
+(in-package :shop3.theorem-prover)
 
 ;;; ------------------------------------------------------------------------
 ;;; Theorem prover
@@ -82,8 +82,8 @@ will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
            (values (list ,bindings) (list ,dependencies))
-	   (real-seek-satisfiers ,d ,goals ,state
-				 ,bindings ,level ,just1 ,dependencies)))))
+           (real-seek-satisfiers ,d ,goals ,state
+                                 ,bindings ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain record-dependencies)
   (:documentation 
@@ -211,14 +211,14 @@ or all answers (nil)."
                         (first goal1)
                         (cons 'and goal1)))))
     (handler-bind
-	((incomplete-dependency-error
-	  #'(lambda (c)
-	      (format t "~%Caught the INCOMPLETE-DEPENDENCY-ERROR (~s) during logical operation ~s on expression: ~s"
-		      c (logical-op c) (expression c))
-	      (continue c)
-	      )))
+        ((incomplete-dependency-error
+          #'(lambda (c)
+              (format t "~%Caught the INCOMPLETE-DEPENDENCY-ERROR (~s) during logical operation ~s on expression: ~s"
+                      c (logical-op c) (expression c))
+              (continue c)
+              )))
       (real-seek-satisfiers-for domain (car goal1) goal1 remaining
-				state bindings level just1 dependencies-in))))
+                                state bindings level just1 dependencies-in))))
 
 (defmacro def-logical-keyword ((name domain-specializer) &body forms)
   "(def-logical-keyword name domain-specializer options &body forms) where forms
@@ -644,7 +644,7 @@ in the goal, so we ignore the extra reference."
                                        &aux new-dependencies)
   ;; DEPENDENCIES in is a single set of dependencies.
   (when (and *record-dependencies-p*
-	     (not (static-bounds-p domain (second arguments))))
+             (not (static-bounds-p domain (second arguments))))
     (cerror "Simply return no new dependencies."
             "We do not have correct logic for computing dependencies for FORALL."))
   (let* ((bounds (second arguments))
@@ -1171,7 +1171,7 @@ also remove the corresponding entry from DEPENDENCY-LIST.
          (setf *attribution-list* (cons (list unified-query attribution)
                                         *attribution-list*))
          (dolist (fact (rest unified-query))
-           (shop2.common::add-atom-to-state fact state nil nil))
+           (add-atom-to-state fact state nil nil))
          binding-set))
      (funcall (fdefinition 'external-access-hook) query)))
 
@@ -1217,7 +1217,7 @@ also remove the corresponding entry from DEPENDENCY-LIST.
 
   (let ((props-as-strings (sort
                            (mapcar #'(lambda (prop) (format nil "~s" prop))
-                                   (shop2.common::state-atoms belief-state))
+                                   (state-atoms belief-state))
                            #'string<)))
 ;;;    (macroexpand '(iter (for prop-string in props-as-strings)
 ;;;                (for prev previous prop-string)

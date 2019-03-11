@@ -1,4 +1,4 @@
-(in-package :shop2-user)
+(in-package :shop-user)
 
 (defconstant +umt-plans+
     '(((!!ASSERT
@@ -66,7 +66,7 @@
 		 common-lisp-user::*nst-default-report-stream*
 		 t)))
     (loop for i from 1 to 3
-	  for new-plan = (remove-costs (first (find-plans (intern (format nil "UMT.PFILE~D" i) :shop2-user))))
+	  for new-plan = (remove-costs (first (find-plans (intern (format nil "UMT.PFILE~D" i) :shop-user))))
 	  do (format str "~TUMT test ~D ~:[failed~;passed~]~%"
 		     i
 		     (equalp new-plan (nth (1- i) +umt-plans+)))

@@ -16,9 +16,9 @@
 ;;;
 ;;;---------------------------------------------------------------------------
 (defpackage shop3-pddl-helpers
-  (:use #:common-lisp #:iterate #:pddl-utils #:shop2)
-  (:nicknames #:shop2.pddl.helpers #:shop2-pddl-helpers)
-  (:shadowing-import-from #:shop2
+  (:use #:common-lisp #:iterate #:pddl-utils #:shop3)
+  (:nicknames #:shop3.pddl.helpers #:shop2-pddl-helpers)
+  (:shadowing-import-from #:shop3
                           #:domain-name #:make-problem #:domain)
   (:shadow #:problem-name)
   (:export #:typed-object-list->facts
@@ -75,7 +75,7 @@
 
 ;;; this function is now obsolete, because of easier-to-use validate-replan.
 (defun check-repair (orig-domain orig-problem repaired-plan &key (package *package*) keep
-                                                              (shop2-domain *domain*))
+                                                              (shop3-domain *domain*))
   (declare (ignore keep))
-  (validate-replan repaired-plan :shop-domain shop2-domain :package package :pddl-domain orig-domain
+  (validate-replan repaired-plan :shop-domain shop3-domain :package package :pddl-domain orig-domain
                    :pddl-problem orig-problem))
