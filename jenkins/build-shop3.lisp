@@ -24,13 +24,13 @@
                (error #'(lambda (x)
                           (declare (ignore x))
                           (setf *build-error* t))))
-  (asdf:load-system "shop2" :force :all))
+  (asdf:load-system "shop3" :force :all))
 
 (cond
   (*build-error*
-   (uiop:die 1 "SHOP2 build failed with an error: ~a.~%" *build-error*))
+   (uiop:die 1 "SHOP3 build failed with an error: ~a.~%" *build-error*))
   (*build-warning*
-   (uiop:die 2 "SHOP2 build failed with warnings:~%~{~t~a~%~}" *build-warning*))
+   (uiop:die 2 "SHOP3 build failed with warnings:~%~{~t~a~%~}" *build-warning*))
   (t
-   (format t "SHOP2 build successful.~%")
+   (format t "SHOP3 build successful.~%")
    (uiop:quit 0)))

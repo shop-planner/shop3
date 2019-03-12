@@ -1,7 +1,7 @@
-(defpackage testing-shop2
+(defpackage testing-shop3
     (:use common-lisp))
 
-(in-package :testing-shop2)
+(in-package :testing-shop3)
 
 (require :asdf)
 
@@ -48,7 +48,7 @@ is bound, write a message and exit on an error.  If
       t)))
 
 (quit-on-error
- (format t "~&;;; Testing standard SHOP2.~%")
- (asdf:test-system "shop2"))
+ (format t "~&;;; Testing standard SHOP3.~%")
+ (asdf:test-system "shop3"))
 
 (uiop:quit 0)

@@ -46,7 +46,7 @@ if [ x"$1" = "xhelp" ]; then
 fi
 lisp=${1:-sbcl} ; shift
 
-scripts="test-shop2.lisp test-shop2-satellite.lisp test-shop-unifier.lisp"
+scripts="test-shop3.lisp test-shop3-satellite.lisp test-shop-unifier.lisp"
 
 sok=1
 
@@ -54,7 +54,7 @@ DO () { ( set -x ; "$@" ); }
 
 do_tests() {
   command="$1" eval="$2"
-  ( DO $command $eval '(load "build-shop2.lisp")' )
+  ( DO $command $eval '(load "build-shop3.lisp")' )
   if [ $? -ne 0 ] ; then
     echo "Compilation FAILED" >&2
   else
@@ -180,7 +180,7 @@ if ! type "$command" ; then
     exit 43
 fi
 
-SHOP2DIR="$(cd ../shop2 ; /bin/pwd)"
+SHOP3DIR="$(cd ../shop3 ; /bin/pwd)"
 THISDIR="$(pwd)"
 PATH=${THISDIR}/VAL:$PATH
 type -P validate 2>/dev/null
@@ -192,8 +192,8 @@ fi
 # terminate on error
 set -e
 
-export CL_SOURCE_REGISTRY="${SHOP2DIR}:${THISDIR}//"
-export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP2DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
+export CL_SOURCE_REGISTRY="${SHOP3DIR}:${THISDIR}//"
+export ASDF_OUTPUT_TRANSLATIONS="(:output-translations (\"${SHOP3DIR}\" (\"${THISDIR}/tmp/fasls\" :implementation)) :ignore-inherited-configuration)"
 
 command="$command $flags"
 if [ -z "${DEBUG_ASDF_TEST}" ] ; then
