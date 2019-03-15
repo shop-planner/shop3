@@ -209,19 +209,29 @@ using MAKE-INITIAL-STATE.")
   (declare (ignorable keyword change state))
   (values))
 
+
+;;; We REDO state updates when we are repairing a plan.  We have
+;;; introduced a divergence into the plan, so at some point a
+;;; precondition will fail, but we will stop redoing before we get to
+;;; this point.
 (defmethod redo-state-update ((keyword (eql 'add)) change state)
-  (assert (not (atom-in-state-p (state-update-literal change) state)))
-  (insert-atom (state-update-literal change) state))
+  (unless (atom-in-state-p (state-update-literal change) state)
+    (insert-atom (state-update-literal change) state)))
 
 (defmethod redo-state-update ((keyword (eql 'delete)) change state)
-  (remove-atom (state-update-literal change) state))
+  (when (atom-in-state-p (state-update-literal change) state)
+    (remove-atom (state-update-literal change) state)))
 
+;;; The distinction between redundant modifications and stock
+;;; modifications only matters when unwinding effects, because we need
+;;; to avoid repeated undos.  But this doesn't matter when redoing,
+;;; because redoing, unlike undoing is idempotent
 (defmethod redo-state-update ((keyword (eql 'redundant-add)) change state)
-  (declare (ignorable keyword change state))
+  (redo-state-update 'add change state)
   (values))
 
 (defmethod redo-state-update ((keyword (eql 'redundant-delete)) change state)
-  (declare (ignorable keyword change state))
+  (redo-state-update 'delete change state)
   (values))
 
 
