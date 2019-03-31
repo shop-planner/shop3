@@ -1,4 +1,3 @@
-;;; -*- Mode: common-lisp; package: shop3; -*-
 
 (in-package :shop3)
 

@@ -1,4 +1,3 @@
-;;; -*- Mode: common-lisp; package: common-lisp-user; -*-
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;; 

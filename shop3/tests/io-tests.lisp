@@ -1,4 +1,3 @@
-;;; -*- mode: common-lisp; coding: unix; -*-
 ;;;---------------------------------------------------------------------------
 ;;; Copyright 2010 Smart Information Flow Technologies, d/b/a SIFT, LLC
 ;;;
