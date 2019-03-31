@@ -68,7 +68,7 @@
              #:trigger-trace
 
              ;; the unifier interface
-             #:unify-fail #:unify-p
+             #:unify-fail #:unify-fail-p #:unify-p
              #:unify #:standardize #:fail
              #:apply-substitution #:compose-substitutions
              #:fix-uninterned-bindings #:binding-list-value

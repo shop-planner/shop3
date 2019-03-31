@@ -59,7 +59,8 @@
 
 (in-package :shop3.theorem-prover)
 
-(defvar *domain* nil)
+(defvar *domain* nil
+  "Default domain to use when planning.")
 
 (defvar *record-dependencies-p* NIL
   "Do we record dependencies when we find literals in the theorem

@@ -1,0 +1,15 @@
+include
+include-stamp
+manual.aux
+manual.html
+manual.info
+manual.toc
+manual.pdf
+manual.fn
+manual.fns
+manual.tp
+manual.tps
+manual.cp
+manual.cps
+manual.vr
+manual.vrs

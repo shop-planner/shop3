@@ -5,9 +5,9 @@
 
 (defun graph-plan-tree (plan-forest &key (tree-processor 'identity)
                                          (graph-object (make-instance 'plan-tree-graph)))
-  "Takes a SHOP2 plan forest (PLAN-TREE) as input, and returns a CL-DOT graph object.
-Note that the PLAN-TREE name is a misnomer that reflects SHOP2 FIND-PLANS misnomer.
-If you ask for plan trees from SHOP2, you really get plan *forests*."
+  "Takes a SHOP plan forest (PLAN-TREE) as input, and returns a CL-DOT graph object.
+Note that the PLAN-TREE name is a misnomer that reflects SHOP FIND-PLANS misnomer.
+If you ask for plan trees from SHOP, you really get plan *forests*."
   (let ((modified-forest (mapcar #'(lambda (tree) (funcall tree-processor tree))
                                plan-forest)))
     (cl-dot:generate-graph-from-roots graph-object modified-forest)))
@@ -63,7 +63,7 @@ If you ask for plan trees from SHOP2, you really get plan *forests*."
                                          (graph-object (make-instance 'enhanced-plan-tree-graph))
                                              label-dependencies
                                              (show-dependencies t))
-  "Takes an enhanced SHOP2 plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
+  "Takes an enhanced SHOP plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
   (let ((*label-depends* label-dependencies)
         (*show-depends* show-dependencies))
     (cl-dot:generate-graph-from-roots graph-object `(,plan-tree ,@(when show-dependencies '(:init))))))

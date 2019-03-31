@@ -92,7 +92,7 @@ theorem-prover?"
                cached)))))
 
 (defmacro variable-p (x)
-  "I can't remember the no-hyphen syntax for this call."
+  "An alias for VARIABLEP, for more consistent naming."
   `(variablep ,x))
 
 (defun anonymous-var-p (x)
@@ -106,6 +106,8 @@ theorem-prover?"
                cached)))))
 
 (deftype shop-variable ()
+  "Type for variables used by the SHOP unifier. A subtype of 
+SYMBOL."
     `(satisfies variablep))
 
 ;;; OLD def...
@@ -132,12 +134,16 @@ variable."
 ;;;  (cond ((prim-variable-p x) x)
 ;;;     ((typep x 'attrib-variable) (attrib-variable-name x))))
 
-(defstruct (binding (:constructor make-binding (var val
-                                                    ; &optional constraints
-                                                    )))
+(defstruct (binding (:constructor make-binding (var val)))
+  "A binding is a structure with a variable and a value."
   var
   val
   ;; constraints
+  )
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (documentation 'binding-var 'function) "Binding structure accessor")
+  (setf (documentation 'binding-val 'function) "Binding structure accessor")
   )
 
 (defmethod make-load-form ((obj binding) &optional env)
@@ -145,6 +151,7 @@ variable."
   `(make-binding (quote ,(binding-var obj)) ,(binding-val obj)))
 
 (defun find-binding (target binding-list)
+  "Find and return the value of TARGET that's recorded in BINDING-LIST."
   (declare (type list binding-list)
            (inline binding-var)
            (optimize (speed 3) (safety 0)))
@@ -153,6 +160,8 @@ variable."
           return binding))
 
 (defun binding-list-value (var binding-list &optional (if-not-found :error))
+  "Return the value of VAR in BINDING-LISP.  When there is no such value, raises 
+an error if IF-NOT-FOUND is :ERROR, else returns the value of IF-NOT-FOUND."
   (let ((binding (find-binding var binding-list)))
     (cond (binding (binding-val binding))
           ((eq if-not-found :error)
@@ -160,16 +169,19 @@ variable."
           (t if-not-found))))
 
 
-(defun make-binding-list (variables bindings)
+(defun make-binding-list (variables values)
+  "Takes a list of VARIABLES and VALUES and returns a BINDING-LIST."
   (loop for var in variables
-        as val in bindings
+        as val in values
         collect (make-binding var val)))
 
 ;;; APPLY-SUBSTITUTION searches through TARGET, replacing each variable
 ;;; symbol with the corresponding value (if any) in A-LIST  (Dana Nau)
-(defmacro apply-substitution (target a-list)
-  `(if (null ,a-list) ,target
-    (real-apply-substitution ,target ,a-list)))
+(defmacro apply-substitution (target substitution)
+   "APPLY-SUBSTITUTION searches through TARGET, replacing each variable
+symbol with the corresponding value (if any) in SUBSTITUTION"
+  `(if (null ,substitution) ,target
+    (real-apply-substitution ,target ,substitution)))
 
 ;;; notes:  called by
 ;;;   COMPOSE-SUBSTITUTIONS, :OPERATOR
@@ -282,6 +294,10 @@ listing a failed constraint."
 result of unify with 'fail."
   `(eq (unify ,e1 ,e2) 'shop2.unifier::fail))
 
+(defmacro unify-fail-p (e1 e2)
+  "Better-named alias for UNIFY-FAIL."
+  `(unify-fail ,e1 ,e2))
+
 (defmacro unify-p (e1 e2)
   "It's painful \(and bug-inducing\) to have to remember to compare the
 result of unify with 'fail.  This checks to see whether E1 and E2
@@ -293,8 +309,9 @@ unify, and returns T or NIL, accordingly."
 ;;; Added handler to trap cases where we unify variables, but fail to
 ;;; successfully satisfy their constraints. [2005/11/07:rpg]
 (defun unify (e1 e2)
-  "Checks to see whether or not E1 and E2 unify, returning a substitution
-if they do, or FAIL \(*NOT* nil\) if they don't."
+  "Checks to see whether or not E1 and E2 unify, returning a
+substitution (a binding list)
+if they do, or FAIL (*NOT* nil) if they don't."
   (cond ((atom e1) (unify1 e1 e2))
         ((atom e2) (unify1 e2 e1))
         (t (let ((hsub (unify (car e1) (car e2))))

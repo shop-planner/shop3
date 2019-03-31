@@ -19,3 +19,7 @@
 [submodule "jenkins/ext/trivial-backtrace"]
         path = jenkins/ext/trivial-backtrace
         url = https://common-lisp.net/project/trivial-backtrace/trivial-backtrace.git
+[submodule "jenkins/ext/sb-texinfo"]
+	path = jenkins/ext/sb-texinfo
+	url = https://github.com/rpgoldman/sb-texinfo.git
+	branch = for-shop

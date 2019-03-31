@@ -104,9 +104,6 @@ do NOT emit singleton variable warnings.")
           ((= lax 3) nil)
           (t (and (atom (car ax)) (listp (cadr ax)) (rest-shop2-axiom-p (cddr ax)))))))
 
-;;; MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
-;;; by putting STATE and TASK onto PROBLEM-NAME's
-;;; property list under the indicators :STATE and :TASKS.
 #+allegro (excl::define-simple-parser make-problem second :shop3-problem)
 
 ;;; this must be a variable, rather than an optional argument, because
@@ -117,6 +114,11 @@ do NOT emit singleton variable warnings.")
 
 (defun make-problem (problem-name-etc state tasks &rest extras
                      &aux domain-name)
+   "MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
+by putting STATE and TASK onto PROBLEM-NAME's property list under the
+indicators :STATE and :TASKS.  As a side effect, sets the global
+variable *PROBLEM*."
+
   (let ((extra (unless (keywordp (first extras)) (pop extras))))
     ;; if extra is given, then the args are problem-name, domain-name, state, tasks
     ;; in that case, we want to ignore domain-name
@@ -183,9 +185,12 @@ do NOT emit singleton variable warnings.")
       (format t "~%~s" answer))
     answer))
 
-;;; DO-PROBLEMS runs FIND-PLANS on each problem in PROBLEMS, which may be
-;;; either a problem-set name or a list of problems
 (defun do-problems (problems &rest keywords)
+  "DO-PROBLEMS runs FIND-PLANS on each problem in PROBLEMS, which may be
+either a problem-set name (a symbol) or a list of problems.
+
+Returns nothing of interest: should only be run for what it displays on the
+console."
   (if (not (listp problems))    ; treat NIL as an empty list, not a problem name
     (setq problems (get-problems problems)))
   (dolist (problem problems)

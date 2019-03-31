@@ -79,10 +79,13 @@
   "Acceptable arguments for SHOP-TRACE (and SHOP-UNTRACE).")
 
 (defmacro shop-trace (&rest items)
-  "(SHOP-TRACE) will return a list of what's currently being traced
+  "- (SHOP-TRACE) with no arguments will return a list of what's
+currently being traced.
 
- (SHOP-TRACE ITEM) will turn on tracing for ITEM, which may be
-   any of the following:
+ - (SHOP-TRACE ITEM) will turn on tracing for ITEM.
+
+ ITEM may be any of the following:
+ 
     - the name of a method, axiom, operator, task, or predicate;
     - one of the keywords :METHODS, :AXIOMS, :OPERATORS, :TASKS,
       :GOALS, :EFFECTS, or :PROTECTIONS, in which case SHOP will
@@ -96,7 +99,7 @@
     - the keyword :ALL in which case SHOP will print out all the tracing
       information it knows how to.
 
- (SHOP-TRACE ITEM1 ITEM2 ...) will do the same for a list of items"
+ - (SHOP-TRACE ITEM1 ITEM2 ...) will do the same for a list of items"
   (let* ((items `,items)
         (new-items
          (if (null items) nil items)
@@ -146,16 +149,21 @@
   (append
    *shop-trace*
    (mapcar #'(lambda (taskname)
-               `(:task ,taskname)) *traced-tasks*)
+               `(:task ,taskname))
+           *traced-tasks*)
    (mapcar #'(lambda (methname)
-               `(:method ,methname)) *traced-methods*)
+               `(:method ,methname))
+           *traced-methods*)
    (mapcar #'(lambda (goalname)
-               `(:goal ,goalname)) *traced-goals*)
+               `(:goal ,goalname))
+           *traced-goals*)
    (mapcar #'(lambda (axiomname)
-               `(:axiom ,axiomname)) *traced-axioms*)))
+               `(:axiom ,axiomname))
+           *traced-axioms*)))
 
 
 (defmacro shop-untrace (&rest items)
+  "(SHOP-UNTRACE ...) is the inverse of (SHOP-TRACE ...)"
   (if (null items)
       '(shop-untrace-all)
     `(shop-untrace-1 ',items)))
@@ -169,7 +177,6 @@
        *traced-axioms* nil))
 
 
-;;; (SHOP-UNTRACE ...) is the inverse of (SHOP-TRACE ...)
 (defun shop-untrace-1 (items)
   ;; it's OK to use destructive deletion here
   (dolist (item items)

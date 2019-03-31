@@ -416,9 +416,8 @@ we use to return plans."
   (return-from get-immediate-list nil))
 
 (defun shorter-plan (plan)
-  "Removes the internal operators from a plan sequence, and
-returns the resulting new sequence.  AFAICT, this also removes the costs.
-Non-destructive."
+  "Removes the internal operators and costs from a plan sequence, and
+returns the resulting new sequence.  Non-destructive."
   (flet ((rest-of-plan (plan)
            (if (numberp (second plan))
                       (rest (rest plan))
