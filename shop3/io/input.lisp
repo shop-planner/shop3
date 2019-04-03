@@ -384,6 +384,11 @@ forall conditions and replacing the variables in them."
              (precond-table (harvest-variables precond))
              (cost-table (harvest-variables cost))
              (tables (list task-table add-table del-table precond-table cost-table)))
+        (when (and (listp (first precond))
+                   (not (null precond))
+                   (symbolp (first (first precond))))
+          (warn 'style-warning :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
+                               :format-arguments (list task)))
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
               :do (check-for-singletons table :context-tables others :construct-type keyword
