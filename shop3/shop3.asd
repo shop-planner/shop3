@@ -70,6 +70,7 @@
     :license "Mozilla Public License"
     :depends-on ((:version "shop3/common" (:read-file-form "shop-version.lisp-expr"))
                  (:version "shop3/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
+                 "trivial-garbage"
                  :alexandria
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")

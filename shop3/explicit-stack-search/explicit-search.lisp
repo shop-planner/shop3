@@ -26,19 +26,9 @@ supports finding the first solution to PROBLEM.  To comply with SHOP3,
 though, always returns a list of plans.
   If the PLAN-TREE keyword argument is non-NIL, will return an enhanced plan
 tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
-  #+(or ccl allegro sbcl clisp abcl ecl)
-  (when gc #+allegro (excl:gc t)
-        #+sbcl (sb-ext:gc :full t)
-        #+ccl (ccl:gc)
-        #+clisp (ext:gc)
-        #+cmucl (extensions:gc :full t)
-        #+abcl (extensions:gc)
-        #+lispworks (hcl:gc-generation t) ; add case for lispworks 5/1/13 BWM
-        #+ecl (ext:gc t)
-        )
-  #-(or :cCL :allegro :sbcl clisp cmucl abcl lispworks ecl)
-  (when gc (cerror "Just continue, skip GC."
-                   "Requested GC before planning, but do not know how to request GC for this lisp implementation (see source code)."))
+  (when gc
+    (trivial-garbage:gc :full t))
+
   (let* ((start-run-time (get-internal-run-time))
          (start-real-time (get-internal-real-time))
          (*plan-tree* nil)
