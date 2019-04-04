@@ -1145,13 +1145,14 @@ where @emph{E@sub{1}} and @emph{E@sub{2}} are logical expressions, and
 for each possible substitution u for variables in @emph{V}, if
 @emph{E@sub{1}@sup{u}} is satisfied then @emph{E@sub{2}@sup{u}} must
 also be satisfied in the current state of the world. Note that this use
-of the keyword “forall” is distinct from its use in add and delete lists
-in operators (see Section 4.10); the latter is used to express a set of
+of the keyword @code{forall} is distinct from its use in add and delete lists
+in operators (@pxref{Operators}): the latter is used to express a set of
 effects rather than a logical expression and consequently has a
 different syntax.
 
 @node Assignments, Eval expressions, Universal Quantifications, Logical Expressions
 @subsection Assignments
+@cindex assignment
 @anchor{#assignments}
 A simple @strong{assignment} expression has the form
 
@@ -1159,13 +1160,14 @@ A simple @strong{assignment} expression has the form
 (assign @emph{v} @emph{e})
 @end lisp
 
+@c FIXME: Fix the crossreference here.
 where @emph{v} is a variable symbol and @emph{e} is general Lisp
 expression. The intent of an assignment expression is to bind the value
 of @emph{e} to the variable symbol @emph{v}. Variable substitutions in
 assignment expressions are done using literal substitutions, as with
-eval terms (see Section 4.3.2). For example, if ?foo is bound to the
-symbol IF and ?bar is bound to the number 0 then the following
-expression will bind the variable ?baz to the list (IF FISH):
+eval terms (see Section 4.3.2). For example, if @code{?foo} is bound to the
+symbol @code{IF} and @code{?bar }is bound to the number 0 then the following
+expression will bind the variable @code{?baz} to the list @code{(IF FISH)}:
 
 @lisp
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
@@ -1655,14 +1657,10 @@ considered. Consequently, the following code:
 
 @lisp
 (:method (eat ?food)
-
-(have-fork ?fork)
-
-((!eat-with-fork ?food ?fork))
-
-(have-spoon ?spoon)
-
-((!eat-with-spoon ?food ?spoon))
+    (have-fork ?fork)
+    ((!eat-with-fork ?food ?fork))
+    (have-spoon ?spoon)
+    ((!eat-with-spoon ?food ?spoon))
 @end lisp
 is semantically equivalent to the following code with multiple methods
 and explicitly exclusive preconditions:
@@ -1678,7 +1676,7 @@ and explicitly exclusive preconditions:
 @end lisp
 In both of the above examples, the !eat-with-spoon operator may be
 performed only if the (have-spoon ?spoon) is satisfied @emph{and}
-(have-fork ?fork) is not satisfied.
+@code{(have-fork ?fork)} is not satisfied.
 
 @node  Planning Domain, Planning Problem, Methods, The SHOP3 Formalism
 @section  Planning Domain
@@ -1713,8 +1711,7 @@ Beginning users of SHOP should simply use the simple domain-name form of
 this argument.
 
 Each item @emph{i@sub{i}} is one of the following: an operator, a
-method, or an axiom. Note that domain names are not used in @sysname; they
-are left in the syntax for backward compatibility.
+method, or an axiom.
 
 @node Extended form, Inclusion directives, Simple Form, Planning Domain
 @subsection Extended form
@@ -1950,27 +1947,30 @@ PDDL methods may only be used in domains that are a subclass of
 
 @node Enhanced Preconditions, PDDL Domain Classes, PDDL Methods, PDDL Methods
 @subsection Enhanced Preconditions
-@anchor{#enhanced-preconditions}
+@cindex PDDL method preconditions
+@cindex Sorting in PDDL method preconditions
 PDDL method preconditions are based on PDDL @emph{goals}, but with the
 following extensions:
 
 @itemize
 @item
-A PDDL method's preconditions may use the @code{:sort-by}        keyword. More
+A PDDL method's preconditions may use the @code{:sort-by}  keyword. More
 precisely:
 
-@end itemize
+@c FIXME: make the following a table -- it doesn't typeset properly
+@example
+@math{P}           ::= PDDL goal
+@math{v}           ::= PDDL/SHOP variable
+@math{P_v}        ::= PDDL goal with @math{v} appearing free
+precond             ::= @math{P} |
+                               @math{P_v} with @math{v} a method parameter |
+                               @t{(:sort-by} @math{v} [<rel>] @math{P_v}
+@end example
 
-@quotation
-precond ::= <PDDL goalφ>|
-
-(:sort-by <var> [<rel>] <PDDL goal@sub{<var>,φ}>
-@end quotation
-@itemize
 @item
-As noted above, variables that appear free in the head of the PDDL
-method may appear free in the precondition, hence the use of <PDDL
-goalφ> and <PDDL goal@sub{<var>,φ}>.
+Variables that appear free in the head of the PDDL
+method may appear free in the precondition, hence the use of @math{P}
+and @math{P_v}.
 
 @end itemize
 
@@ -1984,58 +1984,71 @@ could change.
 
 @node PDDL Domain Classes,  , Enhanced Preconditions, PDDL Methods
 @subsection PDDL Domain Classes
-@anchor{#pddl-domain-classes}
+
 In order to implement the requirements of PDDL, @sysname {} contains a number
-of classes, which can be used when defining domains with defdomain (see
-Section 4.12):
+of classes, which can be used when defining domains with @code{defdomain}
+(@pxref{Planning Domain}).
 
 @itemize
 @item
-SIMPLE-PDDL-DOMAIN -- this is the base class. All PDDL domain classes
+@tindex SIMPLE-PDDL-DOMAIN
+@code{SIMPLE-PDDL-DOMAIN} -- this is the base class. All PDDL domain classes
 should include this class.
 
 @item
-PDDL-DOMAIN -- for historical reasons, this class corresponds roughly to
+@tindex PDDL-DOMAIN
+@code{PDDL-DOMAIN} -- for historical reasons, this class corresponds roughly to
 PDDL domains with the ADL requirements. Use of this class is
 @emph{deprecated;} it was added without sufficient thought.
 
 @item
-ADL-DOMAIN -- SIMPLE-PDDL-DOMAIN with ADL-MIXIN (see below).
+@tindex ADL-DOMAIN
+@code{ADL-DOMAIN} -- @code{SIMPLE-PDDL-DOMAIN} with @code{ADL-MIXIN} (see below).
 
 @item
 Mixin classes for different requirements:
 
 @itemize
 @item
-NEGATIVE-PRECONDITIONS-MIXIN
+@tindex NEGATIVE-PRECONDITIONS-MIXIN
+@code{NEGATIVE-PRECONDITIONS-MIXIN}
 
 @item
-DISJUNCTIVE-PRECONDITIONS-MIXIN
+@tindex DISJUNCTIVE-PRECONDITIONS-MIXIN
+@code{DISJUNCTIVE-PRECONDITIONS-MIXIN}
 
 @item
-UNIVERSAL-PRECONDITIONS-MIXIN
+@tindex UNIVERSAL-PRECONDITIONS-MIXIN
+@code{UNIVERSAL-PRECONDITIONS-MIXIN}
 
 @item
-EXISTENTIAL-PRECONDITIONS-MIXIN
+@tindex EXISTENTIAL-PRECONDITIONS-MIXIN
+@code{EXISTENTIAL-PRECONDITIONS-MIXIN}
 
 @item
-QUANTIFIED-PRECONDITIONS-MIXIN -- this simply inherits universal and
+@tindex QUANTIFIED-PRECONDITIONS-MIXIN
+@code{QUANTIFIED-PRECONDITIONS-MIXIN} -- this simply inherits universal and
 existential preconditions, since they are typically used together.
 
 @item
-CONDITIONAL-EFFECTS-MIXIN
+@tindex CONDITIONAL-EFFECTS-MIXIN
+@code{CONDITIONAL-EFFECTS-MIXIN}
 
 @item
-EQUALITY-MIXIN
+@tindex EQUALITY-MIXIN
+@code{EQUALITY-MIXIN}
 
 @item
-PDDL-TYPING-MIXIN
+@tindex PDDL-TYPING-MIXIN
+@code{PDDL-TYPING-MIXIN}
 
 @item
-COSTS-MIXIN
+@tindex COSTS-MIXIN
+@code{COSTS-MIXIN}
 
 @item
-ADL-MIXIN
+@tindex ADL-MIXIN
+@code{ADL-MIXIN}
 
 @end itemize
 
@@ -3150,10 +3163,10 @@ problems in @emph{list-of-problems}. (More specifically, what it does is
 to store @emph{list-of-problems} on @emph{set-name}'s property list.)
 
 Note that for backwards compatibility, @sysname {} also accepts the forms
-make-domain, make-problem, and make-problem-set, which were employed in
-SHOP 1.x, using the same arguments as defdomain, defproblem, and
-def-problem-set. The difference between the make-X and def-X forms is
-that in the latter case since the form itself is a macro, the arguments
+@code{make-domain}, @code{make-problem}, and @code{make-problem-set}, which were employed in
+SHOP 1.x, using the same arguments as @code{defdomain}, @code{defproblem}, and
+@code{def-problem-set}. The difference between the @code{make-@i{X}} and @code{def-@i{X}} forms is
+that in the latter case since the form is a macro, the arguments
 are not evaluated. This changes the syntax one uses. Thus in a SHOP 1.x
 domain one might define a problem as
 
