@@ -394,7 +394,14 @@ forall conditions and replacing the variables in them."
               :do (check-for-singletons table :context-tables others :construct-type keyword
                                               :construct-name (first task)
                                               :construct operator)))
-      (make-operator :head task :preconditions precond :deletions delete
+      ;; FIXME: to be honest, I don't know why PROCESS-PRE is not
+      ;; invoked on ADD and DELETE in the following.
+      ;; This should be checked. The asserts below are too aggressive -- they break 
+      ;; metaprogramming. [2019/04/04:rpg]
+      ;; (assert (and (listp add) (every #'(lambda (a) (symbolp (first a))) add)))
+      ;; (assert (and (listp delete) (every #'(lambda (d) (symbolp (first d))) delete)))
+      (make-operator :head task :preconditions (process-pre domain precond)
+                     :deletions delete
                      :additions add :cost-fun cost))))
 
 (defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name construct branch-number)
