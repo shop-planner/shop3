@@ -566,16 +566,18 @@ breaks usage of *load-truename* by moving the FASLs.")
       (warn "Redefining domain named ~A" domain)))
   (setf (get (domain-name domain) :domain) domain))
 
-(defun find-domain (name &optional (if-not-found :error))
+(defun find-domain (name-or-obj &optional (if-not-found :error))
   "Find and return a domain object with the name NAME.  Will return
 the value in its IF-NOT-FOUND argument if no such domain is loaded.
 IF-NOT-FOUND defaults to :error, which will raise an error condition."
-  (let ((domain (get name :domain)))
-    (cond (domain domain)
-          ;; not found
-          ((eq if-not-found :error)
-           (error "No domain named ~A" name))
-          (t if-not-found))))
+  (if (typep name-or-obj 'domain)
+      name-or-obj
+      (let ((domain (get name-or-obj :domain)))
+        (cond (domain domain)
+              ;; not found
+              ((eq if-not-found :error)
+               (error "No domain named ~A" name-or-obj))
+              (t if-not-found)))))
 
 ;;; make QUERY easier to use
 (defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
