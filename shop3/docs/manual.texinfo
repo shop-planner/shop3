@@ -1460,7 +1460,7 @@ a task atom with a task symbol that begins with an exclamation point)
 
 @item
 The operator's
-@emph{delete-list}) is a list for which each
+@emph{delete-list} is a list for which each
 of the element may be any of following:
 
 @itemize
@@ -1479,7 +1479,7 @@ a list of logical atoms
 
 @item
 The operator's
-@emph{add-list}) is a list of logical atoms
+@emph{add-list} is a list of logical atoms
 that has the same form as the delete-list.
 
 @item
