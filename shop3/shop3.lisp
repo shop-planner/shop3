@@ -138,9 +138,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
        additional return values:
      PLAN-TREES --- a list of plan trees, whose form is specified elsewhere.
      FINAL-STATES --- a list of final state structures, one per plan."
-  (declare (ignore state))
 
-  (when state-supplied-p
+  (when (and state-supplied-p (not (eq which :mcts)))
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
   ;;; should add a dependency on TRIVIAL-GARBAGE to get rid of this... [2011/09/28:rpg]
   #+(or ccl allegro sbcl clisp abcl ecl)
@@ -190,11 +189,15 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                        (*domain* *domain*)
                        (t
                         (error "Domain not supplied and problem does not specify domain."))))
-         (state (apply 'make-initial-state domain
-                       (if state-type-supplied-p
-                           state-type
-                         (default-state-type domain))
-                       (problem->state domain problem)))
+         (state (if (eq :which :mcts)
+                    (progn
+                      (assert (and state-supplied-p state))
+                      state)
+                     (apply 'make-initial-state domain
+                            (if state-type-supplied-p
+                                state-type
+                                (default-state-type domain))
+                            (problem->state domain problem))))
          (tasks (if tasks-supplied-p tasks (get-tasks problem)))
          *optimal-cost*
          (*verbose* verbose)
