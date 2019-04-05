@@ -164,7 +164,7 @@ currently being traced.
 
 (defmacro shop-untrace (&rest items)
   "(SHOP-UNTRACE ...) is the inverse of (SHOP-TRACE ...)"
-  (if (null items)
+  (if (or (member :all items) (null items))
       '(shop-untrace-all)
     `(shop-untrace-1 ',items)))
 
