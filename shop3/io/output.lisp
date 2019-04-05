@@ -106,7 +106,7 @@
   (if (integerp num) (format nil "~a" num)
     (let* ((base-string (format nil (format nil "~~,~aF" max-decimal) num))
            (trimmed-string (string-right-trim "0" base-string)))
-      (if (eq #\. (char trimmed-string (1- (length trimmed-string))))
+      (if (eql #\. (char trimmed-string (1- (length trimmed-string))))
           (concatenate 'string trimmed-string "0")
         trimmed-string))))
 

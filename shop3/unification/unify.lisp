@@ -356,7 +356,7 @@ if they do, or FAIL (*NOT* nil) if they don't."
   "Return a new variable, made from BASE-NAME"
   (let ((sym (if base-name (gensym (string base-name)) (gensym "?"))))
     (setf (get sym +variable-property-name+) t)
-    (when (eq (aref (symbol-name sym) 1) #\_)
+    (when (eql (aref (symbol-name sym) 1) #\_)
       (setf (get sym +anonymous-property-name+) t))
     sym))
 
