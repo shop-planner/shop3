@@ -5,6 +5,10 @@
 
 This repository contains the open source version of the SHOP3 planner.
 
+## License
+
+[Mozilla Public License](https://www.mozilla.org/en-US/MPL/)
+
 <!-- Remember to add a pointer to the paper. -->
 
 ## Installation Instructions
