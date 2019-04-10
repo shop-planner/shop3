@@ -141,6 +141,11 @@ The second subsystem is the @emph{theorem-prover}, which performs
 Prolog-style rule-based Horn clause deduction over state sequences.
 @c FIXME: When we have chapters for these, add cross-references.
 
+Robert P. Goldman and Ugur Kuter have a paper in the European Lisp
+Symposium describing @sysname:
+@uref{https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf, 
+Hierarchical Task Network Planning in Common Lisp: the case of SHOP3}.
+
 
 The planners in the @SHOP {} family have the following distinctive characteristics:
 
