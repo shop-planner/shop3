@@ -143,14 +143,14 @@ case "$lisp" in
   #   command="${GCL:-gclcvs}"
   #   flags="-batch"
   #   eval="-eval" ;;
-  # lispworks)
-  #   command="${LISPWORKS:-lispworks}"
-  #   # If you have a licensed copy of lispworks,
-  #   # you can obtain the "lispworks" binary with, e.g.
-  #   # echo '(hcl:save-image "/lispworks" :environment nil)' > /tmp/build.lisp ;
-  #   # ./lispworks-6-0-0-x86-linux -siteinit - -init - -build /tmp/build.lisp
-  #   flags="-siteinit - -init -"
-  #   eval="-eval" ;;
+  lispworks)
+    command="${LISPWORKS:-lispworks}"
+    # If you have a licensed copy of lispworks,
+    # you can obtain the "lispworks" binary with, e.g.
+    # echo '(hcl:save-image "/lispworks" :environment nil)' > /tmp/build.lisp ;
+    # ./lispworks-6-0-0-x86-linux -siteinit - -init - -build /tmp/build.lisp
+     flags="-siteinit - -init - -eval '(setf system:*stack-overflow-behaviour* :warn)'"
+     eval="-eval" ;;
   mkcl)
     command="${MKCL:-mkcl}"
     flags="-norc"
