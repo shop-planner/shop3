@@ -1,4 +1,5 @@
 * text=auto !eol
+*.lisp eol=lf
 jenkins/JENKINS-README.org -text
 jenkins/VAL/LICENSE -text
 jenkins/VAL/Make.files -text
