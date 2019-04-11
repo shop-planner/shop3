@@ -23,3 +23,6 @@
 	path = jenkins/ext/sb-texinfo
 	url = https://github.com/rpgoldman/sb-texinfo.git
 	branch = for-shop
+[submodule "jenkins/ext/trivial-garbage"]
+	path = jenkins/ext/trivial-garbage
+	url = https://github.com/shop-planner/trivial-garbage.git
