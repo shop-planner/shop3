@@ -375,7 +375,8 @@ translated."
             (with-open-file (str path :direction :input)
               (let ((*package* *package*))
                 (iter
-                  (for x = (read str nil nil))
+                  (for x = (let ((*read-eval* nil))
+                             (read str nil nil)))
                   (while x)
                   (cond ((eq (car x) 'in-package)
                          (set '*package* (find-package (second x))))
