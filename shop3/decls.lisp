@@ -617,6 +617,10 @@ task keyword of TASK and LIBRARY-TASK are the same.")
   ()
   )
 
+(define-condition domain-style-warning (shop-condition
+                                        simple-condition style-warning)
+  ())
+
 (define-condition domain-item-parse-warning (domain-parse-warning)
   ()
   (:documentation "We have a separate class for warnings generated while parsing

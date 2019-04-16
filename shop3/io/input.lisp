@@ -387,7 +387,7 @@ forall conditions and replacing the variables in them."
         (when (and (listp (first precond))
                    (not (null precond))
                    (symbolp (first (first precond))))
-          (warn 'style-warning :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
+          (warn 'domain-style-warning :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
                                :format-arguments (list task)))
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
