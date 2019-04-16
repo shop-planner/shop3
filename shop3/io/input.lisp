@@ -664,10 +664,10 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
     (let ((domain-form
             (with-open-file (str path :direction :input)
               (let ((*package* *package*))
-                (loop :for x = (let ((*read-eval* nil))
+                (loop :with name
+                      :for x = (let ((*read-eval* nil))
                                  (read str nil nil))
                       :while x
-                      :with name
                       :if (eq (car x) 'in-package)
                         :do (set '*package* (find-package (second x)))
                       :else :if (eq (car x) 'defdomain)

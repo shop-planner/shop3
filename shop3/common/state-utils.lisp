@@ -776,9 +776,9 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-trajectory ((st tagged-state) &key sorted)
   (let ((state (copy-state st)))
-    (loop :for state-info :in (tagged-state-tags-info state)
+    (loop :with trajectory
+          :for state-info :in (tagged-state-tags-info state)
           :for state-list = (state-atoms state)
-          :with trajectory
           :when sorted
             :do (setf state-list (sort state-list 'prop-sorter))
           :do (push state-list trajectory)
