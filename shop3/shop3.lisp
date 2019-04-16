@@ -138,11 +138,10 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
        additional return values:
      PLAN-TREES --- a list of plan trees, whose form is specified elsewhere.
      FINAL-STATES --- a list of final state structures, one per plan."
+  (declare (ignorable state))
 
   (when (and state-supplied-p (not (eq which :mcts)))
     (error "State argument to find-plans is obsolete.~%Please use state-type or default-state-type slot in domain class."))
-  ;;; should add a dependency on TRIVIAL-GARBAGE to get rid of this... [2011/09/28:rpg]
-  #+(or ccl allegro sbcl clisp abcl ecl)
   (when gc
     (trivial-garbage:gc :full t))
 
