@@ -14,7 +14,8 @@
         (directory (asdf:system-relative-pathname "shop3" "examples/satellite/strips/")))
     (load (merge-pathnames "adlSat-cleaned.lisp" directory))
     (let ((domain-file (merge-pathnames "adlSat.pddl" directory)))
-      (loop :for i from 1 :to 20 with standard-plan
+      (loop :with standard-plan
+            :for i from 1 :to 20
             :as probfilename = (format nil "p~2,'0d.pddl" i)
             :as shop-probfilename = (format nil "p~2,'0d.lisp" i)
             :as problem-file = (merge-pathnames probfilename directory)
@@ -36,8 +37,8 @@
         (directory (asdf:system-relative-pathname "shop3" "examples/satellite/strips/")))
     (load (merge-pathnames "adlSat-pure.lisp" directory))
     (let ((domain-file (merge-pathnames "adlSat.pddl" directory)))
-      (loop :for i from 1 :to 20
-            :with standard-plan
+      (loop :with standard-plan
+            :for i from 1 :to 20
             :as probfilename = (format nil "p~2,'0d.pddl" i)
             :as shop-probfilename = (format nil "p~2,'0d.lisp" i)
             :as problem-file = (merge-pathnames probfilename directory)
