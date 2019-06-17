@@ -35,6 +35,17 @@ not tested them with SHOP3.  Patches to make SHOP3 work with other
 implementations are welcomed, but we have no plans to add support to
 any others ourselves.
 
+### Obtaining the code
+
+Clone this repository and then **initialize and populate the
+submodules** (see git documentation).  You need to do this, at least
+for the moment, because some of the required libraries are not in
+Quicklisp.
+
+Once you have done that, you can get SHOP3 started either using
+Quicklisp (probably easiest) or by configuring ASDF (the Common Lisp
+build manager) yourself.  See below.
+
 ### Option 1: Quicklisp
 
 Probably the easiest way to work with SHOP3 will be to use it in
