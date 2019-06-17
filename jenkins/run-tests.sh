@@ -52,6 +52,7 @@ sok=1
 
 DO () { ( set -x ; "$@" ); }
 
+
 do_tests() {
   command="$1" eval="$2"
   ( DO $command $eval '(load "build-shop3.lisp")' )
@@ -180,15 +181,35 @@ if ! type "$command" ; then
     exit 43
 fi
 
+# FIXME: probably need to ensure that we are in the right directory
+# before we do the following...[2019/04/23:rpg]
 SHOP3DIR="$(cd ../shop3 ; /bin/pwd)"
 THISDIR="$(pwd)"
-PATH=${THISDIR}/VAL:$PATH
+PATH=${THISDIR}/ext/VAL:$PATH
 type -P validate 2>/dev/null
 if [[ $? != 0 ]];
 then
     echo "validate is found in path.  Probably you haven't built it"  >&2
     exit 44
 fi
+#     echo "validate is not found in path.  Trying to build it."  >&2
+#     pushd ${THISDIR}/ext/VAL
+#     make
+#     if [[ $? != 0 ]];
+#     then 
+#        echo "Unable to build validate." >&2
+#        exit 44
+#     else
+#         type -P validate 2>/dev/null
+#         if [[ $? != 0 ]];
+#         then
+#             echo "After building validate, unable to find it in PATH." >&2
+#             exit 45
+#         fi
+#     fi
+# fi
+
+
 # terminate on error
 set -e
 
