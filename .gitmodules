@@ -26,3 +26,6 @@
 [submodule "jenkins/ext/trivial-garbage"]
 	path = jenkins/ext/trivial-garbage
 	url = https://github.com/shop-planner/trivial-garbage.git
+[submodule "jenkins/ext/VAL"]
+	path = jenkins/ext/VAL
+	url = https://github.com/guicho271828/VAL.git
