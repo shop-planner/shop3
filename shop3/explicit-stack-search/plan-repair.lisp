@@ -206,9 +206,12 @@ SEARCH-STATE: Search state object.
   Returns:
 Modified search state object."
   (let* ((world-state (world-state search-state))
-         (world-state-tag (* (if (some #'numberp executed)
-                               (/ (length executed) 2)
-                               (length executed))
+         ;; we have to find the index of the last executed action. The
+         ;; NUMBERP check is to make sure that we can handle plans
+         ;; with and without the cost numbers.
+         (world-state-tag (* (if (some #'numberp executed) ; if there are costs in the plan
+                                 (/ (length executed) 2)
+                                 (length executed))
                              ;; magic constant for the tag increment per
                              ;; operator.
                              2))
