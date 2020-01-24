@@ -9,7 +9,7 @@
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
 (defvar *include-rationale* nil)
-        
+
 (defgeneric unfold-loop-task (domain state)
   (:documentation "Driver for the looping tasks."))
 
@@ -72,7 +72,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          total-expansions total-inferences)
 
     #+ignore(when repairable (clrhash *analogical-replay-table*))
-    
+
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
       (unless no-dependencies
@@ -94,7 +94,6 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
         (print-stats-header "Totals:" out-stream)
         (print-stats "" *plans-found* total-expansions total-inferences
                      total-run-time total-real-time out-stream))
-      
       (unless repairable
         (delete-state-tag-decoder)))))
       
@@ -324,6 +323,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                           (depth state) (unifier state))
           (when expansions
             (when *enhanced-plan-tree*
+	      (format t "~%CMS--- Current task: ~s" current-task)
               (let ((task-node (plan-tree:find-task-in-tree
                                 current-task plan-tree-lookup)))
                 

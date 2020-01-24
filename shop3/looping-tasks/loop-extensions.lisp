@@ -34,25 +34,26 @@
 
 (defmethod unfold-loop-task ((domain looping-domain)
                              ess-search-state)
-;  (format t "~%Unfolding now...")
+  (format t "~%Unfolding now...")
   (with-slots (top-tasks tasks current-task
                          unifier backtrack-stack
                          world-state)
               ess-search-state
      
-     ;; (format t "~%Saving backtrack state...")
+     (format t "~%Saving backtrack state...")
      (push (make-loop-state-expand :top-tasks top-tasks
                                    :tasks tasks
                                    :unifier unifier)
            backtrack-stack)
      
-     ;; (format t "~%Start to expand now...")
+     (format t "~%Start to expand now...")
      (multiple-value-bind (success tasks1 top-tasks1 unifier1)      ;one set of dependencies...
          ;; This should not call SEEK-PLANS anymore...
          (expand-loop :ess domain current-task world-state tasks top-tasks
                       unifier ess-search-state)
        
-       ;; (format t "~%Success: ~s" success)
+       (format t "~%Success: ~s" success)
+       (format t "~%Tasks1: ~s" tasks1)
        (when success
          (setf top-tasks top-tasks1
                tasks tasks1
@@ -93,10 +94,76 @@
                                      unifier
                                      ))))
 
+(defun record-reductions (ess-search-state reductions)
+  (when *enhanced-plan-tree*
+    (with-slots (backtrack-stack)
+                           ess-search-state
+					;                 (format t "~%LE --- Current task: ~s" (current-task ess-search-state))
+					;                 (setf (current-task ess-search-state)
+					;                       (apply-substitution current-task u1))
+					;                 (format t "~%Current task: ~s" (current-task ess-search-state))
+                                        ;              (format t "~%Reductions: ~s" reductions)
+       (iter
+	(for reduction in reductions)
+	(format t " ~%Reduction in the tree: ~s" reduction)
+	(let* ((parent (plan-tree:find-task-in-tree
+			(current-task ess-search-state)
+			(plan-tree-lookup ess-search-state)))
+	       (child (make-plan-tree-for-task-net reduction
+						   parent (plan-tree-lookup ess-search-state))))
+	  
+	  ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
+	  (push (make-add-child-to-tree :parent
+					(if (typep child 'plan-tree::complex-tree-node)
+					    (plan-tree::complex-tree-node-task
+					     child)
+					    (plan-tree::primitive-tree-node-task
+					     child))
+					:child
+					(if (typep child 'plan-tree::complex-tree-node)
+					    (plan-tree::complex-tree-node-children
+					     child)
+					    (list (plan-tree::primitive-tree-node-task
+						   child)))
+					)
+		backtrack-stack)
+	  ))))
+  ess-search-state)
+
 (defmethod expand-loop ((engine (eql :ess))
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
 
+  (format t "~%Are we here? EXPAND-LOOP::ESS...")
+  (let* ((task-body (apply-substitution (get-task-body task1) in-unifier))
+         reductions)
+
+    (setf reductions
+          (expand-loop-body (first (second task-body)) task-body
+                            domain state in-unifier nil))
+    (setf reductions (remove :ordered reductions))
+    (unless reductions 
+      (return-from expand-loop (values nil nil nil nil)))
+
+    (setf ess-search-state (record-reductions ess-search-state reductions))
+    (setf reductions (push :ordered reductions))
+    (multiple-value-bind (top-tasks1 tasks1)
+        ;; Need to figure the internals of this method with the
+        ;; LOOP task before use:
+        (apply-method-bindings task1 top-tasks tasks reductions
+                               in-unifier)
+      ;; RETURN:
+      (values t tasks1 top-tasks1 in-unifier))))
+
+
+  
+#|
+(defmethod expand-loop ((engine (eql :ess))
+                        domain task1 state tasks top-tasks
+                        in-unifier &optional ess-search-state)
+
+  (format t "~%Are we here? EXPAND-LOOP::ESS...")
+  
   (let* ((task-body (apply-substitution (shop2::get-task-body task1) in-unifier))
          reductions)
 
@@ -111,7 +178,7 @@
                                  :domain domain)))
 ;         (format t "~%State atoms: ~s" (state-atoms state))
 ;         (format t "~%Pre: ~s" pre)
-;         (format t "~%Unifiers: ~s" unifiers)
+         (format t "~%Unifiers: ~s" unifiers)
 ;         (format t "~%In unifier: ~s" in-unifier)
           (iter
            (for u in unifiers)
@@ -122,50 +189,19 @@
              (format t "~%Subtasks: ~s" subtasks)
              (setf reductions (generate-reductions domain reductions
                                                    subtasks))
-             (when *enhanced-plan-tree*
-               (with-slots (backtrack-stack)
-                           ess-search-state
-;                 (format t "~%Current task: ~s" (current-task ess-search-state))
-;                 (setf (current-task ess-search-state)
-;                       (apply-substitution current-task u1))
-;                 (format t "~%Current task: ~s" (current-task ess-search-state))
-                                        ;              (format t "~%Reductions: ~s" reductions)
-                  (iter
-                   (for reduction in reductions)
-;                  (format t " ~%Reduction in the tree: ~s" reduction)
-                   (let* ((parent (plan-tree:find-task-in-tree
-                                   (current-task ess-search-state)
-                                   (plan-tree-lookup ess-search-state)))
-                          (child (make-plan-tree-for-task-net reduction
-                                                              parent (plan-tree-lookup ess-search-state))))
-                     
-                     ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
-                     (push (make-add-child-to-tree :parent
-                                                   (if (typep child 'plan-tree::complex-tree-node)
-                                                       (plan-tree::complex-tree-node-task
-                                                        child)
-                                                       (plan-tree::primitive-tree-node-task
-                                                        child))
-                                                   :child
-                                                   (if (typep child 'plan-tree::complex-tree-node)
-                                                       (plan-tree::complex-tree-node-children
-                                                        child)
-                                                       (list (plan-tree::primitive-tree-node-task
-                                                              child)))
-                                                   )
-                           backtrack-stack)
-                     ))))))
+	     (setf ess-search-state (record-reductions ess-search-state reductions))
+	     ))
           (format t "~%Loop task decomposed...~%")
           ))
      
       (:for
        (cond
-         ((member :from (second task-body)) ; it's a FROM loop of  some
+         ((assoc :from (rest (second task-body))) ; it's a FROM loop of  some
                                         ; sort, supporting FROM TO for
                                         ; now. 
-          (let* ((start (second (member :from (second task-body))))
-                 (end (second (member :to (second task-body))))
-                 (index-var (second (second task-body)))
+          (let* ((start (second (assoc :from (rest (second task-body)))))
+                 (end (second (assoc :to (rest (second task-body)))))
+                 (index-var (second (assoc :var (rest (second task-body)))))
                  )
             (iter
              (for i from start to end)
@@ -174,14 +210,14 @@
                                                          task-body)) u)))
                (setf reductions (generate-reductions domain reductions subtasks))))))
 
-         ((member :in (second task-body)) ; FOR over elements of a
+         ((assoc :in (rest (second task-body))) ; FOR over elements of a
                                         ; list
 
-          (let ((loop-var (second (second task-body)))
+          (let ((loop-var (second (assoc :var (rest (second task-body)))))
                 (element-list (apply-substitution
-                               (second (member :in (second task-body)))
+                               (second (assoc :in (rest (second task-body))))
                                in-unifier)))
-                                       
+	    (format t "~%Element list in FOR: ~s" element-list)
             (loop for el in element-list
                   do (let ((u `(,(make-binding loop-var el))))
                        (ecase (first (third task-body))
@@ -211,7 +247,10 @@
                                      (subtasks (apply-substitution
                                                 (rest (fourth task-body)) u1)))
                                 (setf reductions (generate-reductions
-                                                  domain reductions subtasks))))))))))))))
+                                                  domain reductions subtasks))))))))))))
+
+       (setf ess-search-state (record-reductions ess-search-state reductions))
+       ))
 
     (setf reductions (remove :ordered reductions))
     (unless reductions 
@@ -224,6 +263,8 @@
                                       in-unifier)
       ;; RETURN:
       (values t tasks1 top-tasks1 in-unifier))))
+
+|#
 
 (defmethod expand-loop ((engine (eql :shop2))
                         domain task1 state tasks top-tasks
@@ -271,14 +312,18 @@
                            :domain domain))
          reductions)
 
+    (format t "~%Loop condition: ~s" loop-condition)
+    (format t "~%Unifiers: ~s" unifiers)
     (iter
      (for u in unifiers)
-     (let* ((u1 (compose-substitutions u in-unifier))
+     (let* ((u1 (compose-substitutions in-unifier u))
             ;; This is the ordered task list?
             (loop-body
              (apply-substitution
               (loop-body-item :ordered task-body)
               u1)))
+       (format t "~%Loop body: ~s" loop-body)
+       (format t "~%U1: ~s" u1)
        (setf reductions (generate-reductions domain reductions
                                              loop-body))))
     reductions))
@@ -288,8 +333,11 @@
                              in-unifier search-state)
   (declare (ignorable search-state state))
 
+  (format t "~%So we are testing this function right now???")
+  (format t "~%Task body: ~s" task-body)
   (let (reductions
         (loop-item (loop-body-item body-key task-body)))
+    (format t "~%Loop item: ~s" loop-item)
     (cond
       ;; it's a :FROM loop of some sort, supporting FROM TO for now.  
       ((loop-body-item-inner :from loop-item)
@@ -307,23 +355,25 @@
 
       ;; FOR over elements of a list
       ((loop-body-item-inner :in loop-item)
-
+       (format t "~%HEre in particular...")
        (let ((loop-var (loop-body-item-inner :var loop-item))
              (element-list (apply-substitution
                             (loop-body-item-inner :in loop-item)
-                            in-unifier)))
+                            in-unifier))
+	     (loop-body (loop-body-item :ordered task-body)))
 
-;        (format t "~%Loop var: ~s" loop-var)
-;        (format t "~%Loop element list: ~s" element-list)
+        (format t "~%Loop var: ~s" loop-var)
+        (format t "~%Loop element list: ~s" element-list)
 ;        (read)
          
          (iter
           (for el in element-list)
           (let* ((u `(,(make-binding loop-var el)))
-                 (loop-body (apply-substitution (loop-body-item :ordered task-body)
-                                                u)))
-            (setf reductions (append reductions
-                                     (generate-reductions domain reductions loop-body))))))))
+                 (loop-body-instantiated (apply-substitution (copy-list loop-body)
+							     u)))
+	    (format t "~%Loop body instantiated: ~s" loop-body-instantiated)
+            (setf reductions (generate-reductions domain reductions loop-body-instantiated))
+	    (format t "~%Reductions: ~s" reductions))))))
 
     ;; RETURN
     reductions))
@@ -403,6 +453,6 @@
              (setf reductions (append reductions (list new-tsk))))
 
 ;    (format t "~%Reductions: ~s" reductions)
- ;   (read)
+;    (read)
     reductions))  
 

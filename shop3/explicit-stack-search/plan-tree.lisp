@@ -95,7 +95,7 @@ Particularly useful for structures, but could be generally applicable."
   (print-unreadably (d str)
     (format str "Primitive: ~S"
             (or (tree-node-expanded-task d) (tree-node-task d)))
-    #+ignore(when (tree-node-dependencies d)
+    (when (tree-node-dependencies d)
       (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
 
 (defmethod print-object ((d top-node) str)
@@ -110,7 +110,7 @@ Particularly useful for structures, but could be generally applicable."
             (or (tree-node-expanded-task d)
                 (tree-node-task d))
             (complex-tree-node-children d))
-    #+ignore(when (tree-node-dependencies d)
+    (when (tree-node-dependencies d)
       (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
 
 
