@@ -927,7 +927,6 @@ set of dependencies."
       (parse-pddl-method domain method)
     (index-method-on-domain domain method-id method-obj)))
 
-;;; FIXME translate preconditions when the domain is metric...
 (defun parse-pddl-method (domain method)
   (let* ((method (uniquify-anonymous-variables method))
          (method-head (second method))
@@ -944,9 +943,14 @@ set of dependencies."
     (when (typep domain 'fluents-mixin)
       (setf pre (translate-fluent-precond domain pre)))
     (when (gethash method-name *all-method-names* nil)
-      (let ((new-name (gensym (symbol-name method-name))))
-        (warn "Non-unique method name ~S: renaming to ~S" method-name new-name)
-        (setf method-name new-name)))
+      (ecase *unique-method-names*
+        (t
+         (let ((new-name (gensym (symbol-name method-name))))
+           (cerror (format nil "Rename to ~s" new-name)
+                   'non-unique-method-name-error :old-name method-name)
+           (setf method-name new-name)))
+        (:warn (warn 'non-unique-method-name-warning :old-name method-name))
+        ((nil))))
     (setf (gethash method-name *all-method-names*) t)
     (labels ((process-task-list (tasks)
                (cond

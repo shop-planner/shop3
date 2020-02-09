@@ -126,6 +126,12 @@ will consult the user even in these cases.")
 guidance in heuristic search while planning.
   Currently supported only in FIND-PLANS-STACK.")
 
+(defvar *unique-method-names* nil
+  "This variable will be dynamically bound by code for parsing domains
+\(and should *not* be set by users\).  If T, the system will raise an error
+if methods do not have unique names.  If :WARN, the system will issue a warning.
+If NIL, the system will accept non-unique names quietly.")
+
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Compiler Directives and Macros
@@ -718,6 +724,10 @@ task keyword of TASK and LIBRARY-TASK are the same.")
   ()
   )
 
+(define-condition domain-parse-error (shop-condition error)
+  ()
+  )
+
 (define-condition domain-style-warning (shop-condition
                                         simple-condition style-warning)
   ())
@@ -739,6 +749,19 @@ task keyword of TASK and LIBRARY-TASK are the same.")
                        context-name
                        bad-conjunction
                        replacement)))))
+
+(define-condition non-unique-method-name-mixin ()
+  ((old-name
+    :initarg :old-name
+    :reader old-name)
+   (task
+    :initarg :task
+    :reader task))
+  (:report (lambda (c stream)
+             (format stream "Non-unique method name ~a for task ~a" (old-name c) (task c)))))
+
+(define-condition non-unique-method-name-warning  (non-unique-method-name-mixin domain-style-warning) ())
+(define-condition non-unique-method-name-error  (non-unique-method-name-mixin domain-parse-error) ())
 
 (define-condition domain-item-parse-warning (domain-parse-warning)
   ()
