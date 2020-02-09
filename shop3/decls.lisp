@@ -337,6 +337,8 @@ IF-THEN-ELSE semantics in methods."))
 ;;;---------------------------------------------------------------------------
 ;;; OPERATORS
 ;;;---------------------------------------------------------------------------
+(deftype operator () '(satisfies operator-p))
+(deftype pddl-action () '(satisfies pddl-action-p))
 
 (defstruct (operator :named (:type list))
   "This structure definition was added in order to make the
@@ -347,6 +349,9 @@ structure could be removed, and a true struct could be used instead."
   deletions
   additions
   (cost-fun nil))
+
+(defun operator-name (operator)
+  (first (operator-head operator)))
 
 ;;;---------------------------------------------------------------------------
 ;;; METHODS
@@ -361,6 +366,32 @@ SHOP domains.")
     (declare (ignorable domain))
     (assert (member (first method) +method-definition-keywords+))
     (second method)))
+
+
+(defgeneric method-p (domain sexpr)
+  (:documentation "Is SEXPR a method object relative to DOMAIN?")
+  (:method ((domain domain) obj)
+    (declare (ignorable domain obj))
+    nil)
+  (:method ((domain domain) (sexpr list))
+    (declare (ignorable domain))
+    (eq (first sexpr) :method)))
+
+(defgeneric method-task (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (second sexpr)))
+
+(defgeneric method-name (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (third sexpr)))
+
+(defgeneric method-preconditions (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (fourth sexpr)))
+
+(defgeneric method-task-net (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (fifth sexpr)))
 
 
 ;;;------------------------------------------------------------------------------------------------------

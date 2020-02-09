@@ -1,18 +1,18 @@
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -21,8 +21,8 @@
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -38,16 +38,16 @@
 ;;; ----------------------------------------------------------------------
 
 ;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
-;;; 
+;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
-;;; 
-;;; Contract No.         FA8650-06-C-7606, 
+;;;
+;;; Contract No.         FA8650-06-C-7606,
 ;;; Contractor Name      Smart Information Flow Technologies, LLC
 ;;;                      d/b/a SIFT, LLC
 ;;; Contractor Address   211 N 1st Street, Suite 300
 ;;;                      Minneapolis, MN 55401
 ;;; Expiration Date      5/2/2011
-;;; 
+;;;
 ;;; The Government's rights to use, modify, reproduce, release,
 ;;; perform, display, or disclose this software are restricted by
 ;;; paragraph (b)(2) of the Rights in Noncommercial Computer Software
@@ -58,7 +58,7 @@
 ;;; markings.
 
 ;;; ----------------------------------------------------------------------
-;;; Further changes 
+;;; Further changes
 ;;; Copyright(c) 2017  Smart Information Flow Technologies
 ;;; Air Force Research Lab Contract # FA8750-16-C-0182
 ;;; Unlimited Government Rights
@@ -99,7 +99,7 @@ This is an easier to use interface to the validator-export function, qv."
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
 file designators.  VALIDATOR-PROGNAME should be a string that names the
-validator in a way that enables it to be found (either an absolute namestring, 
+validator in a way that enables it to be found (either an absolute namestring,
 absolute pathname, or a path-relative namestring)."
   (let ((domain-file (etypecase domain-file
                        (string domain-file)
@@ -147,6 +147,27 @@ absolute pathname, or a path-relative namestring)."
   (:documentation "A new class of SHOP3 domain that permits inclusion of
 PDDL operator definitions.")
   )
+
+(defgeneric pddl-method-p (domain sexpr)
+  (:method ((domain domain) obj)
+    (declare (ignorable domain obj))
+    nil)
+  (:method ((domain simple-pddl-domain) (sexpr list))
+    (declare (ignorable domain))
+    (or (eq (first sexpr) :pddl-method)
+        (call-next-method))))
+
+
+(defmethod method-p ((domain simple-pddl-domain) (sexpr list))
+  (or (pddl-method-p domain sexpr)
+      (call-next-method)))
+
+(defmethod method-name ((domain simple-pddl-domain) (sexpr list))
+  (or
+   (and (pddl-method-p domain sexpr)
+        (third sexpr))
+   (call-next-method)))
+
 
 (defclass negative-preconditions-mixin ()
   ()
@@ -204,7 +225,7 @@ the :adl flag in a PDDL domain file.")
 
 
 (defgeneric process-action (domain action-def)
-  (:documentation "PDDL has actions \(vanilla SHOP3 has operators\), so we 
+  (:documentation "PDDL has actions \(vanilla SHOP3 has operators\), so we
 add code for processing the actions that is parallel to process-operator."))
 
 ;;;---------------------------------------------------------------------------
@@ -212,7 +233,7 @@ add code for processing the actions that is parallel to process-operator."))
 ;;; by the OPERATOR defstruct in vanilla shop3.
 ;;;---------------------------------------------------------------------------
 (defstruct (pddl-action :named (:type list))
-  (head nil :type list)         
+  (head nil :type list)
   precondition
   effect
   (cost-fun nil))
@@ -227,7 +248,6 @@ add code for processing the actions that is parallel to process-operator."))
                                (f-exp-value ?y ?y-val)
                                (call ?op ?x-val ?y-val))))))
     (set-variable-property domain fluents-axioms)
-
     ;; the definition of functions must come before the other items we parse
     ;; for reasons I don't understand, the items are parsed in reverse
     ;; order, so we move the types definition to the
@@ -244,10 +264,22 @@ add code for processing the actions that is parallel to process-operator."))
                                  ,@(when functions-def (list functions-def))
                                  ,@(when types-def (list types-def)))))))
 
+
+(defun pddl-action-name (pddl-action)
+  (first (pddl-action-head pddl-action)))
+
+(defmethod parse-domain-items :around ((domain equality-mixin) items)
+  "Add the axiom that treats equality as a built-in predicate.  This should
+later be compiled into find-satisfiers or something."
+  (let ((equality-axiom '(:- (= ?x ?x) nil)))
+    (set-variable-property domain equality-axiom)
+    (call-next-method domain (cons equality-axiom items))))
+
+
 ;;; FIXME: if the preconditions are rewritten properly, we won't need
 ;;; the metric equality axiom.
 (defmethod parse-domain-items :around ((domain equality-mixin) items)
-  "Add the axiom that treats equality as a built-in predicate.  This should 
+  "Add the axiom that treats equality as a built-in predicate.  This should
 later be compiled into find-satisfiers or something."
   (let* ((basic-equality-axiom '(:- (= ?x ?x) nil))
          (equality-axioms (list basic-equality-axiom))
@@ -367,13 +399,13 @@ later be compiled into find-satisfiers or something."
 (defgeneric translate-precondition (domain expression)
   (:documentation
    "This generic function is used to translate PDDL-style preconditions
-into SHOP3-style syntax.  The rewriting is done based on the domain so 
+into SHOP3-style syntax.  The rewriting is done based on the domain so
 that different syntax features can be turned on and off."))
 
 (defgeneric translate-effect (domain expression)
   (:documentation
    "This generic function is used to translate PDDL-style effects
-into SHOP3-style syntax.  The rewriting is done based on the domain so 
+into SHOP3-style syntax.  The rewriting is done based on the domain so
 that different syntax features can be turned on and off."))
 
 ;;;---------------------------------------------------------------------------
@@ -528,7 +560,7 @@ the theorem-prover."
 ;;;---------------------------------------------------------------------------
 
 (defun translate-pddl-quantifier (expression quantifier &optional (domain *domain*))
-  "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation 
+  "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation
 into SHOP3 quantifier notation \(and adds some
 \(<type> <var>\) conditions\)."
   (labels ((iter (expr)
@@ -553,15 +585,15 @@ into SHOP3 quantifier notation \(and adds some
 
 (defun of-type-exprs (vars types)
   "Because SHOP3 doesn't have the same typing, we take variables
-and their types and generate a list of distinguished propositions 
+and their types and generate a list of distinguished propositions
 we can use in preconditions."
   (loop for v in vars
         as type in types
         collect `(,type ,v)))
-  
+
 
 (defun typed-list-vars (typed-list &optional (domain *domain*))
-  "Takes a typed-list (this is a PDDL construct) as argument and 
+  "Takes a typed-list (this is a PDDL construct) as argument and
 pulls out the variables and types and returns two parallel
 lists of variable names and type names."
   (set-variable-property domain typed-list)
@@ -575,7 +607,7 @@ lists of variable names and type names."
     (values vars types)))
 
 (defun parse-typed-list (typed-list)
-  "Takes a typed-list (this is a PDDL construct) as argument and 
+  "Takes a typed-list (this is a PDDL construct) as argument and
 pulls out the declared items and types and returns two parallel
 lists of declared names and type names."
   (loop with lst = typed-list
@@ -596,21 +628,21 @@ lists of declared names and type names."
                                     ;; have a type declaration:
                                     ;; defaults to OBJECT.
                                     (append types (make-list counter :initial-element 'shop3:object)))))))
-                            
+
 ;;;---------------------------------------------------------------------------
 ;;; Apply-action, which plays a role akin to apply-operator in vanilla
 ;;; SHOP3.
 ;;;---------------------------------------------------------------------------
 (defun apply-action (domain state task-body action protections depth
                      in-unifier)
-  "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then 
+  "If ACTION, a PDDL ACTION, is applicable to TASK in STATE, then
 APPLY-ACTION returns six values:
 1.  the operator as applied, with all bindings;
 2.  a state tag, for backtracking purposes;
 3.  a new set of protections;
 4.  the cost of the new operator;
 5.  unifier;
-6.  dependencies for primary and secondary effects, if *record-dependencies-p* 
+6.  dependencies for primary and secondary effects, if *record-dependencies-p*
     is true.
 This function also DESTRUCTIVELY MODIFIES its STATE argument.
 Otherwise it returns FAIL."
@@ -641,13 +673,13 @@ Otherwise it returns FAIL."
         (return-from apply-action 'fail))
 
       ;; everything below is "if action-unifier != fail"
-      
+
       (setf action-unifier
             (compose-substitutions action-unifier in-unifier))
       ;; first check the preconditions, if any
       (if preconditions
           (let ((pre (apply-substitution preconditions action-unifier)))
-          
+
             ;; need to specially handle the preconditions, since the
             ;; syntax of PDDL preconditions are different from
             ;; SHOP3. [2006/07/31:rpg]
@@ -709,13 +741,13 @@ Otherwise it returns FAIL."
           (extract-adds-and-deletes domain effect-subbed state (1+ depth))
 
 
-        (let ((protections1 protections)               
+        (let ((protections1 protections)
               (statetag (tag-state state)))
           ;; process PROTECTIONS generated by this operator
           (dolist (d final-dels)
             (if (eq (car d) :protection)
-                (setq protections1 
-                      (delete-protection 
+                (setq protections1
+                      (delete-protection
                        protections1 (second d) depth (first head) state))
                 (delete-atom-from-state d state depth (first head))))
 
@@ -730,7 +762,7 @@ Otherwise it returns FAIL."
               (add-atom-to-state a state depth (first head))))
 
           (cond
-            ((protection-ok state protections1 head) 
+            ((protection-ok state protections1 head)
              (setq protections protections1))
             (t
              (retract-state-changes state statetag)
@@ -741,13 +773,13 @@ Otherwise it returns FAIL."
           ;; protections just added are not checked immediately...
           (dolist (a final-adds)
             (when (eql (car a) :protection)
-              (setq protections 
-                    (add-protection protections (second a) 
+              (setq protections
+                    (add-protection protections (second a)
                                     depth (first head) state))))
 
           (trace-print :operators action state "~&PDDL action ~A successfully applied." head-subbed)
 
-          (values head-subbed statetag 
+          (values head-subbed statetag
                   protections cost-number
                   unifier (shop.theorem-prover::rd-union depends secondary-depends)))))))
 
@@ -847,7 +879,7 @@ set of dependencies."
                                             "Ill-defined update value -- multiple bindings for ~s in ~s"
                                             new-value-expr effect-expr)
                                     (when *record-dependencies-p*
-                                      (setf new-deps 
+                                      (setf new-deps
                                             (shopthpr::rd-union (first deps) new-deps)))
                                     (apply-substitution '?val (first unifiers))))
                                  ((numberp new-value-expr)
@@ -867,7 +899,7 @@ set of dependencies."
            ;; delete old value
            (list `(fluent-value ,fluent-function ,old-val))
            new-deps))))))
-        
+
 
 (defmethod validator-export ((domain domain) (plan list) stream)
   (loop :for x :in (pddl-plan domain plan)
@@ -911,6 +943,11 @@ set of dependencies."
          #+ignore var-table)
     (when (typep domain 'fluents-mixin)
       (setf pre (translate-fluent-precond domain pre)))
+    (when (gethash method-name *all-method-names* nil)
+      (let ((new-name (gensym (symbol-name method-name))))
+        (warn "Non-unique method name ~S: renaming to ~S" method-name new-name)
+        (setf method-name new-name)))
+    (setf (gethash method-name *all-method-names*) t)
     (labels ((process-task-list (tasks)
                (cond
                  ((null tasks) (list :ordered (list :task '!!inop)))

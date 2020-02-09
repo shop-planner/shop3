@@ -228,8 +228,6 @@ of SHOP2."
                 nil)
               (seek-more-plans)))))))
 
-(deftype operator () '(satisfies operator-p))
-(deftype pddl-action () '(satisfies pddl-action-p))
 
 (defun seek-plans-primitive-1 (domain task1 state tasks top-tasks
                                depth protections unifier)
