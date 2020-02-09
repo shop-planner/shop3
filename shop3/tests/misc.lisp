@@ -107,7 +107,7 @@
        (equalp
         `((,(shop3.unifier::make-binding '?x 2)
            ,(shop3.unifier::make-binding '?_y 22)))
-        (find-satisfiers '((foo ?x)(bar ?_y)) state nil 0 :domain domain))))
+        (find-satisfiers '((foo ?x)(bar ?_y)) state :just-one nil :level 0 :domain domain))))
     (let* ((domain (find-domain 'test-backtrack))
            (state (shop3::make-initial-state domain :mixed nil)))
       (fiveam:is-false
@@ -127,7 +127,7 @@
        (equalp
         `((,(shop3.unifier::make-binding '?x 2)
            ,(shop3.unifier::make-binding '?_y 22)))
-        (find-satisfiers '((foo ?x)(bar ?_y)) state nil 0 :domain domain))))
+        (find-satisfiers '((foo ?x)(bar ?_y)) state :just-one nil :level 0 :domain domain))))
     (let* ((domain (find-domain 'test-backtrack))
            (state (shop3::make-initial-state domain :mixed nil)))
       (fiveam:is-false

@@ -94,14 +94,14 @@
          ;; in our PDDL FORALLs, the bounds are all going to be static type
          ;; predicates, which don't need their dependencies recorded.
          (mgu2 (let ((*record-dependencies-p* nil))
-                 (find-satisfiers bounds state nil (1+ newlevel) :domain domain)))
+                 (find-satisfiers bounds state :level (1+ newlevel) :domain domain)))
          depends)
     ;; now we find one satisfied disjunct...
     (dolist (m2 mgu2)
       ;; but we find ALL the answers for that disjunct...
       (multiple-value-bind (new-answers new-depends)
           (find-satisfiers (apply-substitution conditions m2)
-                           state t (1+ newlevel) :domain domain)
+                           state :just-one t :level (1+ newlevel) :domain domain)
         ;; all of the conditions must pass
         (unless new-answers
           (return-from pddl-satisfiers-for-forall nil))
@@ -121,7 +121,7 @@
          ;; in our PDDL EXISTS, the bounds are all going to be static type
          ;; predicates, which don't need their dependencies recorded.
          (mgu2 (let ((*record-dependencies-p* nil))
-                 (find-satisfiers bounds state nil 0 :domain domain)))
+                 (find-satisfiers bounds state :domain domain)))
          dependencies)
     (iter (for m2 in mgu2)
       (multiple-value-bind (answers new-depends)

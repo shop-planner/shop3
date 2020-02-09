@@ -528,7 +528,7 @@ Otherwise it returns FAIL."
                 ;; scoped over the effects, and the (not enforced)
                 ;; constraint that all actions should be ground when
                 ;; introduced into the plan by SHOP3.
-                (find-satisfiers pre state t (1+ depth) :domain domain)
+                (find-satisfiers pre state :just-one t :level (1+ depth) :domain domain)
               (unless pu
                 (trace-print :operators (first head) state
                              "~2%Depth ~s, inapplicable action ~s~%     task ~s.~%     Precondition failed: ~s.~%"
@@ -669,7 +669,7 @@ two values."
             effect-expr
           (declare (ignore when))
           (multiple-value-bind (result sp-dependencies) ;secondary precondition dependencies
-              (shopthpr:find-satisfiers antecedent state t (1+ depth) :domain domain)
+              (shopthpr:find-satisfiers antecedent state :just-one t :level (1+ depth) :domain domain)
             (when result
               (let ((unifier (first result)))
                 (multiple-value-bind (new-adds new-deletes new-depends)
