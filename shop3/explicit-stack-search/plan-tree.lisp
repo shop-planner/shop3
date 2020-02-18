@@ -16,6 +16,7 @@
            #:complex-tree-node
            #:make-complex-tree-node
            #:complex-tree-node-children
+           #:complex-tree-node-method-name
            #:top-node
            #:make-top-node
            #:pseudo-node
