@@ -106,8 +106,7 @@
                                                task-body))
                                         in-unifier))
                (unifiers
-                (find-satisfiers pre
-                                 state nil 0
+                (find-satisfiers pre state
                                  :domain domain)))
 ;         (format t "~%State atoms: ~s" (state-atoms state))
 ;         (format t "~%Pre: ~s" pre)
@@ -199,8 +198,7 @@
                                   (find-satisfiers
                                    (apply-substitution (rest (third task-body))
                                                        (compose-substitutions u in-unifier))
-                                   state nil 0
-                                   :domain domain)))
+                                   state :domain domain)))
                              (iter
                               (for u2 in unifiers)
                               (let* ((u1
@@ -267,7 +265,7 @@
   ;; TASK-BODY is the form (:LOOP (:COND ....) (:ORDERED ...))
   (let* ((loop-condition (loop-body-item :cond task-body))
          (unifiers
-          (find-satisfiers loop-condition state nil 0
+          (find-satisfiers loop-condition state
                            :domain domain))
          reductions)
 
@@ -337,7 +335,7 @@
          (find-satisfiers
           (apply-substitution (rest (third task-body))
                               in-unifier)
-          state nil 0
+          state
           :domain domain))
         reductions)
     (iter

@@ -112,7 +112,7 @@ Otherwise it returns FAIL."
        (when preconditions
          (setq pre (apply-substitution preconditions operator-unifier))
          (multiple-value-setq (pu pd)   ;precond unifier, dependencies
-           (find-satisfiers pre state t 0 :domain domain))
+           (find-satisfiers pre state :just-one t :domain domain))
          (unless pu
            (trace-print :operators (first head) state
                         "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
@@ -158,7 +158,7 @@ Otherwise it returns FAIL."
          (unless (eql 'fail d)
            (if (eql (car d) 'forall)
                (let ((bounds (third d)) (dels (fourth d)) mgu2 tempd)
-                 (setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
+                 (setq mgu2 (shopthpr:find-satisfiers bounds state
                                                       :domain domain))
                  (dolist (m2 mgu2)
                    (setq tempd (apply-substitution dels m2))
@@ -171,7 +171,7 @@ Otherwise it returns FAIL."
          (unless (eql 'fail a)
            (if (eql (car a) 'forall)
                (let ((bounds (third a)) (adds (fourth a)) mgu2 tempa)
-                 (setq mgu2 (shopthpr:find-satisfiers bounds state nil 0
+                 (setq mgu2 (shopthpr:find-satisfiers bounds state
                                                       :domain domain))
                  (dolist (m2 mgu2)
                    (setq tempa (apply-substitution adds m2))
@@ -211,7 +211,7 @@ Otherwise it returns FAIL."
 
        (dolist (a tempadd)
          (when (eql (first a) :protection)
-           (unless (let ((*record-dependencies-p* nil))(find-satisfiers (list (second a)) state t 0 :domain domain))
+           (unless (let ((*record-dependencies-p* nil))(find-satisfiers (list (second a)) state :just-one t :domain domain))
              (error "Adding a protection ~A that is violated in state." a))
            (setq protections
                  (add-protection protections (second a)
@@ -284,7 +284,7 @@ Otherwise it returns FAIL."
 
         ;; find all matches to the current state
         (multiple-value-setq (state-unifiers dependencies)
-          (shopthpr:find-satisfiers pre state nil 0
+          (shopthpr:find-satisfiers pre state
                                     :domain domain))
         (if state-unifiers
             (let* ((answers-with-duplicates
