@@ -114,10 +114,10 @@ as will be seen in this manual, many additional functions are offered.
 planning system based on @strong{ordered task decomposition}, a modified
 version of Hierarchical Task Network (HTN) planning that involves planning for tasks in the same
 order that they will later be executed. An HTN, or @emph{decomposition,}
-planner “proceeds by decomposing @emph{nonprimitive tasks} recursively
+planner ``proceeds by decomposing @emph{nonprimitive tasks} recursively
 into smaller and smaller subtasks, until @emph{primitive tasks} are
 reached that can be performed directly using the planning
-operators.”@footnote{From @emph{Automated Planning: Theory and
+operators.''@footnote{From @emph{Automated Planning: Theory and
 Practice,} Ghallab, Nau and Traverso, Morgan Kaufmann, 2004.} This
 manual does not give an introduction to HTN planning or AI planning in
 general, for that we recommend the above-cited textbook by Ghallab,
