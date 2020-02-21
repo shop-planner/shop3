@@ -20,10 +20,8 @@ implementations:
 
 * **SBCL**: Steel Bank Common Lisp.  Available in packages on Ubuntu
   Linux and Mac Homebrew.  Also available from [sbcl.org](https://sbcl.org).
-
 * **CCL**: Clozure Common Lisp.  Available from
   [clozure.com](https://ccl.clozure.com).
-
 * **ACL**: Allegro Common Lisp: Available from [franz.com](https://franz.com).
   Unlike the previous two implementations, this is a *commercial*
   software product.
