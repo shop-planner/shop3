@@ -115,12 +115,12 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :ID-FIRST   - iterative deepening search, returning the first plan.
         :ID-ALL     - iterative deepening search for all shallowest plans.
         :RANDOM     - Randomized search.  Used by Monroe. Not for normal
-                      SHOP2 domains, since normal SHOP2 domains have order-
+                      SHOP3 domains, since normal SHOP3 domains have order-
                       dependent semantics.
-     :VERBOSE says how much information to print about the plans SHOP2
+     :VERBOSE says how much information to print about the plans SHOP3
               finds.  Its values can be any of the following:
         0 or NIL    - print nothing
-        1 or :STATS - print some statistics on SHOP2's operation
+        1 or :STATS - print some statistics on SHOP3's operation
         2 or :PLANS - print the stats and print all plans found, but omit
              operator costs and omit all operators whose names start with \"!!\"
         3 or :LONG-PLANS - print the stats and plans, including all operator

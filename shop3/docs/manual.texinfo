@@ -282,6 +282,7 @@ To enable it you may have to
 
 @node Running SHOP3, The SHOP3 Formalism, Execution Environment, Top
 @chapter Running @sysname {}
+
 The latest version of @sysname {} is loaded by using the ASDF system
 definition facility. The first of the following subsections explains how
 to use ASDF to load @sysname. Note that previous methods of starting @sysname,
