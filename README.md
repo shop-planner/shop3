@@ -38,9 +38,14 @@ any others ourselves.
 ### Obtaining the code
 
 Clone this repository and then **initialize and populate the
-submodules** (see git documentation).  You need to do this, at least
-for the moment, because some of the required libraries are not in
-Quicklisp.
+submodules**.
+
+```
+git clone --recurse-submodules https://github.com/shop-planner/shop3
+```
+
+You need to do this, at least for the moment, because some of the required
+libraries are not in Quicklisp.
 
 Once you have done that, you can get SHOP3 started either using
 Quicklisp (probably easiest) or by configuring ASDF (the Common Lisp
