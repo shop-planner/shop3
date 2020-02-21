@@ -20,10 +20,8 @@ implementations:
 
 * **SBCL**: Steel Bank Common Lisp.  Available in packages on Ubuntu
   Linux and Mac Homebrew.  Also available from [sbcl.org](https://sbcl.org).
-
 * **CCL**: Clozure Common Lisp.  Available from
   [clozure.com](https://ccl.clozure.com).
-
 * **ACL**: Allegro Common Lisp: Available from [franz.com](https://franz.com).
   Unlike the previous two implementations, this is a *commercial*
   software product.
@@ -38,9 +36,14 @@ any others ourselves.
 ### Obtaining the code
 
 Clone this repository and then **initialize and populate the
-submodules** (see git documentation).  You need to do this, at least
-for the moment, because some of the required libraries are not in
-Quicklisp.
+submodules**.
+
+```
+git clone --recurse-submodules https://github.com/shop-planner/shop3
+```
+
+You need to do this, at least for the moment, because some of the required
+libraries are not in Quicklisp.
 
 Once you have done that, you can get SHOP3 started either using
 Quicklisp (probably easiest) or by configuring ASDF (the Common Lisp
@@ -69,19 +72,15 @@ its git submodules.  If Quicklisp is not the right approach for you,
 you may use git commands to populate SHOP3's submodules, and then:
 
 1. Start CL
-
 2. Load the [ASDF](https://www.common-lisp.net/project/asdf/) CL build
    system by doing `(require :asdf)` in the CL REPL.
-
 3. Tell ASDF where to find SHOP3:
-
-        (asdf:initialize-source-registry
+   ```
+   (asdf:initialize-source-registry
             '(:source-registry (:tree SHOP3-DIRECTORY) :inherit-configuration)
-
-  
-  Fill in the name of the directory of your cloned repository for `SHOP3-DIRECTORY`.
-
-4. `(asdf:load-system "shop3")`
+   ```
+   Fill in the name of the directory of your cloned repository for `SHOP3-DIRECTORY`.
+4. Enter `(asdf:load-system "shop3")` into the CL REPL.
 
 ### Once started
 
