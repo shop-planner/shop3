@@ -196,7 +196,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          ;; if you want the state trajectory [2004/09/14:rpg]
          (*states-found* nil)
          ;; used dynamically to allow the user to choose tasks for
-         ;; expansion, rather than allowing SHOP2 to search
+         ;; expansion, rather than allowing SHOP3 to search
          ;; autonomously. [2004/03/30:rpg]
          (*hand-steer* hand-steer)
          (*leashed* leashed)
