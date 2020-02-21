@@ -135,7 +135,7 @@ P. Goldman and John Maraist, of SIFT.
 @sysname {} contains two important subsystems that perform useful
 functions as part of @sysname {}, but that can be used on their own.
 The first is the @emph{unifier}, which computes the most general unifier
-of two logical formulas, encoded as lisp s-expressions.
+of two logical formulas, encoded as Lisp s-expressions.
 @c FIXME: Add cite for the unification algorithm
 The second subsystem is the @emph{theorem-prover}, which performs
 Prolog-style rule-based Horn clause deduction over state sequences.
@@ -308,7 +308,7 @@ some hook routines that can be used to customize the behavior of @sysname.
 @node Loading the Planner, Executing the Planner, Running SHOP3, Running SHOP3
 @section Loading the Planner
 @anchor{#loading-the-planner}
-The @sysname {} planner should be loaded into your lisp environment using
+The @sysname {} planner should be loaded into your Lisp environment using
 ASDF. Assuming that ASDF is properly installed, and the @sysname.asd system
 definition file can be found by ASDF,, the following command should get
 the system loaded:
@@ -933,8 +933,8 @@ expression that are bound. Then it sends the entire expression into the
 Lisp evaluator to get a final value.
 
 @strong{Note:} Counter-intuitive bugs may arise when symbols are passed
-to lisp for evaluation (either as constants or as the values of
-variables). Remember that the lisp evaluator will assume that these are
+to Lisp for evaluation (either as constants or as the values of
+variables). Remember that the Lisp evaluator will assume that these are
 variables! If you wish them to be treated as symbols, you will need to
 quote them. This leads to a slightly undesirable oddity --- variables
 that will be bound to, for example, numbers, can appear normally.
@@ -1024,7 +1024,7 @@ if this were written
 (eval (list ?foo 'BAZ))
 @end lisp
 
-it would cause a Lisp error when lisp attempts to find the value of @code{BAR},
+it would cause a Lisp error when Lisp attempts to find the value of @code{BAR},
 which it would believe to be a variable.
 
 @node Call-terms,  , Eval Terms, Terms
@@ -2102,7 +2102,7 @@ The @sysname{} unifier may be loaded stand-alone with
 
 It provides a library that may be useful for general symbolic
 computation that requires unification of first order (or, indeed, higher
-order) logical expressions represented as lisp s-expressions.
+order) logical expressions represented as Lisp s-expressions.
 
 @include include/fun-shopunif-unify.texinfo
 
@@ -2205,7 +2205,7 @@ order to fully specify the semantics of plan generation in @sysname.
 @c FIXME: Rewrite the discussion of substitutions.
 @strong{Update note:} @emph{The variable bindings in a substitution are
 no longer represented by dotted pairs. Instead, they are represented by
-common lisp @strong{structures} that have `binding-var` and
+Common Lisp @strong{structures} that have `binding-var` and
 `binding-value` slots. So, until there has been time for a rewrite,
 please read “binding structure” for “dotted pair” in the following. [rpg
 12 June 2018]}
