@@ -77,13 +77,12 @@ you may use git commands to populate SHOP3's submodules, and then:
 2. Load the [ASDF](https://www.common-lisp.net/project/asdf/) CL build
    system by doing `(require :asdf)` in the CL REPL.
 3. Tell ASDF where to find SHOP3:
-
-        (asdf:initialize-source-registry
+   ```
+   (asdf:initialize-source-registry
             '(:source-registry (:tree SHOP3-DIRECTORY) :inherit-configuration)
-
-  
-  Fill in the name of the directory of your cloned repository for `SHOP3-DIRECTORY`.
-4. `(asdf:load-system "shop3")`
+   ```
+   Fill in the name of the directory of your cloned repository for `SHOP3-DIRECTORY`.
+4. Enter `(asdf:load-system "shop3")` into the CL REPL.
 
 ### Once started
 
