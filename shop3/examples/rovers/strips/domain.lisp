@@ -15,7 +15,7 @@
 (defclass pure-pddl-domain (pure-logic-domain-mixin pddl-domain)
   ())
 
-(defdomain (rover :type pure-pddl-domain)
+(defdomain (rover :type pure-pddl-domain :unique-method-names t)
     (
      (:requirements :typing)
      (:static
@@ -164,24 +164,28 @@
 
      ;; TOP LEVEL TASK:
      (:pddl-method (achieve-goals)
+       communicate-one-soil-data
        (communicate_soil_data ?goal-loc)
        (:ordered
         (communicated_soil_data ?goal-loc ?_rover)
         (achieve-goals)))
 
      (:pddl-method (achieve-goals)
+       communicate-one-rock-data
        (communicate_rock_data ?goal-loc)
        (:ordered
         (communicated_rock_data ?goal-loc ?_rover)
         (achieve-goals)))
 
      (:method (achieve-goals)
+       communicate-one-image-data
        (communicate_image_data ?obj ?mode)
        (:ordered
         (communicated_image_data ?obj ?mode ?_rover)
         (achieve-goals)))
 
      (:pddl-method (achieve-goals)
+        check-for-all-goals-done
         (and (forall (?goal-loc - waypoint) (not (communicate_soil_data ?goal-loc)))
              (forall (?goal-loc - waypoint)(not (communicate_rock_data ?goal-loc)))
              (forall (?obj - objective)
@@ -214,15 +218,18 @@
 
      ;; this just traverses over the computed PATH
      (:method (move ?_rover ?_from nil)
+       end-of-path
        ()
        ())
 
      (:method (move ?rover ?from (?first . ?rest))
+       recursive-move
        ()
        ((!navigate ?rover ?from ?first)
         (move ?rover ?first ?rest)))
 
      (:method (communicated_soil_data ?goal-loc ?rover)
+       achieve-communicated-soil-data
        ((store_of ?s ?rover))
        ((navigate ?rover ?goal-loc)
         (:immediate empty-store ?s ?rover) 
@@ -232,6 +239,7 @@
         (:immediate !!retract ((COMMUNICATE_SOIL_DATA ?goal-loc)))))
 
      (:method (communicated_rock_data ?goal-loc ?rover)
+       achieve-communicated-rock-data
        ((store_of ?s ?rover))
        ((navigate ?rover ?goal-loc) 
         (:immediate empty-store ?s ?rover) 
@@ -240,6 +248,7 @@
         (:immediate !!retract ((COMMUNICATE_ROCK_DATA ?goal-loc)))))
 
      (:method (communicated_image_data ?obj ?mode ?rover)
+       achieve-communicated-image-data
        ((on_board ?camera ?rover)
         (supports ?camera ?mode)
         (at_lander ?_lander ?lander-loc))
@@ -251,10 +260,12 @@
         (:immediate !!retract ((COMMUNICATE_IMAGE_DATA ?obj ?mode)))))
 
      (:method (calibrate-camera ?rover ?camera)
+       camera-already-calibrated
        ((calibrated ?camera ?rover))
        ())
 
      (:method (calibrate-camera ?rover ?camera)
+       calibrate-the-camera
        ((not (calibrated ?camera ?rover))
         (calibration_target ?camera ?calibration-obj)
         (visible_from ?calibration-obj ?calibration-loc))
@@ -262,7 +273,7 @@
                  (!calibrate ?rover ?camera ?calibration-obj ?calibration-loc)))
 
      (:method (get-line-of-sight ?rover ?obj ?photo-loc)
-       have-line-of-sight
+       have-line-of-sight-for-photo
        ((at ?rover ?photo-loc)
         (visible_from ?obj ?photo-loc))
        ())
@@ -279,7 +290,7 @@
      ;; the following shows a need for some higher-order method constructs
 
      (:method (communicate soil ?analysis-loc ?rover-loc ?rover)
-            have-line-of-sight
+            have-line-of-sight-for-soil
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
         (visible ?rover-loc ?lander-loc))
@@ -288,7 +299,7 @@
 
 
      (:method (communicate soil ?analysis-loc ?rover-loc ?rover)
-       go-to-line-of-sight
+       go-to-line-of-sight-for-soil
        ;; Otherwise, go somewhere where the lander is visible
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
@@ -300,7 +311,7 @@
                                 ?lander-loc)))
 
      (:method (communicate rock ?analysis-loc ?rover-loc ?rover)
-       have-line-of-sight
+       have-line-of-sight-for-rock
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
         (visible ?rover-loc ?lander-loc))
@@ -308,7 +319,7 @@
                                 ?lander-loc)))
 
      (:method (communicate rock ?analysis-loc ?rover-loc ?rover)
-       go-to-line-of-sight
+       go-to-line-of-sight-for-rock
        ;; Otherwise, go somewhere where the lander is visible
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
@@ -320,7 +331,7 @@
                                 ?lander-loc)))
 
      (:method (communicate image ?analysis-loc ?rover-loc ?rover)
-       have-line-of-sight
+       have-line-of-sight-for-image
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
         (visible ?rover-loc ?lander-loc))
@@ -328,7 +339,7 @@
                                 ?lander-loc)))
 
      (:method (communicate image ?analysis-loc ?rover-loc ?rover)
-       go-to-line-of-sight
+       go-to-line-of-sight-for-image
        ;; Otherwise, go somewhere where the lander is visible
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
@@ -345,7 +356,7 @@
 
      (:method (communicate-IMAGE ?rover-loc ?lander-loc
                ?rover ?obj ?mode)
-       communicate
+       communicate-image
        ((at ?rover ?rover-loc)
         (at_lander ?l ?lander-loc)
         (visible ?rover-loc ?lander-loc))
@@ -354,7 +365,7 @@
 
      (:method (communicate-IMAGE ?rover-loc ?lander-loc
                ?rover ?obj ?mode)
-       relocate-then-communicate
+       relocate-then-communicate-image
        ((at ?rover ?loc)
         (at_lander ?l ?lander-loc)
         (not (visible ?rover-loc ?lander-loc))
