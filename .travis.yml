@@ -21,7 +21,7 @@ install:
 script:
   - cl -e "(cl:in-package :cl-user)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
-           (asdf:initialize-source-registry  '(:source-registry (:directory \"./shop/shop3/\") (:tree \"./shop/jenkins/ext/\") :inherit-configuration))
+           (asdf:initialize-source-registry  '(:source-registry (:directory \"./shop3/shop3/\") (:tree \"./shop/jenkins/ext/\") :inherit-configuration))
            (asdf:test-system :shop3)"
 
 sudo: required
