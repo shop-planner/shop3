@@ -16,7 +16,10 @@ notifications:
 
 install:
   - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
-  - pushd shop-planner/shop3/jenkins/VAL && make && popd 
+  - ls $TRAVIS_BUILD_DIR
+  - ls {$TRAVIS_BUILD_DIR}/shop3
+  - ls {$TRAVIS_BUILD_DIR}/shop3/jenkins
+  - pushd  {$TRAVIS_BUILD_DIR}/shop-planner/shop3/jenkins/VAL && make && popd 
 
   # - cl -e "(cl:in-package :cl-user)
   #          (dolist (p '(:fiveam))
