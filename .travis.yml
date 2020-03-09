@@ -7,7 +7,7 @@ env:
     # - LISP=ccl
     - LISP=sbcl
   global:
-    - PATH=${TRAVIS_BUILD_DIR}/shop-planner/shop3/jenkins/VAL/:${PATH}
+    - PATH=${TRAVIS_BUILD_DIR}/jenkins/VAL/:${PATH}
 
 notifications:
   email:
