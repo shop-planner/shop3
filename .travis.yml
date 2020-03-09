@@ -16,10 +16,8 @@ notifications:
 
 install:
   - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
-  - ls $TRAVIS_BUILD_DIR
-  - ls {$TRAVIS_BUILD_DIR}/shop3
-  - ls {$TRAVIS_BUILD_DIR}/shop3/jenkins
-  - pushd  {$TRAVIS_BUILD_DIR}/shop-planner/shop3/jenkins/VAL && make && popd 
+  - ls ${TRAVIS_BUILD_DIR}/shop3/
+  - pushd  ${TRAVIS_BUILD_DIR}/jenkins/VAL && make && popd 
 
   # - cl -e "(cl:in-package :cl-user)
   #          (dolist (p '(:fiveam))
@@ -28,7 +26,7 @@ install:
 script:
   - cl -e "(cl:in-package :cl-user)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
-           (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop-planner/shop3/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/shop-planner/shop3/shop/jenkins/ext/\") :inherit-configuration))
+           (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
            (asdf:test-system :shop3)"
 
 sudo: required
