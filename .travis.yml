@@ -6,6 +6,8 @@ env:
     # - LISP=allegro
     # - LISP=ccl
     - LISP=sbcl
+  global:
+    - PATH=${TRAVIS_BUILD_DIR}/shop-planner/shop3/jenkins/VAL/:${PATH}
 
 notifications:
   email:
@@ -14,6 +16,8 @@ notifications:
 
 install:
   - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
+  - pushd shop-planner/shop3/jenkins/VAL && make && popd 
+
   # - cl -e "(cl:in-package :cl-user)
   #          (dolist (p '(:fiveam))
   #            (ql:quickload p :verbose t))"
