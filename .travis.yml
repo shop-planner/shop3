@@ -3,8 +3,8 @@ language: lisp
 
 env:
   matrix:
-    - LISP=allegro
-    - LISP=ccl
+    # - LISP=allegro
+    # - LISP=ccl
     - LISP=sbcl
 
 notifications:
