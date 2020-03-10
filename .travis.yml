@@ -1,0 +1,60 @@
+dist: bionic
+language: lisp
+
+env:
+  matrix:
+    # - LISP=allegro
+    # - LISP=ccl
+    - LISP=sbcl SUITE=PDDL-TESTS PKG=SHOP3
+    - LISP=sbcl SUITE=PROTECTION-TEST PKG=PROTECTION-TEST
+    - LISP=sbcl PKG=ARITY-TEST SUITE=ALL-SHOP3-INTERNAL-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=UMT-DOMAIN-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=BLOCKS-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=LOGISTICS-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=SINGLETON-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=MISC-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=MINIMAL-SUBTREE-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=ENHANCED-PLAN-TREE
+    - LISP=sbcl PKG=SHOP-THEOREM-PROVER-TESTS SUITE=THEOREM-PROVER-TESTS
+    - LISP=sbcl PKG=SHOP-REPLAN-TESTS SUITE=TEST-PLAN-REPAIR
+
+    # CCL tests must be further subdivided because its code is slower.
+    - LISP=ccl SUITE=SHORT-PDDL-TESTS PKG=SHOP3
+    # This test is expected to fail on CCL because it's less efficient
+    # and times out....
+    # - LISP=ccl SUITE=PLAN-OPENSTACKS PKG=SHOP3-OPENSTACKS
+    - LISP=ccl SUITE=ROVERS-TESTS PKG=SHOP3
+    - LISP=ccl SUITE=PROTECTION-TEST PKG=PROTECTION-TEST
+    - LISP=ccl PKG=ARITY-TEST SUITE=ALL-SHOP3-INTERNAL-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=UMT-DOMAIN-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=BLOCKS-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=LOGISTICS-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=SINGLETON-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=MISC-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=MINIMAL-SUBTREE-TESTS
+    - LISP=ccl PKG=SHOP3-USER SUITE=ENHANCED-PLAN-TREE
+    - LISP=ccl PKG=SHOP-THEOREM-PROVER-TESTS SUITE=THEOREM-PROVER-TESTS
+    - LISP=ccl PKG=SHOP-REPLAN-TESTS SUITE=TEST-PLAN-REPAIR
+  global:
+    - PATH=${TRAVIS_BUILD_DIR}/jenkins/VAL/:${PATH}
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+
+install:
+  - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
+  - ls ${TRAVIS_BUILD_DIR}/shop3/
+  - pushd  ${TRAVIS_BUILD_DIR}/jenkins/VAL && make && popd 
+
+script:
+  - cl -e "(cl:in-package :cl-user)
+           (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
+           (prin1 \"${PKG}::${SUITE}\") (terpri)
+           (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
+           (declaim (optimize (speed 3)))
+           (asdf:load-system :shop3/test)
+           (uiop:quit (if  (typep (fiveam:run (quote ${PKG}::${SUITE})) 'fiveam::test-failure) 1 0))"
+
+sudo: required

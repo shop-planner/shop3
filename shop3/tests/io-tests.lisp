@@ -16,7 +16,7 @@
 
 (in-package :arity-test)
 
-(fiveam:def-suite io-tests)
+(fiveam:def-suite io-tests :in all-shop3-internal-tests)
 (fiveam:in-suite io-tests)
 
 (def-fixture empty-domain ()

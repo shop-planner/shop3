@@ -228,9 +228,11 @@ shop3."
     :class shop-fiveam-tester
     :test-names ((pddl-tests . :shop3)  ; 141
                  (protection-test . :protection-test)  ; 16
+                 ;; all the following are now subsumed into all-shop3-internal-tests
                  (arity-test . :arity-test) ; 6
                  (io-tests . :arity-test) ; 25
                  (method-tests . :arity-test) ; 2
+                 ;; end of internal tests
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 5
                  (depot-tests . :shop3-user) ; 44
@@ -266,7 +268,8 @@ shop3."
                  (:module "shop-internal-tests"
                           :pathname "tests/"
                           :components ((:file "at-package")
-                                       (:file "arity-tests" :depends-on ("at-package"))
+                                       (:file "shop-internal-test-suite")
+                                       (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
                                        (:module "umt-domain"
                                           :components
                                           ((:file "umt2-domain")
@@ -274,8 +277,8 @@ shop3."
                                            (:static-file "axioms.lisp")
                                            (:static-file "operators.lisp")))
                                        (:file "io-tests" :depends-on ("at-package" "umt-domain"))
-                                       (:file "singleton-tests")
-                                       (:file "misc")))
+                                       (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
+                                       (:file "misc" :depends-on ("at-package" "umt-domain"))))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"
