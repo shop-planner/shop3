@@ -62,6 +62,8 @@
 
 (fiveam:def-suite* pddl-tests)
 
+(fiveam:def-suite* short-pddl-tests :in pddl-tests)
+
 (fiveam:def-fixture simple-pddl-actions ()
   (let ((action-def '(:action drive
                 :parameters (?v - vehicle
@@ -760,7 +762,6 @@
 (fiveam:test test-openstacks-adl-explicit-stack-search
   (openstacks-test-loop (first (find-plans-stack shop-problem :verbose 0))))
 
-
 (fiveam:test test-forall-dependencies
   (let ((shop3::*define-silently* t))
     (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
@@ -791,7 +792,7 @@
                          (plan-tree:find-plan-step (third plan) (first plan-trees) (first plan-tree-hashes)))))))))))
 
 (in-package :shop3)
-(fiveam:in-suite pddl-tests)
+(fiveam:in-suite short-pddl-tests)
 
 (fiveam:test test-forall-bounds
   ;; try to make this side-effect free
