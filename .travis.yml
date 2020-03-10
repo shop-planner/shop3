@@ -18,6 +18,7 @@ env:
     - LISP=sbcl PKG=SHOP-THEOREM-PROVER-TESTS SUITE=THEOREM-PROVER-TESTS
     - LISP=sbcl PKG=SHOP-REPLAN-TESTS SUITE=TEST-PLAN-REPAIR
 
+    # CCL tests must be further subdivided because its code is slower.
     - LISP=ccl SUITE=SHORT-PDDL-TESTS PKG=SHOP3
     - LISP=ccl SUITE=PLAN-OPENSTACKS PKG=SHOP3-OPENSTACKS
     - LISP=ccl SUITE=ROVERS-TESTS PKG=SHOP3
@@ -48,7 +49,7 @@ install:
 script:
   - cl -e "(cl:in-package :cl-user)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
-           (prin1 \"${PKG}::${SUITE}\") (tertpri
+           (prin1 \"${PKG}::${SUITE}\") (terpri)
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
            (declaim (optimize (speed 3)))
            (asdf:load-system :shop3/test)
