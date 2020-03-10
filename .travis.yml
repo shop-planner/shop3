@@ -5,9 +5,8 @@ env:
   matrix:
     # - LISP=allegro
     # - LISP=ccl
-    - LISP=sbcl
-  matrix:
-    - SUITE="shop3::(pddl-tests)"
+    - LISP=sbcl SUITE=shop3::(pddl-tests)
+    # - SUITE="shop3::(pddl-tests)"
     # - SUITE="protection-test::(protection-test)"
     # - SUITE="artity-test::(arity-test io-tests method-tests)"
     # - SUITE="shop3-user::(umt-domain-tests)"
@@ -35,7 +34,8 @@ script:
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
            (asdf:load-system :shop3/test)
            (defparameter *tests* (quote ${SUITE}))
-           (format t \"Tests are: ~a~%\" *tests*)"
+           (prin1 *tests*)
+           (terpri)"
 
   # - cl -e "(cl:in-package :cl-user)
   #          (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
