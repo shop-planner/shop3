@@ -36,6 +36,7 @@ script:
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
            (asdf:load-system :shop3/test)
            (defparameter *tests* (quote ${SUITE}))
+           (format t \"Tests are: ~a~%\" *tests*)
            (uiop:quit (if (some (lambda (x) (typep x 'fiveam::test-failure))
                                           (loop :for x :in *tests*
                                            collecting (fiveam:run x)))
