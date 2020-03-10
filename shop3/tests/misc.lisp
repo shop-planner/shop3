@@ -1,6 +1,6 @@
 (in-package :shop3-user)
 
-(fiveam:def-suite misc-tests)
+(fiveam:def-suite misc-tests :in arity-test:all-shop3-internal-tests)
 
 (fiveam:in-suite misc-tests)
 

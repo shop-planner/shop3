@@ -14,6 +14,8 @@
 
 (in-package :arity-test)
 
+(in-suite all-shop3-internal-tests)
+
 (defun init-domain ()
   (let (( *defdomain-verbose* nil )
         (shop2::*define-silently* t))

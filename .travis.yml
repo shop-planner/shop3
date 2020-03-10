@@ -6,11 +6,17 @@ env:
     # - LISP=allegro
     # - LISP=ccl
     - LISP=sbcl SUITE=PDDL-TESTS PKG=SHOP3
-    # - SUITE="shop3::(pddl-tests)"
-    # - SUITE="protection-test::(protection-test)"
-    # - SUITE="artity-test::(arity-test io-tests method-tests)"
-    # - SUITE="shop3-user::(umt-domain-tests)"
-    # - SUITE="shop3-user::
+    - LISP=sbcl SUITE=PROTECTION-TEST PKG=PROTECTION-TEST
+    - LISP=sbcl PKG=ARITY-TEST SUITE=ALL-SHOP3-INTERNAL-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=UMT-DOMAIN-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=BLOCKS-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=LOGISTICS-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=SINGLETON-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=MISC-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=MINIMAL-SUBTREE-TESTS
+    - LISP=sbcl PKG=SHOP3-USER SUITE=ENHANCED-PLAN-TREE
+    - LISP=sbcl PKG=SHOP-THEOREM-PROVER-TESTS SUITE=THEOREM-PROVER-TESTS
+    - LISP=sbcl PKG=SHOP-REPLAN-TESTS SUITE=TEST-PLAN-REPAIR
   global:
     - PATH=${TRAVIS_BUILD_DIR}/jenkins/VAL/:${PATH}
 
@@ -23,10 +29,6 @@ install:
   - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
   - ls ${TRAVIS_BUILD_DIR}/shop3/
   - pushd  ${TRAVIS_BUILD_DIR}/jenkins/VAL && make && popd 
-
-  # - cl -e "(cl:in-package :cl-user)
-  #          (dolist (p '(:fiveam))
-  #            (ql:quickload p :verbose t))"
 
 script:
   - cl -e "(cl:in-package :cl-user)

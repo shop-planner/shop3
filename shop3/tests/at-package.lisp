@@ -18,9 +18,12 @@
 (defpackage arity-test
   (:nicknames #:at #:arity-tests)
   (:use #:common-lisp #:shop3)
+  (:export #:all-shop3-internal-tests)
   (:import-from #:fiveam
                 #:def-fixture
                 #:with-fixture
                 #:test
                 #:signals
-                #:is))
+                #:is
+                #:def-suite
+                #:in-suite))

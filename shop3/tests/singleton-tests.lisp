@@ -1,6 +1,6 @@
 (in-package :shop-user)
 
-(fiveam:def-suite singleton-tests)
+(fiveam:def-suite singleton-tests :in arity-test:all-shop3-internal-tests)
 (fiveam:in-suite singleton-tests)
 
 ;;; this could probably be done more smoothly using HANDLER-CASE
