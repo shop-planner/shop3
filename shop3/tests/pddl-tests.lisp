@@ -756,11 +756,16 @@
              :do (fiveam:is-true (and (or standard-plan
                                           (warn "Failed to SHOP3 plan for problem ~a" (shop3:name shop-problem)))
                                       (validate-plan standard-plan domain-file problem-file)))))))
+
+(fiveam:in-suite shop3::pddl-tests)
+
 (fiveam:test test-openstacks-adl
   (openstacks-test-loop (first (find-plans shop-problem :verbose 0))))
 
 (fiveam:test test-openstacks-adl-explicit-stack-search
   (openstacks-test-loop (first (find-plans-stack shop-problem :verbose 0))))
+
+(fiveam:in-suite plan-openstacks)
 
 (fiveam:test test-forall-dependencies
   (let ((shop3::*define-silently* t))
