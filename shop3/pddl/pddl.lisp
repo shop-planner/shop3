@@ -66,6 +66,9 @@
 (in-package :shop3)
 
 
+(defparameter +fluent-updates+
+  '(assign increase decrease scale-up scale-down))
+
 (defgeneric validator-export (domain plan stream)
   (:documentation "Print a plan in a way that it can be consumed by
 the VAL validator."))
@@ -330,13 +333,56 @@ to just leave it alone."
   effect)
 
 (defmethod translate-effect ((domain conditional-effects-mixin) effect)
-  "This method translates any forall expressions in a PDDL precondition into the
+  "This method translates any forall expressions in a PDDL effect into the
 slightly-different SHOP3 FORALL syntax.
 It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
 translated."
   ;;; FIXME: don't we need to translate existential variables, as well?
   (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
     (call-next-method domain new-effect)))
+
+(defmethod translate-effect ((domain fluents-mixin) effect)
+  "This method translates any metric effects into updates using ASSIGN-FLUENT.
+It then invokes the next method, to insure that all the other
+PDDL - SHOP3 constructs are translated."
+  (let ((new-effect (translate-metric-updates domain effect)))
+    (call-next-method domain new-effect)))
+
+(defun translate-metric-updates (domain expression)
+  (labels ((iter (expr)
+             ;; is this a fluent update?
+             (cond ((and (listp expr)
+                         (member (first expr) +fluent-updates+)
+                         (or
+                          ;; first check for SHOP ASSIGN vs. PDDL ASSIGN
+                          (and (eq (first expr) 'assign)
+                               (fluent-function-p domain (first (second expr))))
+                          ;; otherwise this is an increase or decrease...
+                          (and (not (eq (first expr) 'assign))
+                               (prog1 t
+                                 (assert (fluent-function-p domain (first (second expr)))
+                                         ()
+                                         "Ill-formed fluent update expression:~s~
+                                           first argument ~s should be a fluent function."
+                                         (second expr) expr)
+                                 (assert (fluent-expr-p domain (third expr))
+                                         ()
+                                         "Ill-formed fluent update expression: ~s~
+                                           second argument ~s should be a fluent expression (value to assign)"
+                                         expr (third expr))))))
+                    `(fluent-update ,@expr))
+                   ((and (listp expr) (symbolp (first expr)))
+                    (case (first expr)
+                      ((and not) `(,(first expr) ,@(mapcar #'iter (rest expr))))
+                      (when `(when ,(translate-fluent-precond domain (second expr))
+                               ,(iter (third expr))))
+                      ((exists forall)
+                       (destructuring-bind (quant vars body) expr
+                         `(,quant ,vars ,(iter body))))
+                      (otherwise
+                       expr)))
+                   ((atom expr) expr))))
+    (iter expression)))
 
 ;;;---------------------------------------------------------------------------
 ;;; Methods for translate-precondition
