@@ -363,6 +363,34 @@ translated."
   (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
     (call-next-method domain new-expr)))
 
+(defmethod translate-precondition ((domain fluents-mixin) expression)
+  (let ((new-expr (translate-fluent-precond domain expression)))
+    (call-next-method domain new-expr)))
+
+(defun translate-fluent-precond (domain expression)
+  "Find the fluent comparison expressions in EXPRESSION and rewrite them
+into expressions of the form (FLUENT-CHECK <COMP-OP> <F-EXP> <F-EXP>) for
+the theorem-prover."
+  (labels ((iter (expr)
+             ;; is this a fluent expression?
+             (cond ((and (listp expr)
+                         (= (length expr) 3)
+                         (member (first expr) +numerical-comparisons+ :test 'eq)
+                         (or (not (eq (first expr) '=)) ; this must be a fluent comparision
+                             ;; for equality predications, we need to be heuristic.
+                             (fluent-expr-p domain (second expr)))
+                         `(fluent-check ,@expr)))
+                   ((and (listp expr) (symbolp (first expr)))
+                    (case (first expr)
+                      ((and or not imply) `(,(first expr) ,@(mapcar #'iter (rest expr))))
+                      ((exists forall)
+                       (destructuring-bind (quant vars body) expr
+                         `(,quant ,vars ,(iter body))))
+                      (otherwise
+                       expr)))
+                   (t expr))))
+    (iter expression)))
+
 ;;;---------------------------------------------------------------------------
 ;;; Including PDDL domains in our domains...
 ;;;---------------------------------------------------------------------------
