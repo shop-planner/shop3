@@ -824,35 +824,43 @@ goal1 along with all of the other formulas in remaining."
 (defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1 dependencies-in)
   (let (answers mgu1 found-match depends)
     (dolist (r (state-candidate-atoms-for-goal state goal1))
-      (unless (eql (setq mgu1 (unify goal1 r)) (shop-fail))
-        (let ((updated-dependencies
-               (when *record-dependencies-p*
-                 (let ((e (last-establisher state r)))
-                   (when e              ; fact might come from initial state
-                     (cons (make-raw-depend :prop r :est e) dependencies-in))))))
-          (setq found-match t) ; for debugging printout
-          (multiple-value-bind (new-answers new-depends)
-              (seek-satisfiers (apply-substitution remaining mgu1)
-                               state (apply-substitution bindings mgu1)
-                               (1+ level) just1 :domain domain :dependencies updated-dependencies)
-            (when *record-dependencies-p*
-              (assert (= (length new-answers) (length new-depends))))
-            (when new-answers
-              (trace-print :goals (car goal1) state
-                           "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
-                           level goal1 new-answers)
-              (when just1
-                (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
-              ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
-              ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
-              (multiple-value-setq (answers depends)
-                (answer-set-union new-answers answers new-depends depends))
-              ;; (format t "~&Answers: ~s~%" answers)
-              )))))
-    (unless answers
-      (trace-print :goals (car goal1) state
-                   "~2%Level ~s, state fails goal ~s~%"
-                   level goal1))
+      (if (eql (setq mgu1 (unify goal1 r)) (shop-fail))
+          (progn
+            (trace-print :goals (car goal1) state
+                         "~2%Level ~s, candidate fact ~s fails to match goal ~s~%"
+                         level r goal1)
+            #+ignore(trace-print :goals (car goal1) state
+                         "~2%Level ~s, state fails goal ~s~%"
+                         level goal1)
+            nil)
+        (progn
+          (trace-print :goals (car goal1) state
+                       "~2%Level ~s, state fact ~s satisfies goal ~s~%satisfiers ~s"
+                       level r goal1 mgu1)
+          #+ignore(trace-print :goals (car goal1) state
+                       "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
+                       level goal1 mgu1)
+          (let ((updated-dependencies
+                  (when *record-dependencies-p*
+                    (let ((e (last-establisher state r)))
+                      (when e      ; fact might come from initial state
+                        (cons (make-raw-depend :prop r :est e) dependencies-in))))))
+            (setq found-match t)         ; for debugging printout
+            (multiple-value-bind (new-answers new-depends)
+                (seek-satisfiers (apply-substitution remaining mgu1)
+                                 state (apply-substitution bindings mgu1)
+                                 (1+ level) just1 :domain domain :dependencies updated-dependencies)
+              (when *record-dependencies-p*
+                (assert (= (length new-answers) (length new-depends))))
+              (when new-answers
+                (when just1
+                  (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
+                ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
+                ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
+                (multiple-value-setq (answers depends)
+                  (answer-set-union new-answers answers new-depends depends))
+                ;; (format t "~&Answers: ~s~%" answers)
+                ))))))
     (values answers found-match depends)))
 
 ;;; BINDINGS is a list of either variables or the values assigned to those bindings.
