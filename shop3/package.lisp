@@ -62,6 +62,13 @@
     (:nicknames :shop :shop2)
     (:use :common-lisp :shop3.unifier :shop3.common :shop3.theorem-prover
           :iterate)
+    (:import-from #:shop3.theorem-prover #:+numerical-comparisons+
+                  #:fluent-value
+                  #:f-exp-value
+                  #:fluents-mixin
+                  #:fluent-function-p
+                  #:fluent-expr-p
+                  #:fluent-comparison-p)
     (:import-from #:shop3.unifier #:+primitive-property-name+ #:primitive-symbol-p)
     #+sbcl
     (:shadow #:defconstant)
@@ -125,6 +132,12 @@
              #:setof
              #:bagof
              #:protect
+
+             ;; metric fluents
+             #:increase
+             #:decrease
+             #:scale-up
+             #:scale-down
 
              ;; top type for PDDL type hierarchy
              #:object

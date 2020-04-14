@@ -953,3 +953,64 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (pddl-problem-tests))
+
+(fiveam:def-suite pddl-prover-tests :in pddl-tests)
+
+(defclass test-metric-fluent-domain (pddl-domain fluents-mixin)
+  ())
+
+(fiveam:def-fixture mock-fluent-domain ()
+  (let ((*domain* (make-instance 'test-metric-fluent-domain
+                                       :fluent-functions 'shop-user::(amount capacity))))
+    (&body)))
+
+(fiveam:def-test test-fluent-value-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
+  (let ((state (make-initial-state *domain* :mixed
+                                    'shop-user::((shop::fluent-value (amount jug0) 6)
+                                                 (shop::fluent-value (capacity jug0) 12)))))
+    (let ((answers 
+            (query '((fluent-value shop-user::(amount jug0) ?amt) (fluent-value shop-user::(capacity jug0) ?cap))
+                   state :domain *domain*)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?cap bindings)))))))
+
+(fiveam:def-test test-f-exp-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
+  (let ((state (make-initial-state *domain* :mixed
+                                    'shop-user::((shop::fluent-value (amount jug0) 6)
+                                                 (shop::fluent-value (capacity jug0) 12)))))
+    (let ((answers 
+            (query '((f-exp-value shop-user::(amount jug0) ?amt) (f-exp-value shop-user::(capacity jug0) ?cap))
+                   state :domain *domain*)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?cap bindings)))))
+    (let ((answers 
+            (query '((f-exp-value shop-user::(- (amount jug0)) ?amt)
+                     (f-exp-value (- 12) ?cap))
+                   state :domain *domain*)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql -6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql -12 (shop.unifier:binding-list-value '?cap bindings)))))
+
+    (let ((answers 
+            (query '((f-exp-value shop-user::(* (amount jug0) 2) ?amt1)
+                     (f-exp-value shop-user::(/ (amount jug0) 2) ?amt2)
+                     (f-exp-value shop-user::(+ (* (amount jug0) 2) 12) ?amt3)
+                     (f-exp-value shop-user::(+ (amount jug0) (capacity jug0)) ?amt4)
+                     (f-exp-value shop-user::(/ (amount jug0) 5) ?amt5))
+                   state :domain *domain*)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?amt1 bindings)))
+        (fiveam:is (eql 3 (shop.unifier:binding-list-value '?amt2 bindings)))
+        (fiveam:is (eql 24 (shop.unifier:binding-list-value '?amt3 bindings)))
+        (fiveam:is (eql 18 (shop.unifier:binding-list-value '?amt4 bindings)))
+        (fiveam:is (eql 6/5 (shop.unifier:binding-list-value '?amt5 bindings)))))))

@@ -87,6 +87,7 @@
        (:module pddl
                 :serial t
                 :components ((:file "decls")
+                             (:file "fluents")
                              (:file "pddl")
                              (:file "prover")))
        (:module search
