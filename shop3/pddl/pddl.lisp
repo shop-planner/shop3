@@ -241,24 +241,16 @@ later be compiled into find-satisfiers or something."
     (set-variable-property domain equality-axioms)
     (call-next-method domain (append equality-axioms items))))
 
-;;; FIXME: replace %ENFORCE-TYPE-CONSTRAINTS by open-coding these checks.
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
-  (let ((enforcement-axioms '((:- (%enforce-type-constraints . ?x)
-                               ((= ?x (nil)))
-                               ((= ?x (?c . ?rest))
-                                (enforce ?c "Parameter unbound or ill-typed: ~{ ~a ~}" ?c)
-                                (%enforce-type-constraints ?rest))))))
-    (set-variable-property domain enforcement-axioms)
-    ;; the definition of types must come before the other items we parse
-    ;; for reasons I don't understand, the items are parsed in reverse
-    ;; order, so we move the types definition to the
-    ;; end. [2017/08/02:rpg]
-    (let ((types-def (find :types items :key 'first)))
-      ;; if there's no type definition, add a trivial one.
-      (unless types-def (setf (pddl-types domain) '(object)))
-      (call-next-method domain `(,@enforcement-axioms
-                                 ,@(if types-def (remove types-def items) items)
-                                 ,@(when types-def (list types-def)))))))
+  ;; the definition of types must come before the other items we parse
+  ;; for reasons I don't understand, the items are parsed in reverse
+  ;; order, so we move the types definition to the
+  ;; end. [2017/08/02:rpg]
+  (let ((types-def (find :types items :key 'first)))
+    ;; if there's no type definition, add a trivial one.
+    (unless types-def (setf (pddl-types domain) '(object)))
+    (call-next-method domain `(,@(if types-def (remove types-def items) items)
+                               ,@(when types-def (list types-def))))))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':action)) item)
    (let ((op-name (second item)))
@@ -316,7 +308,6 @@ later be compiled into find-satisfiers or something."
   "For now, simply ignore requirements.  Later we should check that they match the domain class."
   (declare (ignorable domain item-key item))
   (values))
-  
 
 (defmethod process-action ((domain simple-pddl-domain) action-def)
   (destructuring-bind (keyword action-symbol &key parameters precondition effect
@@ -331,9 +322,14 @@ later be compiled into find-satisfiers or something."
         (typed-list-vars parameters domain)
       (let ((precond
               (translate-precondition domain precondition))
+            ;; add a precondition that checks for the action to be well-typed.
             (type-precond
-              `(%enforce-type-constraints
-                ,@(of-type-exprs param-vars param-types)))
+              (cons 'and
+                (iter (for pair in (of-type-exprs param-vars param-types))
+                  (destructuring-bind (type obj) pair
+                    (collecting `(enforce ,pair
+                                          "Parameter ~a unbound or ill-typed. Should be ~a"
+                                          (quote ,obj) (quote ,type)))))))
             (eff
               (translate-effect domain effect))
             (head (cons action-symbol param-vars)))
