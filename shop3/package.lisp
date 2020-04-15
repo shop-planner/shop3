@@ -231,6 +231,7 @@
              #:costs-mixin
              #:adl-mixin
              #:adl-domain
+             #:fluents-mixin
              
 
              ;; MIXIN
