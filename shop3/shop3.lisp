@@ -117,6 +117,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :RANDOM     - Randomized search.  Used by Monroe. Not for normal
                       SHOP3 domains, since normal SHOP3 domains have order-
                       dependent semantics.
+        :MCTS       - Monte Carlo Tree Search mode (experimental and unstable).
      :VERBOSE says how much information to print about the plans SHOP3
               finds.  Its values can be any of the following:
         0 or NIL    - print nothing
@@ -179,7 +180,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                        (*domain* *domain*)
                        (t
                         (error "Domain not supplied and problem does not specify domain."))))
-         (state (if (eq :which :mcts)
+         (state (if (eq which :mcts)
                     (progn
                       (assert (and state-supplied-p state))
                       state)
