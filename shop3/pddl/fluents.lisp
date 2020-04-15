@@ -27,6 +27,14 @@
 
 (in-package :shop3.theorem-prover)
 
+(defparameter +numerical-comparisons+
+  '(< > <= >= =)
+  "Numerical comparisons permitted by the :fluents requirement.")
+
+(defparameter +binary-numerical-operators+
+  '(+ - * /)
+  "Binary numerical operations permitted by the :fluents requirement.")
+
 (defclass fluents-mixin ()
   ((fluent-functions
     :initarg :fluent-functions
@@ -66,12 +74,3 @@
   (:method ((domain fluents-mixin) op)
     (declare (ignorable op domain))
     nil))
-
-
-(defparameter +numerical-comparisons+
-  '(< > <= >= =)
-  "Numerical comparisons permitted by the :fluents requirement.")
-
-(defparameter +binary-numerical-operators+
-  '(+ - * /)
-  "Binary numerical operations permitted by the :fluents requirement.")

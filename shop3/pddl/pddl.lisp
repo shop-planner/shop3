@@ -167,12 +167,10 @@ PDDL operator definitions.")
    )))
 
 (defclass costs-mixin ()
-  ()
-  )
+  ())
 
 (defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-preconditions-mixin conditional-effects-mixin)
-  ()
-  )
+  ())
 
 (defclass pddl-domain ( conditional-effects-mixin quantified-preconditions-mixin equality-mixin
                        static-predicates-mixin
@@ -185,8 +183,7 @@ the :adl flag in a PDDL domain file.")
   )
 
 (defclass adl-domain (simple-pddl-domain adl-mixin)
-  ()
-  )
+  ())
 
 
 (defgeneric process-action (domain action-def)
@@ -203,12 +200,46 @@ add code for processing the actions that is parallel to process-operator."))
   effect
   (cost-fun nil))
 
+(defmethod parse-domain-items :around ((domain fluents-mixin) items)
+  (let ((fluents-axioms `((:- (is-fluent-function (?name . ?_))
+                              ((call fluent-function-p ,domain '?name)))
+                          (:- (fluent-check ?op ?x ?y)
+                              ((call fluent-expr-p ,domain '?x)
+                               (call fluent-expr-p ,domain '?y)
+                               (f-exp-value ?x ?x-val)
+                               (f-exp-value ?y ?y-val)
+                               (call ?op ?x-val ?y-val))))))
+    (set-variable-property domain fluents-axioms)
+
+    ;; the definition of functions must come before the other items we parse
+    ;; for reasons I don't understand, the items are parsed in reverse
+    ;; order, so we move the types definition to the
+    ;; end. [2017/08/02:rpg]
+    (let* ((functions-def (find :functions items :key 'first))
+           (types-def (find :types items :key 'first))
+           (innocuous-items
+             (remove-if #'(lambda (x) (or (eq x :types) (eq x :functions)))
+                        items :key 'first)))
+      (unless functions-def (warn "Unable to find definitions of functions in domain."))
+      (setf (slot-value domain 'shop.theorem-prover::fluent-functions) (mapcar #'first (rest functions-def)))
+      (call-next-method domain `(,@fluents-axioms
+                                 ,@innocuous-items
+                                 ,@(when functions-def (list functions-def))
+                                 ,@(when types-def (list types-def)))))))
+
+;;; FIXME: if the preconditions are rewritten properly, we won't need
+;;; the metric equality axiom.
 (defmethod parse-domain-items :around ((domain equality-mixin) items)
   "Add the axiom that treats equality as a built-in predicate.  This should 
 later be compiled into find-satisfiers or something."
-  (let ((equality-axiom '(:- (= ?x ?x) nil)))
-    (set-variable-property domain equality-axiom)
-    (call-next-method domain (cons equality-axiom items))))
+  (let* ((basic-equality-axiom '(:- (= ?x ?x) nil))
+         (equality-axioms (list basic-equality-axiom))
+         (metric-equality-axiom '(:- (= ?x ?y)
+                                  ((fluent-check = ?x ?y)))))
+    (when (typep domain 'fluents-mixin)
+      (setf equality-axioms (cons metric-equality-axiom equality-axioms)))
+    (set-variable-property domain equality-axioms)
+    (call-next-method domain (append equality-axioms items))))
 
 ;;; FIXME: replace %ENFORCE-TYPE-CONSTRAINTS by open-coding these checks.
 (defmethod parse-domain-items :around ((domain pddl-typing-mixin) items)
@@ -229,38 +260,34 @@ later be compiled into find-satisfiers or something."
                                  ,@(if types-def (remove types-def items) items)
                                  ,@(when types-def (list types-def)))))))
 
-
-;;; parsing PDDL action items --- for now we treat them just as
-;;; operators, but this may get us in trouble! [2006/07/28:rpg]
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':action)) item)
-  (let ((op-name (second item)))
-    ;; do some nasty voodoo to give PDDL actions names like SHOP3
-    ;; operators [2006/07/31:rpg]
-    (unless (eql (elt (symbol-name op-name) 0) #\!)
-      (setf op-name (intern (concatenate 'string
-                                         "!" (symbol-name op-name))
-                            (symbol-package op-name)
-                            ))
+   (let ((op-name (second item)))
+     ;; do some nasty voodoo to give PDDL actions names like SHOP3
+     ;; operators [2006/07/31:rpg]
+     (unless (eql (elt (symbol-name op-name) 0) #\!)
+       (setf op-name (intern (concatenate 'string
+                                          "!" (symbol-name op-name))
+                             (symbol-package op-name)
+                             ))
 ;;;      (format t "~&Making new SHOP3 operator name ~S from old name ~S.~%"
 ;;;           op-name (second item))
-      (setf (second item) op-name))
-    (with-slots (operators) domain
-      (when (gethash op-name operators)
-        (error "There is more than one operator named ~s" op-name))
-      (setf (gethash op-name operators) (process-action domain item)))))
+       (setf (second item) op-name))
+     (with-slots (operators) domain
+       (when (gethash op-name operators)
+         (error "There is more than one operator named ~s" op-name))
+       (setf (gethash op-name operators) (process-action domain item)))))
 
 ;;; default method so we don't try to parse constructs inappropriately
 (defmethod parse-domain-item ((domain domain) (item-key (eql :pddl-method)) item)
-  (declare (ignorable domain item-key item))
-  (error "This domain is not a subclass of SIMPLE-PDDL-DOMAIN, so PDDL-methods cannot be used."))
+   (declare (ignorable domain item-key item))
+   (error "This domain is not a subclass of SIMPLE-PDDL-DOMAIN, so PDDL-methods cannot be used."))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':predicates)) item)
-  "For now, since SHOP doesn't typecheck, we simply ignore these declarations."
-  (declare (ignore item))
-  (values))
+   "For now, since SHOP doesn't typecheck, we simply ignore these declarations."
+   (declare (ignore item))
+   (values))
 
 (defmethod parse-domain-item ((domain pddl-typing-mixin) (item-key (eql ':types)) item)
-  "For now, since SHOP doesn't typecheck, we simply ignore these declarations."
   (assert (every 'symbolp (rest item)))
   (multiple-value-bind (types super-types)
       (parse-typed-list (rest item))
@@ -270,6 +297,21 @@ later be compiled into find-satisfiers or something."
           :do (parse-domain-item domain ':- `(:- (,super-type ?x) (,type ?x)))))
   (values))
 
+;;;---------------------------------------------------------------------------
+;;; Metric function declarations.
+;;;---------------------------------------------------------------------------
+
+(defmethod parse-domain-item ((domain fluents-mixin) (item-key (eql ':functions)) item)
+  (when (member '- item)
+    (error "Don't support the typing of fluents (which can only be number anyway."))
+  (when (typep domain 'pddl-typing-mixin)
+    (warn "Haven't yet implemented function type checking."))
+  (values))
+
+;;;---------------------------------------------------------------------------
+;;; Requirements
+;;;---------------------------------------------------------------------------
+
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':requirements)) item)
   "For now, simply ignore requirements.  Later we should check that they match the domain class."
   (declare (ignorable domain item-key item))
@@ -277,8 +319,6 @@ later be compiled into find-satisfiers or something."
   
 
 (defmethod process-action ((domain simple-pddl-domain) action-def)
-  "Processes a PDDL action.  Handles only the simplest class of actions, 
-with unconditional actions."
   (destructuring-bind (keyword action-symbol &key parameters precondition effect
                                                   (cost 1.0))
       action-def
@@ -302,7 +342,8 @@ with unconditional actions."
                           (if (typep domain 'pddl-typing-mixin)
                               `(and ,type-precond ,precond)
                               precond)
-                          :effect eff :cost-fun cost)))))
+                          :effect eff
+                          :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Additional generic functions, used to tailor the translation of
@@ -341,7 +382,9 @@ translated."
   (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
     (call-next-method domain new-effect)))
 
-(defmethod translate-effect ((domain fluents-mixin) effect)
+;;; this is done as an :around method because it must be done before any
+;;; other translations change processing of the action...
+(defmethod translate-effect :around ((domain fluents-mixin) effect)
   "This method translates any metric effects into updates using ASSIGN-FLUENT.
 It then invokes the next method, to insure that all the other
 PDDL - SHOP3 constructs are translated."
@@ -409,7 +452,7 @@ translated."
   (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
     (call-next-method domain new-expr)))
 
-(defmethod translate-precondition ((domain fluents-mixin) expression)
+(defmethod translate-precondition :around ((domain fluents-mixin) expression)
   (let ((new-expr (translate-fluent-precond domain expression)))
     (call-next-method domain new-expr)))
 
@@ -701,7 +744,8 @@ Otherwise it returns FAIL."
 (defun extract-adds-and-deletes (domain effect-expr state depth)
   "This function is intended for use on a PDDL :effect expression.
 It partitions the effects into adds and deletes and returns these
-two values."
+two values, together with a set of dependencies as a third value,
+if dependency tracking is turned on."
   (case (first effect-expr)
     (and
      (iter (for effect in (rest effect-expr))
@@ -716,6 +760,8 @@ two values."
        (finally
         (return
           (values recursive-adds recursive-deletes recursive-deps)))))
+    (fluent-update
+     (compute-fluent-updates effect-expr state domain depth))
     (not
      ;; add something to deletes
      (values nil (list (second effect-expr))))
@@ -755,6 +801,59 @@ two values."
     (otherwise                          ;includes :protection
      ;; normal expression
      (values (list effect-expr) nil))))
+
+(defun compute-fluent-updates (effect-expr state domain depth)
+  "Translate a FLUENT-UPDATE EFFECT-EXPR into a set of ADD and DELETES
+\(these will have as predicate FLUENT-VALUE\), and optionally return a
+set of dependencies."
+  (let (new-deps)
+    (destructuring-bind (word op fluent-function new-value-expr)
+        effect-expr
+      (declare (ignore word))
+      ;; recover the old fluent value
+      (let* ((fluent-goal `(f-exp-value ,fluent-function ?value))
+             (old-val (multiple-value-bind (unifiers deps)
+                          (shopthpr:find-satisfiers (list fluent-goal) state
+                                                    :level (1+ depth)
+                                                    :just-one t :domain domain)
+                        (assert unifiers ()
+                                "Unable to find current value for ~s in fluent update"
+                                fluent-function)
+                        (setf new-deps (first deps))
+                        (apply-substitution '?value (first unifiers)))))
+        (let* ((update-val (cond ((fluent-expr-p domain new-value-expr)
+                                  (multiple-value-bind (unifiers deps)
+                                      (shopthpr:find-satisfiers `(f-exp-value ,new-value-expr ?val)
+                                                                state :domain domain
+                                                                      :level (1+ depth)
+                                                                      :just-one t)
+                                    (assert unifiers ()
+                                            "Unable to find update value ~s in ~s"
+                                            new-value-expr effect-expr)
+                                    (assert (= (length unifiers) 1) ()
+                                            "Ill-defined update value -- multiple bindings for ~s in ~s"
+                                            new-value-expr effect-expr)
+                                    (when *record-dependencies-p*
+                                      (setf new-deps 
+                                            (shopthpr::rd-union (first deps) new-deps)))
+                                    (apply-substitution '?val (first unifiers))))
+                                 ((numberp new-value-expr)
+                                  new-value-expr)
+                                 (t (error 'type-error "Could not evaluate fluent update expression ~s in ~s"
+                                           new-value-expr effect-expr))))
+               ;; apply the op
+               (new-val (ecase op
+                          (assign update-val)
+                          (scale-up (* old-val update-val))
+                          (scale-down (* old-val update-val))
+                          (increase (+ old-val update-val))
+                          (decrease (- old-val update-val)))))
+          (values
+           ;; add the new value to the adds
+           (list `(fluent-value ,fluent-function ,new-val))
+           ;; delete old value
+           (list `(fluent-value ,fluent-function ,old-val))
+           new-deps))))))
         
 
 (defmethod validator-export ((domain simple-pddl-domain) (plan list) stream)
@@ -784,6 +883,7 @@ two values."
    (gethash (first (second method))
             (slot-value domain 'methods))))
 
+;;; FIXME translate preconditions when the domain is metric...
 (defun parse-pddl-method (domain method)
   (let* ((method (uniquify-anonymous-variables method))
          (method-head (second method))
@@ -797,6 +897,8 @@ two values."
          (task-net (if (symbolp (third method)) (fifth method) (fourth method)))
          ;; FIXME: later we should check singleton variables...
          #+ignore var-table)
+    (when (typep domain 'fluents-mixin)
+      (setf pre (translate-fluent-precond domain pre)))
     (labels ((process-task-list (tasks)
                (cond
                  ((null tasks) (list :ordered (list :task '!!inop)))
@@ -840,3 +942,16 @@ looks through the preconditions finding the forall
         (4 `(:sort-by ,(second pre) ,(third pre) ,(translate-precondition domain (fourth pre)))))
       (translate-precondition domain pre)))
 
+
+;;;---------------------------------------------------------------------------
+;;; Process problem initial state for metric fluents
+;;;---------------------------------------------------------------------------
+(defmethod make-initial-state :around ((domain fluents-mixin) state-encoding atoms &key)
+  "Rewrite initial state facts of the form (= <fluent-function> <value>) into
+new facts of the form (fluent-value fluent-function value)."
+  (call-next-method domain state-encoding
+                    (iter (for atom in atoms)
+                      (if (and (eq (first atom) '=)
+                               (fluent-function-p domain (first (second atom))))
+                          (collecting `(fluent-value ,(second atom) ,(third atom)))
+                          (collecting atom)))))
