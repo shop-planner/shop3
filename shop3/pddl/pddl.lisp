@@ -835,7 +835,7 @@ set of dependencies."
                                     (apply-substitution '?val (first unifiers))))
                                  ((numberp new-value-expr)
                                   new-value-expr)
-                                 (t (error 'type-error "Could not evaluate fluent update expression ~s in ~s"
+                                 (t (error "Could not evaluate fluent update expression ~s in ~s"
                                            new-value-expr effect-expr))))
                ;; apply the op
                (new-val (ecase op
