@@ -66,23 +66,27 @@
 ;;; This macro is defined before find-satisfiers because it is invoked by
 ;;;  find-satisfiers and some compilers want all macros to be defined before
 ;;;  any code which invokes them.
-(defmacro seek-satisfiers (goals state bindings level just1
+(defmacro seek-satisfiers (goals state var-val-list level just1
                            &key (domain nil domain-supp-p)
                              dependencies)
   "Find satisfying assignments to variables in GOALS, using STATE and
-BINDINGS.  Find just one assignment if JUST1 is non-NIL.
-   BINDINGS is *NOT* a list of binding structures! It is a list made
-up of either variables or the values assigned to those variables.  This
-list will be harvested into a list of binding lists by FIND-SATISFIERS.
-   Returns a list of values for the variables \(or the variables
-themselves, if unbound\).  Will also return a set of dependencies, which
-will be computed if *RECORD-DEPENDENCIES-P* is non-NIL."
+VAR-VAL-LIST.  Find just one assignment if JUST1 is non-NIL.
+   VAR-VAL-LIST is a list made up of either variables or the values assigned
+ to those variables.  This list will be harvested into a list of binding lists
+to be returned by FIND-SATISFIERS.
+   Semantically, returns *multiple answers*.
+   In terms of the program, returns two values:
+1. a list of values for the variables \(or the variables themselves, if unbound\).
+2. a list of dependencies, which will be computed if *RECORD-DEPENDENCIES-P* is
+non-NIL."
   (let ((d (gensym)))
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
-           (values (list ,bindings) (list ,dependencies))
+           ;; return value is list-ified because the SEEK-SATISFIERS query is
+           ;; made from a single context, but returns multiple answers.
+           (values (list ,var-val-list) (list ,dependencies))
            (real-seek-satisfiers ,d ,goals ,state
-                                 ,bindings ,level ,just1 ,dependencies)))))
+                                 ,var-val-list ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain record-dependencies)
   (:documentation 
@@ -173,6 +177,8 @@ or all answers (nil)."
 (defun extract-variables (expr)
   (cond
    ((variablep expr) (list expr))
+   ;; FIXME: I think this is buggy, because there could be a variable bound outside that
+   ;; only appears nested inside a FORALL. [2020/04/14:rpg]
    ((and (consp expr) (not (eql (car expr) 'forall)))
     (shop-union (extract-variables (car expr))
                 (extract-variables (cdr expr))))))
@@ -181,18 +187,22 @@ or all answers (nil)."
 ;;; ; proof of GOALS from AXIOMS and states, it returns the values of GOAL's variables
 ;;; ; that make the proof true.  Here are the other parameters:
 ;;; ;  - STATE: the state of the world in which the query is to be evaluated.
-;;; ;  - BINDINGS is the variable bindings at the current node of the proof tree
+;;; ;  - VAR-VAL-LIST is the set of values for the query variables -- which may be the
+;;;            variables themselves if they are still free -- at the current node of the
+;;;            proof tree.
 ;;; ;  - LEVEL is the current search depth, for use in debugging printout
 ;;; ;  - JUST1 is a flag saying whether to return after finding the 1st satisfier
 
 ;;; Function real-seek-satisfiers pulls out the
-(defun real-seek-satisfiers (domain goals state bindings level just1 dependencies-in)
+(defun real-seek-satisfiers (domain goals state var-val-list level just1 dependencies-in)
   (setq *inferences* (1+ *inferences*))
   (let ((goal1 goals) (remaining nil))
 
     ;; If the provided list goals has a list as the head element,
     ;; then we interpret goals as a list of items to satisfy,
     ;; rather than as one single item.
+    ;; FIXME: Heaven help us if the first element in the list is a
+    ;; (meta) variable
     (when (listp (car goals))
       (setq goal1 (car goals))
       (setq remaining (cdr goals))
@@ -213,7 +223,7 @@ or all answers (nil)."
               (continue c)
               )))
       (real-seek-satisfiers-for domain (car goal1) goal1 remaining
-                                state bindings level just1 dependencies-in))))
+                                state var-val-list level just1 dependencies-in))))
 
 (defmacro def-logical-keyword ((name domain-specializer) &body forms)
   "(def-logical-keyword name domain-specializer options &body forms) where forms
@@ -404,22 +414,22 @@ in the goal, so we ignore the extra reference."
   (:satisfier-method (goal other-goals state bindings level just1)
     (standard-satisfiers-for-%cut% domain other-goals
                                  state bindings (1+ level) just1)))
-(DEFMETHOD REAL-SEEK-SATISFIERS-FOR (DOMAIN
-                                       (keyword (EQL '%CUT%))
-                                       GOAL
-                                       OTHER-GOALS
-                                       STATE
-                                       BINDINGS
-                                       LEVEL
-                                       JUST1 dependencies-in)
-    (DECLARE (IGNORABLE DOMAIN keyword goal))
+(defmethod real-seek-satisfiers-for (domain
+                                       (keyword (eql '%cut%))
+                                       goal
+                                       other-goals
+                                       state
+                                       bindings
+                                       level
+                                       just1 dependencies-in)
+    (declare (ignorable domain keyword goal))
     (restart-case
      (signal 'cut-commit)
      (continue ()
       (seek-satisfiers other-goals state bindings (1+ level) just1 :domain domain :dependencies dependencies-in))))
-(DEFMETHOD LOGICAL-KEYWORDP ((keyword (EQL '%CUT%)) DOMAIN)
-    (DECLARE (IGNORABLE DOMAIN keyword))
-    T)
+(defmethod logical-keywordp ((keyword (eql '%cut%)) domain)
+    (declare (ignorable domain keyword))
+    t)
 
 ;; return new unifiers and dependencies (if they are being recorded), and then invokes REMAINING...
 ;;; FIXME: if REMAINING is NIL, then (APPLY-SUBSTITUTION REMAINING
@@ -824,35 +834,43 @@ goal1 along with all of the other formulas in remaining."
 (defun do-conjunct-from-atoms (domain goal1 remaining state bindings level just1 dependencies-in)
   (let (answers mgu1 found-match depends)
     (dolist (r (state-candidate-atoms-for-goal state goal1))
-      (unless (eql (setq mgu1 (unify goal1 r)) (shop-fail))
-        (let ((updated-dependencies
-               (when *record-dependencies-p*
-                 (let ((e (last-establisher state r)))
-                   (when e              ; fact might come from initial state
-                     (cons (make-raw-depend :prop r :est e) dependencies-in))))))
-          (setq found-match t) ; for debugging printout
-          (multiple-value-bind (new-answers new-depends)
-              (seek-satisfiers (apply-substitution remaining mgu1)
-                               state (apply-substitution bindings mgu1)
-                               (1+ level) just1 :domain domain :dependencies updated-dependencies)
-            (when *record-dependencies-p*
-              (assert (= (length new-answers) (length new-depends))))
-            (when new-answers
-              (trace-print :goals (car goal1) state
-                           "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
-                           level goal1 new-answers)
-              (when just1
-                (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
-              ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
-              ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
-              (multiple-value-setq (answers depends)
-                (answer-set-union new-answers answers new-depends depends))
-              ;; (format t "~&Answers: ~s~%" answers)
-              )))))
-    (unless answers
-      (trace-print :goals (car goal1) state
-                   "~2%Level ~s, state fails goal ~s~%"
-                   level goal1))
+      (if (eql (setq mgu1 (unify goal1 r)) (shop-fail))
+          (progn
+            (trace-print :goals (car goal1) state
+                         "~2%Level ~s, candidate fact ~s fails to match goal ~s~%"
+                         level r goal1)
+            #+ignore(trace-print :goals (car goal1) state
+                         "~2%Level ~s, state fails goal ~s~%"
+                         level goal1)
+            nil)
+        (progn
+          (trace-print :goals (car goal1) state
+                       "~2%Level ~s, state fact ~s satisfies goal ~s~%satisfiers ~s"
+                       level r goal1 mgu1)
+          #+ignore(trace-print :goals (car goal1) state
+                       "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
+                       level goal1 mgu1)
+          (let ((updated-dependencies
+                  (when *record-dependencies-p*
+                    (let ((e (last-establisher state r)))
+                      (when e      ; fact might come from initial state
+                        (cons (make-raw-depend :prop r :est e) dependencies-in))))))
+            (setq found-match t)         ; for debugging printout
+            (multiple-value-bind (new-answers new-depends)
+                (seek-satisfiers (apply-substitution remaining mgu1)
+                                 state (apply-substitution bindings mgu1)
+                                 (1+ level) just1 :domain domain :dependencies updated-dependencies)
+              (when *record-dependencies-p*
+                (assert (= (length new-answers) (length new-depends))))
+              (when new-answers
+                (when just1
+                  (return-from do-conjunct-from-atoms (values new-answers found-match new-depends)))
+                ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
+                ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
+                (multiple-value-setq (answers depends)
+                  (answer-set-union new-answers answers new-depends depends))
+                ;; (format t "~&Answers: ~s~%" answers)
+                ))))))
     (values answers found-match depends)))
 
 ;;; BINDINGS is a list of either variables or the values assigned to those bindings.

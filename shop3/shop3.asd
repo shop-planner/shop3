@@ -87,6 +87,7 @@
        (:module pddl
                 :serial t
                 :components ((:file "decls")
+                             (:file "fluents")
                              (:file "pddl")
                              (:file "prover")))
        (:module search
@@ -244,7 +245,7 @@ shop3."
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
                  (test-plan-repair . :shop-replan-tests) ; 3
                  )
-    :num-checks 522
+    :num-checks 582
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

@@ -84,6 +84,11 @@
         (pddl-satisfiers-for-imply domain (cdr goal) other-goals
                                    state bindings (1+ level) just1 dependencies-in)))
 
+(def-logical-keyword (f-exp-value (domain fluents-mixin))
+    (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
+        (pddl-satisfiers-for-f-exp domain (cdr goal) other-goals
+                                   state bindings (1+ level) just1 dependencies-in)))
+
 
 
 (defun pddl-satisfiers-for-forall (domain arguments other-goals
@@ -194,3 +199,53 @@
   (assert (= (length arguments) 2))
   (seek-satisfiers `((or (not ,(first arguments)) ,(second arguments)) ,@other-goals) state bindings newlevel just1
                    :domain domain :dependencies dependencies-in))
+
+
+;;; We find the satisfiers for a fluent expression (an F-EXP in the PDDL 2.1 grammar)
+;;; by recursively traversing it, plugging in numeric constants, computing binary and
+;;; unary functions and looking up FLUENT-VALUEs in STATE.
+(defun pddl-satisfiers-for-f-exp (domain arguments other-goals
+                                         state var-val-list level just1 dependencies-in)
+  ;; The results of this should bind VAR below to values that are emitted from EXPR
+  (destructuring-bind (expr var) arguments
+    (assert (variablep var))
+    (cond ((numberp expr)
+           ;; simple case of a number
+           (let ((temp-bindings (list (make-binding var expr))))
+             (seek-satisfiers (apply-substitution other-goals temp-bindings)
+                              state (apply-substitution var-val-list temp-bindings)
+                              level just1 :domain domain :dependencies dependencies-in)))
+          ;; unary minus
+          ((and (listp expr) (eq (first expr) '-) (= (length expr) 2))
+           (let ((new-var (gentemp (symbol-name '#:?negand))))
+             (set-variable-property domain new-var)
+             (multiple-value-bind (new-answers new-depends)
+                 (find-satisfiers `((f-exp-value ,(second expr) ,new-var) (assign ,var (- ,new-var)))
+                                  state :level (1+ level) :domain domain)
+               (when new-answers
+                 (incorporate-unifiers new-answers other-goals
+                                       just1 state var-val-list dependencies-in new-depends domain level)))))
+          ;; binary expressions
+          ((and (listp expr) (member (first expr) +binary-numerical-operators+))
+           (destructuring-bind (op op1 op2)
+               expr
+             (let* ((op1-var (gentemp (symbol-name '#:?op1)))
+                    (op2-var (gentemp (symbol-name '#:?op2)))
+                    (combination-goal `(assign ,var (,op ,op1-var ,op2-var)))
+                    (op1-goal `(f-exp-value ,op1 ,op1-var))
+                    (op2-goal `(f-exp-value ,op2 ,op2-var)))
+               (set-variable-property domain combination-goal)
+               (multiple-value-bind (new-answers new-depends)
+                   (find-satisfiers `(,op1-goal ,op2-goal ,combination-goal) state
+                                    :level (1+ level) :domain domain)
+                 (when new-answers
+                   (incorporate-unifiers new-answers other-goals
+                                       just1 state var-val-list dependencies-in new-depends domain level))))))
+          ((and (listp expr) (fluent-expr-p domain expr))
+           (multiple-value-bind (new-answers new-depends)
+                 (find-satisfiers `((fluent-value ,expr ,var))
+                                  state :level (1+ level) :just-one t :domain domain)
+               (when new-answers
+                 (incorporate-unifiers new-answers other-goals
+                                       just1 state var-val-list dependencies-in new-depends domain level))))
+          (t (error "Unable to find fluent value for expression ~s" expr)))))

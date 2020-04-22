@@ -13,7 +13,7 @@
 
 @settitle SHOP3 Manual
 @copying
-Copyright @copyright{} 2019 SIFT, LLC.
+Copyright @copyright{} 2020 SIFT, LLC.
 Original materials @copyright{} 2002 University of Maryland.
 
 This document is made available under the Creative Commons
@@ -76,7 +76,6 @@ College Park, MD 20742, USA
 * The SHOP Unifier::
 * Plan Grapher::
 * Internal Technical Information::
-* Differences between SHOP 1x, SHOP2, and SHOP3: Version Differences.
 * General Notes on @sysname {}: General Notes on SHOP3.
 * Acknowledgments::
 * References::
@@ -1870,25 +1869,25 @@ and costs removed.  For this, one may use
 The current release of @sysname {} provides a preliminary capability to
 incorporate PDDL domain definitions into a @sysname {} domain. You should be
 able to incorporate components of a PDDL domain definition into a @sysname
-domain definition of :type pddl-domain or simple-pddl-domain. A
-pddl-domain corresponds to a PDDL domain of the ADL type. The
-pddl-domain uses conditional-effects, existential-preconditions,
+domain definition of @code{:type pddl-domain} or @code{simple-pddl-domain}. A
+@code{pddl-domain} corresponds to a PDDL domain of the ADL type. The
+@code{pddl-domain }uses conditional-effects, existential-preconditions,
 universal-preconditions, and equality (note that these are @emph{PDDL}
 conditional effects, existential preconditions and universal
 preconditions; these are @emph{not} SHOP-syntax condition effects,
-etc.). A simple-pddl-domain will not have conditional-effects,
+etc.). A @code{simple-pddl-domain} will not have conditional-effects,
 existential-preconditions, universal-preconditions, or equality.
 
 Currently the PDDL integration is a little bumpy, and details are in
 flux.
 
 PDDL action names are translated into names that SHOP will recognize as
-primitives (e.g., move would become !move, and would have to be
+primitives (e.g., @t{move} would become @t{!move}, and would have to be
 referenced that way in SHOP method definitions that use it).
 
 You must splice the PDDL domain components into the SHOP domain
-definition. Typically, the best way to do this is to use an :include
-form (see ).
+definition. Typically, the best way to do this is to use an @t{:include}
+form (@pxref{Inclusion directives} ).
 
 Fully ground STRIPS-style domains -- i.e., those where a set of STRIPS
 operators has been exploded into a large set of ground operators by some
@@ -1899,10 +1898,90 @@ intentional, because we don't want to make it impossible to include SHOP
 constructs together with PDDL constructs. However, there should probably
 be a “strict mode” that checks for true conformance with PDDL syntax.
 @menu
+* PDDL Metric Fluents::
 * PDDL Methods::
+* PDDL Domain Classes::
 @end menu
 
-@node PDDL Methods,  , PDDL Support, PDDL Support
+@node  PDDL Metric Fluents, PDDL Methods, PDDL Support, PDDL Support
+@section PDDL Metric Fluents
+
+We have recently added support for PDDL operators with metric fluents,
+signaled by PDDL's @t{:fluents} requirement.
+Metric fluents are numerically-valued functions of domain objects.  Here
+is an example taken from Fox and Long's paper on PDDL 2.1, and updated
+to the changes in PDDL syntax they specify:
+
+@example
+(define (domain jug-pouring)
+  (:requirements :typing :fluents)
+  (:types jug)
+  (:functions
+   (amount ?j - jug) (capacity ?j - jug))
+  (:action empty
+    :parameters (?jug1 ?jug2 - jug)
+    :precondition (>= (- (capacity ?jug2) (amount ?jug2))
+                                 (amount ?jug1)))
+    :effect (and (assign (amount ?jug1) 0)
+                       (assign (amount ?jug2)
+                              (+ (amount ?jug1) (amount ?jug2))))))
+@end example
+
+In the above example, the two functions are @t{amount} and @t{capacity},
+and we see use of the update operator @t{assign} (other such operators
+are @t{increase}, @t{decrease}, @t{scale-up}, and @t{scale-down}), the
+comparison predicate @code{>=} (there are also @code{<=}, @code{<},
+@code{>}, and @code{=}),
+and the binary arithmetic operators
+@code{-} and @code{+} (@code{*} and @code{/} are also supported).
+
+@tindex FLUENTS-MIXIN
+@xref{PDDL Domain Classes}, specifically the discussion of the
+@code{fluents-mixin} class for more details.
+
+@subsection Implementation Notes
+
+As the name suggests, the @code{domain} mixin class @code{fluents-mixin}
+is responsible for the correct interpretation of PDDL metric fluents.
+This requires extensions to the SHOP theorem prover and to the
+interpretation of PDDL actions.
+
+@cindex FLUENT-VALUE
+In its state representation, SHOP stores the current values of metric
+fluents using the dedicated predicate @code{FLUENT-VALUE}, as in, for
+example: @code{(fluent-value (capacity jug0) 12)}.   When the value of a
+metric fluent must be found, this is the form of literal that is
+actually retrieved.
+
+@cindex F-EXP-VALUE
+In the grammar of PDDL, there are also fluent expressions (@t{f-exp}s)
+that are made up of fluent values, numbers, binary and unary operators.
+Internally, the SHOP theorem-prover uses the special predicate
+@code{F-EXP-VALUE} to find values of such expressions, and has a
+special-purpose inference rule coded for them.  These expressions appear
+both in preconditions (as part of comparison predications) and in action
+effects (as part of updates).
+
+@cindex FLUENT-CHECK
+A fluent comparison (@code{f-comp} in the PDDL grammar) is a binary
+comparison applied to two @code{f-exp}s.  Internally, the theorem-prover
+uses the distinguished predicate @code{fluent-check} to check these.  As
+one would expect, it first evaluates the two fluent expressions and then
+applies the comparison operator.
+
+When handling updates to fluent expressions, parsing methods on the
+@code{fluents-mixin} class will translate update expressions into new
+@code{fluent-update} expressions of the following form:
+
+@example
+(fluent-update @var{update-op} @var{fluent-function} @var{f-exp})
+@end example
+
+@findex APPLY-ACTION
+Special code for handling such effect expressions has been added to the
+@code{apply-action} function in SHOP.
+
+@node PDDL Methods, PDDL Domain Classes, PDDL Metric Fluents, PDDL Support
 @section PDDL Methods
 @anchor{#pddl-methods}
 In order to support replanning, we have developed “PDDL methods” that
@@ -1943,15 +2022,13 @@ sets and task networks in a single PDDL method form, and so do
 get this kind of semantics in PDDL methods, the programmer must supply a
 set of methods with mutually-exclusive and exhaustive preconditions.
 
-@c FIXME: Fix cross-reference.
 PDDL methods may only be used in domains that are a subclass of
-@code{SIMPLE-PDDL-DOMAIN} (see Section 8.1.2).
+@code{SIMPLE-PDDL-DOMAIN} (@pxref{PDDL Domain Classes}).
 @menu
 * Enhanced Preconditions::
-* PDDL Domain Classes::
 @end menu
 
-@node Enhanced Preconditions, PDDL Domain Classes, PDDL Methods, PDDL Methods
+@node Enhanced Preconditions,  , PDDL Methods, PDDL Methods
 @subsection Enhanced Preconditions
 @cindex PDDL method preconditions
 @cindex Sorting in PDDL method preconditions
@@ -1988,8 +2065,8 @@ for the task.
 Currently we do not support typing in PDDL method task heads, but this
 could change.
 
-@node PDDL Domain Classes,  , Enhanced Preconditions, PDDL Methods
-@subsection PDDL Domain Classes
+@node PDDL Domain Classes,  , PDDL Methods, PDDL Support
+@section PDDL Domain Classes
 
 In order to implement the requirements of PDDL, @sysname {} contains a number
 of classes, which can be used when defining domains with @code{defdomain}
@@ -2055,6 +2132,10 @@ existential preconditions, since they are typically used together.
 @item
 @tindex ADL-MIXIN
 @code{ADL-MIXIN}
+
+@item
+@tindex FLUENTS-MIXIN
+@code{FLUENTS-MIXIN}
 
 @end itemize
 
@@ -2165,7 +2246,7 @@ we have developed the @sysname{} plan grapher.
 @include include/class-spg-enhanced-plan-tree-graph.texinfo 
 @include include/class-spg-plan-tree-graph.texinfo 
 
-@node Internal Technical Information, Version Differences, Plan Grapher, Top
+@node Internal Technical Information, General Notes on SHOP3, Plan Grapher, Top
 @chapter Internal Technical Information
 
 @strong{This section has not been updated since the transition
@@ -3230,379 +3311,7 @@ of a problem set. This function runs @code{find-plans} on each planning problem
 specified by the list or problem set, and then returns nil. The keywords
 are simply passed on to find-plans.
 
-
-
-@node Version Differences, General Notes on SHOP3, Internal Technical Information, Top
-@chapter Differences between SHOP 1.x, SHOP2 and @sysname {}
-
-The differences between @sysname {} and SHOP 1.x can be grouped in two sets:
-syntactic changes in the domain definitions and differences in
-functionality.
-
-@emph{@strong{Note:} This section has not been updated since the
-extensive modifications were made to @sysname {} (since as time goes by, the
-number of people who would find it useful dwindles more and more). It
-provides an effective description of the difference between SHOP1 and
-the @strong{original}} @emph{@sysname {} syntax, but does not reflect updates
-in the past decade. This section should probably be removed. -- rpg
-December 22, 2017}
-@menu
-* SHOP 1x Syntax Comparison::
-* SHOP 1x Functionality Comparison::
-@end menu
-
-@node SHOP 1x Syntax Comparison, SHOP 1x Functionality Comparison, Version Differences, Version Differences
-@section SHOP 1.x Syntax Comparison
-@anchor{#shop-1.x-syntax-comparison}
-The table below gives examples of SHOP 1.x syntax, comparing it to the
-syntax used in @sysname:
-
-@multitable {(make-domain 'travel'((:- (have-taxi-fare ?distance)((have-cash ?m)))))} {(defdomain travel((:- (have-taxi-fare ?distance)((have-cash ?m)(call >= ?m)))))}
-@c (eval (>= ?m (+ 1.5 ?distance)))))(:- (walking-distance ?u ?v)((weather-is'good)@*
-@c (distance ?u ?v ?w)@*
-@c (eval (<= ?w 3)))((distance ?u ?v ?w)(eval (<= ?w 0.5))))(:method (pay-driver ?fare)((have-cash ?m)@*
-@c (eval (>= ?m ?fare)))`((!set-cash ?m ,(- ?m ?fare))))(:method (travel-to ?q)((at ?p) (walking-distance ?p ?q))'((!walk ?p ?q)))(:method (travel-to ?y)((at ?x) (at-taxi-stand ?t ?x)(distance ?x ?y ?d) (have-taxi-fare ?d))@*
-@c `((!hail ?t ?x) (!ride ?t ?x ?y)(pay-driver ,(+ 1.50 ?d)))((at ?x) (bus-route ?bus ?x ?y))`((!wait-for ?bus ?x) (pay-driver 1.00)@*
-@c (!ride ?bus ?x ?y)))(:operator (!hail ?vehicle ?location)()((at ?vehicle ?location)))(:operator (!wait-for ?bus ?location)()((at ?bus ?location)))(:operator (!ride ?vehicle ?a ?b)((at ?a) (at ?vehicle ?a))((at ?b) (at ?vehicle ?b)))(:operator (!set-cash ?old ?new)((have-cash ?old))((have-cash ?new)))(:operator (!walk ?here ?there)((at ?here))((at ?there)))))} 
-@c (call + 1.5 ?distance))))(:- (walking-distance ?u ?v)good ((weather-is good)@*
-@c (distance ?u ?v ?w)@*
-@c (call <= ?w 3))bad ( (distance ?u ?v ?w)(call <= ?w 0.5)))(:method (pay-driver ?fare)((have-cash ?m)@*
-@c (call >= ?m ?fare))((!set-cash ?m ( call - ?m ?fare))))(:method (travel-to ?q)((at ?p) (walking-distance ?p ?q))((!walk ?p ?q)))(:method (travel-to ?y)by-taxi((at ?x) (at-taxi-stand ?t ?x)(distance ?x ?y ?d) (have-taxi-fare ?d))@*
-@c ((!hail ?t ?x) (!ride ?t ?x ?y)(pay-driver (call + 1.50 ?d)))by-bus((at ?x) (bus-route ?bus ?x ?y))((!wait-for ?bus ?x) (pay-driver 1.00)@*
-@c (!ride ?bus ?x ?y)))(:operator (!hail ?vehicle ?location)() ()((at ?vehicle ?location)))(:operator (!wait-for ?bus ?location)() ()((at ?bus ?location)))(:operator (!ride ?vehicle ?a ?b)()@*
-@c ((at ?a) (at ?vehicle ?a))((at ?b) (at ?vehicle ?b)))(:operator (!set-cash ?old ?new)((have-cash ?old))((have-cash ?old))((have-cash ?new)))(:operator (!walk ?here ?there)((at ?here))((at ?here))((at ?there)))))}
-@item 
-@strong{@sc{Shop1} syntax}
- @tab @strong{@sc{Shop2} Syntax}
-@item 
-(make-domain 'travel
-
-'(
-
-(:- (have-taxi-fare ?distance)
-
-((have-cash ?m)
-
-(eval (>= ?m (+ 1.5 ?distance)))))
-
-(:- (walking-distance ?u ?v)
-
-((weather-is'good)@*
-(distance ?u ?v ?w)@*
-(eval (<= ?w 3)))
-
-((distance ?u ?v ?w)
-
-(eval (<= ?w 0.5))))
-
-(:method (pay-driver ?fare)
-
-((have-cash ?m)@*
-(eval (>= ?m ?fare)))
-
-`((!set-cash ?m ,(- ?m ?fare))))
-
-(:method (travel-to ?q)
-
-((at ?p) (walking-distance ?p ?q))
-
-'((!walk ?p ?q)))
-
-(:method (travel-to ?y)
-
-((at ?x) (at-taxi-stand ?t ?x)
-
-(distance ?x ?y ?d) (have-taxi-fare ?d))@*
-`((!hail ?t ?x) (!ride ?t ?x ?y)
-
-(pay-driver ,(+ 1.50 ?d)))
-
-((at ?x) (bus-route ?bus ?x ?y))
-
-`((!wait-for ?bus ?x) (pay-driver 1.00)@*
-(!ride ?bus ?x ?y)))
-
-(:operator (!hail ?vehicle ?location)
-
-()
-
-((at ?vehicle ?location)))
-
-(:operator (!wait-for ?bus ?location)
-
-()
-
-((at ?bus ?location)))
-
-(:operator (!ride ?vehicle ?a ?b)
-
-((at ?a) (at ?vehicle ?a))
-
-((at ?b) (at ?vehicle ?b)))
-
-(:operator (!set-cash ?old ?new)
-
-((have-cash ?old))
-
-((have-cash ?new)))
-
-(:operator (!walk ?here ?there)
-
-((at ?here))
-
-((at ?there)))
-
-))
- @tab (defdomain travel
-
-(
-
-(:- (have-taxi-fare ?distance)
-
-((have-cash ?m)
-
-(call >= ?m (call + 1.5 ?distance))))
-
-(:- (walking-distance ?u ?v)
-
-good ((weather-is good)@*
-(distance ?u ?v ?w)@*
-(call <= ?w 3))
-
-bad ( (distance ?u ?v ?w)
-
-(call <= ?w 0.5)))
-
-(:method (pay-driver ?fare)
-
-((have-cash ?m)@*
-(call >= ?m ?fare))
-
-((!set-cash ?m ( call - ?m ?fare))))
-
-(:method (travel-to ?q)
-
-((at ?p) (walking-distance ?p ?q))
-
-((!walk ?p ?q)))
-
-(:method (travel-to ?y)
-
-by-taxi
-
-((at ?x) (at-taxi-stand ?t ?x)
-
-(distance ?x ?y ?d) (have-taxi-fare ?d))@*
-((!hail ?t ?x) (!ride ?t ?x ?y)
-
-(pay-driver (call + 1.50 ?d)))
-
-by-bus
-
-((at ?x) (bus-route ?bus ?x ?y))
-
-((!wait-for ?bus ?x) (pay-driver 1.00)@*
-(!ride ?bus ?x ?y)))
-
-(:operator (!hail ?vehicle ?location)
-
-() ()
-
-((at ?vehicle ?location)))
-
-(:operator (!wait-for ?bus ?location)
-
-() ()
-
-((at ?bus ?location)))
-
-(:operator (!ride ?vehicle ?a ?b)
-
-()@*
-((at ?a) (at ?vehicle ?a))
-
-((at ?b) (at ?vehicle ?b)))
-
-(:operator (!set-cash ?old ?new)
-
-((have-cash ?old))
-
-((have-cash ?old))
-
-((have-cash ?new)))
-
-(:operator (!walk ?here ?there)
-
-((at ?here))
-
-((at ?here))
-
-((at ?there)))
-
-))
-@item 
-(make-problem 'go-park-rich 'travel
-
-`((distance downtown park 2)
-
-(distance downtown uptown 8)
-
-(distance downtown suburb 12)
-
-(at-taxi-stand taxi1 downtown)
-
-(at-taxi-stand taxi2 downtown)
-
-(bus-route bus1 downtown park)
-
-(bus-route bus2 downtown uptown)
-
-(bus-route bus3 downtown suburb)
-
-(at downtown)
-
-(weather-is good)
-
-(have-cash 80))
-
-'((travel-to park)))
- @tab (defproblem go-park-rich travel
-
-((distance downtown park 2)
-
-(distance downtown uptown 8)
-
-(distance downtown suburb 12)
-
-(at-taxi-stand taxi1 downtown)
-
-(at-taxi-stand taxi2 downtown)
-
-(bus-route bus1 downtown park)
-
-(bus-route bus2 downtown uptown)
-
-(bus-route bus3 downtown suburb)
-
-(at downtown)
-
-(weather-is good)
-
-(have-cash 80))
-
-((travel-to park)))
-@item 
-(make-problem-set 'travel
-
-'( go-park-broke
-
-go-park-rich
-
-))
- @tab (def-problem-set travel
-
-(go-park-broke
-
-go-park-rich
-
-))
-
-*def-problem-set is not available in JSHOP
-@item 
-(do-problems 'travel :which :all)
- @tab Works in @sysname {} without any changes. Not available in JSHOP.
-@end multitable
-
-To summarize, the changes in syntax are as follows:
-
-@itemize
-@item
-Quotes, back quotes and commas are not used in @sysname {} except as needed in
-general Lisp expressions.
-
-@item
-@emph{make-domain} is replaced with @emph{defdomain.}
-
-@item
-@emph{make-problem} is replaced with @emph{defproblem.}
-
-@item
-Operators may have preconditions in @sysname.
-
-@item
-The tail of an axiom can have names for each of the conjuncts, and the
-tail of a method can have names for each of the precondition-tail pairs.
-These names are optional.
-
-@item
-An ordinary list can be differentiated from a predicate or a function by
-inserting the optional label, @emph{list}, before the first element of
-the list.
-
-@item
-In SHOP 1.x it was valid to have methods of the following form, where
-@emph{e} is any Lisp expression:
-
-@end itemize
-
-@quotation
-(:method (varSubtasks ?tasklist)
-
-((precondition))@*
-@emph{e})
-
-This kind of method is not supported in @sysname.
-@end quotation
-Note that in many cases, @sysname {} is able to process SHOP 1.x syntax (i.e.,
-@sysname {} is partially backward compatible). For example, the old
-@emph{make-domain} and @emph{make-problem} forms can be handled by
-@sysname. It is recommended, however, that new domains be written using the
-new @sysname {} forms.
-
-@node SHOP 1x Functionality Comparison,  , SHOP 1x Syntax Comparison, Version Differences
-@section SHOP 1.x Functionality Comparison
-@anchor{#shop-1.x-functionality-comparison}
-The following are some key differences between the functionality of SHOP
-1.x and @sysname:
-
-@itemize
-@item
-Unlike SHOP 1.x, @sysname {} allows the combination of partially ordered and
-fully ordered tasks through the use of the :unordered and :ordered
-keywords.
-
-@end itemize
-
-@itemize
-@item
-The following keywords in @sysname {} domain definitions are not supported in
-SHOP 1.x: or, assign, sort-by, forall. The functionality associated with
-those keywords is not available in SHOP 1.x.
-
-@item
-The not keyword in SHOP 1.x can only be applied to individual atoms, not
-to arbitrary logical expressions.
-
-@item
-The :optimize-cost, :time-limit, and :plan-tree keyword arguments for
-@sysname {} are not supported in SHOP 1.x. The functionality associated with
-those keywords is not available in SHOP 1.x.
-
-@c FIXME: Cut this whole section or fix the cross-references.
-@item
-The debugging features in @sysname {} (see Sections 5.2 and 5.3) are not
-present in SHOP 1.x.
-
-@item
-@sysname {} version 1.1 includes a Java interface. SHOP 1.x has no such
-interface.
-
-@end itemize
-
-@sysname {} is largely backward compatible with SHOP 1.x . @sysname {} can run most
-SHOP 1.x knowledge bases with only little or no modification.
-
-@node General Notes on SHOP3, Acknowledgments, Version Differences, Top
+@node General Notes on SHOP3, Acknowledgments, Internal Technical Information, Top
 @chapter General Notes on @sysname {}
 @enumerate 
 @item

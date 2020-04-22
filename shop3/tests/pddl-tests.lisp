@@ -66,32 +66,32 @@
 
 (fiveam:def-fixture simple-pddl-actions ()
   (let ((action-def '(:action drive
-                :parameters (?v - vehicle
-                             ?from ?to - location
-                             ?fbefore ?fafter - fuel-level)
-                :precondition (and (at ?v ?from)
-                               (accessible ?v ?from ?to)
-                               (fuel ?v ?fbefore)
-                               (next ?fbefore ?fafter))
-                :effect (and (not (at ?v ?from))
-                          (at ?v ?to)
-                         (not (fuel ?v ?fbefore))
-                         (fuel ?v ?fafter))))
+                      :parameters (?v - vehicle
+                                   ?from ?to - location
+                                   ?fbefore ?fafter - fuel-level)
+                      :precondition (and (at ?v ?from)
+                                     (accessible ?v ?from ?to)
+                                     (fuel ?v ?fbefore)
+                                     (next ?fbefore ?fafter))
+                      :effect (and (not (at ?v ?from))
+                               (at ?v ?to)
+                               (not (fuel ?v ?fbefore))
+                               (fuel ?v ?fafter))))
         (untyped-action-def '(:action drive
-                :parameters (?v - vehicle
-                             ?from ?to - location
-                             ?fbefore ?fafter)
-                :precondition (and (at ?v ?from)
-                               (accessible ?v ?from ?to)
-                               (fuel ?v ?fbefore)
-                               (next ?fbefore ?fafter))
-                :effect (and (not (at ?v ?from))
-                          (at ?v ?to)
-                         (not (fuel ?v ?fbefore))
-                         (fuel ?v ?fafter))))
+                              :parameters (?v - vehicle
+                                           ?from ?to - location
+                                           ?fbefore ?fafter)
+                              :precondition (and (at ?v ?from)
+                                             (accessible ?v ?from ?to)
+                                             (fuel ?v ?fbefore)
+                                             (next ?fbefore ?fafter))
+                              :effect (and (not (at ?v ?from))
+                                       (at ?v ?to)
+                                       (not (fuel ?v ?fbefore))
+                                       (fuel ?v ?fafter))))
         (typelist '(?v - vehicle
-                             ?from ?to - location
-                             ?fbefore ?fafter)))
+                    ?from ?to - location
+                    ?fbefore ?fafter)))
     (declare (ignorable typelist action-def untyped-action-def))
     (&body)))
 
@@ -125,20 +125,22 @@
     (fiveam:with-fixture action-test-fixtures ()
       #+nil(break "Domain is ~S" domain)
       (fiveam:is (equal '(and
-                          (%enforce-type-constraints (vehicle ?v)
-                           (location ?from)
-                           (location ?to)
-                           (fuel-level ?fbefore)
-                           (fuel-level ?fafter))
+                          (and 
+                           (enforce (vehicle ?v) "Parameter ~a unbound or ill-typed. Should be ~a"  '?v 'vehicle)
+                           (enforce (location ?from) "Parameter ~a unbound or ill-typed. Should be ~a"  '?from 'location)
+                           (enforce (location ?to) "Parameter ~a unbound or ill-typed. Should be ~a"  '?to 'location)
+                           (enforce (fuel-level ?fbefore) "Parameter ~a unbound or ill-typed. Should be ~a"  '?fbefore 'fuel-level)
+                           (enforce (fuel-level ?fafter) "Parameter ~a unbound or ill-typed. Should be ~a"  '?fafter 'fuel-level))
                           (and (at ?v ?from) (accessible ?v ?from ?to)
                            (fuel ?v ?fbefore) (next ?fbefore ?fafter)))
                         (pddl-action-precondition action)))
       (fiveam:is (equal '(and
-                          (%enforce-type-constraints (vehicle ?v)
-                           (location ?from)
-                           (location ?to)
-                           (object ?fbefore)
-                           (object ?fafter))
+                          (and
+                           (enforce (vehicle ?v) "Parameter ~a unbound or ill-typed. Should be ~a"  '?v 'vehicle)
+                           (enforce (location ?from) "Parameter ~a unbound or ill-typed. Should be ~a"  '?from 'location)
+                           (enforce (location ?to) "Parameter ~a unbound or ill-typed. Should be ~a"  '?to 'location)
+                           (enforce (object ?fbefore) "Parameter ~a unbound or ill-typed. Should be ~a"  '?fbefore 'object)
+                           (enforce (object ?fafter) "Parameter ~a unbound or ill-typed. Should be ~a"  '?fafter 'object))
                           (and (at ?v ?from) (accessible ?v ?from ?to)
                            (fuel ?v ?fbefore) (next ?fbefore ?fafter)))
                         (pddl-action-precondition untyped-action)))))
@@ -153,7 +155,11 @@
       (fiveam:is
        (equal
         '(PDDL-ACTION (!WALK ?FROM ?TO)
-          (and (%enforce-type-constraints (loc ?from) (loc ?to)) (AT ROBOT ?FROM))
+          (and
+           (and  
+            (enforce (loc ?from) "Parameter ~a unbound or ill-typed. Should be ~a"  '?from 'loc)
+            (enforce (loc ?to) "Parameter ~a unbound or ill-typed. Should be ~a"  '?to 'loc))
+           (AT ROBOT ?FROM))
           (AND (NOT (AT ROBOT ?FROM)) (AT ROBOT ?TO))
           1.0)
         (progn
@@ -204,13 +210,13 @@
        'prop-sorter)))
     (fiveam:signals
         error
-        (let ((*state-encoding* :list))
-          (declare (special *state-encoding*))
-          (let ((state (make-initial-state *domain* *state-encoding*  nil)))
-            (apply-action *domain* state
-                          '(!walk new-jersey new-york)
-                          (operator *domain* '!walk)
-                          nil 0 nil))))))
+      (let ((*state-encoding* :list))
+        (declare (special *state-encoding*))
+        (let ((state (make-initial-state *domain* *state-encoding*  nil)))
+          (apply-action *domain* state
+                        '(!walk new-jersey new-york)
+                        (operator *domain* '!walk)
+                        nil 0 nil))))))
 
 
 (fiveam:def-fixture quantified-preconditions-fixtures ()
@@ -221,17 +227,17 @@
                      ((:types airplane airplanetype direction segment))))
          (act (process-action domain
                               '(:action move
-                                        :parameters
-                                        (?a - airplane ?t - airplanetype
-                                            ?d1 - direction ?s1 ?s2  - segment
-                                            ?d2 - direction)
-                                        :precondition
-                                        (forall (?s - segment)
-                                                (imply
-                                                 (and
-                                                  (is-blocked ?s ?t ?s2 ?d2)
-                                                  (not (= ?s ?s1)))
-                                                 (not (occupied ?s))))))))
+                                :parameters
+                                (?a - airplane ?t - airplanetype
+                                 ?d1 - direction ?s1 ?s2  - segment
+                                 ?d2 - direction)
+                                :precondition
+                                (forall (?s - segment)
+                                 (imply
+                                  (and
+                                   (is-blocked ?s ?t ?s2 ?d2)
+                                   (not (= ?s ?s1)))
+                                  (not (occupied ?s))))))))
     (&body)))
 
 (fiveam:test quantified-preconditions
@@ -239,7 +245,13 @@
     (fiveam:is
      (equal
       '(and
-        (%enforce-type-constraints (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2))
+        (and
+         (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
+         (enforce (airplanetype ?t) "Parameter ~a unbound or ill-typed. Should be ~a"  '?t 'airplanetype)
+         (enforce (direction ?d1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d1 'direction)
+         (enforce (segment ?s1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s1 'segment)
+         (enforce (segment ?s2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s2 'segment)
+         (enforce (direction ?d2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d2 'direction))
         (forall (?s)
          (segment ?s)
          (imply
@@ -251,7 +263,12 @@
 
     (fiveam:is 
      (equal '(and
-              (%enforce-type-constraints (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2))
+              (and (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
+               (enforce (airplanetype ?t) "Parameter ~a unbound or ill-typed. Should be ~a"  '?t 'airplanetype)
+               (enforce (direction ?d1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d1 'direction)
+               (enforce (segment ?s1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s1 'segment)
+               (enforce (segment ?s2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s2 'segment)
+               (enforce (direction ?d2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d2 'direction))
               (and
                (has-type ?a ?t)
                (is-moving ?a)
@@ -290,9 +307,13 @@
 
     (fiveam:is 
      (equal '(and
-              (%enforce-type-constraints
-               (airplane ?a) (airplanetype ?t) (direction ?d1)
-               (segment ?s1) (segment ?s2) (direction ?d2))
+              (and
+               (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
+               (enforce (airplanetype ?t) "Parameter ~a unbound or ill-typed. Should be ~a"  '?t 'airplanetype)
+               (enforce (direction ?d1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d1 'direction)
+               (enforce (segment ?s1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s1 'segment)
+               (enforce (segment ?s2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s2 'segment)
+               (enforce (direction ?d2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d2 'direction))
               (forall (?s ?a2)
                (and
                 (segment ?s)
@@ -317,8 +338,13 @@
 
     (fiveam:is 
      (equal '(and
-              (%enforce-type-constraints
-                (airplane ?a) (airplanetype ?t) (direction ?d1) (segment ?s1) (segment ?s2) (direction ?d2))
+              (and
+               (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
+               (enforce (airplanetype ?t) "Parameter ~a unbound or ill-typed. Should be ~a"  '?t 'airplanetype)
+               (enforce (direction ?d1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d1 'direction)
+               (enforce (segment ?s1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s1 'segment)
+               (enforce (segment ?s2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?s2 'segment)
+               (enforce (direction ?d2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?d2 'direction))
               (and
                (has-type ?a ?t)
                (is-moving ?a)
@@ -352,11 +378,11 @@
                                 (move-dir ?s1 ?s2 ?d2)
                                 (at-segment ?a ?s1)
                                 (not    (exists (?a1 - airplane)        (and    (not (= ?a1 ?a))
-                                                                                (blocked ?s2 ?a1))))
+                                                                         (blocked ?s2 ?a1))))
                                 (forall (?s - segment)  (imply  (and    (is-blocked ?s ?t ?s2 ?d2)
-                                                                        (not (= ?s ?s1)))
-                                                                (not (occupied ?s))
-                                                                ))
+                                                                 (not (= ?s ?s1)))
+                                                         (not (occupied ?s))
+                                                         ))
                                 )
                                :effect
                                (and
@@ -425,7 +451,7 @@
       (let ((*state-encoding* :list))
         (declare (special *state-encoding*))
         (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
-                                                                      (loc new-jersey) (loc new-york)
+                                                                     (loc new-jersey) (loc new-york)
                                                                      (carrying cargo)))))
 
           (apply-action *domain* state
@@ -493,20 +519,20 @@
 (fiveam:def-fixture quantified-when-fixtures ()
   (progn
     (let ((*define-silently* t))
-     (defdomain (quantified-when-domain
-                 :type pddl-domain
-                 :redefine-ok t)
-         ((:types loc luggage)
-          (:action walk
-           :parameters (?from ?to - loc)
-           :precondition (at robot ?from)
-           :effect (and (not (at robot ?from))
-                        (at robot ?to)
-                        (forall (?x - luggage)
-                                (when (carrying robot ?x)
-                                  (and (not (at ?x ?from))
-                                       (at ?x ?to)))))))))
-         (&body)))
+      (defdomain (quantified-when-domain
+                  :type pddl-domain
+                  :redefine-ok t)
+          ((:types loc luggage)
+           (:action walk
+            :parameters (?from ?to - loc)
+            :precondition (at robot ?from)
+            :effect (and (not (at robot ?from))
+                         (at robot ?to)
+                         (forall (?x - luggage)
+                                 (when (carrying robot ?x)
+                                   (and (not (at ?x ?from))
+                                        (at ?x ?to)))))))))
+    (&body)))
 
 (fiveam:test quantified-when
   (fiveam:with-fixture quantified-when-fixtures ()
@@ -711,27 +737,27 @@
                        (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
                        (!SHIP-ORDER O1 N4 N5))
                      (shorter-plan (first (find-plans
-                                     'os-sequencedstrips-p5_1i :verbose 0))))))
+                                           'os-sequencedstrips-p5_1i :verbose 0))))))
 
 
 (fiveam:test ess-pddl-planning
   (let ((shop3:*define-silently* t)
         (plan '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
-                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
-                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
-                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
-                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
-                       (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
-                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
-                       (!SHIP-ORDER O2 N4 N5)))
+                (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O3 N3 N4)
+                (!SHIP-ORDER O4 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O1 N3 N4)
+                (!SHIP-ORDER O2 N4 N5)))
         (shuffled-plan '((!OPEN-NEW-STACK N0 N1) (!OPEN-NEW-STACK N1 N2)
-                       (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
-                       (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
-                       (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
-                       (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O4 N3 N4)
-                       (!SHIP-ORDER O3 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
-                       (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
-                       (!SHIP-ORDER O1 N4 N5))))
+                         (!OPEN-NEW-STACK N2 N3) (!OPEN-NEW-STACK N3 N4)
+                         (!OPEN-NEW-STACK N4 N5) (!START-ORDER O5 N5 N4) (!MAKE-PRODUCT P5)
+                         (!SHIP-ORDER O5 N4 N5) (!START-ORDER O4 N5 N4) (!MAKE-PRODUCT P4)
+                         (!START-ORDER O3 N4 N3) (!MAKE-PRODUCT P3) (!SHIP-ORDER O4 N3 N4)
+                         (!SHIP-ORDER O3 N4 N5) (!START-ORDER O2 N5 N4) (!MAKE-PRODUCT P1)
+                         (!START-ORDER O1 N4 N3) (!MAKE-PRODUCT P2) (!SHIP-ORDER O2 N3 N4)
+                         (!SHIP-ORDER O1 N4 N5))))
     (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/domain.lisp"))
     (load (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/p01-manual.lisp"))
     (fiveam:is (equalp plan (shorter-plan (first (find-plans-stack 
@@ -802,97 +828,97 @@
 (fiveam:test test-forall-bounds
   ;; try to make this side-effect free
   (let ((*domain* nil))
-   (let ((*define-silently* t))
-     (defdomain (rover-for-test :type pddl-domain)
-         (
-          (:requirements :typing)
-          (:static
-           can_traverse
-           equipped_for_soil_analysis
-           equipped_for_rock_analysis
-           equipped_for_imaging
-           supports
-           visible
-           visible_from
-           store_of
-           on_board)
-          (:types rover waypoint store camera mode lander objective)
-          (:predicates (at ?x - rover ?y - waypoint) 
-                       (at_lander ?x - lander ?y - waypoint)
-                       (can_traverse ?r - rover ?x - waypoint ?y - waypoint)
-                       (equipped_for_soil_analysis ?r - rover)
-                       (equipped_for_rock_analysis ?r - rover)
-                       (equipped_for_imaging ?r - rover)
-                       (empty ?s - store)
-                       (have_rock_analysis ?r - rover ?w - waypoint)
-                       (have_soil_analysis ?r - rover ?w - waypoint)
-                       (full ?s - store)
-                       (calibrated ?c - camera ?r - rover) 
-                       (supports ?c - camera ?m - mode)
-                       (available ?r - rover)
-                       (visible ?w - waypoint ?p - waypoint)
-                       (have_image ?r - rover ?o - objective ?m - mode)
-                       (communicated_soil_data ?w - waypoint)
-                       (communicated_rock_data ?w - waypoint)
-                       (communicated_image_data ?o - objective ?m - mode)
-                       (at_soil_sample ?w - waypoint)
-                       (at_rock_sample ?w - waypoint)
-                       (visible_from ?o - objective ?w - waypoint)
-                       (store_of ?s - store ?r - rover)
-                       (calibration_target ?i - camera ?o - objective)
-                       (on_board ?i - camera ?r - rover)
-                       (channel_free ?l - lander)
-                       )
-          ))
-     (DEFPROBLEM test-rover-problem ROVER-for-test
-       ((OBJECTIVE OBJECTIVE1) (OBJECTIVE OBJECTIVE0)
-        (CAMERA CAMERA0) (WAYPOINT WAYPOINT3) (WAYPOINT WAYPOINT2)
-        (WAYPOINT WAYPOINT1) (WAYPOINT WAYPOINT0)
-        (STORE ROVER0STORE) (ROVER ROVER0) (MODE LOW_RES)
-        (MODE HIGH_RES) (MODE COLOUR) (LANDER GENERAL)
-        (VISIBLE WAYPOINT1 WAYPOINT0)
-        (VISIBLE WAYPOINT0 WAYPOINT1)
-        (VISIBLE WAYPOINT2 WAYPOINT0)
-        (VISIBLE WAYPOINT0 WAYPOINT2)
-        (VISIBLE WAYPOINT2 WAYPOINT1)
-        (VISIBLE WAYPOINT1 WAYPOINT2)
-        (VISIBLE WAYPOINT3 WAYPOINT0)
-        (VISIBLE WAYPOINT0 WAYPOINT3)
-        (VISIBLE WAYPOINT3 WAYPOINT1)
-        (VISIBLE WAYPOINT1 WAYPOINT3)
-        (VISIBLE WAYPOINT3 WAYPOINT2)
-        (VISIBLE WAYPOINT2 WAYPOINT3) (AT_SOIL_SAMPLE WAYPOINT0)
-        (AT_ROCK_SAMPLE WAYPOINT1) (AT_SOIL_SAMPLE WAYPOINT2)
-        (AT_ROCK_SAMPLE WAYPOINT2) (AT_SOIL_SAMPLE WAYPOINT3)
-        (AT_ROCK_SAMPLE WAYPOINT3) (AT_LANDER GENERAL WAYPOINT0)
-        (CHANNEL_FREE GENERAL) (AT ROVER0 WAYPOINT3)
-        (AVAILABLE ROVER0) (STORE_OF ROVER0STORE ROVER0)
-        (EMPTY ROVER0STORE) (EQUIPPED_FOR_SOIL_ANALYSIS ROVER0)
-        (EQUIPPED_FOR_ROCK_ANALYSIS ROVER0)
-        (EQUIPPED_FOR_IMAGING ROVER0)
-        (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT0)
-        (CAN_TRAVERSE ROVER0 WAYPOINT0 WAYPOINT3)
-        (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT1)
-        (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT3)
-        (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT2)
-        (CAN_TRAVERSE ROVER0 WAYPOINT2 WAYPOINT1)
-        (ON_BOARD CAMERA0 ROVER0)
-        (CALIBRATION_TARGET CAMERA0 OBJECTIVE1)
-        (SUPPORTS CAMERA0 COLOUR) (SUPPORTS CAMERA0 HIGH_RES)
-        (VISIBLE_FROM OBJECTIVE0 WAYPOINT0)
-        (VISIBLE_FROM OBJECTIVE0 WAYPOINT1)
-        (VISIBLE_FROM OBJECTIVE0 WAYPOINT2)
-        (VISIBLE_FROM OBJECTIVE0 WAYPOINT3)
-        (VISIBLE_FROM OBJECTIVE1 WAYPOINT0)
-        (VISIBLE_FROM OBJECTIVE1 WAYPOINT1)
-        (VISIBLE_FROM OBJECTIVE1 WAYPOINT2)
-        (VISIBLE_FROM OBJECTIVE1 WAYPOINT3)
-        (COMMUNICATE_SOIL_DATA WAYPOINT2)
-        (COMMUNICATE_ROCK_DATA WAYPOINT3)
-        (COMMUNICATE_IMAGE_DATA OBJECTIVE1 HIGH_RES)
-        )
-       (:TASK ACHIEVE-GOALS))
-     )
+    (let ((*define-silently* t))
+      (defdomain (rover-for-test :type pddl-domain)
+          (
+           (:requirements :typing)
+           (:static
+            can_traverse
+            equipped_for_soil_analysis
+            equipped_for_rock_analysis
+            equipped_for_imaging
+            supports
+            visible
+            visible_from
+            store_of
+            on_board)
+           (:types rover waypoint store camera mode lander objective)
+           (:predicates (at ?x - rover ?y - waypoint) 
+                        (at_lander ?x - lander ?y - waypoint)
+                        (can_traverse ?r - rover ?x - waypoint ?y - waypoint)
+                        (equipped_for_soil_analysis ?r - rover)
+                        (equipped_for_rock_analysis ?r - rover)
+                        (equipped_for_imaging ?r - rover)
+                        (empty ?s - store)
+                        (have_rock_analysis ?r - rover ?w - waypoint)
+                        (have_soil_analysis ?r - rover ?w - waypoint)
+                        (full ?s - store)
+                        (calibrated ?c - camera ?r - rover) 
+                        (supports ?c - camera ?m - mode)
+                        (available ?r - rover)
+                        (visible ?w - waypoint ?p - waypoint)
+                        (have_image ?r - rover ?o - objective ?m - mode)
+                        (communicated_soil_data ?w - waypoint)
+                        (communicated_rock_data ?w - waypoint)
+                        (communicated_image_data ?o - objective ?m - mode)
+                        (at_soil_sample ?w - waypoint)
+                        (at_rock_sample ?w - waypoint)
+                        (visible_from ?o - objective ?w - waypoint)
+                        (store_of ?s - store ?r - rover)
+                        (calibration_target ?i - camera ?o - objective)
+                        (on_board ?i - camera ?r - rover)
+                        (channel_free ?l - lander)
+                        )
+           ))
+      (DEFPROBLEM test-rover-problem ROVER-for-test
+        ((OBJECTIVE OBJECTIVE1) (OBJECTIVE OBJECTIVE0)
+         (CAMERA CAMERA0) (WAYPOINT WAYPOINT3) (WAYPOINT WAYPOINT2)
+         (WAYPOINT WAYPOINT1) (WAYPOINT WAYPOINT0)
+         (STORE ROVER0STORE) (ROVER ROVER0) (MODE LOW_RES)
+         (MODE HIGH_RES) (MODE COLOUR) (LANDER GENERAL)
+         (VISIBLE WAYPOINT1 WAYPOINT0)
+         (VISIBLE WAYPOINT0 WAYPOINT1)
+         (VISIBLE WAYPOINT2 WAYPOINT0)
+         (VISIBLE WAYPOINT0 WAYPOINT2)
+         (VISIBLE WAYPOINT2 WAYPOINT1)
+         (VISIBLE WAYPOINT1 WAYPOINT2)
+         (VISIBLE WAYPOINT3 WAYPOINT0)
+         (VISIBLE WAYPOINT0 WAYPOINT3)
+         (VISIBLE WAYPOINT3 WAYPOINT1)
+         (VISIBLE WAYPOINT1 WAYPOINT3)
+         (VISIBLE WAYPOINT3 WAYPOINT2)
+         (VISIBLE WAYPOINT2 WAYPOINT3) (AT_SOIL_SAMPLE WAYPOINT0)
+         (AT_ROCK_SAMPLE WAYPOINT1) (AT_SOIL_SAMPLE WAYPOINT2)
+         (AT_ROCK_SAMPLE WAYPOINT2) (AT_SOIL_SAMPLE WAYPOINT3)
+         (AT_ROCK_SAMPLE WAYPOINT3) (AT_LANDER GENERAL WAYPOINT0)
+         (CHANNEL_FREE GENERAL) (AT ROVER0 WAYPOINT3)
+         (AVAILABLE ROVER0) (STORE_OF ROVER0STORE ROVER0)
+         (EMPTY ROVER0STORE) (EQUIPPED_FOR_SOIL_ANALYSIS ROVER0)
+         (EQUIPPED_FOR_ROCK_ANALYSIS ROVER0)
+         (EQUIPPED_FOR_IMAGING ROVER0)
+         (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT0)
+         (CAN_TRAVERSE ROVER0 WAYPOINT0 WAYPOINT3)
+         (CAN_TRAVERSE ROVER0 WAYPOINT3 WAYPOINT1)
+         (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT3)
+         (CAN_TRAVERSE ROVER0 WAYPOINT1 WAYPOINT2)
+         (CAN_TRAVERSE ROVER0 WAYPOINT2 WAYPOINT1)
+         (ON_BOARD CAMERA0 ROVER0)
+         (CALIBRATION_TARGET CAMERA0 OBJECTIVE1)
+         (SUPPORTS CAMERA0 COLOUR) (SUPPORTS CAMERA0 HIGH_RES)
+         (VISIBLE_FROM OBJECTIVE0 WAYPOINT0)
+         (VISIBLE_FROM OBJECTIVE0 WAYPOINT1)
+         (VISIBLE_FROM OBJECTIVE0 WAYPOINT2)
+         (VISIBLE_FROM OBJECTIVE0 WAYPOINT3)
+         (VISIBLE_FROM OBJECTIVE1 WAYPOINT0)
+         (VISIBLE_FROM OBJECTIVE1 WAYPOINT1)
+         (VISIBLE_FROM OBJECTIVE1 WAYPOINT2)
+         (VISIBLE_FROM OBJECTIVE1 WAYPOINT3)
+         (COMMUNICATE_SOIL_DATA WAYPOINT2)
+         (COMMUNICATE_ROCK_DATA WAYPOINT3)
+         (COMMUNICATE_IMAGE_DATA OBJECTIVE1 HIGH_RES)
+         )
+        (:TASK ACHIEVE-GOALS))
+      )
     (fiveam:is-false 
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
@@ -923,7 +949,7 @@
                                                        (problem-state (find-problem 'test-rover-problem))
                                                        :test 'equalp))
             :record-dependencies nil :domain *domain*))))
-    
+
 
 (fiveam:def-suite rovers-tests :in pddl-tests)
 (fiveam:in-suite rovers-tests)
@@ -953,3 +979,220 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (pddl-problem-tests))
+
+(fiveam:def-suite pddl-prover-tests :in pddl-tests)
+
+(defclass test-metric-fluent-domain (pddl-domain fluents-mixin)
+  ())
+
+(in-package :shop-user)
+
+(defparameter shop::mfd-functions
+  '(amount capacity))
+
+(defparameter shop::init-fluent-values
+  '((shop::fluent-value (amount jug0) 6)
+    (shop::fluent-value (capacity jug0) 12)))
+
+(in-package :shop)
+
+(fiveam:def-fixture mock-fluent-domain ()
+  (let ((domain (make-instance 'test-metric-fluent-domain
+                               :fluent-functions mfd-functions)))
+    (&body)))
+
+(fiveam:def-test test-fluent-value-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
+  (let ((state (make-initial-state domain :mixed init-fluent-values)))
+    (let ((answers 
+            (query '((fluent-value (shop-user::amount shop-user::jug0) ?amt)
+                     (fluent-value (shop-user::capacity shop-user::jug0) ?cap))
+                   state :domain domain)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?cap bindings)))))))
+
+(fiveam:def-test test-f-exp-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
+  (let ((state (make-initial-state domain :mixed init-fluent-values)))
+    (let ((answers 
+            (query '((f-exp-value (shop-user::amount shop-user::jug0) ?amt)
+                     (f-exp-value (shop-user::capacity shop-user::jug0) ?cap))
+                   state :domain domain)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?cap bindings)))))
+    (let ((answers 
+            (query '((f-exp-value (- (shop-user::amount shop-user::jug0)) ?amt)
+                     (f-exp-value (- 12) ?cap))
+                   state :domain domain)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql -6 (shop.unifier:binding-list-value '?amt bindings)))
+        (fiveam:is (eql -12 (shop.unifier:binding-list-value '?cap bindings)))))
+
+    (let ((answers 
+            (query '((f-exp-value (* (shop-user::amount shop-user::jug0) 2) ?amt1)
+                     (f-exp-value (/ (shop-user::amount shop-user::jug0) 2) ?amt2)
+                     (f-exp-value (+ (* (shop-user::amount shop-user::jug0) 2) 12) ?amt3)
+                     (f-exp-value (+ (shop-user::amount shop-user::jug0) (shop-user::capacity shop-user::jug0)) ?amt4)
+                     (f-exp-value (/ (shop-user::amount shop-user::jug0) 5) ?amt5))
+                   state :domain domain)))
+      (fiveam:is-true answers)
+      (fiveam:is (= 1 (length answers)))
+      (let ((bindings (first answers)))
+        (fiveam:is (eql 12 (shop.unifier:binding-list-value '?amt1 bindings)))
+        (fiveam:is (eql 3 (shop.unifier:binding-list-value '?amt2 bindings)))
+        (fiveam:is (eql 24 (shop.unifier:binding-list-value '?amt3 bindings)))
+        (fiveam:is (eql 18 (shop.unifier:binding-list-value '?amt4 bindings)))
+        (fiveam:is (eql 6/5 (shop.unifier:binding-list-value '?amt5 bindings)))))))
+
+(fiveam:def-suite pddl-fluents-tests :in pddl-tests)
+
+(fiveam:def-test test-precond-rewriting (:suite pddl-fluents-tests :fixture mock-fluent-domain)
+  (iter (for comp-op in +numerical-comparisons+)
+    (as sample-expr-1 = `(,comp-op (shop-user::amount shop-user::jug0) 12))
+    (as sample-expr-2 = `(,comp-op 12 (shop-user::capacity shop-user::jug0)))
+    (as sample-expr-3 = `(,comp-op (shop-user::amount shop-user::jug0) (shop-user::capacity shop-user::jug0)))
+
+    (as result-1 = `(fluent-check ,comp-op (shop-user::amount shop-user::jug0) 12))
+    (as result-2 = `(fluent-check ,comp-op 12 (shop-user::capacity shop-user::jug0)))
+    (as result-3 = `(fluent-check ,comp-op (shop-user::amount shop-user::jug0) (shop-user::capacity shop-user::jug0)))
+    (fiveam:is (equalp result-1 (translate-fluent-precond domain sample-expr-1)))
+    (fiveam:is (equalp result-2 (translate-fluent-precond domain sample-expr-2)))
+    (fiveam:is (equalp result-3 (translate-fluent-precond domain sample-expr-3))))
+  (let ((jug-precond-1 '(>= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+        (jug-precond-2 '(and (jug-in-hand) (>= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1))))
+        (jug-precond-3 '(or (and (jug-in-hand) (>= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                         (and (jug-in-robot) (>= (shop-user::capacity ?jug2) (shop-user::amount ?jug2)))))
+        (jug-precond-4 '(forall (?jug1 ?jug2)
+                         (or (and (jug-in-hand) (>= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                          (and (jug-in-robot) (>= (shop-user::capacity ?jug2) (shop-user::amount ?jug2))))))
+        (jug-precond-5 '(exists (?jug1 ?jug2)
+                         (or (and (jug-in-hand) (>= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                          (and (jug-in-robot) (>= (shop-user::capacity ?jug2) (shop-user::amount ?jug2))))))
+        )
+    (fiveam:is (equalp
+                '(shop::fluent-check >= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1))
+                (translate-fluent-precond domain jug-precond-1)))
+    (fiveam:is (equalp
+                '(and (jug-in-hand) (shop::fluent-check >= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                (translate-fluent-precond domain jug-precond-2)))
+    (fiveam:is (equalp
+                '(or (and (jug-in-hand) (shop::fluent-check >= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                  (and (jug-in-robot) (shop::fluent-check >= (shop-user::capacity ?jug2) (shop-user::amount ?jug2))))
+                (translate-fluent-precond domain jug-precond-3)))
+    (fiveam:is (equalp
+                '(forall (?jug1 ?jug2)
+                  (or (and (jug-in-hand) (shop::fluent-check >= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                   (and (jug-in-robot) (shop::fluent-check >= (shop-user::capacity ?jug2) (shop-user::amount ?jug2)))))
+                (translate-fluent-precond domain jug-precond-4)))
+    (fiveam:is (equalp
+                '(exists (?jug1 ?jug2)
+                  (or (and (jug-in-hand) (shop::fluent-check >= (- (shop-user::capacity ?jug2) (shop-user::amount ?jug2)) (shop-user::amount ?jug1)))
+                   (and (jug-in-robot) (shop::fluent-check >= (shop-user::capacity ?jug2) (shop-user::amount ?jug2)))))
+                (translate-fluent-precond domain jug-precond-5)))))
+
+(fiveam:def-test test-effect-rewriting (:suite pddl-fluents-tests :fixture mock-fluent-domain)
+  (iter (for update-op in +fluent-updates+)
+    (as sample-expr-1 = `(,update-op (shop-user::amount shop-user::jug0) 12))
+    (as sample-expr-2 = `(,update-op (shop-user::amount shop-user::jug0) (shop-user::capacity shop-user::jug0)))
+
+    (as result-1 = `(fluent-update ,update-op (shop-user::amount shop-user::jug0) 12))
+    (as result-2 = `(fluent-update ,update-op (shop-user::amount shop-user::jug0) (shop-user::capacity shop-user::jug0)))
+    (fiveam:is (equalp result-1 (translate-metric-updates domain sample-expr-1)))
+    (fiveam:is (equalp result-2 (translate-metric-updates domain sample-expr-2))))
+  ;; jug pouring example:
+  (fiveam:is (equalp '(and (shop::fluent-update assign (shop-user::amount ?jug1) 0)
+                       (shop::fluent-update assign (shop-user::amount ?jug2)
+                        (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2))))
+                     (translate-metric-updates domain
+                                               '(and (assign (shop-user::amount ?jug1) 0)
+                                                 (assign (shop-user::amount ?jug2)
+                                                  (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2)))))))
+  (fiveam:is (equalp '(forall (?jug1 ?jug2) (and (shop::fluent-update assign (shop-user::amount ?jug1) 0)
+                                             (shop::fluent-update assign (shop-user::amount ?jug2)
+                                              (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2)))))
+                     (translate-metric-updates domain
+                                               '(forall (?jug1 ?jug2)
+                                                 (and (assign (shop-user::amount ?jug1) 0)
+                                                  (assign (shop-user::amount ?jug2)
+                                                   (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2))))))))
+  (fiveam:is (equalp '(forall (?jug1 ?jug2) 
+                       (when (and (shop::fluent-check > (shop-user::amount ?jug2) 0)
+                                  (robotic-jug ?jug2))
+                         (and (shop::fluent-update assign (shop-user::amount ?jug1) 0)
+                              (shop::fluent-update assign (shop-user::amount ?jug2)
+                                                   (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2))))))
+                     (translate-metric-updates domain
+                                               '(forall (?jug1 ?jug2)
+                                                 (when (and (> (shop-user::amount ?jug2) 0)
+                                                            (robotic-jug ?jug2))
+                                                   (and (assign (shop-user::amount ?jug1) 0)
+                                                        (assign (shop-user::amount ?jug2)
+                                                                (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2))))))))))
+
+(defclass metric-fluents-domain (pddl-domain fluents-mixin)
+  ())
+
+(fiveam:def-fixture jug-pouring-domain ()
+  (progn
+    (let ((*define-silently* t)
+          #+allegro (excl:*redefinition-warnings* nil))
+      (defdomain (shop-jug-pouring :type metric-fluents-domain)
+          ((:include jug-pouring #. (asdf:system-relative-pathname "shop3" "tests/jug-pouring.pddl"))) ))
+    (let ((domain (find-domain 'shop-jug-pouring)))
+      (&body))))
+
+(fiveam:def-fixture successful-jug-pouring-problem ()
+  (let ((problem
+          (let ((*define-silently* t)
+                #+allegro (excl:*redefinition-warnings* nil))
+            (make-problem 'successful-jug-pouring
+                          '((jug jug0)
+                            (jug jug1)
+                            (= (capacity jug0) 12)
+                            (= (capacity jug1) 12)
+                            (= (amount jug0) 6)
+                            (= (amount jug1) 6))
+                          '(!empty jug0 jug1)
+                          ))))
+    (&body)))
+
+(fiveam:test test-pouring-jug
+  (fiveam:with-fixture jug-pouring-domain ()
+    (fiveam:with-fixture successful-jug-pouring-problem ()
+      (let ((action (operator domain '!empty))
+            (state (make-initial-state domain :mixed (problem-state problem))))
+        (fiveam:is (equalp '(pddl-action (!empty ?jug1 ?jug2)
+                             (and
+                              (and (enforce (jug ?jug1) "Parameter ~a unbound or ill-typed. Should be ~a"  '?jug1 'jug)
+                               (enforce (jug ?jug2) "Parameter ~a unbound or ill-typed. Should be ~a"  '?jug2 'jug))
+                              (fluent-check >= (- (capacity ?jug2) (amount ?jug2))
+                               (amount ?jug1)))
+                             (and (fluent-update assign (amount ?jug1) 0)
+                              (fluent-update assign (amount ?jug2)
+                               (+ (amount ?jug1) (amount ?jug2))))
+                             1.0)
+                           action))
+        (fiveam:is (alexandria:set-equal
+                    '((JUG JUG0) (JUG JUG1) (FLUENT-VALUE (AMOUNT JUG1) 6) (FLUENT-VALUE (AMOUNT JUG0) 6)
+                      (FLUENT-VALUE (CAPACITY JUG1) 12) (FLUENT-VALUE (CAPACITY JUG0) 12))
+                    (state-atoms state) :test 'equalp))
+        (multiple-value-bind (bound-op state-tag protections cost unifier)
+            (apply-action domain state '(!empty jug0 jug1) action nil 0 nil)
+          (fiveam:is (equalp '(!empty jug0 jug1) bound-op))
+          (fiveam:is (alexandria:set-equal '((JUG JUG0) (JUG JUG1) (FLUENT-VALUE (AMOUNT JUG1) 12) (FLUENT-VALUE (AMOUNT JUG0) 0)
+                                             (FLUENT-VALUE (CAPACITY JUG1) 12) (FLUENT-VALUE (CAPACITY JUG0) 12))
+                                           (state-atoms state) :test 'equalp)))
+        (let ((trivial-plans (find-plans problem :domain domain :verbose 0)))
+          (fiveam:is-true trivial-plans)
+          (fiveam:is (equalp '((!empty jug0 jug1) 1.0)
+                             (first trivial-plans))))
+        (let ((trivial-plans (find-plans-stack problem :domain domain :verbose 0)))
+          (fiveam:is-true trivial-plans)
+          (fiveam:is (equalp '((!empty jug0 jug1) 1.0)
+                             (first trivial-plans))))))))
