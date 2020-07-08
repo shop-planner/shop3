@@ -377,7 +377,7 @@ forall conditions and replacing the variables in them."
 
 (defmethod process-op ((domain domain) operator)
   (let ((operator (uniquify-anonymous-variables operator)))
-    (destructuring-bind (keyword task &key add delete precond (cost 1.0)) operator
+    (destructuring-bind (keyword task &key add delete precond (cost 1.0) &allow-other-keys) operator
       (let* ((task-table (harvest-variables task))
              (add-table (harvest-variables add))
              (del-table (harvest-variables delete))
