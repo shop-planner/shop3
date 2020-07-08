@@ -4,13 +4,12 @@
                          ; cross-edges between primitive nodes.
 
 (defun graph-plan-tree (plan-forest &key (tree-processor 'identity)
+                                    (attributes nil)
                                          (graph-object (make-instance 'plan-tree-graph)))
-  "Takes a SHOP plan forest (PLAN-TREE) as input, and returns a CL-DOT graph object.
-Note that the PLAN-TREE name is a misnomer that reflects SHOP FIND-PLANS misnomer.
-If you ask for plan trees from SHOP, you really get plan *forests*."
+  "Takes a SHOP plan forest (PLAN-FOREST) as input, and returns a CL-DOT graph object."
   (let ((modified-forest (mapcar #'(lambda (tree) (funcall tree-processor tree))
                                plan-forest)))
-    (cl-dot:generate-graph-from-roots graph-object modified-forest)))
+    (cl-dot:generate-graph-from-roots graph-object modified-forest attributes)))
 
 (defmethod cl-dot:graph-object-node ((g plan-tree-graph) (obj cons))
   (declare (ignorable g))
@@ -61,12 +60,14 @@ If you ask for plan trees from SHOP, you really get plan *forests*."
 
 (defun graph-enhanced-plan-tree (plan-tree &key 
                                          (graph-object (make-instance 'enhanced-plan-tree-graph))
-                                             label-dependencies
-                                             (show-dependencies t))
+                                         attributes
+                                         label-dependencies
+                                         (show-dependencies t))
   "Takes an enhanced SHOP plan tree \(PLAN-TREE\) as input, and returns a CL-DOT graph object."
   (let ((*label-depends* label-dependencies)
         (*show-depends* show-dependencies))
-    (cl-dot:generate-graph-from-roots graph-object `(,plan-tree ,@(when show-dependencies '(:init))))))
+    (cl-dot:generate-graph-from-roots graph-object `(,plan-tree ,@(when show-dependencies '(:init)))
+                                      attributes)))
 
 
 (defmethod cl-dot:graph-object-points-to ((g enhanced-plan-tree-graph)(obj plan-tree:complex-tree-node))
