@@ -1166,6 +1166,7 @@ A simple @strong{assignment} expression has the form
 @end lisp
 
 @c FIXME: Fix the crossreference here.
+@noindent
 where @emph{v} is a variable symbol and @emph{e} is general Lisp
 expression. The intent of an assignment expression is to bind the value
 of @emph{e} to the variable symbol @emph{v}. Variable substitutions in
@@ -1178,8 +1179,44 @@ expression will bind the variable @code{?baz} to the list @code{(IF FISH)}:
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
 @end lisp
 
-Similarly, if ?foo is bound to LIST and ?bar is bound to 4 then the
-expression above will bind ?baz to the list (NIL (LIST FISH) 2).
+Similarly, if @code{?foo} is bound to @code{LIST} and @code{?bar} is bound to @code{4} then the
+expression above will bind @code{?baz }to the list @code{(NIL (LIST
+FISH) 2)}.@footnote{
+A somewhat cumbersome way to verify this is as follows:
+@lisp
+(defdomain test-domain ((:- (= ?x ?x) ())))
+(query '((= ?foo list)
+            (= ?bar 4)
+            (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))) 
+        (shop::make-initial-state 'test-domain :mixed nil)  
+        :domain 'test-domain)
+@end lisp
+}
+
+@b{Note:} @code{assign} is @emph{not} the default way to bind
+@sysname{}'s logical variables.  The default way to bind logical
+variables is through @emph{unification}. @code{assign} is specifically for use
+when you wish to use @emph{lisp code} to produce values you will bind
+variables to.  To that end, @code{assign} expects that its second
+argument will be a lisp expression and it will @emph{evaluate} that
+expression.  It is because of this evaluation process that the following
+expression (with @code{=} interpreted as unification)
+
+@lisp
+(= ?x foo)
+@end lisp
+
+@noindent
+will bind @code{?x} to the symbol @code{foo}, but 
+
+@lisp
+(assign ?x foo)
+@end lisp
+
+@noindent will cause a run-time error.  In the second example, @sysname
+will attempt to evaluate @code{foo} and report it as an unbound variable --
+unless this is evaluated in a context where @code{foo} is a variable,
+in which case @code{?x} will be bound to the current value of @code{foo}.
 
 @sysname {} also offers a @strong{compound assignment} expression of this
 form:
