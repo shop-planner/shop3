@@ -120,7 +120,8 @@ SYMBOL."
 variable."
   (if (atom literal)
       (not (variablep literal))
-    (every #'groundp literal)))
+      (and (groundp (car literal))
+           (groundp (cdr literal)))))
 
 (defun variable-name (x) x)
 
