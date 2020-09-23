@@ -129,7 +129,9 @@ variable *PROBLEM*."
     (unless (listp problem-name-etc)
       (setf problem-name-etc (list problem-name-etc)))
     (destructuring-bind (problem-name &rest options
-                         &key (type 'problem) domain &allow-other-keys)
+                         &key (type 'problem) domain
+                           documentation
+                         &allow-other-keys)
         problem-name-etc
       (let ((options (copy-tree options)))
         (remf options :type)
@@ -143,6 +145,10 @@ variable *PROBLEM*."
                                            :name problem-name)))
           (apply 'initialize-problem problem-inst :state state
                                                   :tasks tasks extras)
+          (when documentation
+            (assert (typep documentation 'string))
+            (setf (documentation problem-name :shop3-problem)
+                  documentation))
           (setf *problem* problem-name)
           #+allegro
           (excl:record-source-file problem-name :type :shop3-problem)
