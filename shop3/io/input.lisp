@@ -112,6 +112,15 @@ do NOT emit singleton variable warnings.")
 (defvar *make-problem-silently* nil
   "If this variable is bound to t, make-problem will NOT print a message.")
 
+#+sbcl
+(defmethod documentation ((symbol symbol) (type (eql :shop3-problem)))
+  (get symbol :shop3-problem-docstring nil))
+
+#+sbcl
+(defmethod (setf documentation) ((value string) (symbol symbol) (type (eql :shop3-problem)))
+  (setf (get symbol :shop3-problem-docstring) value))
+
+
 (defun make-problem (problem-name-etc state tasks &rest extras
                      &aux domain-name)
    "MAKE-PROBLEM creates a planning problem named PROBLEM-NAME
