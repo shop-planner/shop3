@@ -29,3 +29,6 @@
 [submodule "jenkins/ext/VAL"]
 	path = jenkins/ext/VAL
 	url = https://github.com/guicho271828/VAL.git
+[submodule "jenkins/ext/cl-dot"]
+	path = jenkins/ext/cl-dot
+	url = https://github.com/michaelw/cl-dot.git
