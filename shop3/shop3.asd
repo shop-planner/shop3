@@ -141,7 +141,7 @@ minimal affected subtree."
     :serial t
     :pathname "common/"
     :version (:read-file-form "shop-version.lisp-expr")
-    :depends-on (:shop3/unifier :iterate)
+    :depends-on (:shop3/unifier :iterate :alexandria)
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")
@@ -237,15 +237,16 @@ shop3."
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 5
                  (depot-tests . :shop3-user) ; 44
-                 (logistics-tests . :shop3-user) ; 200
+                 (logistics-tests . :shop3-user) ; 408
                  (singleton-tests . :shop3-user) ; 44
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
                  (enhanced-plan-tree . :shop3-user) ; 2
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
                  (test-plan-repair . :shop-replan-tests) ; 3
+                 (test-shop-states . :test-states) ; 110
                  )
-    :num-checks 582
+    :num-checks 896
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -279,6 +280,7 @@ shop3."
                                            (:static-file "operators.lisp")))
                                        (:file "io-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
+                                       (:file "state-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "misc" :depends-on ("at-package" "umt-domain"))))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 

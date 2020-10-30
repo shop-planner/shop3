@@ -69,6 +69,8 @@
 (defparameter +fluent-updates+
   '(assign increase decrease scale-up scale-down))
 
+(defvar *validator-progname* (truename (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate")))
+
 (defgeneric validator-export (domain plan stream)
   (:documentation "Print a plan in a way that it can be consumed by
 the VAL validator."))
@@ -85,7 +87,7 @@ This is an easier to use interface to the validator-export function, qv."
        (validator-export domain shop-plan stream)
     (when filename (close stream))))
 
-(defun validate-plan (plan domain-file problem-file &key (validator-progname "validate") (shop3-domain *domain*)
+(defun validate-plan (plan domain-file problem-file &key (validator-progname *validator-progname*) (shop3-domain *domain*)
                                                       (verbose *verbose*))
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
