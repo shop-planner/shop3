@@ -437,7 +437,10 @@ using MAKE-INITIAL-STATE.")
 
 (defstruct (mixed-state (:include tagged-state)
                         (:constructor makemixedstate)
-                        (:copier nil)))
+                        (:copier nil))
+  "A `:mixed` state is a singly-hashed state. I.e., the body is
+represented as a hash table, hashed on the predicate, not on
+the entire state atom (as in the `:hash` type state).")
 
 (defmethod make-initial-state (domain (state-encoding (eql :mixed)) atoms &key)
   (declare (ignore domain))
@@ -507,6 +510,111 @@ using MAKE-INITIAL-STATE.")
 ;     (setf (tagged-state-tags-info the-copy)
 ;           (copy-tree (tagged-state-tags-info st)))
 ;     the-copy))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; The "doubly-hashed-state" class
+(defconstant +VARIABLE-TERM+ (uiop:find-symbol* '#:%variable% (find-package (symbol-name '%shop3-common-private%))))
+(defconstant +SINGLETON-TERM+ (uiop:find-symbol* '#:%singleton% (find-package (symbol-name '%shop3-common-private%))))
+(defstruct (doubly-hashed-state (:include tagged-state)
+                        (:constructor makedoubly-hashedstate)
+                        (:copier nil))
+  "A `:doubly-hashed` state is like singly-hashed (`:mixed`) state. I.e., the body is
+represented as a hash table, hashed on the predicate, not on
+the entire state atom (as in the `:hash` type state).  *Unlike* a singly-hashed
+state, the entry for a predicate will be a sub-hash table for the second argument.")
+
+(defmethod make-initial-state (domain (state-encoding (eql :doubly-hashed)) atoms &key)
+  (declare (ignore domain))
+   (make-doubly-hashed-state atoms))
+
+(defmethod state->state-type ((state doubly-hashed-state))
+  :doubly-hashed)
+
+(defun make-doubly-hashed-state (atoms)
+ (let ((st (makedoubly-hashedstate)))
+    (setf (state-body st) (make-hash-table :test #'eq))
+    (dolist (atom atoms) (insert-atom atom st))
+    st))
+
+(defmethod insert-atom (atom (st doubly-hashed-state))
+  (let ((subtable (gethash (first atom) (state-body st))))
+    (unless subtable
+       ;; because of the possibility of numbers, strings, etc.
+      (setf subtable (make-hash-table :test #'equal))
+      (setf (gethash (first atom) (state-body st)) subtable))
+    (if (= (length atom) 1)
+        (pushnew t (gethash +SINGLETON-TERM+ subtable))
+        (pushnew (rest atom) (gethash (second atom) subtable) :test 'equal))))
+
+(defmethod remove-atom (atom (st doubly-hashed-state))
+  (let* ((statebody (state-body st))
+         (subtable (gethash (first atom) statebody)) ; hash-table
+         (sub-key (if (> (length atom) 1)
+                      (second atom) 
+                      +SINGLETON-TERM+))
+         (subtable-entry (when subtable
+                           (gethash sub-key subtable)))) ; list
+    (cond ((null subtable) (values)) ;no-op
+          ((null subtable-entry) (values))
+          ((eq sub-key +SINGLETON-TERM+) (remhash sub-key subtable))
+          (t
+           (setf (gethash sub-key subtable)
+                 (delete
+                  (rest atom)
+                  subtable-entry
+                  :test #'equal))))))
+
+(defmethod state-atoms ((st doubly-hashed-state))
+  (let ((statebody (state-body st))     ; this is a hash-table of hash-tables
+        (acc nil)) 
+    (maphash #'(lambda (pred subtable)
+                 (maphash #'(lambda (first-arg lis)
+                              (if (eq first-arg +SINGLETON-TERM+)
+                                  (push `(,pred) acc)
+                                  (setf acc
+                                        (append (mapcar #'(lambda (entry) (cons pred entry)) lis)
+                                                acc))))
+                          subtable))
+             statebody)
+    acc))
+
+(defmethod atom-in-state-p (atom (st doubly-hashed-state))
+  (if-let ((subhash (gethash (first atom) (state-body st))))
+    (if-let (lst (gethash (second atom) subhash))
+      (member (rest atom) lst :test #'equal))))
+
+(defmethod state-all-atoms-for-predicate ((st doubly-hashed-state) pred)
+  (let ((subhash (gethash pred (state-body st))))
+    (when subhash
+      (let ((acc nil))
+        (maphash #'(lambda (subkey lst)
+                     (if (eq subkey +singleton-term+)
+                         (push (cons pred nil) acc)
+                         ;; lst has the atoms with the predicate removed.
+                         (mapc #'(lambda (tail)
+                                   (push (cons pred tail) acc))
+                               lst)))
+                 subhash)
+        acc))))
+
+(defmethod state-candidate-atoms-for-goal ((st doubly-hashed-state) goal)
+  ;(format t "state-body: ~A~%~%"  (state-atoms st))
+  (destructuring-bind (pred . body) goal
+    (if-let ((sub-table (gethash pred (state-body st))))
+      (if (or (zerop (length body)) (variablep (first body)))
+          (state-all-atoms-for-predicate st pred)
+          (if-let ((lst (gethash (first body) sub-table)))
+            (mapcar #'(lambda (x) (cons pred x)) lst))))))
+
+(defmethod copy-state ((st doubly-hashed-state))
+  (let ((the-copy (make-doubly-hashed-state nil)))
+    (setf (state-body the-copy) (copy-hash-table (state-body st) #'copy-hash-table))
+    (setf (tagged-state-tags-info the-copy)
+          (copy-tree (tagged-state-tags-info st)))
+    (setf (tagged-state-block-at the-copy)
+     (tagged-state-block-at st))
+    the-copy))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "bit-state" class

@@ -1,4 +1,4 @@
-(in-package :shop2.common)
+(in-package :shop3.common)
 
 ;;;---------------------------------------------------------------------------
 ;;; Elnatan wrote the following:
@@ -71,9 +71,13 @@ keyword arguments for additional state components."))
 (defgeneric atom-in-state-p (atom state)
   (:documentation "Is the atom in the state?"))
 
-(defgeneric state-all-atoms-for-predicate (state pred))
+(defgeneric state-all-atoms-for-predicate (state pred)
+  (:documentation "Return all atoms in STATE that concern PRED.  Used internally
+by the theorem-prover.  Must be implemented when adding a new state structure type."))
 
-(defgeneric state-candidate-atoms-for-goal (state goal))
+(defgeneric state-candidate-atoms-for-goal (state goal)
+    (:documentation "Return all atoms in STATE relevant to GOAL.  Used internally
+by the theorem-prover.  Must be implemented when adding a new state structure type."))
 
 ; Returns a copy of the state.
 (defgeneric copy-state (state)
