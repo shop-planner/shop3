@@ -4,38 +4,85 @@
   (progn (logistics-domain)
          (&body)))
 
-(defun log-plan (problem-name)
+(defun log-plan (problem-name &key (state-type :mixed))
   (logistics-domain)
-  (let ((plan-list (plan-quietly problem-name)))
+  (let ((plan-list (plan-quietly problem-name :state-type state-type)))
     (when plan-list
       (remove-plan-costs (first plan-list)))))
 
-(defun ess-log-plan (problem-name)
+(defun ess-log-plan (problem-name &key (state-type :mixed))
   (logistics-domain)
-  (let ((plan-list (ess-plan-quietly problem-name)))
+  (let ((plan-list (ess-plan-quietly problem-name :state-type state-type)))
     (when plan-list
       (remove-plan-costs (first plan-list)))))
 
+;;; Now this is testing FOUR combinations: both stock and explicit stack x
+;;; standard state (:Mixed) and doubly-hashed state.
 (defmacro log-test-both (name &body body)
-  (let ((ess-name (intern (format nil "~a-STACK" name) :shop-user)))
-    `(progn
+  (let ((ess-name (intern (format nil "~a-STACK" name) :shop-user))
+        (dh-name (intern (format nil "~a-DH" name) :shop-user))
+        (dh-ess-name (intern (format nil "~a-DH-STACK" name) :shop-user)))
+    `(flet ((prune-plan (plan)
+               (remove '!add-protection (remove-plan-costs plan) :key 'first)))
        (fiveam:test ,name
          (flet ((log-plan (problem-name)
                   (logistics-domain)
-                  (let ((plan-list (plan-quietly problem-name)))
+                  (let ((plan-list (plan-quietly problem-name :state-type :mixed)))
                     (when plan-list
-                      (remove-plan-costs (first plan-list))))))
+                      (prune-plan (first plan-list))))))
            ,@body))
+       (fiveam:test ,dh-name
+         (flet ((log-plan (problem-name)
+                  (logistics-domain)
+                  (let ((plan-list (plan-quietly problem-name :state-type :doubly-hashed)))
+                    (when plan-list
+                      (prune-plan (first plan-list))))))
+           (is-true plan-list)))
        (fiveam:test ,ess-name  
          (flet ((log-plan (problem-name)
                   (logistics-domain)
-                  (let ((plan-list (ess-plan-quietly problem-name)))
+                  (let ((plan-list (ess-plan-quietly problem-name :state-type :mixed)))
                     (when plan-list
-                      (remove-plan-costs (first plan-list))))))
-           ,@body)))))
+                      (prune-plan (first plan-list))))))
+           ,@body))
+       (fiveam:test ,dh-ess-name  
+         (flet ((log-plan (problem-name)
+                  (logistics-domain)
+                  (let ((plan-list (ess-plan-quietly problem-name :state-type :doubly-hashed)))
+                    (when plan-list
+                      (prune-plan (first plan-list))))))
+           (is-true plan-list))))))
 
 (fiveam:def-suite logistics-tests)
 (fiveam:in-suite logistics-tests)
+
+(fiveam:test check-simple-logistic-plan
+  (flet ((prune-plan (plan)
+               (remove '!add-protection (remove-plan-costs plan) :key 'first)))
+    (logistics-domain)
+    (dolist (state-type '(:mixed :doubly-hashed))
+      (let ((log-plan
+              (let ((plan-list (plan-quietly 'log-ran-20-1 :state-type state-type)))
+                (when plan-list
+                  (prune-plan (first plan-list))))))
+        (fiveam:is-true log-plan)
+        (fiveam:is-true (validate-plan
+                         log-plan
+                         (asdf:system-relative-pathname "shop3" "examples/logistic/domain_strips.pddl")
+                                       (asdf:system-relative-pathname "shop3" "examples/logistic/log_ran_20_1.pddl")
+                                       :shop3-domain (shop3::make-domain '(logistics :type shop3::simple-pddl-domain))
+                                       :validator-progname (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate"))))
+      (let ((log-plan
+              (let ((plan-list (ess-plan-quietly 'log-ran-20-1 :state-type state-type)))
+                (when plan-list
+                  (prune-plan (first plan-list))))))
+        (fiveam:is-true log-plan)
+        (fiveam:is-true (validate-plan
+                         log-plan
+                         (asdf:system-relative-pathname "shop3" "examples/logistic/domain_strips.pddl")
+                                       (asdf:system-relative-pathname "shop3" "examples/logistic/log_ran_20_1.pddl")
+                                       :shop3-domain (shop3::make-domain '(logistics :type shop3::simple-pddl-domain))
+                                       :validator-progname (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate")))))))
 
 (log-test-both log-ran-15-1
   (fiveam:is
