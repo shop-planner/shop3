@@ -2,6 +2,14 @@
 
 all: html pdf info
 
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+$(info $$mkfile_path is [${mkfile_path}])
+current_dir := $(dir $(mkfile_path))
+$(info $$current_dir is [${current_dir}])
+root_dir := $(shell dirname $(realpath ${current_dir}/../))
+$(info $$root_dir is [${root_dir}])
+export CL_SOURCE_REGISTRY=${root_dir}/jenkins/ext//:${root_dir}/shop3//:
+
 clean:
 	rm -rf include
 	rm -f  *.pdf *.html *.info
@@ -9,10 +17,9 @@ clean:
 	rm -f include-stamp
 
 include-stamp: ../*.lisp ../*.asd
-	sbcl \
-	--eval '(let ((asdf:*central-registry* (cons (truename #p"../../jenkins/ext/sb-texinfo/") asdf:*central-registry*))) (require :sb-texinfo))' \
-	--eval '(let ((asdf:*central-registry* (append (list (truename #p"../") (truename #p"../shop3-theorem-prover.api/")) asdf:*central-registry*))) (require :shop3) (require :shop3-thmpr-api) (require :shop3/plan-grapher))' \
-	--eval '(sb-texinfo:generate-includes "include/" (list :shop3 :shop3.unifier :shop3.common :shop3.theorem-prover :shop3.theorem-prover-api :shop3.plan-grapher) :base-package :shop3 :extra-symbols (list (quote shop3.unifier::binding)))' \
+	sbcl --no-userinit --eval '(require :asdf)' \
+	--eval '(progn (require :sb-texinfo)(asdf:load-system :shop3 :force :all) (require :shop3-thmpr-api) (require :shop3/plan-grapher))' \
+	--eval '(sb-texinfo:generate-includes "include/" (list :shop3 :shop3.unifier :shop3.common :shop3.theorem-prover :shop3.theorem-prover-api :shop3.plan-grapher) :base-package :shop3 :extra-symbols (list (quote shop3.unifier::binding) (quote shop3.common::insert-atom) (quote shop3.common::remove-atom) (quote shop3.common::atom-in-state-p) (quote shop3.common::state-all-atoms-for-predicate) (quote shop3.common::state-candidate-atoms-for-goal)))' \
 	--eval '(quit)'
 	touch include-stamp
 

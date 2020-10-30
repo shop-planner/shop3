@@ -75,6 +75,7 @@ College Park, MD 20742, USA
 * The SHOP Theorem Prover::
 * The SHOP Unifier::
 * Plan Grapher::
+* Data Structures::
 * Internal Technical Information::
 * General Notes on @sysname {}: General Notes on SHOP3.
 * Acknowledgments::
@@ -2271,7 +2272,7 @@ expressions -- renaming variables to be unique.
 
 @include include/fun-shopunif-standardize.texinfo
 
-@node Plan Grapher, Internal Technical Information, The SHOP Unifier, Top
+@node Plan Grapher, Data Structures, The SHOP Unifier, Top
 @chapter Plan Grapher
 
 In order to make the plan trees that @sysname{} can produce more useful,
@@ -2283,7 +2284,89 @@ we have developed the @sysname{} plan grapher.
 @include include/class-spg-enhanced-plan-tree-graph.texinfo 
 @include include/class-spg-plan-tree-graph.texinfo 
 
-@node Internal Technical Information, General Notes on SHOP3, Plan Grapher, Top
+@node Data Structures, Internal Technical Information, Plan Grapher, Top
+@chapter Data Structures
+
+@menu
+* States::
+@end menu
+
+@node States,  , Data Structures, Data Structures
+@section States
+
+A state represents the state of the world at any given time, and is
+identified with a set of ground literals.@footnote{Note that the state
+of the world is @emph{not} the same as the search state.  The
+(projected) world state is only one component of the search state.}  
+The meaning of the state is a
+function of this set of ground literals and the set of axioms in
+effect. For more discussion of the semantics of states, see
+@pxref{States and Satisfiers}.
+
+The programmer may choose from a number of different representations of
+world states, which may be more or less efficient, depending on the
+problem at hand:
+
+@itemize
+@item @code{:list} -- 
+This is the simplest state representation, a
+simple list of facts. As the set of facts in the state description
+grows, the linear search for lookup that is required here will become
+increasingly expensive.
+@item @code{:hash} -- 
+In this representation, the state is represented as a hash table of
+propositions.  The performance of this alternative will depend on how
+well the host implementation hashes full s-expressions.
+@item @code{:mixed} --
+This encoding, which is the default, uses a hash table, but hashes each
+state literal on its predicate.  As long as there are not very large
+data tables in the state, this should be quite efficient.  If there are
+many facts with the same predicate, this will devolve to linear search.
+@item @code{:doubly-hashed} --
+@b{Newly added.}
+Similar to the @code{:mixed} representation, the state is represented as
+a hash table, indexed on state predicates.  However, each hash bucket in
+this representation is itself a hash table, indexed on the value of the
+first argument.  This should often improve performance on large data
+tables, where there are often checks of single facts.
+@item @code{:bit} --
+The state is encoded as vectors, based on argument indices, etc. I don't
+understand the implementation well, nor do I understand under what
+conditions it will work well or badly. I believe for this to be correct,
+the set of possible values for a given predicate's arguments must be
+known in advance, but I can't say for sure. It would be helpful for
+someone to dig into this more deeply.  Until someone does, @emph{this
+representation is probably to be avoided.}
+@end itemize
+
+Adding a new state representation is a relatively easy thing to do.  Any
+new state data structure must be a structure that extends
+@code{shop3.common::tagged-state}.  It must support the following
+generic functions:
+
+@include include/fun-shop3cmn-make-initial-state.texinfo
+
+@include include/fun-shop3cmn-state-gt-state-type.texinfo
+
+@include include/fun-shop3cmn-insert-atom.texinfo
+
+@include include/fun-shop3cmn-remove-atom.texinfo
+
+@include include/fun-shop3cmn-state-atoms.texinfo
+
+@include include/fun-shop3cmn-atom-in-state-p.texinfo
+
+@code{state-all-atoms-for-predicate} @c This should be in the auto-generated document files,
+@c but isn't.
+
+@code{state-candidate-atoms-for-goal} @c This should be in the auto-generated document files,
+@c but isn't.
+
+@include include/fun-shop3cmn-copy-state.texinfo
+
+
+
+@node Internal Technical Information, General Notes on SHOP3, Data Structures, Top
 @chapter Internal Technical Information
 
 @strong{This section has not been updated since the transition
