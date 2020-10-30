@@ -58,8 +58,12 @@
 ;;; markings.
 (in-package :common-lisp-user)
 
+(defpackage %shop3-common-private%
+  (:intern #:%variable% #:%singleton%))
+
 (defpackage :shop3.common
     (:nicknames #:shop3cmn #:shop.common #:shop2.common)
+    (:import-from #:alexandria #:if-let)
     (:use :common-lisp :shop3.unifier :iterate)
     (:export #:shop-fail #:call
 
@@ -95,3 +99,4 @@
              #:make-tag-map
              #:delete-tag-map
              ))
+

@@ -18,6 +18,7 @@
                                    (no-dependencies nil)
                                    repairable
                                    rationale
+                                   (state-type :mixed state-type-supplied-p)
                                    (out-stream t)
                                    (which :first))
   "Top level search function for explicit-state search in SHOP3.
@@ -52,7 +53,9 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                         (error "Domain not supplied and problem does not specify domain."))))
          (*domain* domain)
          (world-state (apply 'make-initial-state domain
-                             (default-state-type domain)
+                             (if state-type-supplied-p
+                                 state-type
+                                 (default-state-type domain))
                              (problem->state domain problem)))
          (tasks (get-tasks problem))
          (search-state (make-instance 'search-state

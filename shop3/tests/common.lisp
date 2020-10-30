@@ -17,15 +17,19 @@ costs.  This function just throws away the costs."
   (apply #'find-plans problem :which :first :verbose 0 :gc t args))
 
 (defun ess-plan-quietly (problem &rest args)
-  (flet ((find-plans (problem  &rest rest &key which verbose gc)
+  (flet ((find-plans (problem  &rest rest &key which verbose gc state-type)
            (declare (ignore gc))
            (remf rest :which)
            (remf rest :verbose)
            (remf rest :gc)
            (assert (eq which :first))
-           (when rest
-             (error "Can't handle rest arguments for FIND-PLANS-STACK: ~s" rest))
-           (find-plans-stack problem :verbose verbose)))
+           (let ((state-type-arg
+                   (when state-type
+                     `(:state-type ,state-type))))
+             (remf rest :state-type)
+             (when rest
+               (error "Can't handle rest arguments for FIND-PLANS-STACK: ~s" rest))
+             (apply #'find-plans-stack problem :verbose verbose state-type-arg))))
     (apply #'find-plans problem :which :first :verbose 0 :gc t args)))
 
 
