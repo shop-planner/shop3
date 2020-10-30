@@ -19,7 +19,8 @@
   (:use #:common-lisp #:iterate #:pddl-utils #:shop3)
   (:nicknames #:shop3.pddl.helpers #:shop2-pddl-helpers)
   (:shadowing-import-from #:shop3
-                          #:domain-name #:make-problem #:domain)
+                          #:domain-name #:make-problem #:domain
+                          #:*validator-progname*)
   (:shadow #:problem-name)
   (:export #:typed-object-list->facts
            #:translate-openstacks-problem

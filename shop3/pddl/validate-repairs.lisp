@@ -13,7 +13,7 @@
 ;;;
 ;;;---------------------------------------------------------------------------
 
-(in-package #:shop2-pddl-helpers)
+(in-package #:shop3-pddl-helpers)
 
 (defun validate-replan (repaired-plan &key (shop-domain *domain*) (package *package*) pddl-domain pddl-problem
                                         (on-failure nil))
@@ -41,7 +41,8 @@
            (namestring (uiop:with-temporary-file (:pathname pddl-domain-name :stream str :keep t)
                          (pddl-utils:pprint-pddl pddl-domain str)
                          pddl-domain-name))))
-    (let ((validation-command (format nil "validate -vv -x ~a ~a ~a"
+    (let ((validation-command (format nil "~a -vv -x ~a ~a ~a"
+                                      *validator-progname*
                                       pddl-domain-filename pddl-problem-filename pddl-plan-filename)))
       (multiple-value-bind (output error-output exit-code)
           (uiop:run-program validation-command
