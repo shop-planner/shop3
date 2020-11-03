@@ -134,9 +134,10 @@ Returns the corresponding plan sequence position (integer)."
   (let ((task-pos (position (task-name task) task)))
     (rest (nthcdr task-pos task))))
 
-(defun find-complex-node-if (fun tree)
-  "Return a complex node whose TASK (first element)
-satisfies FUN."
+(defun find-complex-node-if (fun tree &key (node-fun nil))
+  "If `NODE-FUN` is nil return a complex node whose *task* (first element)
+satisfies `FUN`.  If `NODE-FUN` is non-`NIL`, then return a complex node
+that satisfies `FUN`."
   (labels ((list-iter (lst)
              (unless (null lst)
                (or (node-iter (first lst))
@@ -144,8 +145,11 @@ satisfies FUN."
            (node-iter (node)
              (when (complex-node-p node)
 ;;             (format t "Complex node head: ~S~%" (first node))
-               (if (funcall fun (first node)) node
-                   (list-iter (cdr node))))))
+               (if node-fun
+                (if (funcall fun node) node
+                    (list-iter (cdr node)))   
+                (if (funcall fun (first node)) node
+                    (list-iter (cdr node)))))))
     ;; top level i
     (list-iter tree)))
 
@@ -161,10 +165,13 @@ parent."
                      (values found-node found-parent)
                      (list-iter (rest lst) parent)))))
            (node-iter (node parent)
-             (cond ((complex-node-p node)
-                    (list-iter (complex-node-children node) node))
-                   ((primitive-node-p node)
+             ;; MUST check for primitive node first, because a primitive node may
+             ;; satisfy complex-node-p, which is not a good check
+             ;; and can't be, because of the format.
+             (cond ((primitive-node-p node)
                     (when (funcall fun (primitive-node-task node)) (values node parent)))
+                   ((complex-node-p node)
+                    (list-iter (complex-node-children node) node))
                    (t
                     (error 'type-error :expected-type 'tree-node :datum node)))))
     ;; Ugh: SHOP plan trees are really forests. Most of the time.
