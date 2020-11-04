@@ -263,6 +263,7 @@
              #:find-complex-node-for-task
              #:find-all-complex-node-for-task
              #:make-complex-node
+             #:node-parent
 
              ;; conditions
              #:no-method-for-task
