@@ -235,3 +235,9 @@ plan sequence."
     (if (complex-node-p tree)
         (node-iter tree)
         (list-iter tree))))
+
+(defun node-parent (node tree)
+  "Find `NODE`'s parent in `TREE`. Returns `NIL` if nothing found."
+  (flet ((match-if-child (n)
+           (member node (complex-node-children n) :test 'eq)))
+    (find-complex-node-if #'match-if-child tree :node-fun t)))
