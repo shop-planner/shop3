@@ -708,7 +708,7 @@ in the goal, so we ignore the extra reference."
 
     ;; (cerror 
        ;;     "We do not have correct logic for computing dependencies for SETOF."))
-  (destructuring-bind (var bounds outvar) arguments
+  (destructuring-bind (var-or-vars bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
                                         ;; necessary because of the
@@ -717,11 +717,21 @@ in the goal, so we ignore the extra reference."
                                         :domain domain)))
       (unless raw-results (return-from standard-satisfiers-for-setof nil))
       (let ((new-binding
-             (make-binding outvar
-                           (remove-duplicates
-                            (loop for binding-list in raw-results
-                                collect (binding-list-value var binding-list))
-                            :test 'equal))))
+              (if (variablep var-or-vars)
+                  (let ((var var-or-vars))
+                    (make-binding outvar
+                                  (remove-duplicates
+                                   (loop for binding-list in raw-results
+                                         collect (binding-list-value var binding-list))
+                                   :test 'equal)))
+                  (let ((vars var-or-vars))
+                    (make-binding outvar
+                                  (remove-duplicates
+                                   (loop :for binding-list :in raw-results
+                                         :collect
+                                         (loop :for var :in vars
+                                               :collect (binding-list-value var binding-list)))
+                                   :test 'equalp))))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
                          newlevel just1 :domain domain :dependencies dependencies-in)))))
@@ -733,7 +743,7 @@ in the goal, so we ignore the extra reference."
     (cerror "Simply return no new dependencies." 'incomplete-dependency-error :logical-op "BAGOF" :expression arguments))
     ;;(cerror "Simply return no new dependencies."
       ;;      "We do not have correct logic for computing dependencies for BAGOF."))
-  (destructuring-bind (var bounds outvar) arguments
+  (destructuring-bind (var-or-vars bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
                                         ;; necessary because of the
@@ -742,9 +752,17 @@ in the goal, so we ignore the extra reference."
                                         :domain domain)))
       (unless raw-results (return-from standard-satisfiers-for-bagof nil))
       (let ((new-binding
-             (make-binding outvar
-                            (loop for binding-list in raw-results
-                                  collect (binding-list-value var binding-list)))))
+              (if (variablep var-or-vars)
+                  (let ((var var-or-vars))
+                    (make-binding outvar
+                                  (loop for binding-list in raw-results
+                                        collect (binding-list-value var binding-list))))
+                  (let ((vars var-or-vars))
+                    (make-binding outvar
+                                  (loop :for binding-list :in raw-results
+                                        :collect
+                                        (loop :for var :in vars
+                                              :collect (binding-list-value var binding-list))))))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
                          newlevel just1 :domain domain :dependencies dependencies-in)))))
