@@ -222,19 +222,21 @@ plan sequence."
   (labels ((list-iter (lst)
              (mapcar #'node-iter lst))
            (node-iter (node)
-             (cond ((complex-node-p node)
-                    (make-complex-node (complex-node-task node)
-                                       (list-iter (complex-node-children node))))
-                   ((primitive-node-p node)
+             (cond ((primitive-node-p node)
                     (make-primitive-node (primitive-node-task node)
                                          (primitive-node-cost node)
                                          (primitive-node-position node)))
+                   ((complex-node-p node)
+                    (make-complex-node (complex-node-task node)
+                                       (list-iter (complex-node-children node))))
                    (t
                     (error 'type-error :expected-type 'tree-node :datum node)))))
     ;; Ugh: SHOP plan trees are really forests. Most of the time.
-    (if (complex-node-p tree)
-        (node-iter tree)
-        (list-iter tree))))
+    (cond ((primitive-node-p tree)
+           (node-iter tree))
+          ((complex-node-p tree)
+           (node-iter tree))
+          (t (list-iter tree)))))
 
 (defun node-parent (node tree)
   "Find `NODE`'s parent in `TREE`. Returns `NIL` if nothing found."
