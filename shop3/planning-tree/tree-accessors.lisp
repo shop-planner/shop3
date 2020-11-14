@@ -134,10 +134,11 @@ Returns the corresponding plan sequence position (integer)."
   (let ((task-pos (position (task-name task) task)))
     (rest (nthcdr task-pos task))))
 
-(defun find-complex-node-if (fun tree &key (node-fun nil))
+(defun find-complex-node-if (fun tree-list &key (node-fun nil))
   "If `NODE-FUN` is nil return a complex node whose *task* (first element)
 satisfies `FUN`.  If `NODE-FUN` is non-`NIL`, then return a complex node
-that satisfies `FUN`."
+that satisfies `FUN`.  Takes a list of trees (list of nodes) as input.
+Won't work properly on a true tree."
   (labels ((list-iter (lst)
              (unless (null lst)
                (or (node-iter (first lst))
@@ -151,7 +152,8 @@ that satisfies `FUN`."
                 (if (funcall fun (first node)) node
                     (list-iter (cdr node)))))))
     ;; top level i
-    (list-iter tree)))
+    (assert (every #'(lambda (x) (or (primitive-node-p x) (complex-node-p x))) tree-list))
+    (list-iter tree-list)))
 
 (defun find-primitive-node-if (fun tree)
   "Return a primitive node whose TASK satisfies FUN.  When
@@ -218,7 +220,8 @@ satisfies FUN."
 (defun copy-plan-tree (tree)
   "Return a functional copy of TREE. By \"functional\" we mean satisfies the
 key tree property -- the primitive tasks are EQ to the primitive tasks in the 
-plan sequence."
+plan sequence -- but the nodes will not be EQ to the nodes in the original
+tree (although they will be EQUALP."
   (labels ((list-iter (lst)
              (mapcar #'node-iter lst))
            (node-iter (node)
@@ -231,7 +234,7 @@ plan sequence."
                                        (list-iter (complex-node-children node))))
                    (t
                     (error 'type-error :expected-type 'tree-node :datum node)))))
-    ;; Ugh: SHOP plan trees are really forests. Most of the time.
+    ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
     (cond ((primitive-node-p tree)
            (node-iter tree))
           ((complex-node-p tree)
