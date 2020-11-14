@@ -68,14 +68,26 @@ do_tests() {
     do
       echo "Testing: $i" >&2
       test_count=`expr "$test_count" + 1`
-      if DO $command $eval "(load \"$i\")" ; then
-        echo "Using $command, $i passed" >&2
-	test_pass=`expr "$test_pass" + 1`
+      if [ $lisp = "lispworks" ]; then
+          if DO $command $eval "(setf system:*stack-overflow-behaviour* :warn)" $eval "(load \"$i\")" ; then
+              echo "Using $command, $i passed" >&2
+	      test_pass=`expr "$test_pass" + 1`
+          else
+              echo "Using $command, $i failed" >&2
+	      test_fail=`expr "$test_fail" + 1`
+	      failed_list="$failed_list $i"
+              sok=0
+          fi
       else
-        echo "Using $command, $i failed" >&2
-	test_fail=`expr "$test_fail" + 1`
-	failed_list="$failed_list $i"
-        sok=0
+          if DO $command $eval "(load \"$i\")" ; then
+              echo "Using $command, $i passed" >&2
+	      test_pass=`expr "$test_pass" + 1`
+          else
+              echo "Using $command, $i failed" >&2
+	      test_fail=`expr "$test_fail" + 1`
+	      failed_list="$failed_list $i"
+              sok=0
+          fi
       fi
     done
     echo >&2
