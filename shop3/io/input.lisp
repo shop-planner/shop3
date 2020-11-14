@@ -594,13 +594,19 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
                (error "No domain named ~A" name-or-obj))
               (t if-not-found)))))
 
-;;; make QUERY easier to use
+;;; make QUERY easier to use -- this around method is here because FIND-DOMAIN isn't available in
+;;; the SHOP THEOREM-PROVER system.
 (defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
                                                              (record-dependencies *record-dependencies-p*))
-  (if (symbolp domain)
-      (call-next-method goals state :just-one just-one :domain (find-domain domain)
-                        :record-dependencies record-dependencies)
-      (call-next-method)))
+  (let* ((domain
+           (if (symbolp domain)
+               (find-domain domain)
+               domain))
+         (state (if (listp state)
+                    (make-initial-state domain :mixed state)
+                    state)))
+    (call-next-method goals state :just-one just-one :domain (find-domain domain)
+                                  :record-dependencies record-dependencies)))
   
 
 (defun delete-domain (name)
