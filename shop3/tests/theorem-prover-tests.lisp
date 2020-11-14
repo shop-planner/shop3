@@ -70,6 +70,10 @@
             (query '(or (foo ?x) (bar ?x))
                    (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((foo a) (bar b))))))
+      (is (equal '(a b) (sorted-bindings '?x bindings))))
+    (let ((bindings
+            (query '(or (foo ?x) (bar ?x))
+                   '((foo a) (bar b)))))
       (is (equal '(a b) (sorted-bindings '?x bindings))))))
 
 ;;; what about IMPLY?
@@ -82,11 +86,20 @@
                                                       (foo c)
                                                       (foo d) (bar d))))))
       (is (equal '(a b c) (sorted-bindings '?x bindings))))
+    (let ((bindings
+            (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
+                   '((foo a) (foo b) (bar b) (baz b)
+                     (foo c)
+                     (foo d) (bar d)))))
+      (is (equal '(a b c) (sorted-bindings '?x bindings))))
     ;; in this context, (NOT (BAR ?X)) has no sensible semantics.  Raise error.
     (signals non-ground-error
      (query '(and (imply (bar ?x) (baz ?x)))
             (shop3.common:make-initial-state *domain* (default-state-type *domain*)
-                                             '((foo a) (foo b) (bar b) (baz b))))))
+                                             '((foo a) (foo b) (bar b) (baz b)))))
+    (signals non-ground-error
+     (query '(and (imply (bar ?x) (baz ?x)))
+            '((foo a) (foo b) (bar b) (baz b)))))
   (with-fixture pddl-tp-domain ()
     (let ((bindings
             (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
@@ -94,6 +107,12 @@
                                                     '((foo a) (foo b) (bar b) (baz b)
                                                       (foo c)
                                                       (foo d) (bar d))))))
+      (is (equal '(a b c) (sorted-bindings '?x bindings))))
+    (let ((bindings
+            (query '(and (foo ?x) (imply (bar ?x) (baz ?x)))
+                   '((foo a) (foo b) (bar b) (baz b)
+                     (foo c)
+                     (foo d) (bar d)))))
       (is (equal '(a b c) (sorted-bindings '?x bindings))))))
 
 
