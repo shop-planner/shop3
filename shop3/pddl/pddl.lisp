@@ -72,8 +72,8 @@
 (defvar *validator-progname*
   (let ((local-validator (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate")))
     (if (probe-file local-validator)
-        (truename local-validator))
-    "validate"))
+        (truename local-validator)
+        "validate")))
 
 (defgeneric validator-export (domain plan stream)
   (:documentation "Print a plan in a way that it can be consumed by
