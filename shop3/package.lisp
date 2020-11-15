@@ -62,6 +62,7 @@
     (:nicknames :shop :shop2)
     (:use :common-lisp :shop3.unifier :shop3.common :shop3.theorem-prover
           :iterate)
+    (:import-from #:shop3.common #:domain-core)
     (:import-from #:shop3.theorem-prover #:+numerical-comparisons+
                   #:fluent-value
                   #:f-exp-value

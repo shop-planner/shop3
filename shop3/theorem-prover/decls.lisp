@@ -132,7 +132,7 @@ function!  Instead, please use the def-logical-keyword macro.")
   (gethash name (domain-axioms domain)))
 
 
-(defclass thpr-domain (has-axioms-mixin)
+(defclass thpr-domain (domain-core has-axioms-mixin)
   (
    (domain-name
     :initarg :domain-name

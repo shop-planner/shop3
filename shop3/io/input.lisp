@@ -585,7 +585,7 @@ breaks usage of *load-truename* by moving the FASLs.")
   "Find and return a domain object with the name NAME.  Will return
 the value in its IF-NOT-FOUND argument if no such domain is loaded.
 IF-NOT-FOUND defaults to :error, which will raise an error condition."
-  (if (typep name-or-obj 'domain)
+  (if (typep name-or-obj 'domain-core)
       name-or-obj
       (let ((domain (get name-or-obj :domain)))
         (cond (domain domain)
