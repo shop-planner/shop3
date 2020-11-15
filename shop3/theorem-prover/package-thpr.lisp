@@ -61,7 +61,7 @@
 (defpackage :shop3.theorem-prover
     (:nicknames :shopthpr :shop.theorem-prover)
     (:use :common-lisp :shop3.common :shop3.unifier :iterate)
-    (:import-from #:shop3.common #:add-atom-to-state #:state-atoms)
+    (:import-from #:shop3.common #:add-atom-to-state #:state-atoms #:domain-core)
     ;; make these symbols available for import
     (:intern  #:+numerical-comparisons+
               #:fluent-value

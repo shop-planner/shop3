@@ -30,6 +30,14 @@
 ;;; make-initial-state
 
 ;;;---------------------------------------------------------------------------
+;;; Class that is the core of all domain objects
+;;;---------------------------------------------------------------------------
+(defclass domain-core ()
+  ()
+  (:documentation "Core class that is the parent of all domain classes, both
+theorem-prover and SHOP3."))
+
+;;;---------------------------------------------------------------------------
 ;;; Generic function declarations
 ;;;---------------------------------------------------------------------------
 ;; this is the new initial state creation function which dispatches
