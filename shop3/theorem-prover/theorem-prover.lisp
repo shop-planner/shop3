@@ -702,67 +702,39 @@ in the goal, so we ignore the extra reference."
 
 (defun standard-satisfiers-for-setof (domain arguments other-goals
                                              state bindings newlevel just1 dependencies-in)
-  ;; (setof ?var expr ?outvar)
+  ;; (setof ?term expr ?outvar)
   (when *record-dependencies-p*
     (cerror  "Simply return no new dependencies." 'incomplete-dependency-error :logical-op "SETOF" :expression arguments))
-
-    ;; (cerror 
-       ;;     "We do not have correct logic for computing dependencies for SETOF."))
-  (destructuring-bind (var-or-vars bounds outvar) arguments
-    (let ((raw-results (find-satisfiers (list bounds) state
-                                        ;; no bindings should be
-                                        ;; necessary because of the
-                                        ;; substitution into the
-                                        ;; goal...
-                                        :domain domain)))
-      (unless raw-results (return-from standard-satisfiers-for-setof nil))
-      (let ((new-binding
-              (if (variablep var-or-vars)
-                  (let ((var var-or-vars))
-                    (make-binding outvar
-                                  (remove-duplicates
-                                   (loop for binding-list in raw-results
-                                         collect (binding-list-value var binding-list))
-                                   :test 'equal)))
-                  (let ((vars var-or-vars))
-                    (make-binding outvar
-                                  (remove-duplicates
-                                   (loop :for binding-list :in raw-results
-                                         :collect
-                                         (loop :for var :in vars
-                                               :collect (binding-list-value var binding-list)))
-                                   :test 'equalp))))))
-        (seek-satisfiers (apply-substitution other-goals (list new-binding))
-                         state (apply-substitution bindings (list new-binding))
-                         newlevel just1 :domain domain :dependencies dependencies-in)))))
+  (setof-bagof-helper :setof domain arguments other-goals
+                      state bindings newlevel just1 dependencies-in))
 
 (defun standard-satisfiers-for-bagof (domain arguments other-goals
                                              state bindings newlevel just1 dependencies-in)
   ;; (bagof ?var expr ?outvar)
   (when *record-dependencies-p*
     (cerror "Simply return no new dependencies." 'incomplete-dependency-error :logical-op "BAGOF" :expression arguments))
-    ;;(cerror "Simply return no new dependencies."
-      ;;      "We do not have correct logic for computing dependencies for BAGOF."))
-  (destructuring-bind (var-or-vars bounds outvar) arguments
+  (setof-bagof-helper :bagof domain arguments other-goals
+                      state bindings newlevel just1 dependencies-in))
+
+(defun setof-bagof-helper (mode domain arguments other-goals
+                           state bindings newlevel just1 dependencies-in)
+  (destructuring-bind (term bounds outvar) arguments
     (let ((raw-results (find-satisfiers (list bounds) state
                                         ;; no bindings should be
                                         ;; necessary because of the
                                         ;; substitution into the
                                         ;; goal...
                                         :domain domain)))
-      (unless raw-results (return-from standard-satisfiers-for-bagof nil))
+      (unless raw-results (return-from setof-bagof-helper nil))
       (let ((new-binding
-              (if (variablep var-or-vars)
-                  (let ((var var-or-vars))
-                    (make-binding outvar
-                                  (loop for binding-list in raw-results
-                                        collect (binding-list-value var binding-list))))
-                  (let ((vars var-or-vars))
-                    (make-binding outvar
-                                  (loop :for binding-list :in raw-results
-                                        :collect
-                                        (loop :for var :in vars
-                                              :collect (binding-list-value var binding-list))))))))
+              (make-binding outvar
+                             (iter (for binding-list in raw-results)
+                               (as val = (apply-substitution term binding-list))
+                               (with prev)
+                               (ecase mode
+                                 (:setof (pushnew val prev :test 'equal))
+                                 (:bagof (push val prev)))
+                               (finally (return (nreverse prev)))))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
                          newlevel just1 :domain domain :dependencies dependencies-in)))))

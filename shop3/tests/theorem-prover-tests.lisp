@@ -130,6 +130,11 @@
                                                     '((foo a) (foo b) (bar a))))))
       (is (equal '((a b)) (sorted-bindings '?xes bindings))))
     (let ((bindings
+            (query '(setof (foo ?x ?y) (and (foo ?x) (bar ?y)) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar a))))))
+      (is (alexandria:set-equal '((foo a a) (foo b a)) (first (sorted-bindings '?xes bindings)) :test 'equal)))
+    (let ((bindings
             (query '(setof ?x (foo ?x) ?xes)
                    (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((bar a) (bar b))))))
@@ -139,7 +144,6 @@
             (query '(setof (?x ?y) (and (foo ?x) (bar ?y)) ?bs)
                    (shop3.common:make-initial-state *domain* (default-state-type *domain*)
                                                     '((foo a) (foo b) (bar a))))))
-      (princ (sorted-bindings '?bs bindings))
       (is (= (length bindings) 1))
       (is-true (alexandria:set-equal '((a a) (b a))
                                 (first (sorted-bindings '?bs bindings))
