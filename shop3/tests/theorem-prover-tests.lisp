@@ -116,3 +116,64 @@
       (is (equal '(a b c) (sorted-bindings '?x bindings))))))
 
 
+(test check-setof-bindings
+  (with-fixture tp-domain ()
+    ;; simple setof and bagof
+    (let ((bindings
+            (query '(setof ?x (foo ?x) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b))))))
+      (is (equal '((a b)) (sorted-bindings '?xes bindings))))
+    (let ((bindings
+            (query '(setof ?x (or (foo ?x) (bar ?x)) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar a))))))
+      (is (equal '((a b)) (sorted-bindings '?xes bindings))))
+    (let ((bindings
+            (query '(setof ?x (foo ?x) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((bar a) (bar b))))))
+      (is-false bindings))
+    ;; multiple variables
+    (let ((bindings
+            (query '(setof (?x ?y) (and (foo ?x) (bar ?y)) ?bs)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar a))))))
+      (princ (sorted-bindings '?bs bindings))
+      (is (= (length bindings) 1))
+      (is-true (alexandria:set-equal '((a a) (b a))
+                                (first (sorted-bindings '?bs bindings))
+                                :test 'equalp)))))
+
+(test check-bagof-bindings
+  (with-fixture tp-domain ()
+    ;; simple bagof and bagof
+    (let ((bindings
+            (query '(bagof ?x (foo ?x) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b))))))
+      (is (equal '((a b)) (sorted-bindings '?xes bindings))))
+    ;; duplicate bindings here.  Does not work because our implementation of OR is "wrong."
+    #|
+    (let ((bindings
+            (query '(bagof ?x (or (foo ?x) (bar ?x)) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar a))))))
+      (princ bindings)
+      (is (equal '((a a b)) (sorted-bindings '?xes bindings))))
+    |#
+    (let ((bindings
+            (query '(bagof ?x (foo ?x) ?xes)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((bar a) (bar b))))))
+      (is-false bindings))
+    ;; multiple variables
+    (let ((bindings
+            (query '(bagof (?x ?y) (and (foo ?x) (bar ?y)) ?bs)
+                   (shop3.common:make-initial-state *domain* (default-state-type *domain*)
+                                                    '((foo a) (foo b) (bar a))))))
+      (is (= (length bindings) 1))
+      (is-true (alexandria:set-equal '((a a) (b a))
+                                (first (sorted-bindings '?bs bindings))
+                                :test 'equalp)))))
+
