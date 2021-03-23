@@ -1272,20 +1272,34 @@ it fails, will call error with @emph{error-args.} For example
 A @strong{setof-expression} has the form
 
 @lisp
-(setof @emph{var expr set-var})
+(setof @emph{term expr set-var})
 @end lisp
 Find all solutions to @emph{expr,} and bind the @emph{set of} values for
-@emph{var} in @emph{expr} to @emph{set-var}. For example
+@emph{term} in @emph{expr} to @emph{set-var}. For example
 
 @lisp
 (setof ?uav (uav ?uav) ?uavs)
 @end lisp
 
-
 will bind @code{?uavs} to the set of UAVs in the current state.
+
+@lisp
+(setof (pair ?uav1 ?uav2) 
+  (and (uav ?uav1) (uav ?uav2) (line-of-sight ?uav1 ?uav2))
+  ?pairs)
+@end lisp
+
+will bind @code{?pairs} to a set of terms, e.g., @code{((pair rotor1
+fw2) (pair rotor2 fw3))} indicating pairs of UAVs with line of sight
+from the first to the second.
 
 Note that the semantics of this operator are to fail if the @emph{expr}
 is an unsatisfiable goal.
+
+@b{Note:} Support for general terms as the first argument to
+@code{setof} and @code{bagof} (@pxref{Bagof-expressions}) is new in
+version 3.4 of @sysname{}.  Code that depends on it should use a
+corresponding version dependency qualifier in, e.g., ASDF (@code{(:version "shop3" "3.4")}).
 
 @node Bagof-expressions,  , Setof-expressions, Logical Expressions
 @subsection Bagof-expressions
