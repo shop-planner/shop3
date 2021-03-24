@@ -25,13 +25,21 @@ implementations:
 * **ACL**: Allegro Common Lisp: Available from [franz.com](https://franz.com).
   Unlike the previous two implementations, this is a *commercial*
   software product.
+* **LispWorks**: Recently we have been given a license to test SHOP3 on
+  [LispWorks](http://www.lispworks.com/), and have verified that the SHOP3 test
+  suite passes on LW.  Like Allegro, LispWorks is a *commercial* lisp implementation.
 
-We regularly test SHOP3 on all three of these lisp implementations,
+We regularly test SHOP3 on all of these lisp implementations,
 using an exhaustive test suite.  There are at least a handful of
 other CL implementations, both open source and commercial, but we have
-not tested them with SHOP3.  Patches to make SHOP3 work with other
+not tested them with SHOP3.  Attempts to run SHOP3 on ECL, ABCL, and clisp
+have *not* been successful.  Patches to make SHOP3 work with other
 implementations are welcomed, but we have no plans to add support to
 any others ourselves.
+
+Note that we have not tested SHOP3 on the free versions of ACL or LispWorks, and
+we do not expect it to work well on these platforms because of their resource limitations.
+For hobbyist projects, we suggest SBCL or CCL instead.
 
 ### Obtaining the code
 
@@ -64,6 +72,11 @@ directory.  Once this is done, you should be able to:
 1. Start CL
 2. Inside CL, enable Quicklisp
 3. Enter `(ql:quickload "shop3")` into the CL REPL.
+
+**Note:** At the moment, SHOP3 is not available for installation through
+Quicklisp, but we have requested that it be added to the distribution,
+and hope it will be.  If it is, we will update the README accordingly, and
+installation will become much simpler.
 
 ### Option 2: Without Quicklisp
 
