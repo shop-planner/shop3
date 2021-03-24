@@ -47,11 +47,11 @@ Clone this repository and then **initialize and populate the
 submodules**.
 
 ```
-git clone --recurse-submodules https://github.com/shop-planner/shop3
+git clone https://github.com/shop-planner/shop3
 ```
 
-You need to do this, at least for the moment, because some of the required
-libraries are not in Quicklisp.
+See the two installation options below to see whether you need to supply
+the `--recurse-submodules` option when cloning.
 
 Once you have done that, you can get SHOP3 started either using
 Quicklisp (probably easiest) or by configuring ASDF (the Common Lisp
@@ -73,6 +73,15 @@ directory.  Once this is done, you should be able to:
 2. Inside CL, enable Quicklisp
 3. Enter `(ql:quickload "shop3")` into the CL REPL.
 
+Quicklisp contains all of the dependencies that SHOP3 requires *except* the
+`"pddl-utils"` system.  This system is only used in the tests, or for some optional
+functionality.  If you wish to have this subsystem, you can either;
+
+1. populate the git submodules -- or just the `pddl-tools` one -- in the SHOP3 git
+  repository, OR
+2. Clone [the pddl-tools repository](https://github.com/rpgoldman/pddl-tools) into 
+  `local-projects`, as well, and do not bother with the git submodules.
+
 **Note:** At the moment, SHOP3 is not available for installation through
 Quicklisp, but we have requested that it be added to the distribution,
 and hope it will be.  If it is, we will update the README accordingly, and
@@ -82,7 +91,8 @@ installation will become much simpler.
 
 The SHOP3 repository has links to all of the libraries it requires in
 its git submodules.  If Quicklisp is not the right approach for you,
-you may use git commands to populate SHOP3's submodules, and then:
+you must use git commands to populate SHOP3's submodules (if you like,
+you may clone with the `--recurse-submodules` option), and then:
 
 1. Start CL
 2. Load the [ASDF](https://www.common-lisp.net/project/asdf/) CL build
