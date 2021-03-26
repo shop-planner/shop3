@@ -37,8 +37,8 @@
            (find-nomove) (add-new-goals) (find-movable) (move-block)))))
     (&body)))
 
-(def-fixture complex-method-def ()
-  (let ((meth '(:method (find-movable)
+(def-fixture complex-method-def (&optional named)
+  (let ((meth `(:method ,@(when named '(find-movable-meth)) (find-movable)
                 (:first (clear ?x) (not (dont-move ?x))
                  (goal (on-table ?x)) (not (put-on-table ?x)))
                                         ; Decomposition
@@ -80,7 +80,101 @@
                 placeholder
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
                 '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
-                placeholder nil '(:ordered (:task shop2::!!inop))))))))
+                placeholder nil '(:ordered (:task shop2::!!inop)))))))
+  (with-fixture empty-domain ()
+   (with-fixture complex-method-def (t)
+     (multiple-value-bind (meth-def meth-id)
+         (shop2::process-method *domain* meth)
+       (is
+        (equal 
+         ;; replace all the gensyms
+         (subst-if 'placeholder
+                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                   meth-def)
+         '(:method (find-movable)
+           placeholder
+           (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
+           '(:ordered (:task !assert ((put-on-table ?x))) (:task find-movable))
+           placeholder
+           (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
+           '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
+           placeholder nil '(:ordered (:task shop2::!!inop)))))
+       (is (eq 'find-movable-meth meth-id))))))
+
+(test test-method-recording
+  (with-fixture complex-method-def (t)
+    (let* ((temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
+           (domain (progn 
+                     (eval `(defdomain ,temp-domain-desig
+                                (,meth)))
+                     (find-domain temp-domain-desig)))
+           (translated (subst-if 'placeholder
+                         #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                         (with-fixture empty-domain ()
+                           (shop::process-method *domain* meth)))))
+      
+      (fiveam:is-true (typep domain 'domain))
+      (is (equalp translated
+                  (subst-if 'placeholder
+                         #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                         (gethash 'find-movable-meth (shop::domain-name-to-method-table domain)))))
+      (is (eq 'find-movable-meth
+              (gethash
+               (gethash 'find-movable-meth (shop::domain-name-to-method-table domain))
+               (shop::domain-method-to-name-table domain)))))))
+
+(test test-singleton-method-recording
+  (let* ((meth `(:method (find-movable)
+                  find-movable-meth
+                  (:first (clear ?x) (not (dont-move ?x))
+                          (goal (on-table ?x)) (not (put-on-table ?x)))
+                                        ; Decomposition
+                  ((!assert ((put-on-table ?x))) (find-movable))))
+         (temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
+         (domain (progn 
+                   (eval `(defdomain ,temp-domain-desig
+                              (,meth)))
+                   (find-domain temp-domain-desig)))
+         (translated (subst-if 'placeholder
+                               #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                               (shop::process-method domain meth))))
+    
+    (fiveam:is-true (typep domain 'domain))
+    (is (equalp translated
+                (subst-if 'placeholder
+                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                          (gethash 'find-movable-meth (shop::domain-name-to-method-table domain)))))
+    (is (eq 'find-movable-meth
+            (gethash
+             (gethash 'find-movable-meth (shop::domain-name-to-method-table domain))
+             (shop::domain-method-to-name-table domain))))))
+
+(test test-null-precondition-method-recording
+  (let ((shop::*ignore-singleton-variables* t)) ;don't need these warnings.
+   (let* ((meth `(:method (find-movable)
+                   ()
+                   ((!assert ((put-on-table ?x))) (find-movable))))
+          (temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
+          (domain (progn 
+                    (eval `(defdomain ,temp-domain-desig
+                               (,meth)))
+                    (find-domain temp-domain-desig)))
+          (translated (subst-if 'placeholder
+                                #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                                (shop::process-method domain meth))))
+    
+     (fiveam:is-true (typep domain 'domain))
+     (is (= 1 (length (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))
+     (let ((lookup-key (first (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))
+       (is (equalp translated
+                   (subst-if 'placeholder
+                             #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                             (gethash lookup-key (shop::domain-name-to-method-table domain)))))
+       (is (eq
+            lookup-key
+            (gethash
+             (gethash lookup-key (shop::domain-name-to-method-table domain))
+             (shop::domain-method-to-name-table domain))))))))
 
 (test check-operator-definitions
   ;; FIXME: it's possibly wrong to be depending on the accidental return of the operator object
