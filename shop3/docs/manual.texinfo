@@ -725,6 +725,7 @@ of other methods for debugging purposes. For example,
       (:task !do ?x))))
 @end lisp
 
+@vindex *break-on-backtrack*
 There is now a new variable, @var{*break-on-backtrack*}, that will cause the
 Lisp environment to throw into a break loop when @sysname {} backtracks.
 
@@ -1675,13 +1676,21 @@ in the future.}
 @anchor{#methods}
 A @strong{method} is a list of the form
 
-(:method @emph{h} [@emph{n@sub{1}}] @emph{C@sub{1}} @emph{T@sub{1}}
+(:method [@emph{m@sub{id}}] @emph{h} [@emph{n@sub{1}}] @emph{C@sub{1}} @emph{T@sub{1}}
 [@emph{n@sub{2}}] @emph{C@sub{2}} @emph{T@sub{2}} ... [@emph{n@sub{k}}]
 @emph{C@sub{k}} @emph{T@sub{k}})
 
 where
 
 @itemize
+@item
+@emph{m@sub{id}} is an @emph{optional} identifier for this method expression.
+Note that this is distinct from the (also optional) identifiers for each
+precondition/task network pair, @emph{n@sub{i}}, described below.  The
+exception to this rule is that a precondition/task network identifier,
+if supplied, for a method expression with only a single such pair, will
+be used as the identifier for the entire method expression.
+
 @item
 @emph{h} (which is called the method's @strong{head}) is a task atom in
 which no @emph{call- or eval-terms} can appear;
@@ -1704,13 +1713,15 @@ domain descriptions by looking at traces of @sysname's behavior.
 @end itemize
 
 A method indicates that the task specified in the method's head can be
-performed by performing all of the tasks in one of the methods tails
+performed by performing all of the tasks in one of the method's tails
 when one that tail's precondition is satisfied. Note that the
-preconditions are considered in the given order, and a later
+preconditions in a single @code{:method} expression are considered in the given order, and a later
 precondition is considered @emph{only} if all of the earlier
-preconditions are not satisfied. If there are multiple methods for a
-given task available at some point in time, all of these methods can be
-considered. Consequently, the following code:
+preconditions are not satisfied. 
+
+On the other hand, if there are multiple top-level methods for a
+given task available at some point in time, all of these methods will be
+considered (through backtracking). Consequently, the following code:
 
 @lisp
 (:method (eat ?food)
@@ -1719,6 +1730,8 @@ considered. Consequently, the following code:
     (have-spoon ?spoon)
     ((!eat-with-spoon ?food ?spoon))
 @end lisp
+
+@noindent{}
 is semantically equivalent to the following code with multiple methods
 and explicitly exclusive preconditions:
 
@@ -1731,9 +1744,28 @@ and explicitly exclusive preconditions:
     (and (not (have-fork ?fork)) (have-spoon ?spoon))
     ((!eat-with-spoon ?food ?spoon))
 @end lisp
-In both of the above examples, the !eat-with-spoon operator may be
-performed only if the (have-spoon ?spoon) is satisfied @emph{and}
+
+@noindent{}
+In both of the above examples, the @code{!eat-with-spoon} operator may be
+performed only if @code{(have-spoon ?spoon)} is satisfied @emph{and}
 @code{(have-fork ?fork)} is not satisfied.
+
+This should be compared with the following case, where one is permitted
+to eat with @emph{either} fork or spoon -- where the spoon is not
+limited to use when a fork is not available:
+
+@lisp
+(:method (eat ?food)
+   (have-fork ?fork)
+   ((!eat-with-fork ?food ?fork)))
+
+(:method (eat ?food)
+    (have-spoon ?spoon)
+    ((!eat-with-spoon ?food ?spoon))
+@end lisp
+
+@noindent{}
+In this case, both alternatives will be tried.
 
 @node  Planning Domain, Planning Problem, Methods, The SHOP3 Formalism
 @section  Planning Domain
