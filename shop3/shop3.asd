@@ -231,8 +231,7 @@ shop3."
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (arity-test . :arity-test) ; 6
-                 (io-tests . :arity-test) ; 25
-                 (method-tests . :arity-test) ; 2
+                 (io-tests . :arity-test) ; 34
                  ;; end of internal tests
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 5
@@ -246,7 +245,7 @@ shop3."
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  )
-    :num-checks 918
+    :num-checks 928
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

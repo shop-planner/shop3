@@ -216,6 +216,14 @@ will consult the user even in these cases.")
 ;;;---------------------------------------------------------------------------
 ;;; DOMAINS
 ;;;---------------------------------------------------------------------------
+(defgeneric domain-methods (domain)
+  (:documentation "Returns a hash-table mapping complex task names to
+methods for expanding such tasks."))
+
+(defgeneric domain-operators (domain)
+  (:documentation "Returns a hash-table mapping primitive task names to
+operator definitions."))
+
 (defclass actions-domain-mixin ()
      ((methods
        :initarg :methods
@@ -224,13 +232,36 @@ will consult the user even in these cases.")
       (operators
        :initarg :operators
        :reader domain-operators
-       ))
+       )
+      (methods-to-names
+       :initform (make-hash-table :test 'eq)
+       :reader domain-method-to-name-table
+       :documentation "Map from methods (by object identity) to method IDs (symbols)."
+       )
+      (names-to-methods
+       :initform (make-hash-table :test 'eq)
+       :reader domain-name-to-method-table
+       :documentation "Map from method IDs (symbols) to methods."
+       )
+      )
   )
 
 (defclass domain (actions-domain-mixin shop3.theorem-prover:thpr-domain)
      ()
   (:documentation "An object representing a SHOP domain.")
   )
+
+(defgeneric domain-method-id-lookup (domain method-id)
+  (:method ((domain actions-domain-mixin) (method-id symbol))
+    (gethash method-id (domain-name-to-method-table domain))))
+
+(defgeneric assign-domain-method-id (domain method method-id)
+  (:method ((domain actions-domain-mixin) method (method-id symbol))
+    (with-slots (methods-to-names names-to-methods) domain
+     (assert (not (gethash method-id names-to-methods)))
+      (setf (gethash method-id names-to-methods) method
+            (gethash method methods-to-names) method-id))))
+
 
 (defclass pure-logic-domain-mixin ()
   ()

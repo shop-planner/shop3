@@ -778,7 +778,6 @@
              :as shop-problem-file =(merge-pathnames (make-pathname :type "lisp") problem-file)
              :as shop-problem = (progn (load shop-problem-file) shop3::*problem*)
              :as standard-plan = ,plan-form
-             :do (print "...")
              :do (fiveam:is-true (and (or standard-plan
                                           (warn "Failed to SHOP3 plan for problem ~a" (shop3:name shop-problem)))
                                       (validate-plan standard-plan domain-file problem-file)))))))

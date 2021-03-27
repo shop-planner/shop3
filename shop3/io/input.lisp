@@ -243,15 +243,65 @@ forall conditions and replacing the variables in them."
                  ,(process-pre domain  (apply-substitution (fourth pre) alist)))))
         (otherwise pre)))))
 
+(defun %new-method-id (method-task-name)
+  "Return a new name for a method expression (top level method form, 
+as distinguished from a precondition/tasknet pair, which may be nested
+in a single `:method` expression with others).
+   This returns a symbol that is *not* interned."
+  (gensym (concatenate 'string (symbol-name '#:meth-) (symbol-name method-task-name))))
+
+(declaim (ftype (function (list) fixnum) count-method-branches))
+(defun count-method-branches (method-body)
+  (iter (with count = 0)
+    (declare (type fixnum count))
+    (with body = method-body)
+    (while body)
+    (if (and (first body) (symbolp (first body))) ;identifier
+        (setf body (cdddr body))
+        (setf body (cddr body)))
+    (incf count)
+    (finally (return count))))
+
+;;; Extract a *unique* (relative to DOMAIN) method ID for METHOD-EXPR.
+;;; Prefer one explicitly provided, if it's a singleton method, take a
+;;; user-supplied one for the pair, modifying to achieve uniqueness.
+;;; use of this method should avoid issues with uniqueness
+(defun extract-method-id (domain method-expr task-name)
+  (cond ((symbolp (second method-expr))
+         ;; user-supplied method header
+         (if (not (domain-method-id-lookup domain (second method-expr)))
+             (second method-expr)
+             (progn
+              (cerror
+               "Transform this name to be unique?"
+               "Supplied method identifier ~s is not unique in its domain." (second method-expr))
+              (gensym (symbol-name (second method-expr))))))
+        ;; handling singleton method with an internal identifier
+        ((and (third method-expr)(symbolp (third method-expr)) ; 1st pair has an id
+              (= 1 (count-method-branches
+                    (method-expression-body domain method-expr))))
+         ;; use the ID of the singleton pair as the method id.
+         (let ((candidate 
+                 (third method-expr)))
+           (cond ((not (domain-method-id-lookup domain candidate))
+                  candidate)
+                 ;; otherwise it's not unique
+                 (t
+                  (gensym (concatenate 'string (symbol-name task-name) "-" (symbol-name task-name))))))) 
+        (t
+         (%new-method-id task-name))))
+
 ;;; this function pre-processes the methods, replace every
 ;;; variable defined by the forall condition to a previously
 ;;; unused variable. It also regularizes the methdods in old SHOP format.
 (defmethod process-method ((domain domain) method)
   (let* ((method (uniquify-anonymous-variables method))
-         (method-head (second method))
-         (method-name (car method-head))
+         (method-head (method-expression-task domain method))
+         (method-name (first method-head)) ;task name of the method
+         (method-id (extract-method-id domain method method-name))
          (task-variables (harvest-variables method-head))
          body-var-tables)
+    (assert method-id)
     (flet ((massage-task-net (clause)
              ;; this is a bunch of stuff for processing the task net which
              ;; I am sorry to say I don't fully understand.  I don't know
@@ -277,57 +327,77 @@ forall conditions and replacing the variables in them."
                   `(quote ,(process-task-list clause)))))))
 
       ;; answer will be (:method <head> ...)
-      (prog1
-          ;; here's the transformed METHOD
-      `(,(first method)
-        ,method-head
-        ,@(loop with tail = (cddr method)
-                with pre
-                with task-net
-                with var-table
-                ;; there's only one task net
-                with singleton = (or (= (length tail) 1)
-                                     ;; branch name and task net...
-                                     (and (= (length tail) 2)
-                                          (symbolp (first tail))
-                                          (not (variablep (first tail)))))
-                for branch-counter from 0
-                until (null tail)
-                ;; find or make a method label
-                if (and (car tail)
-                        (symbolp (car tail))
-                        ;; could be a second-order HTN.
-                        (not (variablep (first tail))))
-                  collect (pop tail)
-                else
-                  collect (gensym (format nil "~A~D--"
-                                          method-name branch-counter))
-                ;; collect the preconditions
-                do (setf pre (pop tail))
-                   (setf task-net (pop tail))
-                   (setf var-table (harvest-variables (cons pre task-net)))
-                   (push var-table body-var-tables)
-                   (check-for-singletons var-table :context-table task-variables
-                                                   :construct-type (first method)
-                                                   :construct-name method-name
-                                                   :construct method
-                                                   :branch-number (unless singleton (1+ branch-counter)))
-                collect (process-pre domain
-                                     ;; we have to disambiguate
-                                     ;; preconditions if we are in a
-                                     ;; universal-preconditions-mixin,
-                                     ;; but are using SHOP2
-                                     ;; quantification instead of PDDL
-                                     ;; quantification (yuck) -- wish I could think of something better.
-                                     (if (typep domain 'universal-preconditions-mixin)
-                                         (subst 'shop-forall 'forall pre)
-                                         pre))
-                collect (massage-task-net task-net)))
+      (let ((final-method 
+              ;; here's the transformed METHOD
+              `(,(first method)                 ; the keyword
+                ,method-head
+                ,@(loop with tail = (method-expression-body domain method)
+                        with pre
+                        with task-net
+                        with var-table
+                        ;; there's only one task net
+                        with singleton = (or (= (length tail) 1)
+                                             ;; branch name and task net...
+                                             (and (= (length tail) 2)
+                                                  (symbolp (first tail))
+                                                  (not (variablep (first tail)))))
+                        for branch-counter from 0
+                        until (null tail)
+                        ;; find or make a method label
+                        if (and (car tail)
+                                (symbolp (car tail))
+                                ;; could be a second-order HTN.
+                                (not (variablep (first tail))))
+                          collect (pop tail)
+                        else
+                          collect (gensym (format nil "~A~D--"
+                                                  method-name branch-counter))
+                        ;; collect the preconditions
+                        do (setf pre (pop tail))
+                           (setf task-net (pop tail))
+                           (setf var-table (harvest-variables (cons pre task-net)))
+                           (push var-table body-var-tables)
+                           (check-for-singletons var-table :context-table task-variables
+                                                           :construct-type (first method)
+                                                           :construct-name method-name
+                                                           :construct method
+                                                           :branch-number (unless singleton (1+ branch-counter)))
+                        collect (process-pre domain
+                                             ;; we have to disambiguate
+                                             ;; preconditions if we are in a
+                                             ;; universal-preconditions-mixin,
+                                             ;; but are using SHOP2
+                                             ;; quantification instead of PDDL
+                                             ;; quantification (yuck) -- wish I could think of something better.
+                                             (if (typep domain 'universal-preconditions-mixin)
+                                                 (subst 'shop-forall 'forall pre)
+                                                 pre))
+                        collect (massage-task-net task-net)))))
         ;; just before returning, check for singletons in the method's head
         (check-for-singletons task-variables :context-tables body-var-tables
                                              :construct-type (first method)
                                              :construct-name method-name
-                                             :construct method)))))
+                                             :construct method)
+        (values final-method method-id)))))
+
+(defgeneric method-expression-body (domain method-expr)
+  (:documentation "Helper function for parsing a method expression.
+Returns the method expression's body: the remainder of the method
+expression after the method keyword, the optional label, and the task have
+been removed.")
+  (:method ((domain domain) (method-expr list))
+    (if (symbolp (second method-expr))
+        (cdddr method-expr)
+        (cddr method-expr))))
+
+(defgeneric method-expression-task (domain method-expr)
+  (:documentation "Helper function for parsing a method expression.
+Returns the method expression's body: skipping over the optional label,
+if any.")
+  (:method ((domain domain) (method-expr list))
+    (if (symbolp (second method-expr))
+        (third method-expr)
+        (second method-expr))))
 
 (defmethod process-method :before ((domain pure-logic-domain-mixin) method)
   (declare (ignorable domain))
@@ -336,7 +406,10 @@ forall conditions and replacing the variables in them."
                                        (rest method-body)
                                        method-body)))
     (when (> (length body-without-first-label) 2)
-      (error "Error in method definition:~%~T~A~%It is not acceptable to use methods with IF-THEN-ELSE semantics in a pure-logic-domain-mixin." method))))
+      (error "Error in method definition:~%~T~A~%~
+              It is not acceptable to use methods with IF-THEN-ELSE semantics ~
+              in a pure-logic-domain-mixin."
+             method))))
 
 
 ;;; returns t if item is found anywhere in the tree; doubly recursive,
@@ -706,9 +779,16 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
 ;;;---------------------------------------------------------------------------
 
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':method)) item)
-  (push (process-method domain item)
-        (gethash (first (second item))
-                 (slot-value domain 'methods))))
+  (multiple-value-bind (method-obj method-id)
+      (process-method domain item)
+    (push method-obj
+          (gethash (first (method-expression-task domain item))
+              (slot-value domain 'methods)))
+    (with-slots (methods-to-names names-to-methods) domain
+      (assert (not (gethash method-obj methods-to-names)))
+      (setf (gethash method-obj methods-to-names) method-id)
+      (assert (not (gethash method-id names-to-methods)))
+      (setf (gethash method-id names-to-methods) method-obj))))
 
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':operator)) item)
   (let ((op-name (first (second item))))
