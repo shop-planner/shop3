@@ -13,6 +13,8 @@
 (defgeneric unfold-loop-task (domain state)
   (:documentation "Driver for the looping tasks."))
 
+(defgeneric expand-primitive-state (state domain))
+
 
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                    (no-dependencies nil)
@@ -20,7 +22,9 @@
                                    rationale
                                    (state-type :mixed state-type-supplied-p)
                                    (out-stream t)
-                                   (which :first))
+                                   (which :first)
+                                   analogical-replay
+                                   make-analogy-table)
   "Top level search function for explicit-state search in SHOP3.
 Does not support the full range of options supported by SHOP3: only
 supports finding the first solution to PROBLEM.  To comply with SHOP3,
@@ -40,6 +44,8 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
+         (*make-analogy-table* make-analogy-table)
+         (*analogical-replay* analogical-replay)
          (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
@@ -74,7 +80,11 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          total-run-time total-real-time
          total-expansions total-inferences)
 
-    #+ignore(when repairable (clrhash *analogical-replay-table*))
+    (when (and analogical-replay make-analogy-table)
+      (error "Cannot build the analogy table while using it: :analogical-replay and ~
+              :make-analogy-table are mutually exclusive options."))
+    (when make-analogy-table
+      (clear-replay-table domain *analogical-replay-table*))
     
     (when plan-tree
       (setf (slot-value search-state 'plan-tree) tree)
@@ -325,6 +335,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                           (get-task-body current-task)
                           method (protections state)
                           (depth state) (unifier state))
+          
           (when expansions
             (when *enhanced-plan-tree*
               (let ((task-node (plan-tree:find-task-in-tree
@@ -332,6 +343,9 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                 
                 (push (record-node-expansion task-node task-expansion plan-tree-lookup)
                       backtrack-stack)))
+            (when *make-analogy-table*
+              (let ((method-id (domain-id-for-method-lookup domain method)))
+                (record-decomposition domain current-task method-id backtrack-stack)))
             (setf alternatives
                   (if *record-dependencies-p*
                       (mapcar #'list expansions unifiers dependencies)
@@ -340,7 +354,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         (mapcar #'(lambda (x y) (list x y nil)) expansions unifiers))))
             t))))))
 
-(defgeneric expand-primitive-state (state domain))
+
 
 (defmethod EXPAND-PRIMITIVE-STATE (state (domain domain))
 
@@ -380,6 +394,20 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
         t))))
 
+(defmethod sort-methods :around ((domain domain) (methods list) (which-plans symbol))
+  (unless (and *analogical-replay* (> (length methods) 1))
+    (return-from sort-methods (call-next-method)))
+  (let ((guidance (guidance domain
+                            ;; FIXME: this is not ideal -- we should have a way of getting
+                            ;; the actual task here.  But right now, we are only looking at
+                            ;; the task name, anyway.
+                            (method-head domain (first methods))
+                            *analogical-replay-table*
+                            methods)))
+    (if guidance ;; we get back a preferred alternative
+        (cons guidance (remove guidance methods))
+        (call-next-method))))
+
 ;;; record the expansion of a tree node by rewriting its task.  Return
 ;;; the backtrack stack entry needed to undo the transformation.
 (defun record-node-expansion (tree-node expanded-task hash-table)
@@ -404,11 +432,12 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
       :prop prop
       :consumer tree-node))))
 
-(defun task-sexp-task-name (task)
-  (let* ((task (if (eq (first task) :task) (rest task)
-                 task))
-         (task (if (eq (first task) :immediate) (rest task) task)))
-    (first task)))
+;; DUPLICATE -- the TASK-ID function does this, as well.
+;; (defun task-sexp-task-name (task)
+;;   (let* ((task (if (eq (first task) :task) (rest task)
+;;                  task))
+;;          (task (if (eq (first task) :immediate) (rest task) task)))
+;;     (first task)))
 
 (defun strip-task-sexp (task)
   "Remove qualifiers like :TASK and :IMMEDIATE from TASK and return it."
@@ -530,3 +559,4 @@ Return the CHOICE-ENTRY where backtracking stopped."
                       (remove-forest (plan-tree:complex-tree-node-children tree)))
                      (t (error "Unexpected argument:  ~s"  tree)))))
     (remove-subtree subtree)))
+

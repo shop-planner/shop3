@@ -128,6 +128,18 @@ What this means is that we are recording the match of the TASK as a
 template against a standardized EXPANDED-TASK from the plan library.")
   )
 
+(defclass record-expansion-for-replay (stack-entry)
+  ((task
+    :initarg :task
+    :reader task
+    :type list)
+   (method-id
+    :initarg :method-id
+    :reader method-id
+    :type symbol)
+   )
+  (:documentation "Record the expansion of TASK according to METHOD-ID.
+This may later be used by the analogical replay code."))
 
 
 
@@ -185,6 +197,11 @@ template against a standardized EXPANDED-TASK from the plan library.")
 (defmethod do-backtrack ((entry record-expansion) (state search-state))
   (setf (gethash (tree-node entry) (plan-tree-lookup state)) nil)
   (setf (plan-tree:tree-node-expanded-task (tree-node entry)) nil)
+  (values))
+
+(defmethod do-backtrack ((entry record-expansion-for-replay) (state search-state))
+  (with-slots (task method-id) entry
+    (%delete-a-decomposition *domain* task method-id))
   (values))
 
 

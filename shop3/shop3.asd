@@ -103,6 +103,7 @@
                              ;; dependency information.
                              (:file "plan-tree")
                              (:file "backtrack-stack")
+                             (:file "analogical-replay")
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
@@ -227,7 +228,7 @@ shop3."
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
-    :test-names ((pddl-tests . :shop3)  ; 141
+    :test-names ((pddl-tests . :shop3)  ; 144
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (arity-test . :arity-test) ; 6

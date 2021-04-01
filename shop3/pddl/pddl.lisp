@@ -891,10 +891,9 @@ set of dependencies."
             (remove-if #'internal-operator-p plan :key 'first))))
 
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql :pddl-method)) method)
-  (push
-   (parse-pddl-method domain method)
-   (gethash (first (second method))
-            (slot-value domain 'methods))))
+  (multiple-value-bind (method-obj method-id)
+      (parse-pddl-method domain method)
+    (index-method-on-domain domain method-id method-obj)))
 
 ;;; FIXME translate preconditions when the domain is metric...
 (defun parse-pddl-method (domain method)
@@ -931,12 +930,14 @@ set of dependencies."
       #+ignore (setf var-table (harvest-variables method-head))
       ;; now we need to harvest only FREE variables in the preconditions and task net...
       ;; answer will be (:pddl-method <head> ...)
-      ;; here's the transformed METHOD
-      `(,(first method)
-        ,method-head
-        ,method-name
-        ,(process-pddl-method-pre domain pre)
-        (quote ,(process-task-list task-net)))
+      (values
+       ;; here's the transformed METHOD
+       `(,(first method)
+         ,method-head
+         ,method-name
+         ,(process-pddl-method-pre domain pre)
+         (quote ,(process-task-list task-net)))
+       method-name)
       ;; FIXME: just before returning, check for singletons in the method's head
       #+ignore
       (check-for-singletons task-variables :context-tables body-var-tables
