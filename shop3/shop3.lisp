@@ -166,6 +166,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*depth-cutoff* depth-cutoff)
          (*plans-found* nil)
          (*optimal-plan* 'fail)
+         (*print-stats* (or *print-stats* (> *verbose* 0)))
          (*explanation* explanation) (*attribution-list* nil)
          (*external-access* (fboundp 'external-access-hook))
          (*trace-query* (fboundp 'trace-query-hook))
@@ -222,7 +223,6 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     ;;    (format t "~%Top-Tasks: ~a" top-tasks)
     (determine-verbosity *verbose*)
 
-    ;; FIXME: the format calls in here should probably be PRINT-STATS or PRINT-STATS-HEADER.
     (when *print-stats*
       (format out-stream "~&---------------------------------------------------------------------------")
       (format out-stream "~%~@[Problem ~s with ~]:WHICH = ~s, :VERBOSE = ~s" problem which *verbose*)
@@ -233,7 +233,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (catch 'user-done
       (ecase which
         ((:id-first :id-all)
-         (print-stats-header "Depth" out-stream)
+         (print-stats-header "Depth" :stream out-stream)
          (do ((*depth-cutoff* 0 (1+ *depth-cutoff*)))
              ((or (time-expired-p)      ;need to check here for expired time....
                   (and *plans-found*
@@ -255,7 +255,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                  total-expansions (+ total-expansions *expansions*)
                  total-inferences (+ total-inferences *inferences*))
            (print-stats *depth-cutoff* *plans-found* *expansions*
-                        *inferences* new-run-time new-real-time out-stream)
+                        *inferences* new-run-time new-real-time :stream out-stream)
            (and (equal *expansions* old-expansions)
                 (equal *inferences* old-inferences)
                 (progn (format t "~&Ending at depth ~D: no new expansions or inferences.~%"
@@ -285,9 +285,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (setq total-run-time (- (get-internal-run-time) *start-run-time*)
           total-real-time (- (get-internal-real-time) *start-real-time*))
 
-    (print-stats-header "Totals:" out-stream)
+    (print-stats-header "Totals:" :stream out-stream :backtracks t)
     (print-stats "" *plans-found* total-expansions total-inferences
-                 total-run-time total-real-time out-stream)
+                 total-run-time total-real-time :stream out-stream :backtracks *backtracks*)
     (let ((plan-trees
            (when *plan-tree*
              (extract-trees *plans-found* *unifiers-found*))))
