@@ -41,6 +41,8 @@
              *backtrack-failed-choose-method*
              *backtrack-failed-choose-method-bindings*)))
 
+
+
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                    (no-dependencies nil)
                                    repairable
@@ -97,19 +99,10 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                                :lookup-table (plan-tree-lookup search-state))))
                     (make-plan-tree-for-task-net tasks tree (plan-tree-lookup search-state))
                     tree)))
-         (*expansions* 0)
-         (*inferences* 0)
-         (*backtracks* 0)
-         (*backtrack-failed-pop-toplevel* 0)
-         (*backtrack-failed-pop-immediate* 0)
-         (*backtrack-failed-loop-unfold* 0)
-         (*backtrack-failed-primitive* 0)
-         (*backtrack-failed-choose-method* 0)
-         (*backtrack-failed-choose-method-bindings* 0)
          total-run-time total-real-time
          total-expansions total-inferences)
 
-    (determine-verbosity verbose)
+    (bind-count-variables
 
       (determine-verbosity verbose)
       
@@ -119,26 +112,26 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
           (prepare-state-tag-decoder)))
       (set-variable-property domain tasks)
 
-    (unwind-protect
-         (seek-plans-stack search-state domain
-                           :which which
-                           :repairable repairable
-                           :stream out-stream)
-      (setq total-run-time (- (get-internal-run-time) start-run-time)
-            total-real-time (- (get-internal-real-time)
-                               start-real-time))
-      
-      (setq total-expansions *expansions*
-            total-inferences *inferences*)
-      
-      (print-stats-header "Totals:" :stream out-stream :backtracks t)
-      (print-stats "" *plans-found* total-expansions total-inferences
-                   total-run-time total-real-time
-                   :stream out-stream
-                   :backtracks *backtracks*)
-      (print-backtrack-stats)
-      (unless repairable
-        (delete-state-tag-decoder)))))
+      (unwind-protect
+           (seek-plans-stack search-state domain
+                             :which which
+                             :repairable repairable
+                             :stream out-stream)
+        (setq total-run-time (- (get-internal-run-time) start-run-time)
+              total-real-time (- (get-internal-real-time)
+                                 start-real-time))
+        
+        (setq total-expansions *expansions*
+              total-inferences *inferences*)
+        
+        (print-stats-header "Totals:" :stream out-stream :backtracks t)
+        (print-stats "" *plans-found* total-expansions total-inferences
+                     total-run-time total-real-time
+                     :stream out-stream
+                     :backtracks *backtracks*)
+        (print-backtrack-stats)
+        (unless repairable
+          (delete-state-tag-decoder))))))
       
 (defun seek-plans-stack (state domain &key (which :first) repairable (stream t))
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP3 search
