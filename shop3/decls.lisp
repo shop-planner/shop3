@@ -301,6 +301,11 @@ IF-THEN-ELSE semantics in methods."))
          is intended for use with a particular domain definition."))
   (:documentation "An object representing a SHOP problem."))
 
+
+(defmethod problem-name ((name symbol))
+  name)
+
+
 (defmethod domain-name ((probspec symbol))
   (domain-name (find-problem probspec t)))
 
