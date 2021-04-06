@@ -1,0 +1,273 @@
+(define (domain um-translog-2)
+(:requirements ...)
+(:predicates
+	 (at-equipment ?e ?l) (at-packagec ?p ?c) (at-packagel ?p ?l) (at-packagev ?p ?v) (at-vehicle ?v ?l) (availablel ?l) (availabler ?r) (availablev ?v) (chute-connected ?v) (clear) (connect-city ?r ?rtype ?c1 ?c2) (connect-loc ?r ?rtype ?l1 ?l2) (delivered ?p ?d) (door-open ?v) (empty ?c) (fees-collected ?p) (hose-connected ?v) (h-start ?p) (hub ?l) (in-city ?l ?c) (in-region ?c ?r) (move ?p) (move-emp ?v) (over ?p) (pv-compatible ?ptype ?vtype) (ramp-connected ?v ?r) (ramp-down ?v) (rv-compatible ?rtype ?vptype) (serves ?h ?r) (tcenter ?l) (t-end ?p) (t-start ?p) (typel ?l ?type) (typep ?p ?type) (typev ?v ?type) (typevp ?v ?type) (unload ?v) (valve-open ?v)(region ?x) (package ?x) (city ?x) (location ?x) (vehicle ?x) (route ?x) (equipment ?x) (ptype ?x) (vtype ?x) (vptype ?x) (rtype ?x) (ltype ?x) (crane ?x) (plane-ramp ?x) )
+(:functions
+	 (distance ?l1 ?l2) (gas-left ?v) (gpm ?v) (height-v ?v) (height-cap-l ?l) (height-cap-r ?r) (length-v ?v) (length-cap-l ?l) (local-height ?c) (local-weight ?c) (volume-cap-c ?c) (volume-cap-l ?l) (volume-cap-v ?v) (volume-load-l ?l) (volume-load-v ?v) (volume-p ?p) (weight-cap-c ?c) (weight-cap-r ?r) (weight-cap-v ?v) (weight-p ?p) (weight-load-v ?v) (weight-v ?v) (width-v ?v) (width-cap-l ?l))
+(:action collect-fees
+ :parameters ( ?p)
+ :precondition
+	(and (package ?p)  (not (fees-collected ?p)) (not ))
+ :effect
+	 (fees-collected ?p))
+
+(:action deliver
+ :parameters ( ?p ?d)
+ :precondition
+	(and (package ?p) (location ?d)  (at-packagel ?p ?d) (not ))
+ :effect
+	(and (delivered ?p ?d) (not (at-packagel ?p ?d)) (decrease (volume-load-l ?d) (volume-p ?p))))
+
+(:action open-door-regular
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (door-open ?v)) (typev ?v regularv))
+ :effect
+	 (door-open ?v))
+
+(:action close-door-regular
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (door-open ?v) (typev ?v regularv))
+ :effect
+	 (not (door-open ?v)))
+
+(:action load-regular
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-vehicle ?v ?l) (availablev ?v) (at-packagel ?p ?l) (typev ?v regularv)  (door-open ?v) (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (at-packagev ?p ?v) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action unload-regular
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-vehicle ?v ?l) (at-packagev ?p ?v) (typev ?v regularv) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p))) (door-open ?v))
+ :effect
+	(and (at-packagel ?p ?l) (unload ?v) (not (at-packagev ?p ?v)) (not (move ?p)) (not (clear)) (increase (volume-load-l ?l) (volume-p ?p)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action pick-up-package-ground
+ :parameters ( ?p ?c ?l)
+ :precondition
+	(and (package ?p) (crane ?c) (location ?l)  (at-equipment ?c ?l) (at-packagel ?p ?l) (empty ?c) (fees-collected ?p) (<= (weight-p ?p) (weight-cap-c ?c)) (<= (volume-p ?p) (volume-cap-c ?c)))
+ :effect
+	(and (at-packagec ?p ?c) (not (empty ?c)) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p))))
+
+(:action put-down-package-vehicle
+ :parameters ( ?p ?c ?v ?l)
+ :precondition
+	(and (package ?p) (crane ?c) (vehicle ?v) (location ?l)  (at-equipment ?c ?l) (at-packagec ?p ?c) (at-vehicle ?v ?l) (typev ?v flatbed) (availablev ?v)  (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (empty ?c) (at-packagev ?p ?v) (not (at-packagec ?p ?c)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action pick-up-package-vehicle
+ :parameters ( ?p ?c ?v ?l)
+ :precondition
+	(and (package ?p) (crane ?c) (vehicle ?v) (location ?l)  (empty ?c) (at-equipment ?c ?l) (at-packagev ?p ?v) (at-vehicle ?v ?l) (<= (weight-p ?p) (weight-cap-c ?c)) (<= (volume-p ?p) (volume-cap-c ?c)) (typev ?v flatbed))
+ :effect
+	(and (at-packagec ?p ?c) (not (empty ?c)) (not (at-packagev ?p ?v)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action put-down-package-ground
+ :parameters ( ?p ?c ?l)
+ :precondition
+	(and (package ?p) (crane ?c) (location ?l)  (at-equipment ?c ?l) (at-packagec ?p ?c) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p))))
+ :effect
+	(and (at-packagel ?p ?l) (empty ?c) (not (move ?p)) (not (at-packagec ?p ?c)) (increase (volume-load-l ?l) (volume-p ?p))))
+
+(:action connect-chute
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (chute-connected ?v)) (typev ?v hopper))
+ :effect
+	 (chute-connected ?v))
+
+(:action disconnect-chute
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (chute-connected ?v) (typev ?v hopper))
+ :effect
+	 (not (chute-connected ?v)))
+
+(:action fill-hopper
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (chute-connected ?v) (at-vehicle ?v ?l) (at-packagel ?p ?l) (availablev ?v) (typev ?v hopper)  (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (at-packagev ?p ?v) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action empty-hopper
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (chute-connected ?v) (at-vehicle ?v ?l) (at-packagev ?p ?v) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p))) (typev ?v hopper))
+ :effect
+	(and (at-packagel ?p ?l) (unload ?v) (not (at-packagev ?p ?v)) (not (move ?p)) (not (clear)) (increase (volume-load-l ?l) (volume-p ?p)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action connect-hose
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (hose-connected ?v)) (typev ?v tanker))
+ :effect
+	 (hose-connected ?v))
+
+(:action disconnect-hose
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (hose-connected ?v) (not (valve-open ?v)) (typev ?v tanker))
+ :effect
+	 (not (hose-connected ?v)))
+
+(:action open-valve
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (valve-open ?v)) (hose-connected ?v) (typev ?v tanker))
+ :effect
+	 (valve-open ?v))
+
+(:action close-valve
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (valve-open ?v) (typev ?v tanker))
+ :effect
+	 (not (valve-open ?v)))
+
+(:action fill-tank
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-vehicle ?v ?l) (at-packagel ?p ?l) (typev ?v tanker) (availablev ?v)  (valve-open ?v) (hose-connected ?v) (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (at-packagev ?p ?v) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action empty-tank
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-vehicle ?v ?l) (at-packagev ?p ?v) (typev ?v tanker) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p))) (hose-connected ?v) (valve-open ?v))
+ :effect
+	(and (at-packagel ?p ?l) (unload ?v) (not (at-packagev ?p ?v)) (not (move ?p)) (not (clear)) (increase (volume-load-l ?l) (volume-p ?p)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action raise-ramp
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (ramp-down ?v) (typev ?v auto))
+ :effect
+	 (not (ramp-down ?v)))
+
+(:action lower-ramp
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (ramp-down ?v)) (typev ?v auto))
+ :effect
+	 (ramp-down ?v))
+
+(:action load-cars
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (typev ?v auto)  (availablev ?v) (at-packagel ?p ?l) (at-vehicle ?v ?l) (ramp-down ?v) (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (at-packagev ?p ?v) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action unload-cars
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-packagev ?p ?v) (at-vehicle ?v ?l) (typev ?v auto) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p))) (ramp-down ?v))
+ :effect
+	(and (at-packagel ?p ?l) (unload ?v) (not (at-packagev ?p ?v)) (not (move ?p)) (not (clear)) (increase (volume-load-l ?l) (volume-p ?p)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action attach-conveyor-ramp
+ :parameters ( ?v ?r ?l)
+ :precondition
+	(and (vehicle ?v) (plane-ramp ?r) (location ?l)  (not ) (at-equipment ?r ?l) (typev ?v air) (not ) (at-vehicle ?v ?l))
+ :effect
+	 (ramp-connected ?v ?r))
+
+(:action detach-conveyor-ramp
+ :parameters ( ?v ?r ?l)
+ :precondition
+	(and (vehicle ?v) (plane-ramp ?r) (location ?l)  (ramp-connected ?v ?r) (at-equipment ?r ?l) (at-vehicle ?v ?l) (not (door-open ?v)))
+ :effect
+	 (not (ramp-connected ?v ?r)))
+
+(:action open-door-airplane
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (not (door-open ?v)) (typev ?v air) )
+ :effect
+	 (door-open ?v))
+
+(:action close-door-airplane
+ :parameters ( ?v)
+ :precondition
+	(and (vehicle ?v)  (door-open ?v) (typev ?v air))
+ :effect
+	 (not (door-open ?v)))
+
+(:action load-airplane
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (at-packagel ?p ?l) (at-vehicle ?v ?l) (availablev ?v)  (door-open ?v)  (>= (weight-cap-v ?v) (+ (weight-load-v ?v) (weight-p ?p))) (>= (volume-cap-v ?v) (+ (volume-load-v ?v) (volume-p ?p))) (fees-collected ?p))
+ :effect
+	(and (at-packagev ?p ?v) (not (at-packagel ?p ?l)) (decrease (volume-load-l ?l) (volume-p ?p)) (increase (weight-load-v ?v) (weight-p ?p)) (increase (volume-load-v ?v) (volume-p ?p))))
+
+(:action unload-airplane
+ :parameters ( ?p ?v ?l)
+ :precondition
+	(and (package ?p) (vehicle ?v) (location ?l)  (typev ?v air) (at-packagev ?p ?v) (at-vehicle ?v ?l) (>= (volume-cap-l ?l) (+ (volume-load-l ?l) (volume-p ?p)))  (door-open ?v))
+ :effect
+	(and (at-packagel ?p ?l) (unload ?v) (not (at-packagev ?p ?v)) (not (move ?p)) (not (clear)) (increase (volume-load-l ?l) (volume-p ?p)) (decrease (weight-load-v ?v) (weight-p ?p)) (decrease (volume-load-v ?v) (volume-p ?p))))
+
+(:action move-vehicle-local-road-route1
+ :parameters ( ?v ?ori ?des ?ocity)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (city ?ocity)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (valve-open ?v)) (not (hose-connected ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (typevp ?v truck) (in-city ?ori ?ocity) (in-city ?des ?ocity) (<= (height-v ?v) (local-height ?ocity)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (local-weight ?ocity)) (or  (and  (tcenter ?ori) (tcenter ?des)) (and  (not (tcenter ?ori)) (not (tcenter ?des)))) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (move ?p) (over ?p))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-local-road-route2
+ :parameters ( ?v ?ori ?des ?ocity)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (city ?ocity)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (valve-open ?v)) (not (hose-connected ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (typevp ?v truck) (in-city ?ori ?ocity) (in-city ?des ?ocity) (<= (height-v ?v) (local-height ?ocity)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (local-weight ?ocity)) (and  (not (tcenter ?ori)) (tcenter ?des)) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (move ?p) (t-start ?p))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-local-road-route3
+ :parameters ( ?v ?ori ?des ?ocity)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (city ?ocity)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (valve-open ?v)) (not (hose-connected ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (typevp ?v truck) (in-city ?ori ?ocity) (in-city ?des ?ocity) (<= (height-v ?v) (local-height ?ocity)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (local-weight ?ocity)) (and  (tcenter ?ori) (not (tcenter ?des))) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (over ?p) (move ?p) (not (t-end ?p)) (not (h-start ?p)))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-road-route-crosscity
+ :parameters ( ?v ?ori ?des ?ocity ?dcity ?r)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (city ?ocity) (city ?dcity) (route ?r)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (valve-open ?v)) (not (hose-connected ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (typevp ?v truck) (in-city ?ori ?ocity) (in-city ?des ?dcity) (not (= ?ocity ?dcity)) (connect-city ?r road-route ?ocity ?dcity) (availabler ?r) (<= (height-v ?v) (height-cap-r ?r)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (weight-cap-r ?r)) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (move ?p) (over ?p))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-nonroad-route1
+ :parameters ( ?v ?ori ?des ?r)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (route ?r)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (valve-open ?v)) (not (hose-connected ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (not (typevp ?v truck)) (tcenter ?ori) (tcenter ?des) (or  (and  (hub ?ori) (hub ?des)) (and  (not (hub ?ori)) (not (hub ?des)))) (availablel ?ori) (availablel ?des)  (availabler ?r) (<= (height-v ?v) (height-cap-r ?r)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (weight-cap-r ?r)) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (t-end ?p) (move ?p) (not (t-start ?p)))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-nonroad-route2
+ :parameters ( ?v ?ori ?des ?r)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (route ?r)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (hose-connected ?v)) (not (valve-open ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (not (typevp ?v truck)) (tcenter ?ori) (tcenter ?des) (not (hub ?ori)) (hub ?des) (availablel ?ori) (availablel ?des)  (availabler ?r) (<= (height-v ?v) (height-cap-r ?r)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (weight-cap-r ?r)) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (h-start ?p) (move ?p) (not (t-start ?p)))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action move-vehicle-nonroad-route3
+ :parameters ( ?v ?ori ?des ?r)
+ :precondition
+	(and (vehicle ?v) (location ?ori) (location ?des) (route ?r)  (at-vehicle ?v ?ori) (not (= ?ori ?des)) (or  (> (volume-load-v ?v) 0) (not (move-emp ?v))) (or  (and  (typev ?v regularv) (not (door-open ?v))) (and  (typev ?v hopper) (not (chute-connected ?v))) (and  (typev ?v tanker) (not (hose-connected ?v)) (not (valve-open ?v))) (and  (typev ?v auto) (not (ramp-down ?v))) (and  (typev ?v air) (not (door-open ?v)) (not )) (typev ?v flatbed)) (>= (height-cap-l ?des) (height-v ?v)) (>= (length-cap-l ?des) (length-v ?v)) (>= (width-cap-l ?des) (width-v ?v)) (>= (gas-left ?v) (* (gpm ?v) (distance ?ori ?des))) (not (typevp ?v truck)) (tcenter ?ori) (tcenter ?des) (hub ?ori) (not (hub ?des)) (availablel ?ori) (availablel ?des)  (availabler ?r) (<= (height-v ?v) (height-cap-r ?r)) (<= (+ (weight-v ?v) (weight-load-v ?v)) (weight-cap-r ?r)) (not ))
+ :effect
+	(and (at-vehicle ?v ?des) (not (at-vehicle ?v ?ori)) (forall (?p ) (when (and (package ?p) (at-packagev ?p ?v)) (and (t-end ?p) (move ?p) (not (h-start ?p)) (not (t-start ?p)))) (when (> (volume-load-v ?v) 0)  (not (move-emp ?v))) (when (= (volume-load-v ?v) 0)  (move-emp ?v)) (decrease (gas-left ?v) (* (distance ?ori ?des) (gpm ?v)))))
+
+(:action clean-domain
+ :parameters ()
+ :precondition
+	(and (not ))
+ :effect
+	 (clear))
+
+)
