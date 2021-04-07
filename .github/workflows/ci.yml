@@ -1,0 +1,109 @@
+name: CI
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test:
+    # The type of runner that the job will run on
+    runs-on: ${{matrix.os}}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        lisp:
+          - ccl
+          - sbcl
+        test:
+          - ARITY-TEST::ALL-SHOP3-INTERNAL-TESTS
+          - PROTECTION-TEST::PROTECTION-TEST
+          - SHOP-REPLAN-TESTS::TEST-PLAN-REPAIR
+          - SHOP-THEOREM-PROVER-TESTS::THEOREM-PROVER-TESTS
+          - SHOP3-OPENSTACKS::PLAN-OPENSTACKS
+          - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL
+          - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL-explicit-stack-search
+          - SHOP3-USER::BLOCKS-TESTS
+          - SHOP3-USER::ENHANCED-PLAN-TREE
+          - SHOP3-USER::LOGISTICS-TESTS
+          - SHOP3-USER::MINIMAL-SUBTREE-TESTS
+          - SHOP3-USER::MISC-TESTS
+          - SHOP3-USER::SINGLETON-TESTS
+          - SHOP3-USER::UMT-DOMAIN-TESTS
+          - SHOP3::ROVERS-TESTS
+          - SHOP3::SHORT-PDDL-TESTS
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        git submodule update --init --recursive
+
+    # Lisp setup copied from here: https://github.com/3b/ci-example/blob/master/.github/workflows/CI.yml
+    - name: cache .roswell
+      id: cache-dot-roswell
+      uses: actions/cache@v1
+      with:
+        path: ~/.roswell
+        key: ${{ runner.os }}-dot-roswell-${{ matrix.lisp }}-${{ hashFiles('**/*.asd') }}
+        restore-keys: |
+          ${{ runner.os }}-dot-roswell-${{ matrix.lisp }}-
+          ${{ runner.os }}-dot-roswell-
+
+    - name: install roswell
+      shell: bash
+      # always run install, since it does some global installs and setup that isn't cached
+      env:
+       LISP: ${{ matrix.lisp }}
+      run: |
+        sudo apt install -y libcurl4
+        curl -L https://github.com/roswell/roswell/releases/download/v19.08.10.101/roswell_19.08.10.101-1_amd64.deb --output roswell.deb
+        sudo dpkg -i roswell.deb
+
+    - name: run lisp
+      continue-on-error: true
+      shell: bash
+      run: |
+        ros -e '(format t "~a:~a on ~a~%...~%~%" (lisp-implementation-type) (lisp-implementation-version) (machine-type))'
+        ros -e '(format t " fixnum bits:~a~%" (integer-length most-positive-fixnum))'
+        ros -e "(ql:quickload 'trivial-features)" -e '(format t "features = ~s~%" *features*)'
+
+    # Compile first in a separate step to make the test output more readable
+    - name: compile
+      shell: bash
+      run: |
+        ros -e "(cl:in-package :cl-user)
+           (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
+           (prin1 \"${{ matrix.test }}\") (terpri)
+           (asdf:initialize-source-registry  '(:source-registry (:directory \"$PWD/shop3/\") (:tree \"$PWD/jenkins/ext/\") :inherit-configuration))
+           (declaim (optimize (speed 3)))
+           (asdf:load-system :shop3/test)
+           (uiop:quit 0)"
+
+    - name: tests
+      shell: bash
+      run: |
+        ros -e "(cl:in-package :cl-user)
+           (require :asdf)
+           (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
+           (prin1 \"${{ matrix.test }}\") (terpri)
+           (asdf:initialize-source-registry  '(:source-registry (:directory \"$PWD/shop3/\") (:tree \"$PWD/jenkins/ext/\") :inherit-configuration))
+           (declaim (optimize (speed 3)))
+           (asdf:load-system :shop3/test)
+           (defun test-fail-p (test-result)
+             (typecase test-result
+               (fiveam::test-passed nil)
+               (fiveam::test-failure t)
+               (list (when (find-if #'test-fail-p test-result) t))
+               (t t)))
+           (uiop:quit (if (test-fail-p (fiveam:run (quote ${{ matrix.test }}))) 1 0))"
