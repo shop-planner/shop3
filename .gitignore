@@ -41,3 +41,8 @@ README\.html
 *.aux
 
 .DS_Store
+*~
+\#*\#
+*.out
+*.log
+
