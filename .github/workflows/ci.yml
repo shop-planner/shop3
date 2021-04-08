@@ -65,9 +65,12 @@ jobs:
       # always run install, since it does some global installs and setup that isn't cached
       env:
        LISP: ${{ matrix.lisp }}
+      # Use a previous release of Roswell to avoid error encountered
+      # due to libcurl3 not being available.
+      # Source of fix: https://github.com/avodonosov/drakma/commit/fbba29181ba2962f5031da581bd2de4dac98733d
       run: |
         sudo apt install -y libcurl4
-        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh -x
+        curl -L https://raw.githubusercontent.com/roswell/roswell/a8fd8a3c33078d6f06e6cda9d099dcba6fbefcb7/scripts/install-for-ci.sh | sh
 
     # Prompts Roswell to setup if the selected lisp version, if it has not been setup yet.
     - name: run lisp
