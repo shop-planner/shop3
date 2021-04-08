@@ -67,8 +67,7 @@ jobs:
        LISP: ${{ matrix.lisp }}
       run: |
         sudo apt install -y libcurl4
-        curl -L https://github.com/roswell/roswell/releases/download/v19.08.10.101/roswell_19.08.10.101-1_amd64.deb --output roswell.deb
-        sudo dpkg -i roswell.deb
+        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh -x
 
     # Prompts Roswell to setup if the selected lisp version, if it has not been setup yet.
     - name: run lisp
