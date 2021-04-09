@@ -49,6 +49,23 @@ jobs:
       run: |
         git submodule update --init --recursive
 
+    - name: cache validate
+      id: cache-validate
+      uses: actions/cache@v2
+      with:
+        path: jenkins/VAL
+        key: ${{ runner.os }}
+
+    - name: compile validate
+      if: steps.cache-validate.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cd jenkins/VAL
+        make
+
+    - name: add validate to path
+      run: echo "${GITHUB_WORKSPACE}/jenkins/VAL" >> $GITHUB_PATH
+
     # Lisp setup copied from here: https://github.com/3b/ci-example/blob/master/.github/workflows/CI.yml
     - name: cache .roswell
       id: cache-dot-roswell
@@ -72,17 +89,8 @@ jobs:
         sudo apt install -y libcurl4
         curl -L https://raw.githubusercontent.com/roswell/roswell/a8fd8a3c33078d6f06e6cda9d099dcba6fbefcb7/scripts/install-for-ci.sh | sh
 
-    # Prompts Roswell to setup if the selected lisp version, if it has not been setup yet.
-    - name: run lisp
-      continue-on-error: true
-      shell: bash
-      run: |
-        ros -e '(format t "~a:~a on ~a~%...~%~%" (lisp-implementation-type) (lisp-implementation-version) (machine-type))'
-        ros -e '(format t " fixnum bits:~a~%" (integer-length most-positive-fixnum))'
-        ros -e "(ql:quickload 'trivial-features)" -e '(format t "features = ~s~%" *features*)'
-
     # Compile first in a separate step to make the test output more readable
-    - name: compile
+    - name: compile lisp
       shell: bash
       run: |
         ros -e "(cl:in-package :cl-user)
