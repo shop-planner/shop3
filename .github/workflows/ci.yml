@@ -86,7 +86,7 @@ jobs:
       # due to libcurl3 not being available.
       # Source of fix: https://github.com/avodonosov/drakma/commit/fbba29181ba2962f5031da581bd2de4dac98733d
       run: |
-        sudo apt install -y libcurl4
+        sudo apt-get install -y libcurl4
         curl -L https://raw.githubusercontent.com/roswell/roswell/a8fd8a3c33078d6f06e6cda9d099dcba6fbefcb7/scripts/install-for-ci.sh | sh
 
     # Compile first in a separate step to make the test output more readable
