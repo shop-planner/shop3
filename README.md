@@ -5,6 +5,13 @@
 
 This repository contains the open source version of the SHOP3 planner.
 
+## Exciting news (2021-04-22)
+
+SHOP3 has been incorporated into [Quicklisp](https://www.quicklisp.org/beta/) which
+is very exciting news, since it means that SHOP3 can now be installed with a single,
+simple command, that will download it, build it, and start it.  We have updated the
+installation instructions accordingly.
+
 ## License
 
 [Mozilla Public License](https://www.mozilla.org/en-US/MPL/)
@@ -65,13 +72,30 @@ is a package manager for CL libraries, and will be the easiest way to
 get the libraries that SHOP3 depends on.
 
 If you wish to use Quicklisp, follow the installation instructions for
-quicklisp at the above site, and then clone the SHOP3 repository into
-the `local-projects` subdirectory of your Quicklisp install
-directory.  Once this is done, you should be able to:
+quicklisp at the above site.  Now you have two choices: you can install
+SHOP3 through Quicklisp, or you can check out SHOP3 from here (GitHub) and use
+Quicklisp only for the required dependencies.
+
+#### The Easy way -- do everything with Quicklisp
 
 1. Start CL
 2. Inside CL, enable Quicklisp
 3. Enter `(ql:quickload "shop3")` into the CL REPL.
+
+#### With your own copy of SHOP3
+
+This installation method is best for someone who is interested in developing
+new HTN planning capabilities with SHOP and will want to be modifying the
+source of the planning system.  If you would just like to develop planning
+domains and problems, then the simpler, all-Quicklisp method is probably
+better for you.  You can always check out a copy of the repo later if you
+want.
+
+1. Clone the SHOP3 repository into the `local-projects` subdirectory of your
+  Quicklisp install directory (see the Quicklisp docs).
+2. Start CL
+3. Inside CL, enable Quicklisp
+4. Enter `(ql:quickload "shop3")` into the CL REPL.
 
 Quicklisp contains all of the dependencies that SHOP3 requires *except* the
 `"pddl-utils"` system.  This system is only used in the tests, or for some optional
@@ -82,10 +106,6 @@ functionality.  If you wish to have this subsystem, you can either;
 2. Clone [the pddl-tools repository](https://github.com/rpgoldman/pddl-tools) into 
   `local-projects`, as well, and do not bother with the git submodules.
 
-**Note:** At the moment, SHOP3 is not available for installation through
-Quicklisp, but we have requested that it be added to the distribution,
-and hope it will be.  If it is, we will update the README accordingly, and
-installation will become much simpler.
 
 ### Option 2: Without Quicklisp
 
@@ -108,13 +128,22 @@ you may clone with the `--recurse-submodules` option), and then:
 ### Once started
 
 We suggest that you interact with SHOP3 through the `shop-user`
-package in the REPL.
+package in the REPL, for exploratory work.  If you wish to develop
+a more substantial planning application, we recommend starting a new
+system in a dedicated package that will `:use-package shop3`.
 
 The best environment for working with CL for any purpose, including
 SHOP3 planning, is through the Superior Lisp Interaction Mode for
-Emacs, or [SLIME](https://common-lisp.net/project/slime/).  If you use
-ACL, Franz have their own Emacs Lisp Interface (ELI) as a possible
-alternative.  Both ACL and CCL have some sort of GUI, as well.
+Emacs, or [SLIME](https://common-lisp.net/project/slime/) or its fork,
+[SLY](https://github.com/joaotavora/sly).  Both of these are available
+for installation through (MELPA)[https://melpa.org/#/] using the Emacs
+package manager.
+
+If you use Allegro Common Lisp, Franz have their own Emacs Lisp Interface (ELI)
+as a possible alternative.
+
+Allegro, CCL, and Lispworks each have some
+sort of GUI/IDE, as well.
 
 ## Using SHOP3
 
@@ -125,13 +154,11 @@ benefits from having tex/latex installed.  To build, change to the
 installed, or just `make` if you have tex/latex, as well.  This will
 produce the manual in HTML, Emacs info, and PDF formats.
 
+## Questions
 
+If you have questions, please post them using the (Discussions)[https://github.com/shop-planner/shop3/discussions] link.
 
-<!--
-Local Variables:
-mode: markdown
-End:
--->
+Now that GitHub has added discussions, we would prefer to keep issues for actual bug reports.
 
 
 
