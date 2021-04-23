@@ -136,7 +136,7 @@ The best environment for working with CL for any purpose, including
 SHOP3 planning, is through the Superior Lisp Interaction Mode for
 Emacs, or [SLIME](https://common-lisp.net/project/slime/) or its fork,
 [SLY](https://github.com/joaotavora/sly).  Both of these are available
-for installation through (MELPA)[https://melpa.org/#/] using the Emacs
+for installation through [MELPA](https://melpa.org) using the Emacs
 package manager.
 
 If you use Allegro Common Lisp, Franz have their own Emacs Lisp Interface (ELI)
