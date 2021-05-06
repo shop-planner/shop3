@@ -1505,6 +1505,7 @@ following form:
        [:cost @emph{cost-fn}])
 @end lisp
 
+@noindent{}
 where
 
 @itemize
@@ -1547,36 +1548,7 @@ that has the same form as the delete-list.
 
 @end itemize
 
-
-In the above definition, a @strong{protection condition} is an
-expression of the form
-
-@lisp
-(:protection a)
-@end lisp
-
-
-where @emph{a} is a logical atom. The purpose of a protection condition
-in the add list is to tell @sysname {} that it should not execute any operator
-that deletes @emph{a}. The purpose of a protection condition in the
-delete list is to cancel a previously added protection condition. For
-example, if we drive a delivery truck to a certain location in order to
-pick up a package, then we might not want to allow the truck to be moved
-away from that location until after we have picked up the package.@  To
-represent this, we might use the following operators:
-
-@lisp
-(:op (!drive-to ?truck ?old-loc ?location)
-   :delete ((at ?truck ?old-loc))
-   :add ((at ?truck ?location)
-           (:protection (at ?truck ?location))))
-(:op (!pick-up ?truck ?package ?location)
-  :delete
-    ((at ?package ?location)
-     (:protection (at ?truck ?location)))
-   :add ((in ?package ?truck)))
-@end lisp
-
+@subsection Internal Operators
 @cindex internal operators
 @anchor{#internal-operators}
 As noted above, the head of the operator is a primitive task atom, so it
@@ -1601,6 +1573,8 @@ exists in @sysname {} is so that automated systems which use @sysname {} plans a
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
+@subsection Operators must be deterministic
+
 When designing an operator, it is important to ensure that each variable
 symbol in the add list, delete list, and cost always be bound to a
 single value when the operator is invoked. Variable symbols can be bound
@@ -1617,6 +1591,39 @@ However, @sysname {} will be able to correctly process operators that have
 multiple unifiers for preconditions as long as no two unifiers can
 provide different values for a variable that appears in the add list,
 delete list, or cost.
+
+@subsection Protection conditions
+
+In the definition of operators, a @strong{protection condition} is an
+expression of the form
+
+@lisp
+(:protection a)
+@end lisp
+
+@noindent{}
+where @emph{a} is a logical atom. The purpose of a protection condition
+in the add list is to tell @sysname {} that it should not execute any operator
+that deletes @emph{a}. The purpose of a protection condition in the
+delete list is to cancel a previously added protection condition. For
+example, if we drive a delivery truck to a certain location in order to
+pick up a package, then we might not want to allow the truck to be moved
+away from that location until after we have picked up the package.@  To
+represent this, we might use the following operators:
+
+@lisp
+(:op (!drive-to ?truck ?old-loc ?location)
+   :delete ((at ?truck ?old-loc))
+   :add ((at ?truck ?location)
+           (:protection (at ?truck ?location))))
+(:op (!pick-up ?truck ?package ?location)
+  :delete
+    ((at ?package ?location)
+     (:protection (at ?truck ?location)))
+   :add ((in ?package ?truck)))
+@end lisp
+
+
 @menu
 * Operators Legacy Syntax::
 @end menu
