@@ -1090,10 +1090,10 @@ quantifications}, @strong{assignments}, @strong{eval expressions},
 * Universal Quantifications::
 * Assignments::
 * Eval expressions::
-* Call-expressions::
-* Enforce-expressions::
-* Setof-expressions::
-* Bagof-expressions::
+* call expressions::
+* Enforce expressions::
+* Setof expressions::
+* Bagof expressions::
 @end menu
 
 @node Conjuncts, Disjuncts, Logical Expressions, Logical Expressions
@@ -1239,32 +1239,37 @@ to a @emph{list} of possible values and through backtracking, @sysname's
 theorem-prover will find all solutions with @emph{v} bound to the
 various values of @emph{e,} in turn.
 
-@node Eval expressions, Call-expressions, Assignments, Logical Expressions
+@node Eval expressions, call expressions, Assignments, Logical Expressions
 @subsection Eval expressions
 @anchor{#eval-expressions}
-An @strong{eval-expression} has the same form as an
-@ref{#eval-terms,eval-term}, q.v. Unlike an eval-term, however, an
-eval-expression is interpreted simply as either true or false rather
+An @strong{eval expression} has the same form as an eval term
+(@pxref{Eval Terms}). Unlike an eval term, however, an
+eval expression is interpreted simply as either true or false rather
 than having some value which would be used as an argument to a
-predicate. Thus eval-expression typically invoke boolean Lisp functions
-such as evenp or >=.
+predicate. Thus an eval expression typically invokes boolean Lisp functions
+such as @code{evenp} or @code{>=}.
 
-@node Call-expressions, Enforce-expressions, Eval expressions, Logical Expressions
-@subsection Call-expressions
-A @strong{call-expression} has the same form as a
-@ref{#call-terms,call-term}, q.v. As with eval-expressions,
-call-expressions are interpreted as either true or false.
+Note that if you use an eval expression for its @emph{side effects}, you
+must be careful to ensure that it still returns a true value.
 
-@node Enforce-expressions, Setof-expressions, Call-expressions, Logical Expressions
-@subsection Enforce-expressions
+@node call expressions, Enforce expressions, Eval expressions, Logical Expressions
+@subsection Call expressions
+A @strong{call expression} has the same form as a call term
+(@pxref{Call Terms}). As with eval expressions (@pxref{Eval expressions}),
+call expressions are interpreted as either true or false, and the
+warning mentioned there about using Eval expressions for side effects
+applies to Call expressions, as well.
+
+@node Enforce expressions, Setof expressions, call expressions, Logical Expressions
+@subsection Enforce expressions
 @anchor{#enforce-expressions}
-An @strong{enforce-expression} has the form
+An @strong{enforce expression} has the form
 
 @lisp
 (enforce @emph{t@sub{1}} &rest @emph{error-args})
 @end lisp
 Enforce expressions are for goals that should @emph{always} be
-satisfied. SHOP's theorem-prover will attempt to prove @emph{t} and if
+satisfied. SHOP's theorem-prover will attempt to prove @emph{t@sub{1}} and if
 it fails, will call error with @emph{error-args.} For example
 
 @lisp
@@ -1272,10 +1277,12 @@ it fails, will call error with @emph{error-args.} For example
           "~A x-position undefined." (quote ?aircraft))
 @end lisp
 
-@node Setof-expressions, Bagof-expressions, Enforce-expressions, Logical Expressions
-@subsection Setof-expressions
+Enforce expressions are useful when debugging domains.
+
+@node Setof expressions, Bagof expressions, Enforce expressions, Logical Expressions
+@subsection Setof expressions
 @anchor{#setof-expressions}
-A @strong{setof-expression} has the form
+A @strong{setof expression} has the form
 
 @lisp
 (setof @emph{term expr set-var})
@@ -1303,12 +1310,12 @@ Note that the semantics of this operator are to fail if the @emph{expr}
 is an unsatisfiable goal.
 
 @b{Note:} Support for general terms as the first argument to
-@code{setof} and @code{bagof} (@pxref{Bagof-expressions}) is new in
+@code{setof} and @code{bagof} (@pxref{Bagof expressions}) is new in
 version 3.4 of @sysname{}.  Code that depends on it should use a
 corresponding version dependency qualifier in, e.g., ASDF (@code{(:version "shop3" "3.4")}).
 
-@node Bagof-expressions,  , Setof-expressions, Logical Expressions
-@subsection Bagof-expressions
+@node Bagof expressions,  , Setof expressions, Logical Expressions
+@subsection Bagof expressions
 @anchor{#bagof-expressions}
 The syntax for bagof is the same as for setof (Section 4.5.10), but
 binds @emph{set-var} to a @emph{bag} of results, which may contain
