@@ -927,15 +927,17 @@ Any of the structures defined in the remaining sections are said to be
 
 @node General Lisp Expressions, Terms, Symbols, The SHOP3 Formalism
 @section General Lisp Expressions
-@anchor{#general-lisp-expressions} A number of @sysname {} domain
-structures described in this section, e.g. @ref{#assignments},
-@ref{#sorted-precondition}, and @ref{#operators} use @strong{general
+@anchor{#general-lisp-expressions} 
+
+A number of @sysname {} domain
+structures described in this section, (e.g. @ref{Assignments},
+@ref{Sorted Precondition}, @ref{Eval Terms}, and @ref{Call Terms}) use @strong{general
 Lisp expressions}.  These are arbitrary pieces of Lisp code which can
 include functions, macros, special macro symbols (e.g., backquote),
 etc. When @sysname {} needs to get the value of a general Lisp
 expression, it first substitutes values for any variable symbols in
-the expression that are bound. Then it sends the entire expression
-into the Lisp evaluator to get a final value.
+the expression that are bound. Then it submits the entire expression
+to the Lisp environment to get its value.
 
 @strong{Note:} Counter-intuitive bugs may arise when symbols are passed
 to Lisp for evaluation (either as constants or as the values of
@@ -975,7 +977,7 @@ a @strong{call-term}
 @menu
 * List Terms::
 * Eval Terms::
-* Call-terms::
+* Call Terms::
 @end menu
 
 @node List Terms, Eval Terms, Terms, Terms
@@ -993,7 +995,7 @@ is included, the item @emph{l} should evaluate to a list; all items in
 @emph{l} are included in the list after @emph{t@sub{1}} through
 @emph{t@sub{n}}.
 
-@node Eval Terms, Call-terms, List Terms, Terms
+@node Eval Terms, Call Terms, List Terms, Terms
 @subsection Eval Terms
 @anchor{#eval-terms}
 An @strong{eval-term} is an expression of the form
@@ -1032,8 +1034,8 @@ if this were written
 it would cause a Lisp error when Lisp attempts to find the value of @code{BAR},
 which it would believe to be a variable.
 
-@node Call-terms,  , Eval Terms, Terms
-@subsection Call-terms
+@node Call Terms,  , Eval Terms, Terms
+@subsection Call terms
 @anchor{#call-terms}
 A @strong{call-term} is an expression of the form
 
@@ -1484,18 +1486,9 @@ cannot both have the @code{:immediate} keyword.
 @section  Operators
 @anchor{#operators}
 
-The arguments marked with keywords are all optional, and may appear in
-any order. The add-list, and delete-list default to being empty. The
-preconditions default to being vacuously true, and the cost defaults to
-1.0.
-
-@emph{Note:} We still support @shoptwo{}'s original syntax for operators,
-described below (@pxref{Operators Legacy Syntax}).
-
 An @strong{operator} is description of how to perform a @emph{primitive}
 task, which cannot be decomposed further. An operator definition has the
 following form:
-
 
 @lisp
 (:op @emph{head}
