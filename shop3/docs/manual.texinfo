@@ -900,19 +900,19 @@ the following conventions:
 @itemize
 @item
 a @strong{variable symbol} can be any Lisp symbol whose name begins with
-a question mark (such as ?x or ?hello-there)
+a question mark (such as @code{?x} or @code{?hello-there})
 
 @item
 an @strong{anonymous variable symbol} can be any variable symbol with an
 underscore immediately following the question mark in its name (such as
-?_ or ?_airplane). These variables will unify with any value, and need
-not co-refer (i.e., two copies of ?_ in a single term need not unify
+@code{?_} or @code{?_airplane}). These variables will unify with any value, and need
+not co-refer (i.e., two copies of @code{?_} in a single term need not unify
 with each other). These variables will also not trip the singleton
 variable check.
 
 @item
 a @strong{primitive task symbol} can be any Lisp symbol whose name
-begins with an exclamation point (such as !unstack or !putdown)
+begins with an exclamation point (such as @code{!unstack} or @code{!putdown})
 
 @item
 a @strong{constant} @strong{symbol}, a @strong{function symbol}, a
