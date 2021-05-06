@@ -1505,7 +1505,7 @@ following form:
        [:cost @emph{cost-fn}])
 @end lisp
 
-@noindent{}
+@noindent
 where
 
 @itemize
@@ -1531,9 +1531,9 @@ a logical atom
 a protection condition (see below)
 
 @item
-an expression of the form (forall V E L), where @emph{V} is a list of
-variables in @emph{E}, @emph{E} is a logical expression, and @emph{L} is
-a list of logical atoms, @ref{Logical Atoms}.
+an expression of the form @code{(forall @var{V} @var{E} @var{L})}, where @var{V} is a list of
+variables in @var{E}, @var{E} is a logical expression, and @var{L} is
+a list of logical atoms, @xref{Logical Atoms}.
 
 @end itemize
 
@@ -1547,6 +1547,15 @@ that has the same form as the delete-list.
 @emph{c} is omitted, the cost defaults to 1.
 
 @end itemize
+
+@menu
+* Internal Operators::
+* Operators must be deterministic::
+* Protection conditions::
+* Operators Legacy Syntax::
+@end menu
+
+@node  Internal Operators, Operators must be deterministic, Operators, Operators
 
 @subsection Internal Operators
 @cindex internal operators
@@ -1573,7 +1582,9 @@ exists in @sysname {} is so that automated systems which use @sysname {} plans a
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
+@node Operators must be deterministic, Protection conditions, Operators, Operators
 @subsection Operators must be deterministic
+@cindex Operators, deterministic
 
 When designing an operator, it is important to ensure that each variable
 symbol in the add list, delete list, and cost always be bound to a
@@ -1592,7 +1603,9 @@ multiple unifiers for preconditions as long as no two unifiers can
 provide different values for a variable that appears in the add list,
 delete list, or cost.
 
+@node Protection conditions, Operators Legacy Syntax, Operators must be deterministic, Operators
 @subsection Protection conditions
+@cindex protections
 
 In the definition of operators, a @strong{protection condition} is an
 expression of the form
@@ -1601,7 +1614,7 @@ expression of the form
 (:protection a)
 @end lisp
 
-@noindent{}
+@noindent
 where @emph{a} is a logical atom. The purpose of a protection condition
 in the add list is to tell @sysname {} that it should not execute any operator
 that deletes @emph{a}. The purpose of a protection condition in the
@@ -1624,11 +1637,7 @@ represent this, we might use the following operators:
 @end lisp
 
 
-@menu
-* Operators Legacy Syntax::
-@end menu
-
-@node Operators Legacy Syntax,  , Operators, Operators
+@node Operators Legacy Syntax,  , Protection conditions, Operators
 @subsection Operators: Legacy Syntax
 
 In our work with @shoptwo{}, we found that operator definitions in its
@@ -1739,7 +1748,7 @@ considered (through backtracking). Consequently, the following code:
     ((!eat-with-spoon ?food ?spoon))
 @end lisp
 
-@noindent{}
+@noindent
 is semantically equivalent to the following code with multiple methods
 and explicitly exclusive preconditions:
 
@@ -1753,7 +1762,7 @@ and explicitly exclusive preconditions:
     ((!eat-with-spoon ?food ?spoon))
 @end lisp
 
-@noindent{}
+@noindent
 In both of the above examples, the @code{!eat-with-spoon} operator may be
 performed only if @code{(have-spoon ?spoon)} is satisfied @emph{and}
 @code{(have-fork ?fork)} is not satisfied.
@@ -1772,11 +1781,13 @@ limited to use when a fork is not available:
     ((!eat-with-spoon ?food ?spoon))
 @end lisp
 
-@noindent{}
+@noindent
 In this case, both alternatives will be tried.
 
 @node  Planning Domain, Planning Problem, Methods, The SHOP3 Formalism
 @section  Planning Domain
+@cindex domain
+
 @anchor{#planning-domain} A @strong{planning domain} is an object that
 contains all of the information for solving a class of planning
 problems@footnote{The term “class” here is meant @emph{informally;}
@@ -1786,15 +1797,17 @@ will include definitions of the operators (or actions) and methods
 available in the domain. A planning domain definition may also contain
 axioms, or other items that are accepted by specific SHOP domain
 extensions. Finally, a domain definition can @emph{include} other
-domains by reference, see @ref{Inclusion directives}.
+domains by reference, @pxref{Inclusion directives}.
 @menu
 * Simple Form::
 * Extended form::
+* The domain variable::
 * Inclusion directives::
 @end menu
 
 @node Simple Form, Extended form, Planning Domain, Planning Domain
 @subsection Simple Form
+@findex defdomain
 @anchor{#simple-form}
 A planning domain definition in the simple form looks like this:
 
@@ -1802,6 +1815,7 @@ A planning domain definition in the simple form looks like this:
 (defdomain @emph{domain-name} (@emph{i@sub{1}} @emph{i@sub{2}} ... @emph{i@sub{n}}))
 @end lisp
 
+@noindent
 where @emph{domain-name} is a symbol (which does not need to be quoted).
 Beginning users of SHOP should simply use the simple domain-name form of
 this argument.
@@ -1809,37 +1823,46 @@ this argument.
 Each item @emph{i@sub{i}} is one of the following: an operator, a
 method, or an axiom.
 
-@node Extended form, Inclusion directives, Simple Form, Planning Domain
+@node Extended form, The domain variable, Simple Form, Planning Domain
 @subsection Extended form
 @anchor{#extended-form}
+@findex defdomain
+@cindex defdomain, extended form
 The extended form of the @sysname {} domain definition looks like this:
 
 @lisp
-(defdomain (@emph{domain-name} &rest @emph{args}) (@emph{i@sub{1}} @emph{i@sub{2}} ... @emph{i@sub{n}}))
+(defdomain (@var{domain-name} &rest @var{args}) (@var{i@sub{1}} @var{i@sub{2}} ... @var{i@sub{n}}))
 @end lisp
 
+@noindent
 @emph{args} includes the following keyword arguments:
 
 @itemize
 @item
-a :type keyword argument, allowing the domain modeler to indicate a
+a @code{:type} keyword argument, allowing the domain modeler to indicate a
 specific subclass of the @sysname {} domain class. E.g., one might have
-(my-domain :type pddl-domain).
+@code{(my-domain :type pddl-domain)}.
+@cindex domain :type argument
 
 @item
-A :redefine-ok argument. If this is NIL (the default), defdomain will
+A @code{:redefine-ok} argument. If this is @code{NIL} (the default), defdomain will
 warn when the domain @emph{domain-name} is already defined.
+@cindex domain :redefine-ok argument
 
 @item
-A :noset argument. Currently this defaults to NIL, to provide for
+A @code{:noset} argument. Should the dynamic variable @code{*domain*} be
+bound as a side-effect of evaluating the @code{defdomain} expression?Currently this defaults to @code{NIL}, to provide for
 backward compatibility, but I would like to see this move to defaulting
-to T.
+to @code{T}.  See discussion of @code{*domain*} below.
+@cindex domain :noset argument
 
 @end itemize
 
+@node The domain variable, Inclusion directives, Extended form, Planning Domain
+@subsection The @code{*domain*} variable
 @vindex *domain*
 
-This is actually a bit of a kludge. The existing defdomain form, as a
+This is actually a bit of a kludge. The existing @code{defdomain} implementation, as a
 side-effect, sets the global variable @var{*domain*}. If this were only a
 default domain name, that would be fine, but it is used everywhere as a
 special variable to mean “the domain within which we are planning.” So
@@ -1849,18 +1872,19 @@ happen. I would like to stamp out the use of @var{*domain*} as a default
 domain.
 
 The question of which additional arguments are accepted in @emph{args}
-is a matter for the implementer of the specialized domain type being
-used. Any additional arguments will be passed to the make-instance
-method for the domain class.@footnote{If you don't know what this means,
+is a matter for the implementer of the specialized domain type@footnote{Which must be a subclass of the @code{shop:domain} Common Lisp class.} being
+used. Any additional arguments will be passed to the @code{make-instance}
+method for the @code{domain} subclass.@footnote{If you don't know what this means,
 you may safely ignore it.} @sysname {} extenders can create new subclasses of
 domain that accept initialization arguments. A first example of the use
-of this is the built-in pddl-domain class.
+of this is the built-in @code{pddl-domain} class.
+@tindex pddl-domain
 
-If you are using the extended form of defdomain, you should have in hand
+If you are using the extended form of @code{defdomain}, you should have in hand
 a new @sysname {} domain subclass, with a description of its arguments. If you
 do not, you should ignore the extended form.
 
-@node Inclusion directives,  , Extended form, Planning Domain
+@node Inclusion directives,  , The domain variable, Planning Domain
 @subsection Inclusion directives
 @cindex :include
 @cindex include directives
@@ -1873,7 +1897,7 @@ using the include directive:
 (:include @emph{domain-name file-name})
 @end lisp
 
-
+@noindent
 for example
 
 @lisp
@@ -1881,11 +1905,18 @@ for example
   #.(asdf:system-relative-pathname "core-domains" "domains.lisp"))
 @end lisp
 
-
+@noindent
 would take the text of the flight-operators domain, which should be
 found in the domains.lisp file. Note the use of the reader evaluation
 form -- @code{#.} -- to force evaluation of the expression that yields the
 pathname.
+
+@b{Designer's Note:} @sysname{}'s inclusion directive is a mess.  @sysname{}
+really @emph{needs} an inclusion directive, but it is a poor fit to
+@code{defdomain}, because the latter is an @emph{executable macro}, but
+the inclusion directive is inherently @emph{file-based}, rather than
+@emph{code} (s-expression)-based. I have not been able to come up with a
+more graceful solution, however. @i{--rpg}
 
 @node  Planning Problem, Planning Problem Set, Planning Domain, The SHOP3 Formalism
 @section  Planning Problem
