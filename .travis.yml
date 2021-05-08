@@ -52,7 +52,7 @@ install:
   - pushd  ${TRAVIS_BUILD_DIR}/jenkins/VAL && make && popd 
 
 script:
-  - cl -e "(cl:in-package :cl-user)
+  - travis_wait 50 cl -e "(cl:in-package :cl-user)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
            (prin1 \"${PKG}::${SUITE}\") (terpri)
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
