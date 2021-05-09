@@ -156,7 +156,7 @@ produce the manual in HTML, Emacs info, and PDF formats.
 
 ## Questions
 
-If you have questions, please post them using the (Discussions)[https://github.com/shop-planner/shop3/discussions] link.
+If you have questions, please post them using the [Discussions](https://github.com/shop-planner/shop3/discussions) link.
 
 Now that GitHub has added discussions, we would prefer to keep issues for actual bug reports.
 
