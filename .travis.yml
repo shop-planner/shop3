@@ -1,5 +1,7 @@
 dist: bionic
 language: lisp
+services:
+  - docker
 
 env:
   matrix:
@@ -47,17 +49,7 @@ notifications:
     on_failure: always
 
 install:
-  - curl -L https://raw.githubusercontent.com/sionescu/cl-travis/master/install.sh | sh
-  - ls ${TRAVIS_BUILD_DIR}/shop3/
-  - pushd  ${TRAVIS_BUILD_DIR}/jenkins/VAL && make && popd 
+  - docker pull mdehavensift/shop3-test-env:latest
 
 script:
-  - travis_wait 50 cl -e "(cl:in-package :cl-user)
-           (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
-           (prin1 \"${PKG}::${SUITE}\") (terpri)
-           (asdf:initialize-source-registry  '(:source-registry (:directory \"$TRAVIS_BUILD_DIR/shop3/\") (:tree \"$TRAVIS_BUILD_DIR/jenkins/ext/\") :inherit-configuration))
-           (declaim (optimize (speed 3)))
-           (asdf:load-system :shop3/test)
-           (uiop:quit (if  (typep (fiveam:run (quote ${PKG}::${SUITE})) 'fiveam::test-failure) 1 0))"
-
-sudo: required
+  - docker run --rm -v $PWD:/shop3 --workdir=/shop3/jenkins -e PKG=SHOP3-USER -e SUITE=MINIMAL-SUBTREE-TESTS mdehavensift/shop3-test-env:latest ./run-tests.sh ccl run-ci-test.lisp
