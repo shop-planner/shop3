@@ -50,4 +50,4 @@ install:
   - docker pull mdehavensift/shop3-test-env:latest
 
 script:
-  - docker run --rm -v $PWD:/shop3 --workdir=/shop3/jenkins -e PKG=SHOP3-USER -e SUITE=MINIMAL-SUBTREE-TESTS mdehavensift/shop3-test-env:latest ./run-tests.sh ccl run-ci-test.lisp
+  - docker run --rm -v $PWD:/shop3 --workdir=/shop3/jenkins -e PKG=$PKG -e SUITE=$SUITE mdehavensift/shop3-test-env:latest ./run-tests.sh ccl run-ci-test.lisp
