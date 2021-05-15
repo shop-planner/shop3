@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker build . -t shop3-docker-image:latest
+docker build . -t shop3-test-env:latest
