@@ -10,8 +10,8 @@
 (declaim (optimize (speed 3)))
 (asdf:load-system :shop3/test)
 
-(defconstant +test-pkg+ (uiop:getenv "PKG"))
-(defconstant +test-suite+ (uiop:getenv "SUITE"))
+(defconstant +test-pkg+ (string-upcase (uiop:getenv "PKG")))
+(defconstant +test-suite+ (string-upcase (uiop:getenv "SUITE")))
 
 (let ((test (find-symbol +test-suite+ +test-pkg+)))
   (unless test
