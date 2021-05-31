@@ -104,13 +104,14 @@ sea exploration, medical treatment, and military operations, to name
 just a few.  This is the manual for @sysname {}, the third major version
 of the  Simple Hierarchical Ordered Planner.
 
-AI planning systems takes as input a @emph{domain} -- a description of
-available actions, relations, etc.; a @emph{problem} -- a description of
-the initial state of the system, and an @emph{objective}, a task to be performed or goal to
-be achieved.  From these, it generates a @emph{plan}: a sequence of
-actions that, if performed with the expected results, will attain the
-objective.  This is the key function performed by @sysname {}, although,
-as will be seen in this manual, many additional functions are offered.
+An AI planning system takes as input a @emph{domain} -- a description
+of available actions, relations, etc.; a @emph{problem} -- a
+description of the initial state of the system, and an
+@emph{objective}, a task to be performed or goal to be achieved.  From
+these, it generates a @emph{plan}: a sequence of actions that, if
+performed with the expected results, will attain the objective.  This
+is the key function performed by @sysname {}, although, as will be
+seen in this manual, many additional functions are offered.
 
 @sysname {} is a domain-independent
 planning system based on @strong{ordered task decomposition}, a modified
@@ -576,7 +577,7 @@ process. If the @var{time-limit} argument is a number, @sysname {} will check
 the elapsed CPU time at the start of each step of the planning process,
 and if the number of seconds elapsed is greater than the argument value,
 @sysname {} will immediately terminate. The main use for this feature is in
-combination with (:optimize-cost t) argument, in order to return the
+combination with @code{(:optimize-cost t)} argument, in order to return the
 optimal value found within the given time limit. For example, consider
 the call @code{(find-plans 'foo :verbose 1 :optimize-cost t :time-limit 120)}.
 This call addresses a problem named @emph{foo}, and runs until it either
@@ -586,14 +587,15 @@ functionality is inspired, in part, by Anytime Algorithms [Dean and
 Boddy, 1998].
 
 @item @anchor{#explanation}
-If @emph{explanation} is non-nil, @sysname {} adds extra information at the
-end of each operator explaining how the preconditions for that operator
-were satisfied. Currently supports only logical atoms, and, and or; it
-doesn't work with forall, not, eval, etc. If this feature is used with
-the external-access-hook feature (see Section 5.4), any attribution
-information provided by the external-access-hook routine is included in
-the relevant explanation. The default value of @emph{explanation} is
-@code{nil}. 
+If @emph{explanation} is non-nil, @sysname {} adds extra information
+at the end of each operator explaining how the preconditions for that
+operator were satisfied. Currently supports only logical atoms,
+@code{and}, and @code{or}; it doesn't work with @code{forall},
+@code{not}, @code{eval}, etc. If this feature is used with the
+external-access-hook feature (see @ref{Hook Routines}), any attribution
+information provided by the external-access-hook routine is included
+in the relevant explanation. The default value of @emph{explanation}
+is @code{nil}.
 @cindex explanation
 
 @item
@@ -606,9 +608,9 @@ task into lower level tasks is represented by the upper level task atom,
 followed by trees for each lower level task. The leaves of the tree,
 involving operators, are each lists of three elements: the cost of the
 operator, the task atom for the operator, and the numerical position of
-the operator in the plan (staring at 1). For example, a task (travel
-houston springfield) that was directly decomposed into operators, (!fly
-houston boston) with cost 200 and (!drive boston springfield) with cost
+the operator in the plan (staring at 1). For example, a task @code{(travel
+houston springfield)} that was directly decomposed into operators, @code{(!fly
+houston boston)} with cost 200 and @code{(!drive boston springfield)} with cost
 50, would have the following plan tree:
 
 @lisp
@@ -650,8 +652,8 @@ whenever it prints out a tracing message
 @item
 the keyword @code{:plans} in which case @sysname {} will print diagnostic information
 whenever it has found a plan (and may be considering whether or not to
-keep the plan, depending on the :which and :optimize arguments of
-seek-plans).
+keep the plan, depending on the @code{:which} and @code{:optimize} arguments of
+@code{seek-plans}).
 @item
 The keyword @code{:all}, which will trace all available items, currently
 methods, axioms, operators, tasks, goals and protections.
@@ -683,11 +685,10 @@ of items
 @findex print-current-plan
 @findex print-current-tasks
 
-There are three variables, namely @code{*current-state*}, @code{*current-plan*}, and
-@code{*current-tasks*}, in @sysname. These variables can be used to monitor the
+There are three variables, namely @var{*current-state*}, @var{*current-plan*}, and
+@var{*current-tasks*}, in @sysname. These variables can be used to monitor the
 current status of the state, current plan and the list of current tasks
 to be accomplished respectively. Since these are the internal variables
-
 of the @sysname {} planning system, the following functions are defined to
 access the current contents of those variables: @code{print-current-state},
 @code{print-current-plan}, and @code{print-current-tasks}, respectively. Note that
@@ -772,7 +773,7 @@ can use @code{(SHOP-TRACE :METHODS)} to further focus your attention.
 @item
 If visual inspection of method and operator definitions does not reveal
 the problem, you most likely have problems with precondition
-expressions. In this case, try using @code{(SHOP-TRACE :GOALS)}, rerunning
+expressions. In this case, try using @code{(SHOP-TRACE :GOALS)}, re-running
 @code{FIND-PLANS} and check to see what's happened when your problematic method or
 operator's preconditions are checked.
 
@@ -788,7 +789,7 @@ in @sysname {} domains.
 routines that may be defined by the user; if they are defined, they are
 invoked under specific circumstances. Hook routines are typically used
 when embedding @sysname {} in an application; they allow such an application
-to obtain additional information from @sysname {} or to affect it's behavior.
+to obtain additional information from @sysname {} or to affect its behavior.
 There are three hooks that are recognized by @sysname:
 
 @itemize
@@ -815,19 +816,20 @@ atoms in the current state.
 This hook routine is intended to allow @sysname {} to use an external source
 (such as a database) to determine the applicability of methods and
 operators. To use this hook routine, a domain must include one or more
-logical expressions that have the keyword :external as the first symbol.
+logical expressions that have the keyword @code{:external} as the first symbol.
 Such expressions must only involve a single logical atom, or a single
 conjunction of logical atoms. When @sysname {} attempts to find a binding that
-satisfies such an expression, it will first invoke external-access-hook
+satisfies such an expression, it will first invoke @code{external-access-hook}
 to satisfy the expression; if that routine is undefined or returns nil,
 @sysname {} will then try to satisfy the expression using its internal
-knowledge state. The argument to external-access-hook is a list of the
-form @code{'(and (@var{pred} @var{val} @var{val})@dots{})}. It returns a list of responses,
-each of which is a list of two elements: an attribution and a list of
-bindings for the unbound variables in the query. The attribution is
-stored for use with the @emph{explanation} option for the planning
-system (@pxref{#explanation, explanation, explanation}). For example, consider a method that has the
-following precondition:
+knowledge state. The argument to @code{external-access-hook} is a list
+of the form @code{'(and (@var{pred} @var{val} @var{val})@dots{})}.  It
+returns a list of responses, each of which is a list of two elements:
+an attribution, and a list of bindings for the unbound variables in the
+query. The attribution is stored for use with the @emph{explanation}
+option for the planning system (@pxref{#explanation, explanation,
+explanation}). For example, consider a method that has the following
+precondition:
 
 @lisp
 (or (and (clear ?b1)
@@ -836,7 +838,7 @@ following precondition:
      (:external and (on ?b1 ?b2) (on ?b2 ?b3)))
 @end lisp
 
-When this precondition is encountered and external-access-hook is
+When this precondition is encountered and @code{external-access-hook} is
 defined, @sysname {} invokes that routine with the argument @code{'(and (on ?b1 ?b2)
 (on ?b2 ?b3))}. The routine might (for example) return the list:
 
@@ -1003,18 +1005,18 @@ is included, the item @var{l} should evaluate to a list; all items in
 An @strong{eval term} is an expression of the form
 
 @lisp
-(eval @emph{general}-@emph{lisp-expression})
+(eval @emph{general-lisp-expression})
 @end lisp
 The value associated with an eval term is determined as follows. First,
-any variable symbols which appear in @emph{lisp-expression} and are
+any variable symbols which appear in @var{general-lisp-expression} and are
 bound are replaced by the values that they are bound to. Then, the
 entire expression is evaluated in Lisp. For example, if the variable
-symbol ?foo is bound to the value 3 then the term:
+symbol @var{?foo} is bound to the value 3 then the term:
 
 @lisp
 (eval (mapcar #'(lambda (x) (+ x ?foo)) `(1 2 ,(* ?foo ?foo))))
 @end lisp
-
+@noindent
 will have as its value a list containing the numbers 4, 5, and 12. 
 
 @cindex quoting in call and eval terms
@@ -1023,25 +1025,33 @@ that variable substitutions in eval terms are handled before any
 evaluation of the expression, as in Lisp macros. One implication of this
 fact is that variables with symbolic values must be explicitly quoted if
 they are to be treated as Lisp symbols. For example, if the variable
-@code{?foo} is bound to the symbol @code{BAR}, the following eval term has the value
+@var{?foo} is bound to the symbol @code{BAR}, the following eval term has the value
 @code{(BAR BAZ)}:
 
 @lisp
 (eval (list '?foo 'BAZ))
 @end lisp
-
-if this were written
+@noindent
+But if this were written
 
 @lisp
 (eval (list ?foo 'BAZ))
 @end lisp
-
+@noindent
 it would cause a Lisp error when Lisp attempts to find the value of @code{BAR},
 which it would believe to be a variable.
 
 @node Call Terms,  , Eval Terms, Terms
 @subsection Call terms
 @anchor{#call-terms}
+A @strong{call term} is not as expressive as an eval term. In
+particular, it does not support the evaluation of Lisp macros
+(including macro characters such as backquote). Both @code{call} and
+@code{eval} are supported in @sysname {} because the former is
+compatible with JSHOP 1.0 and the latter is compatible with SHOP
+1.x. @sysname {} users who are not interested in either form of
+compatibility may use either form.
+
 A @strong{call term} is an expression of the form
 
 @lisp
@@ -1054,21 +1064,16 @@ tells @sysname {} that @var{f} is an attached procedure, i.e., that whenever
 @sysname {} needs to evaluate a precondition or task list that contains a
 call term, @sysname {} should replace the call term with the result of
 applying the function @var{f} on the arguments @var{t@sub{1},
-t@sub{2}, @dots{}, t@sub{n}}. 
-We later will define preconditions (@pxref{Logical Precondition, preconditions}) and task
-lists (@pxref{Task Lists}).
+t@sub{2}, @dots{}, t@sub{n}}.  We later will define preconditions
+(@pxref{Logical Precondition, preconditions}) and task lists
+(@pxref{Task Lists}).
 
 For example, the following call term would have the value 6:
 
 @lisp
 (call + (call + 1 2) 3)
 @end lisp
-Note that a call term is not as expressive as an eval term. In
-particular, it does not support the evaluation of Lisp macros (including
-macro characters such as backquote). Both @code{call} and @code{eval} are supported in
-@sysname {} because the former is compatible with JSHOP 1.0 and the latter is
-compatible with SHOP 1.x. @sysname {} users who are not interested in either
-form of compatibility may use either form.
+
 
 @node Logical Atoms , Logical Expressions, Terms, The SHOP3 Formalism
 @section Logical Atoms
@@ -1087,9 +1092,9 @@ other than an eval or call term.
 @anchor{#logical-expressions}
 A @strong{logical expression} is a logical atom or any of the following
 complex expressions: @strong{conjuncts}, @strong{disjuncts},
-@strong{negations}, @strong{implications}, @strong{universal
-quantifications}, @strong{assignments}, @strong{eval expressions},
-@strong{call expressions}.
+@strong{negations}, @strong{implications}, @strong{universal quantifications},
+@strong{assignments}, @strong{eval}, @strong{call}, @strong{enforce}, @strong{setof},
+and @strong{bagof}.
 @menu
 * Conjuncts::
 * Disjuncts::
@@ -1159,9 +1164,9 @@ An @strong{implication} is an expression of the form
 @end lisp
 @noindent
 where @emph{Y} and @emph{Z} are logical expressions. The intent of an
-implication is to evaluate its logical counterpart; that is, @emph{(¬Y ∨
-Z)}. Note that here, @emph{Y} should be ground, or the semantic of the
-implication will be ambiguous.
+implication is to evaluate its logical counterpart; that is, @emph{(¬Y
+∨ Z)}. Note that the context should not leave free variables in
+@emph{Y}, or the semantics of the implication will be ambiguous.
 
 @node Universal Quantifications, Assignments, Implications, Logical Expressions
 @subsection Universal Quantifications
@@ -1176,7 +1181,7 @@ form
 where @emph{E@sub{1}} and @emph{E@sub{2}} are logical expressions, and
 @emph{V} is the list of variables in @emph{E@sub{1}}. To satisfy a
 @strong{universal quantification} expression, the following must hold:
-for each possible substitution u for variables in @emph{V}, if
+for each possible substitution @emph{u} for variables in @emph{V}, if
 @emph{E@sub{1}@sup{u}} is satisfied then @emph{E@sub{2}@sup{u}} must
 also be satisfied in the current state of the world. Note that this use
 of the keyword @code{forall} is distinct from its use in add and delete lists
@@ -1225,9 +1230,9 @@ A somewhat cumbersome way to verify this is as follows:
 @b{Note:} @code{assign} is @emph{not} the default way to bind
 @sysname{}'s logical variables.  The default way to bind logical
 variables is through @emph{unification}. @code{assign} is specifically for use
-when you wish to use @emph{lisp code} to produce values you will bind
+when you wish to use @emph{Lisp code} to produce values you will bind
 variables to.  To that end, @code{assign} expects that its second
-argument will be a lisp expression and it will @emph{evaluate} that
+argument will be a Lisp expression and it will @emph{evaluate} that
 expression.  It is because of this evaluation process that the following
 expression (with @code{=} interpreted as unification)
 
@@ -1313,14 +1318,14 @@ Find all solutions to @emph{expr,} and bind the @emph{set of} values for
 @emph{term} in @emph{expr} to @emph{set-var}. For example
 
 @lisp
-(setof ?uav (uav ?uav) ?uavs)
+(setof ?u (uav ?u) ?uavs)
 @end lisp
 
 will bind @code{?uavs} to the set of UAVs in the current state.
 
 @lisp
-(setof (pair ?uav1 ?uav2) 
-  (and (uav ?uav1) (uav ?uav2) (line-of-sight ?uav1 ?uav2))
+(setof (pair ?u1 ?u2) 
+  (and (uav ?u1) (uav ?u2) (line-of-sight ?u1 ?u2))
   ?pairs)
 @end lisp
 
@@ -1450,13 +1455,14 @@ A @strong{task atom} is an expression of any of the forms
 @end lisp
 @noindent
 where @emph{s} is a task symbol and the arguments @emph{t@sub{1},
-t@sub{2}, @dots{}, t@sub{n}} are terms. The task atom is @strong{primitive}
-if @emph{s} is a primitive task symbol, and it is @strong{compound} if
-@emph{s} is a compound task symbol. The first and second forms are
-called an @strong{ordinary task atom}; the third form is called an
-@strong{immediate task atom}. The purpose of the @code{:immediate} keyword is
-to give a higher priority to the task, as described in the following
-subsection.
+t@sub{2}, @dots{}, t@sub{n}} are terms. The task atom is
+@strong{primitive} if @emph{s} is a primitive task symbol, and it is
+@strong{compound} if @emph{s} is a compound task symbol; recall
+@ref{Symbols}, and also see @ref{Operators}. The first and second
+forms are called an @strong{ordinary task atom}; the third form is
+called an @strong{immediate task atom}. The purpose of the
+@code{:immediate} keyword is to give a higher priority to the task, as
+described in the following subsection.
 
 @node Task Lists, Operators, Task Atoms, The SHOP3 Formalism
 @section Task Lists
@@ -1475,16 +1481,18 @@ tasklist@sub{2} @dots{} tasklist@sub{n}}), where @emph{tasklist@sub{1}
 tasklist@sub{2} @dots{} tasklist@sub{n}} are task lists.
 
 @item
-A task atom, see 4.8.
+A task atom, see @ref{Task Atoms}.
 
 @end itemize
 
-The :ordered keyword, which is optional, specifies that @sysname {} must
-perform the task lists in the order that they are given.@ The :unordered
-keyword specifies that there is no particular ordering specified between
-@emph{tasklist@sub{1}, tasklist@sub{2} @dots{} tasklist@sub{n}.@ } With the
-use of the :unordered keyword, @sysname {} may interleave tasks between
-different task lists.@  Suppose we have two task lists as the following:
+The @code{:ordered} keyword, which is optional, specifies
+that @sysname {} must perform the task lists in the order that they
+are given.@ The @code{:unordered} keyword specifies that there is no
+particular ordering specified between @emph{tasklist@sub{1},
+tasklist@sub{2} @dots{} tasklist@sub{n}.@ } With the use of the
+@code{:unordered} keyword, @sysname {} may interleave tasks between
+different task lists.@ Suppose we have two task lists as the
+following:
 
 @emph{T} = @code{(:ordered @emph{t}@sub{1} @emph{t}@sub{2} @dots{}
 @emph{t@sub{m}})};
@@ -1506,13 +1514,13 @@ priority to the immediate tasks. For example, if @emph{t}@sub{1} is
 immediate and @emph{u}@sub{1} is not immediate, then @sysname {} should
 perform @emph{t}@sub{1} before both @emph{t}@sub{2} and @emph{u}@sub{1}.
 
-Note: A task with the @code{:immediate} keyword specifies that this task must
+@strong{Note:} A task with the @code{:immediate} keyword specifies that this task must
 be performed immediately when it has no predecessors.@  Therefore, we
 can allow only one task with the @code{:immediate} keyword in the list of tasks
 that have no predecessors.@  Otherwise, @sysname's behavior on those tasks
 is undefined.@  In other words, it is not allowed to have two tasks in
-an :unordered list and both have the @code{:immediate} keyword.@ @  For
-instance, on the example above, @emph{t@sub{1}} and @emph{u@sub{1}}
+an @code{:unordered} list with both having the @code{:immediate} keyword.@
+@ For instance, on the example above, @emph{t@sub{1}} and @emph{u@sub{1}}
 cannot both have the @code{:immediate} keyword.
 
 @node  Operators, Methods, Task Lists, The SHOP3 Formalism
@@ -1525,9 +1533,9 @@ following form:
 
 @lisp
 (:op @emph{head}
-       [:add @emph{add-list}]
-       [:delete @emph{delete-list}]
        [:precond @emph{precondition}]
+       [:delete @emph{delete-list}]
+       [:add @emph{add-list}]
        [:cost @emph{cost-fn}])
 @end lisp
 
@@ -1536,37 +1544,40 @@ where
 
 @itemize
 @item
-@emph{head} (the operator's @strong{head}) is a primitive task atom (i.e.,
-a task atom with a task symbol that begins with an exclamation point)
+@emph{head} (the operator's @strong{head}) is a primitive task atom, i.e.
+a task atom with a task symbol that begins with an exclamation point.
 
 @item The operator's
 @emph{precondition} is a logical expression. This is quite general,
 recall @ref{Logical Expressions}, especially @ref{Assignments}, and
-@ref{Eval expressions}.
+@ref{Eval expressions}.  With the latter two one can, for example,
+compute values for auxiliary variables, which can be used later in the
+body of the operator.
 
 @item
 The operator's
-@emph{delete-list} is a list for which each
-of the element may be any of following:
+@emph{add-list} is a list for which each element may be any of following:
 
 @itemize
 @item
-a logical atom
+a logical atom (recall @ref{Logical Atoms}),
 
 @item
-a protection condition (see below)
+a protection condition, see @ref{Protection conditions},
 
 @item
-an expression of the form @code{(forall @var{V} @var{E} @var{L})}, where @var{V} is a list of
-variables in @var{E}, @var{E} is a logical expression, and @var{L} is
-a list of logical atoms, @xref{Logical Atoms}.
+an expression of the form @code{(forall @var{V} @var{E} @var{L})},
+where @var{V} is a list of variables in @var{E}, @var{E} is a logical
+expression, and @var{L} is a list of logical atoms.
+
+Such an expression can, for example, be used to implement PDDL's
+@emph{conditional effects}.
 
 @end itemize
 
 @item
-The operator's
-@emph{add-list} is a list of logical atoms
-that has the same form as the delete-list.
+The operator's @emph{delete-list} is a list of logical atoms of the
+same form as the @emph{add-list}.
 
 @item
 @emph{cost-fn} (the operator's @strong{cost}) is a general Lisp expression. If
@@ -1719,11 +1730,8 @@ in the future.}
 @anchor{#methods}
 A @strong{method} is a list of the form
 
-
 @lisp
-(:method [@var{m@sub{id}}] @var{h} [@var{n@sub{1}}] @var{C@sub{1}} @var{T@sub{1}}
-[@var{n@sub{2}}] @var{C@sub{2}} @var{T@sub{2}} @dots{} [@var{n@sub{k}}]
-@var{C@sub{k}} @var{T@sub{k}})
+(:method [@var{nm}] @var{T} [@var{n@sub{1}}] @var{C@sub{1}} @var{T@sub{1}} [@var{n@sub{2}}] @var{C@sub{2}} @var{T@sub{2}} @dots{} [@var{n@sub{k}}] @var{C@sub{k}} @var{T@sub{k}})
 @end lisp
 
 @noindent
@@ -1731,43 +1739,44 @@ where
 
 @itemize
 @item
-@var{m@sub{id}} is an @emph{optional} identifier for this method expression.
-Note that this is distinct from the (also optional) identifiers for each
-precondition/task network pair, @var{n@sub{i}}, described below.  The
-exception to this rule is that a precondition/task network identifier,
-if supplied, for a method expression with only a single such pair, will
-be used as the identifier for the entire method expression.
+@var{nm} is an optional @emph{name} for this method.  Note that
+@var{nm} is distinct from the (also optional) names @var{n@sub{i}} for
+each (precondition, task network) pair described below.  The exception
+to this rule is that if an @var{n@sub{1}} is supplied for a method
+expression with only one (precondition, task network) pair,
+@var{n@sub{1}} will be used as the identifier for the entire method
+expression.
 
 @item
-@var{h} (which is called the method's @strong{head}) is a task atom in
-which no @emph{call or eval terms} can appear;
+@var{T}, also referred to as the method's @strong{head}, is a
+@emph{task} atom in which no @emph{call} or @emph{eval} terms can
+appear.
 
 @item
-Each @var{C@sub{i}} (which is called a @strong{precondition} for the
-method) is a logical precondition.
+Each @var{C@sub{i}}, a @strong{precondition} for the method, is a
+logical precondition; see @ref{Logical Precondition}.
 
 @item
-Each @var{T@sub{i}} (which is called a @strong{tail} of the method) is
-a task list. The task atoms in the list can contain call terms.
+Each @var{T@sub{i}}, called a @strong{tail} of the method, is a task
+list. The task atoms in the list can contain @emph{call} terms.
 
 @item
-Each n@var{@sub{i}} is the @emph{name} for the succeeding
+Each @var{n@sub{i}} is the @emph{name} for the succeeding
 @var{C@sub{i} T@sub{i}} pair. These names are optional and if omitted a
-unique name will be assigned for each pair. These names have no semantic
+unique name will be assigned for each pair. The names have no semantic
 meaning to @sysname, but are provided in order to help the user debug
 domain descriptions by looking at traces of @sysname's behavior.
 
 @end itemize
 
-A method indicates that the task specified in the method's head can be
-performed by performing all of the tasks in one of the method's tails
-when one that tail's precondition is satisfied. Note that the
-preconditions in a single @code{:method} expression are considered in the given order, and a later
-precondition is considered @emph{only} if all of the earlier
-preconditions are not satisfied. 
+A method indicates that the task specified in its head can be
+performed by performing all of the tasks in one of its tails, when
+that tail's precondition is satisfied. The preconditions in a method
+are considered in the order given, and a later precondition is
+considered @emph{only} if all of the earlier ones are not satisfied.
 
-On the other hand, if there are multiple top-level methods for a
-given task available at some point in time, all of these methods will be
+On the other hand, if there are @emph{multiple} top-level methods for a
+given task available at some point in time, @emph{all} of these methods will be
 considered (through backtracking). Consequently, the following code:
 
 @lisp
@@ -1962,11 +1971,11 @@ A @strong{planning problem} has the form
 
 @noindent
 where @emph{problem-name} is a symbol, @emph{domain-name} is a symbol,
-each a@emph{@sub{i}} is a ground logical atom, and @emph{T} is a task
+each @emph{a@sub{i}} is a ground logical atom, and @emph{T} is a task
 list. This form defines a problem which may be solved by addressing the
 tasks in @emph{T,} using the operators, methods and axioms in
 @emph{domain-name,} starting in an initial state defined by the atoms
-a@emph{@sub{1}} through a@emph{@sub{n}}.
+@emph{a@sub{1}} through @emph{a@sub{n}}.
 
 @include include/macro-shop-defproblem.texinfo
 
@@ -2022,13 +2031,13 @@ and costs removed.  For this, one may use
 @anchor{#pddl-compatibility}
 The current release of @sysname {} provides a preliminary capability to
 incorporate PDDL domain definitions into a @sysname {} domain. You should be
-able to incorporate components of a PDDL domain definition into a @sysname
+able to incorporate components of a PDDL domain definition into a @sysname{}
 domain definition of @code{:type pddl-domain} or @code{simple-pddl-domain}. A
 @code{pddl-domain} corresponds to a PDDL domain of the ADL type. The
 @code{pddl-domain }uses conditional-effects, existential-preconditions,
 universal-preconditions, and equality (note that these are @emph{PDDL}
 conditional effects, existential preconditions and universal
-preconditions; these are @emph{not} SHOP-syntax condition effects,
+preconditions; these are @emph{not} SHOP-syntax conditional effects,
 etc.). A @code{simple-pddl-domain} will not have conditional-effects,
 existential-preconditions, universal-preconditions, or equality.
 
@@ -2310,9 +2319,8 @@ use ``out-of-the box.''  Specifically, it does not contain any built-in
 functionality for advancing the world state; those need to be developed
 by the programmer, based on facilities supplied by @sysname{}'s
 ``common'' subsystem.
-The theorem-prover makes relies critically on the unifier subsystem, and
-re-exports from the theorem-prover package most of the key functions
-from the unifier package.
+The theorem-prover relies critically on the unifier subsystem, and
+re-exports most of the key functions from the unifier package.
 
 The top-level function of the theorem-prover is @emph{query}, which is
 built on top of the more difficult-to-use @emph{find-satisfiers}:
