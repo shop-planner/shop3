@@ -3646,6 +3646,10 @@ search and in the second case it will use an iterative-deepening search:
 @node Acknowledgments, References, General Notes on SHOP3, Top
 @chapter Acknowledgments
 @anchor{#acknowledgments}
+
+Thanks to Kostas Oikonomou for multiple corrections, edits, and
+improvements to the @sysname{} manual.
+
 Original University of Maryland work on @sysname {} was supported in part by
 the following grants, contracts, and awards: Air Force Research
 Laboratory F30602-99-1-0013 and F30602-00-2-0505, Army Research
@@ -3664,7 +3668,7 @@ SIFT LLC work was also supported by Internal Research and Development.
 Joint SIFT, LLC and University of Maryland work was supported by DARPA
 contract FA8650-06-C-7606.
 
-Recent SIFT work on the manual was supported by the Defense Advanced
+Previous SIFT work on the manual was supported by the Defense Advanced
 Research Projects Agency (DARPA) and the Air Force Research Laboratory
 under Contract No. FA8750-17-C-0184.
 
