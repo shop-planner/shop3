@@ -417,9 +417,11 @@ Otherwise it returns FAIL."
       (append previous (list (first unordered-list)))))))
 
 (defun get-task-name (task1)
-  (if (eq (second task1) :immediate)
-    (third task1)
-    (second task1)))
+  (cond ((eq (first task1) :task)
+         (if (eq (second task1) :immediate)
+             (third task1)
+             (second task1)))
+        (t (first task1))))
 
 (defun get-task-body (task1)
   (if (eq (second task1) :immediate)

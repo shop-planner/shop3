@@ -370,10 +370,7 @@ of SHOP2."
              (dump-previous-plans!)))
           (when acceptable-cost
             (trace-print :plans nil state "~4TStoring new plan in *plans-found*~%")
-            (store-plan! domain which-plans final-plan state unifier)
-            ;; (break "What's in *plans-found* now: ~s" *plans-found*)
-            ;; (trace-print :plans nil state "~4TAfter storage, length of *plans-found* is ~d~%" (length *plans-found*))
-            )))))
+            (store-plan! domain which-plans final-plan state unifier))))))
 
 (defgeneric store-plan! (domain which-plans plan state unifier)
   (:method ((domain domain) (which-plans symbol) plan state unifier)
