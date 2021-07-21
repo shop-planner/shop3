@@ -79,13 +79,16 @@ to be returned by FIND-SATISFIERS.
 1. a list of values for the variables \(or the variables themselves, if unbound\).
 2. a list of dependencies, which will be computed if *RECORD-DEPENDENCIES-P* is
 non-NIL."
-  (let ((d (gensym)))
-    `(let ((,d (if ,domain-supp-p ,domain *domain*)))
-       (if (null ,goals)
+  (let ((d (gensym))
+        (goals-val (gensym))
+        (domain (if domain-supp-p domain '*domain*)))
+    `(let ((,d ,domain)
+           (,goals-val ,goals))
+       (if (null ,goals-val)
            ;; return value is list-ified because the SEEK-SATISFIERS query is
            ;; made from a single context, but returns multiple answers.
            (values (list ,var-val-list) (list ,dependencies))
-           (real-seek-satisfiers ,d ,goals ,state
+           (real-seek-satisfiers ,d ,goals-val ,state
                                  ,var-val-list ,level ,just1 ,dependencies)))))
 
 (defgeneric query (goals state &key just-one domain record-dependencies)
@@ -107,20 +110,21 @@ state provides the database.  level is a non-negative integer indicating the
 current depth of inference, used in debugging prints, and
 JUST-ONE is a boolean indicating whether you want just one answer (non-nil)
 or all answers (nil)."
+  (declare (optimize (speed 3) (safety 3) (space 1)))
   (setf *current-state* state)
   (let ((*state* state))
     (declare (special *state*))
     (let* ((sought-goals
-             (cond
+             (case (first goals)
                ;; optimize the singleton case for FIRST...
-               ((eq (first goals) :first) (rest goals))
-               ((eq (first goals) :sort-by)
+               (:first (rest goals))
+               (:sort-by
                 (if (= (length goals) 3)
                     (third goals)
                     (fourth goals)))
-               ((eq (first goals) :random)
+               (:random
                 (second goals))
-               (t goals)))
+               (otherwise goals)))
            (variables (extract-variables sought-goals)))
       (multiple-value-bind (answers depends)
           ;; if the preconditions use :SORT-BY, we assume that the preconditions are
@@ -142,7 +146,7 @@ or all answers (nil)."
                         (if (= (length goals) 3) #'<
                             (eval (third goals)))
                         :key #'(lambda (sat)
-                                 (eval (apply-substitution (second goals) sat))))
+                                 (apply-substitution (second goals) sat)))
                   (when *record-dependencies-p* (make-list num-satisfiers :initial-element nil)))
                  ;; see earlier comment about SORT-BY.
                  #+ignore(if *record-dependencies-p*

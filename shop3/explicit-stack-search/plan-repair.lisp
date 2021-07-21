@@ -126,25 +126,27 @@ BEFORE the insertion of FAILED into the plan tree.")
 (defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
   (let ((*verbose* verbose)
         (*domain* domain))
+    
     (when (>= *verbose* 2)
       (format t "~&World state before backjump is:~%")
       (pprint (state-atoms (world-state search-state))))
-    (let ((failed-choice-node (find-failed-choice-entry failed-tree-node search-state)))
-      (when (>= *verbose* 1)
-        (format t "~&Backjumping to ~A~%" failed-choice-node))
-      (stack-backjump search-state failed-choice-node)
-      (cond ((>= *verbose* 2)
-             (format t "~&Beginning plan repair~%World state after backjump is:~%")
-             (pprint (state-atoms (world-state search-state))))
-            ((= *verbose* 1)
-             (format t "~&Beginning plan repair~%")))
-      ;; at this point, we have a backtrack state where we have popped
-      ;; a toplevel task, and if we restart here, we lose the possible
-      ;; choices.  So what we need to do is to reset the alternatives
-      ;; for solving this task, not find a different task.
-      (setf (mode search-state) 'expand-task)
-      ;; must be "repairable" so that we don't strip NOPs.
-      (seek-plans-stack search-state domain :repairable t))))
+    (bind-count-variables
+      (let ((failed-choice-node (find-failed-choice-entry failed-tree-node search-state)))
+        (when (>= *verbose* 1)
+          (format t "~&Backjumping to ~A~%" failed-choice-node))
+        (stack-backjump search-state failed-choice-node)
+        (cond ((>= *verbose* 2)
+               (format t "~&Beginning plan repair~%World state after backjump is:~%")
+               (pprint (state-atoms (world-state search-state))))
+              ((= *verbose* 1)
+               (format t "~&Beginning plan repair~%")))
+        ;; at this point, we have a backtrack state where we have popped
+        ;; a toplevel task, and if we restart here, we lose the possible
+        ;; choices.  So what we need to do is to reset the alternatives
+        ;; for solving this task, not find a different task.
+        (setf (mode search-state) 'expand-task)
+        ;; must be "repairable" so that we don't strip NOPs.
+        (seek-plans-stack search-state domain :repairable t)))))
 
 ;;; This is a very messy function: it's supposed to grab fresh copies
 ;;; of actions (i.e., the actions in the PLAN, which is a replan) in

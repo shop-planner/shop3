@@ -77,21 +77,28 @@
   (format nil "~%~A" (make-string indentation :initial-element #\space))
   (apply #'format (cons nil body)))
 
-(defun print-stats-header (label &optional (stream t))
+(defun print-stats-header (label &key (stream t) backtracks)
   (when *print-stats*
     (format stream
-            "~%~7@a Plans Mincost Maxcost Expansions Inferences  CPU time  Real time"
-            label)))
+            "~%~7@a Plans Mincost Maxcost Expansions Inferences~:[~;  Backtracks~]  CPU time  Real time"
+            label backtracks)))
 
 (defun print-stats (depth plans tasks inferences runtime realtime
-                    &optional (stream t))
+                    &key (stream t) backtracks)
   (when *print-stats*
-    (format stream "~%~6@a~6@a ~7@a ~7@a~11@s~11@s~10,3f~11,3f~%"
+    (format stream "~%~6@a~6@a ~7@a ~7@a~12@s~11@s~@[~12d~]~10,3f~11,3f~%"
             depth (length plans)
+            ;; min cost
             (if plans (to-string (apply #'min (mapcar #'plan-cost plans)) 2) "-")
+            ;; max cost
             (if plans (to-string (apply #'max (mapcar #'plan-cost plans)) 2) "-")
-            tasks inferences
+            ;; expansions
+            tasks
+            inferences
+            backtracks
+            ;; CPU time
             (/ runtime internal-time-units-per-second)
+            ;; real time
             (/ realtime internal-time-units-per-second))))
 
 ; Converts a number to a string.
@@ -172,5 +179,6 @@
 ;;; Debug function
 ;;;---------------------------------------------------------------------------
 (defun backtrack (format-string &rest args)
+  (incf *backtracks*)
   (when *break-on-backtrack*
     (apply #'break format-string args)))

@@ -1,6 +1,6 @@
 (defpackage :shop3-rovers
   (:use common-lisp shop3)
-  (:nicknames #:shop2-rovers)
+  (:nicknames #:shop2-rovers #:shop-rovers)
   (:intern
    #:communicated_image_data
    #:communicated_rock_data

@@ -74,6 +74,7 @@
 (defparameter *internal-time-tag* nil)    ; catch tag to throw to when time expires
 (defparameter *time-limit* nil)     ; maximum time (in seconds) for execution
 (defparameter *expansions* 0)       ; number of task expansions so far
+(defvar       *backtracks* 0)
 (defparameter *plans-found* nil)    ; list of plans found so far
 (defparameter *plan-tree* nil)      ; whether to return the tree
 (defparameter *collect-state* nil)  ; whether to return the final states
@@ -299,6 +300,11 @@ IF-THEN-ELSE semantics in methods."))
        "The programmer MAY (but is not obligated to) specify that a problem
          is intended for use with a particular domain definition."))
   (:documentation "An object representing a SHOP problem."))
+
+
+(defmethod problem-name ((name symbol))
+  name)
+
 
 (defmethod domain-name ((probspec symbol))
   (domain-name (find-problem probspec t)))

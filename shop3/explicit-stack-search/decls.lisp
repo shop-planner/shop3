@@ -102,3 +102,33 @@ functions."
   `(setf ,place
          (append ,place ,value)))
 
+(declaim (special
+          *backtrack-failed-pop-toplevel*
+          *backtrack-failed-pop-toplevel*
+          *backtrack-failed-pop-immediate*
+          *backtrack-failed-loop-unfold*
+          *backtrack-failed-primitive*
+          *backtrack-failed-choose-method*
+          *backtrack-failed-choose-method-bindings*))
+
+;;; Any call to SEEK-PLANS-STACK should be wrapped by this macro,
+;;; to ensure that counting does not cause an error.
+(defmacro bind-count-variables (&body body)
+  `(let ((*expansions* 0)
+         (*inferences* 0)
+         (*backtracks* 0)
+         (*backtrack-failed-pop-toplevel* 0)
+         (*backtrack-failed-pop-immediate* 0)
+         (*backtrack-failed-loop-unfold* 0)
+         (*backtrack-failed-primitive* 0)
+         (*backtrack-failed-choose-method* 0)
+         (*backtrack-failed-choose-method-bindings* 0))
+     (declare (special
+          *backtrack-failed-pop-toplevel*
+          *backtrack-failed-pop-toplevel*
+          *backtrack-failed-pop-immediate*
+          *backtrack-failed-loop-unfold*
+          *backtrack-failed-primitive*
+          *backtrack-failed-choose-method*
+          *backtrack-failed-choose-method-bindings*))
+     ,@body))
