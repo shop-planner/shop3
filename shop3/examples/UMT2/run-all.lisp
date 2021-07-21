@@ -6,7 +6,7 @@
 
 (IN-PACKAGE :shop-user)
 
-(defparameter +PROBLEM-DIR+ "/home/rpg/lisp/shop/shop3/examples/UMT2/")
+(defparameter +PROBLEM-DIR+ (namestring (asdf:system-relative-pathname "shop3" "examples/UMT2/")))
 (defparameter +DOMAIN-FILE+ "UMT2.lisp")
 (defparameter +PROBLEM-PATTERN+ "pfile?.lisp")
 (defmacro before-run ()
@@ -22,6 +22,7 @@
 (before-run)
 
 (loop :for file :in (directory (concatenate 'string +PROBLEM-DIR+ +PROBLEM-PATTERN+))
+      :unless (equal (pathname-name file) "pfile3")
       :do (load file)
           (with-open-file (str (concatenate 'string +PROBLEM-DIR+ "runall.log")
                                :direction :output :if-exists :append :if-does-not-exist :create)
