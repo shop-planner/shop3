@@ -3,7 +3,7 @@
 
 # SHOP3 
 
-This repository contains the open source version of the SHOP3 planner.
+This repository contains the open source version of the SHOP3 Hierarchical Task Network (HTN) AI planner.
 
 ## Exciting news (2021-04-22)
 
