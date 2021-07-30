@@ -1,5 +1,4 @@
 # YAML 1.2
----
 authors: 
   -
     affiliation: "SIFT, LLC"
@@ -42,4 +41,3 @@ references:
 cff-version: "1.2.0"
 # date-released: 2019-04
 message: "If you use this software, please cite it using this conference paper."
-...
