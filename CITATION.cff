@@ -2,8 +2,7 @@ authors:
   -
     affiliation: "SIFT, LLC"
     family-names: Goldman
-    given-names: Robert
-    name-particle: "P."
+    given-names: Robert P.
     orcid: "https://orcid.org/0000-0002-5851-4851"
   -
     affiliation: "SIFT, LLC"
@@ -30,14 +29,13 @@ references:
       -
         affiliation: "SIFT, LLC"
         family-names: Goldman
-        given-names: Robert
-        name-particle: "P."
+        given-names: Robert P.
         orcid: "https://orcid.org/0000-0002-5851-4851"
       -
         affiliation: "SIFT, LLC"
         family-names: Kuter
         given-names: Ugur
 cff-version: "1.2.0"
-date-released: 2019-04-01
+date-released: 2019-03-31
 message: "If you use this software, please cite it using this conference paper."
-version: 0.1.0
+version: 3.0.0
