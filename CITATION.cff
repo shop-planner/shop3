@@ -38,5 +38,6 @@ references:
         family-names: Kuter
         given-names: Ugur
 cff-version: "1.2.0"
-# date-released: 2019-04
+date-released: 2019-04-01
 message: "If you use this software, please cite it using this conference paper."
+version: 0.1.0
