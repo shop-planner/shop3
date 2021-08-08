@@ -78,8 +78,8 @@ College Park, MD 20742, USA
 * The SHOP Unifier::
 * Plan Grapher::
 * Data Structures::
-* Internal Technical Information::
 * General Notes on @sysname {}: General Notes on SHOP3.
+* Internal Technical Information::
 * Acknowledgments::
 * References::
 * Function Index::
@@ -1647,7 +1647,7 @@ exists in @sysname {} is so that automated systems which use @sysname {} plans a
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
-@node Operators must be deterministic, Protection conditions, Operators, Operators
+@node Operators must be deterministic, Protection conditions, Internal Operators, Operators
 @subsection Operators must be deterministic
 @cindex Operators, deterministic
 
@@ -2025,7 +2025,7 @@ A @strong{planning problem set} has the form
 where @var{set-name} is a symbol and each @var{p@sub{i}} is the name
 of a planning problem.
 
-@node  Plans, , Planning Problem Set, The SHOP3 Formalism
+@node  Plans, Simple example, Planning Problem Set, The SHOP3 Formalism
 @section  Plans
 @cindex plans
 
@@ -2478,7 +2478,7 @@ we have developed the @sysname{} plan grapher.
 @include include/class-spg-enhanced-plan-tree-graph.texinfo 
 @include include/class-spg-plan-tree-graph.texinfo 
 
-@node Data Structures, Internal Technical Information, Plan Grapher, Top
+@node Data Structures, General Notes on SHOP3, Plan Grapher, Top
 @chapter Data Structures
 
 @menu
@@ -2559,8 +2559,120 @@ generic functions:
 @include include/fun-shop3cmn-copy-state.texinfo
 
 
+@node General Notes on SHOP3, Internal Technical Information, Data Structures, Top
+@chapter General Notes on @sysname {}
 
-@node Internal Technical Information, General Notes on SHOP3, Data Structures, Top
+@menu
+* More on axioms::
+@end menu
+
+@node More on axioms,  , General Notes on SHOP3, General Notes on SHOP3
+@section More on axioms
+@anchor{#more-on-axioms}
+
+@enumerate
+
+@item
+@sysname's axiom syntax and semantics are like those of Prolog's Horn
+clauses: there is implicit universal quantification over @emph{all}
+variables.  For example the axiom
+@lisp
+(:- (p ?x ?y) (q ?x ?z))
+@end lisp
+@noindent
+means @math{\forall x\,\forall y\,\forall z\; \bigl( q(x,z)
+\rightarrow p(x,y) \bigr)}.
+
+@item
+An axiom may invoke arbitrary Lisp functions, but only through the
+@code{eval}, @code{call}, and @code{assign} family of
+pseudo-predicates.  Note that these functions do not have access to
+the current state, except by using the special variable
+@code{shop::*current-state*}. 
+@vindex *current-state*
+
+Other predicates are addressed through the theorem-prover. The theorem
+prover knows about @sysname{}'s state and queries will be evaluated in
+the context of the current state.
+
+By default, the theorem prover will search for all solutions to a
+query (you can use the @code{:just-one} flag to avoid this), and
+recursive queries will cause the theorem-prover to go away forever.
+
+@item
+Since the null conjunct is always true, an axiom of the form @code{(:-
+a nil)} is equivalent to asserting the atom @var{a} as a basic
+fact. The difference is that the expression @code{(:- a nil)} is what
+one would put into the set of axioms for the problem domain, whereas
+the atom @var{a} is what one would put into a state description. Such
+an atom can be deleted by an operator, but with the axiom @code{(:- a
+nil)}, @var{a} is always true and no operator can change that.
+
+@item
+An axiom with several conjunctions in its tail has different semantics
+than you would get by making each conjunct the tail of a separate
+axiom. Consider the following axiom lists:
+
+@lisp
+X1 = ((:- (a ?x) ((b ?x)) ((c ?x))))
+X2 = ((:- (a ?x) ((b ?x))) (:- (a ?x) ((c ?x))))
+@end lisp
+@noindent
+
+In @var{X1}, the single axiom acts like an if-then-else:
+if @code{((b ?x))} is true then @code{find-satisfiers} returns the
+satisfiers for @code{(b ?x)}; otherwise if @code{((c ?x))} is true
+then it returns the satisfiers for @code{(c ?x)}.  For example,
+@lisp
+(find-satisfiers '((a ?u)) '((b 2) (c 3)))
+@end lisp
+@noindent
+would return @code{(((?u . 2)))}.
+
+On the other hand, in @var{X2} the set of axioms acts like a
+logical ``or'': @code{find-satisfiers} returns every satisfier for
+@code{(b ?x)} @emph{and} every satisfier for @code{(c ?x)}. In this case,
+@lisp
+(find-satisfiers '((a ?u)) '((b 2) (c 3)))
+@end lisp
+@noindent
+would return @code{(((?u . 2)) ((?u . 3)))}.
+
+
+@end enumerate
+
+
+@section Tasks, methods, operators, plans
+
+@enumerate
+@item
+Since a primitive task name is basically a call to an operator, you
+should never create a set of methods and operators that has more than
+one operator for the same primitive task. Otherwise, your plans will be
+ambiguous.
+
+@item
+In the following two calls to @code{find-plans} @sysname {} will find the same set of
+all shallowest plans, but in the first case @sysname {} will use a depth-first
+search and in the second case it will use an iterative-deepening search:
+
+@lisp
+(find-plans 'p :which :all-shallowest)
+(find-plans 'p :which :id-all)
+@end lisp
+@noindent
+Likewise, the following two calls to @sysname {} will both find the same
+shallowest plan, but in the first case @sysname {} will use a depth-first
+search and in the second case it will use an iterative-deepening search:
+@lisp
+(find-plans 'p :which :shallowest)
+(find-plans 'p :which :id-first)
+@end lisp
+
+@end enumerate
+
+
+@node Internal Technical Information, Acknowledgments, General Notes on SHOP3, Top
 @chapter Internal Technical Information
 
 @strong{This section has not been updated since the transition
@@ -3630,122 +3742,10 @@ of a problem set. This function runs @code{find-plans} on each planning problem
 specified by the list or problem set, and then returns nil. The keywords
 are simply passed on to find-plans.
 
-@node General Notes on SHOP3, Acknowledgments, Internal Technical Information, Top
-@chapter General Notes on @sysname {}
-
-@menu
-* More on axioms::
-@end menu
-
-@node More on axioms
-@section More on axioms
-@anchor{#more-on-axioms}
-
-@enumerate
-
-@item
-@sysname's axiom syntax and semantics are like those of Prolog's Horn
-clauses: there is implicit universal quantification over @emph{all}
-variables.  For example the axiom
-@lisp
-(:- (p ?x ?y) (q ?x ?z))
-@end lisp
-@noindent
-means @math{\forall x\,\forall y\,\forall z\; \bigl( q(x,z)
-\rightarrow p(x,y) \bigr)}.
-
-@item
-An axiom may invoke arbitrary Lisp functions, but only through the
-@code{eval}, @code{call}, and @code{assign} family of
-pseudo-predicates.  Note that these functions do not have access to
-the current state, except by using the special variable
-@code{shop::*current-state*}. 
-@vindex *current-state*
-
-Other predicates are addressed through the theorem-prover. The theorem
-prover knows about @sysname{}'s state and queries will be evaluated in
-the context of the current state.
-
-By default, the theorem prover will search for all solutions to a
-query (you can use the @code{:just-one} flag to avoid this), and
-recursive queries will cause the theorem-prover to go away forever.
-
-@item
-Since the null conjunct is always true, an axiom of the form @code{(:-
-a nil)} is equivalent to asserting the atom @var{a} as a basic
-fact. The difference is that the expression @code{(:- a nil)} is what
-one would put into the set of axioms for the problem domain, whereas
-the atom @var{a} is what one would put into a state description. Such
-an atom can be deleted by an operator, but with the axiom @code{(:- a
-nil)}, @var{a} is always true and no operator can change that.
-
-@item
-An axiom with several conjunctions in its tail has different semantics
-than you would get by making each conjunct the tail of a separate
-axiom. Consider the following axiom lists:
-
-@lisp
-X1 = ((:- (a ?x) ((b ?x)) ((c ?x))))
-X2 = ((:- (a ?x) ((b ?x))) (:- (a ?x) ((c ?x))))
-@end lisp
-@noindent
-
-In @var{X1}, the single axiom acts like an if-then-else:
-if @code{((b ?x))} is true then @code{find-satisfiers} returns the
-satisfiers for @code{(b ?x)}; otherwise if @code{((c ?x))} is true
-then it returns the satisfiers for @code{(c ?x)}.  For example,
-@lisp
-(find-satisfiers '((a ?u)) '((b 2) (c 3)))
-@end lisp
-@noindent
-would return @code{(((?u . 2)))}.
-
-On the other hand, in @var{X2} the set of axioms acts like a
-logical ``or'': @code{find-satisfiers} returns every satisfier for
-@code{(b ?x)} @emph{and} every satisfier for @code{(c ?x)}. In this case,
-@lisp
-(find-satisfiers '((a ?u)) '((b 2) (c 3)))
-@end lisp
-@noindent
-would return @code{(((?u . 2)) ((?u . 3)))}.
-
-
-@end enumerate
-
-
-@section Tasks, methods, operators, plans
-
-@enumerate
-@item
-Since a primitive task name is basically a call to an operator, you
-should never create a set of methods and operators that has more than
-one operator for the same primitive task. Otherwise, your plans will be
-ambiguous.
-
-@item
-In the following two calls to @code{find-plans} @sysname {} will find the same set of
-all shallowest plans, but in the first case @sysname {} will use a depth-first
-search and in the second case it will use an iterative-deepening search:
-
-@lisp
-(find-plans 'p :which :all-shallowest)
-(find-plans 'p :which :id-all)
-@end lisp
-@noindent
-Likewise, the following two calls to @sysname {} will both find the same
-shallowest plan, but in the first case @sysname {} will use a depth-first
-search and in the second case it will use an iterative-deepening search:
-@lisp
-(find-plans 'p :which :shallowest)
-(find-plans 'p :which :id-first)
-@end lisp
-
-@end enumerate
 
 
 
-
-@node Acknowledgments, References, General Notes on SHOP3, Top
+@node Acknowledgments, References, Internal Technical Information, Top
 @chapter Acknowledgments
 @anchor{#acknowledgments}
 
