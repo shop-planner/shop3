@@ -283,22 +283,31 @@ To enable it you may have to
 
 @node Running SHOP3, The SHOP3 Formalism, Execution Environment, Top
 @chapter Running @sysname {}
+@findex find-plans
+@findex find-plans-stack
+@findex mk:defsystem
+@findex do-problems
+@findex shop-trace
+@findex shop-untrace
 
 The latest version of @sysname {} is loaded by using the ASDF system
 definition facility. The first of the following subsections explains how
-to use ASDF to load @sysname. Note that previous methods of starting @sysname,
-by hand-coded load files, and @code{mk:defsystem}, are no longer supported.
+to use ASDF to load @sysname.@footnote{Previous methods of starting @sysname,
+by hand-coded load files, and @code{mk:defsystem}, are no longer supported.}
 There are three ways to invoke the @sysname {} planning process:
 @code{find-plans}, and @code{find-plans-stack},
 which find plans for a single planning problem, and @code{do-problems}, which
 finds plans for a planning problem set.
-% FIXME: Replace with cross-references.
-Subsection 5.2 describes the use
-of these functions. Subsection 5.3 describes the functions @code{shop-trace}
-and @code{shop-untrace}, which are the primary mechanisms for debugging @sysname{}
-domain descriptions and problem specifications. Subsection 5.4 describes
-some additional features that may also be useful for debugging domain
-descriptions and problems for @sysname. Finally, subsection 5.5 describes
+@xref{Executing the Planner} @c Subsection 5.2 
+for instructions in the use
+of these functions.
+The functions @code{shop-trace}
+and @code{shop-untrace} are the primary mechanisms for debugging @sysname{}
+domain descriptions and problem specifications, @pxref{Tracing} for
+instructions. @xref{Other Debugging Features} describes
+some additional features that may be useful for debugging domain
+descriptions and problems for @sysname. Finally, @pxref{Hook Routines}
+for a description of
 some hook routines that can be used to customize the behavior of @sysname.
 @menu
 * Loading the Planner::
