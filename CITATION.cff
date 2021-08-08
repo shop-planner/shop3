@@ -10,8 +10,8 @@ authors:
     given-names: Ugur
 title: "SHOP3 HTN Planner"
 
-references:
-  - type: conference-paper
+preferred-citation:
+    type: conference-paper
     title: "Hierarchical Task Network Planning in Common Lisp: the case of SHOP3"
     collection-title: Proceedings of the 12th European Lisp Symposium
     editors:
