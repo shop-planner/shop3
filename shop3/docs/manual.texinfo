@@ -120,8 +120,9 @@ involves planning for tasks in the same order that they will later be
 executed. An HTN, or @emph{decomposition,} planner ``proceeds by
 decomposing @emph{nonprimitive tasks} recursively into smaller and
 smaller subtasks, until @emph{primitive tasks} are reached that can be
-performed directly using the planning operators.'' (See @cite{[Ghallab
-@i{et al.}, 2004]}.) This manual does not give an introduction to
+performed directly using the planning operators''
+(@pxref{GhallabEtAl2004, , Ghallab et al.@comma{} 2004}).
+This manual does not give an introduction to
 HTN planning or AI planning in general, for that we recommend the
 above-cited textbook and/or the research papers describing @sysname{}.
 
@@ -131,7 +132,9 @@ Prof. Dana Nau's research group.  This manual draws heavily on
 material from the manual for @sc{Shop2}, which was, in turn based, in
 part, on the JSHOP documentation written by Füsun Yaman, with
 additional material from Yue Cao's December 2000 draft of the @sc{Shop2}
-documentation and pseudocode from @cite{[Nau @emph{et al}., 2001]}.  Some
+documentation and pseudocode from Nau @emph{et al.}
+(@pxref{NauEtAl2001, ,Nau et al.@comma{} 2001}).
+Some
 updates to the @sc{Shop2} manual were made by Robert P. Goldman and
 John Maraist, of SIFT.
 
@@ -145,7 +148,8 @@ Prolog-style rule-based Horn clause deduction over state sequences.
 @c FIXME: When we have chapters for these, add cross-references.
 
 Robert P. Goldman and Ugur Kuter have a paper in the European Lisp
-Symposium describing @sysname{} @cite{[Goldman & Kuter, 2019]}
+Symposium describing @sysname{} 
+(@pxref{GoldmanKuter2019, , Goldman & Kuter@comma{} 2019}).
 
 
 The planners in the @SHOP {} family have the following distinctive characteristics:
@@ -593,8 +597,8 @@ the call @code{(find-plans 'foo :verbose 1 :optimize-cost t :time-limit 120)}.
 This call addresses a problem named @emph{foo}, and runs until it either
 finds the minimum cost plan or until 2 minutes have elapsed. It then
 returns the lowest cost plan that it found during that time. This
-functionality is inspired, in part, by Anytime Algorithms @cite{[Dean and
-Boddy, 1998]}.
+functionality is inspired, in part, by Anytime Algorithms
+(@pxref{DeanBoddy1998, Dean & Boddy@comma{} 1998}).
 
 @item @anchor{#explanation}
 If @emph{explanation} is non-nil, @sysname {} adds extra information
@@ -1506,8 +1510,8 @@ A task atom, see @ref{Task Atoms}.
 
 The @code{:ordered} keyword, which is optional, specifies
 that @sysname {} must perform the task lists in the order that they
-are given. (In the terminology of @cite{[Ghallab @emph{at al.}, 2004]}
-an @code{:ordered} expression specifies a @emph{simple task network}.)
+are given. In the terminology of Ghallab @emph{at al.} (@pxref{GhallabEtAl2004})
+an @code{:ordered} expression specifies a @emph{simple task network}.
 The @code{:unordered} keyword specifies that there is no particular
 ordering specified between @var{tasklist@sub{1}, tasklist@sub{2}
 @dots{} tasklist@sub{n}.@ } With the use of the @code{:unordered}
@@ -3780,12 +3784,14 @@ of Maryland, SIFT, or the United States Government.
 @chapter References
 @anchor{#references}
 
+@anchor{DeanBoddy1998}
 [Dean and Boddy, 1998] T. Dean and M. Boddy. An analysis of
 time-dependent planning. In @emph{AAAI-88}, 1988.
 
-[Ghallab @emph{et al.}, 2004] M. Ghallab, D. Nau, P. Traverso. Automated
+@anchor{GhallabEtAl2004}[Ghallab @emph{et al.}, 2004] M. Ghallab, D. Nau, P. Traverso. Automated
 Planning: Theory and Practice, Morgan Kaufmann, 2004.
 
+@anchor{GoldmanKuter2019}
 [Goldman & Kuter, 2019] Goldman, R. P., & Kuter, U.
 @uref{https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf, 
 Hierarchical Task Network Planning in Common Lisp: the case of SHOP3}.
@@ -3800,6 +3806,7 @@ Muñoz-Avila. SHOP and M-SHOP: Planning with Ordered Task Decomposition.
 Tech report TR 4157, University of Maryland, College Park, MD, June
 2000.
 
+@anchor{NauEtAl2001}
 [Nau @emph{et al.}, 2001] D. S. Nau, H. Muñoz-Avila Y. Cao, A. Lotem,
 and.S. Mitchell. Totally Ordered Planning with Partially Ordered
 Subtasks. In @emph{IJCAI-01}, 2001.
