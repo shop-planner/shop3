@@ -15,7 +15,7 @@
 
 @settitle SHOP3 Manual
 @copying
-Copyright @copyright{} 2020 SIFT, LLC.
+Copyright @copyright{} 2018-2021 SIFT, LLC.
 Original materials @copyright{} 2002 University of Maryland.
 
 This document is made available under the Creative Commons
@@ -121,19 +121,18 @@ executed. An HTN, or @emph{decomposition,} planner ``proceeds by
 decomposing @emph{nonprimitive tasks} recursively into smaller and
 smaller subtasks, until @emph{primitive tasks} are reached that can be
 performed directly using the planning operators.'' (See @cite{[Ghallab
-@emph{et al.}, 2004]}.) This manual does not give an introduction to
+@i{et al.}, 2004]}.) This manual does not give an introduction to
 HTN planning or AI planning in general, for that we recommend the
-above-cited textbook and/or the research papers describing @sysname
-{}.
+above-cited textbook and/or the research papers describing @sysname{}.
 
 @sc{Shop} and @sc{Shop 2} were originally developed at the Computer
 Science Department of the University of Maryland, College Park, by
 Prof. Dana Nau's research group.  This manual draws heavily on
-material from the manual for @sc{Shop 2}, which was, in turn based, in
+material from the manual for @sc{Shop2}, which was, in turn based, in
 part, on the JSHOP documentation written by Füsun Yaman, with
-additional material from Yue Cao's December 2000 draft of the @sc{Shop
-2} documentation and pseudocode from @cite{[Nau @emph{et al}., 2001]}.  Some
-updates to the @sc{Shop 2} manual were made by Robert P. Goldman and
+additional material from Yue Cao's December 2000 draft of the @sc{Shop2}
+documentation and pseudocode from @cite{[Nau @emph{et al}., 2001]}.  Some
+updates to the @sc{Shop2} manual were made by Robert P. Goldman and
 John Maraist, of SIFT.
 
 @sysname {} contains two important subsystems that perform useful
@@ -146,9 +145,7 @@ Prolog-style rule-based Horn clause deduction over state sequences.
 @c FIXME: When we have chapters for these, add cross-references.
 
 Robert P. Goldman and Ugur Kuter have a paper in the European Lisp
-Symposium describing @sysname:
-@uref{https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf, 
-Hierarchical Task Network Planning in Common Lisp: the case of SHOP3}.
+Symposium describing @sysname{} @cite{[Goldman & Kuter, 2019]}
 
 
 The planners in the @SHOP {} family have the following distinctive characteristics:
@@ -291,9 +288,12 @@ The latest version of @sysname {} is loaded by using the ASDF system
 definition facility. The first of the following subsections explains how
 to use ASDF to load @sysname. Note that previous methods of starting @sysname,
 by hand-coded load files, and @code{mk:defsystem}, are no longer supported.
-There are two ways to execute the @sysname {} planning process: @code{find-plans},
-which finds plans for a single planning problem, and @code{do-problems}, which
-finds plans for a planning problem set. Subsection 5.2 describes the use
+There are three ways to invoke the @sysname {} planning process:
+@code{find-plans}, and @code{find-plans-stack},
+which find plans for a single planning problem, and @code{do-problems}, which
+finds plans for a planning problem set.
+% FIXME: Replace with cross-references.
+Subsection 5.2 describes the use
 of these functions. Subsection 5.3 describes the functions @code{shop-trace}
 and @code{shop-untrace}, which are the primary mechanisms for debugging @sysname{}
 domain descriptions and problem specifications. Subsection 5.4 describes
@@ -923,9 +923,9 @@ begins with an exclamation point (such as @code{!unstack} or @code{!putdown})
 a @strong{constant} symbol, a @strong{function} symbol, a
 @strong{predicate} symbol, or a @strong{compound task} symbol can be
 any Lisp symbol whose name does not begin with a question mark or
-exclamation point. (We use ``predicate'' and ``function'' in the
+exclamation point. We use ``predicate'' and ``function'' in the
 first-order logic sense; as will be seen in @ref{Eval Terms}, the
-functions can be general Lisp functions.)
+functions can be general Lisp functions.
 
 @end itemize
 
@@ -1018,7 +1018,7 @@ The @emph{value} associated with an @code{eval} term is determined as follows. F
 any variable symbols which appear in @var{general-lisp-expression} and are
 bound are replaced by the values that they are bound to. Then, the
 entire expression is evaluated in Lisp. For example, if the variable
-symbol @var{?foo} is bound to the value 3 then the term:
+symbol @code{?foo} is bound to the value 3 then the term:
 
 @lisp
 (eval (mapcar #'(lambda (x) (+ x ?foo)) `(1 2 ,(* ?foo ?foo))))
@@ -1031,7 +1031,7 @@ Note that variable substitutions in @code{eval} terms are handled before any
 evaluation of the expression, as in Lisp macros. One implication of this
 fact is that variables with symbolic values must be explicitly quoted if
 they are to be treated as Lisp symbols. For example, if the variable
-@var{?foo} is bound to the symbol @code{bar}, the following eval term has the value
+@code{?foo} is bound to the symbol @code{bar}, the following @code{eval} term has the value
 @code{(bar baz)}:
 
 @lisp
@@ -1061,7 +1061,7 @@ compatibility may use either form.
 A @strong{call} term is an expression of the form
 
 @lisp
-(call f @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
+(call @var{f} @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
 @end lisp
 @noindent
 where @var{f} is a function symbol and each @var{t@sub{i}} is a term
@@ -1069,7 +1069,7 @@ or a @code{call} term. A @code{call} term has a special meaning to @sysname, bec
 tells @sysname {} that @var{f} is an attached procedure, i.e., that whenever
 @sysname {} needs to evaluate a precondition or task list that contains a
 @code{call} term, @sysname {} should replace the @code{call} term with the result of
-applying the function @var{f} on the arguments @var{t@sub{1},
+applying the function @var{f} to the arguments @var{t@sub{1},
 t@sub{2}, @dots{}, t@sub{n}}.  We later will define preconditions
 (@pxref{Logical Precondition, preconditions}) and task lists
 (@pxref{Task Lists}).
@@ -1172,7 +1172,6 @@ An @strong{implication} is an expression of the form
 where @var{Y} and @var{Z} are logical expressions. The intent of an
 implication is to evaluate its logical counterpart; that is,
 @math{\neg Y \lor Z}.
-@c @emph{(¬Y @c ∨ Z)}
 Note that the context should not leave free variables in
 @var{Y}, or the semantics of the implication will be ambiguous.
 
@@ -1188,7 +1187,7 @@ form
 @noindent
 where @var{E@sub{1}} and @var{E@sub{2}} are logical expressions, and
 @var{V} is the list of variables in @var{E@sub{1}}. To satisfy a
-universal quantification expression, the following must hold:
+universally quantified expression, the following must hold:
 for each possible substitution @var{u} for variables in @var{V}, if
 @var{E@sub{1}@sup{u}} is satisfied then @var{E@sub{2}@sup{u}} must
 also be satisfied in the current state of the world. Note that this
@@ -1204,7 +1203,7 @@ expression and consequently has a different syntax.
 A simple @strong{assignment} expression has the form
 
 @lisp
-(assign @emph{v} @emph{e})
+(assign @var{v} @var{e})
 @end lisp
 
 @noindent
@@ -1221,9 +1220,9 @@ variable @var{?baz} to the list @code{(if fish)}:
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
 @end lisp
 @noindent
-Similarly, if @var{?foo} is bound to @code{list} and @var{?bar} is bound to @code{4} then the
-expression above will bind @var{?baz }to the list @code{(nil (list
-fish) 2)}.@footnote{
+Similarly, if @code{?foo} is bound to @code{list} and @code{?bar} is bound to @code{4} then the
+expression above will bind @code{?baz} to the list
+@code{(nil (list fish) 2)}.@footnote{
 A somewhat cumbersome way to verify this is as follows:
 @lisp
 (defdomain test-domain ((:- (= ?x ?x) ())))
@@ -1248,15 +1247,15 @@ expression (with @code{=} interpreted as unification)
 (= ?x foo)
 @end lisp
 @noindent
-will bind @var{?x} to the symbol @code{foo}, but 
+will bind @code{?x} to the symbol @code{foo}, but 
 
 @lisp
 (assign ?x foo)
 @end lisp
 @noindent will cause a run-time error.  In the second example, @sysname
-will attempt to evaluate @var{foo} and report it as an unbound variable --
-unless this is evaluated in a context where @var{foo} is a variable,
-in which case @var{?x} will be bound to the current value of @var{foo}.
+will attempt to evaluate @code{foo} and report it as an unbound variable --
+unless this is evaluated in a context where @code{foo} is a variable,
+in which case @code{?x} will be bound to the current value of @code{foo}.
 
 @sysname {} also offers a @strong{compound assignment} expression of this
 form:
@@ -1283,7 +1282,10 @@ predicate. Thus an @code{eval} expression typically invokes boolean Lisp functio
 such as @code{evenp} or @code{>=}.
 
 Note that if you use an @code{eval} expression for its @emph{side effects}, you
-must be careful to ensure that it still returns a true value.
+must be careful to ensure that it still returns a true value.  For
+example, if you introduce an invocation of @code{format} for debugging
+purposes, remember that @code{format} always returns @code{nil}, and
+will cause the containing precondition to fail!
 
 @node call expressions, Enforce expressions, Eval expressions, Logical Expressions
 @subsection Call expressions
@@ -1327,7 +1329,7 @@ Find all solutions to @var{expr}, and bind the @emph{set} of values for
 (setof ?u (uav ?u) ?uavs)
 @end lisp
 @noindent
-will bind @var{?uavs} to the set of UAVs in the current state.
+will bind @code{?uavs} to the set of UAVs in the current state.
 
 @lisp
 (setof (pair ?u1 ?u2) 
@@ -1599,6 +1601,7 @@ to be presented in any special order -- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
+* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
@@ -1982,12 +1985,12 @@ A @strong{planning problem} has the form
 (defproblem @var{problem-name} @var{domain-name} (@var{a@sub{1}} @var{a@sub{2}} @dots{} @var{a@sub{n}}) @var{T})
 @end lisp
 @noindent
-where @emph{problem-name} is a symbol, @emph{domain-name} is a symbol,
-each @emph{g@sub{i}} is a ground logical atom, and @emph{T} is a task
-list. This form defines a problem which may be solved by addressing
-the tasks in @emph{T,} using the operators, methods, and axioms in
-@emph{domain-name,} starting in an initial state defined by the ground
-atoms @emph{g@sub{1}} through @emph{g@sub{n}}.
+where @var{problem-name} is a symbol, @var{domain-name} is a symbol,
+each @var{a@sub{i}} is a ground logical atom, and @var{T} is a task
+list. This form defines a problem which may be solved by addressing the
+tasks in @var{T}, using the operators, methods and axioms in
+@var{domain-name}, starting in an initial state defined by the ground atoms
+@var{a@sub{1}} through @var{a@sub{n}}.
 
 @include include/macro-shop-defproblem.texinfo
 
@@ -3617,6 +3620,10 @@ are simply passed on to find-plans.
 @node General Notes on SHOP3, Acknowledgments, Internal Technical Information, Top
 @chapter General Notes on @sysname {}
 
+@menu
+* More on axioms::
+@end menu
+
 @node More on axioms
 @section More on axioms
 @anchor{#more-on-axioms}
@@ -3639,10 +3646,11 @@ An axiom may invoke arbitrary Lisp functions, but only through the
 @code{eval}, @code{call}, and @code{assign} family of
 pseudo-predicates.  Note that these functions do not have access to
 the current state, except by using the special variable
-@code{shop::*current-state*}.
+@code{shop::*current-state*}. 
+@vindex *current-state*
 
 Other predicates are addressed through the theorem-prover. The theorem
-prover knows about @sysname's state and queries will be evaluated in
+prover knows about @sysname{}'s state and queries will be evaluated in
 the context of the current state.
 
 By default, the theorem prover will search for all solutions to a
@@ -3659,8 +3667,8 @@ an atom can be deleted by an operator, but with the axiom @code{(:- a
 nil)}, @var{a} is always true and no operator can change that.
 
 @item
-An axiom with several conjuncts in its tail has different semantics
-than what you would get by making each conjunct the tail of a separate
+An axiom with several conjunctions in its tail has different semantics
+than you would get by making each conjunct the tail of a separate
 axiom. Consider the following axiom lists:
 
 @lisp
@@ -3681,7 +3689,7 @@ would return @code{(((?u . 2)))}.
 
 On the other hand, in @var{X2} the set of axioms acts like a
 logical ``or'': @code{find-satisfiers} returns every satisfier for
-@code{(b ?x)} and every satisfier for @code{(c ?x)}. In this case,
+@code{(b ?x)} @emph{and} every satisfier for @code{(c ?x)}. In this case,
 @lisp
 (find-satisfiers '((a ?u)) '((b 2) (c 3)))
 @end lisp
@@ -3762,11 +3770,18 @@ of Maryland, SIFT, or the United States Government.
 @node References, Function Index, Acknowledgments, Top
 @chapter References
 @anchor{#references}
+
 [Dean and Boddy, 1998] T. Dean and M. Boddy. An analysis of
 time-dependent planning. In @emph{AAAI-88}, 1988.
 
 [Ghallab @emph{et al.}, 2004] M. Ghallab, D. Nau, P. Traverso. Automated
 Planning: Theory and Practice, Morgan Kaufmann, 2004.
+
+[Goldman & Kuter, 2019] Goldman, R. P., & Kuter, U.
+@uref{https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf, 
+Hierarchical Task Network Planning in Common Lisp: the case of SHOP3}.
+@i{ Proceedings of the 12th European Lisp Symposium}. European Lisp
+Symposium, Genova, Italy, April 2019.
 
 [Nau @emph{et al.}, 1999] D. Nau, Y. Cao, A. Lotem, and H. Muñoz-Avila.
 SHOP: Simple Hierarchical Ordered Planner. In @emph{IJCAI-99}, 1999.
