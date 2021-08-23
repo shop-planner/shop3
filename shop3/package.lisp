@@ -100,6 +100,7 @@
              ;; shop2.  Packages :use'ing shop2 should *not* also :use
              ;; shop-unifier.
              #:trace-print
+             #:shop-trace-info
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
 
              #:unify #:standardize #:fail

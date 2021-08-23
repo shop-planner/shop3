@@ -73,7 +73,7 @@
 (defvar *traced-goals* nil)
 
 
-(defconstant SHOP-TRACE-ITEMS
+(defconstant +shop-trace-items+
   (list :methods :axioms :operators :tasks :goals :effects :protections
        :states :plans :item)
   "Acceptable arguments for SHOP-TRACE (and SHOP-UNTRACE).")
@@ -106,7 +106,7 @@ currently being traced.
          ))
     (when (member :all new-items)
       (setf new-items (delete :all new-items))
-      (setf new-items (union SHOP-TRACE-ITEMS new-items)))
+      (setf new-items (union +shop-trace-items+ new-items)))
 
     `(shop-trace-1 ',new-items)))
 
@@ -114,12 +114,12 @@ currently being traced.
   ;; make sure the argument is coerced to a list
   (unless (null items)
     (dolist (item items)
-      (cond ((member item SHOP-TRACE-ITEMS)
+      (cond ((member item +shop-trace-items+)
              (pushnew item *shop-trace*))
             ((listp item)
              (macrolet ((trace-item (variable)
                           `(progn (pushnew (second item) ,variable)
-                                  (pushnew :item *shop-trace*))))
+                                  (pushnew item *shop-trace*))))
                (case (car item)
                  (:task (trace-item *traced-tasks*))
                  (:method (trace-item *traced-methods*))
@@ -145,7 +145,7 @@ currently being traced.
 
 
 (defun shop-trace-info ()
-  "Information about the traced aspects of shop2."
+  "Information about the traced aspects of shop3."
   (append
    *shop-trace*
    (mapcar #'(lambda (taskname)
