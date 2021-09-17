@@ -1010,7 +1010,7 @@ An @strong{eval} term is an expression of the form
 @lisp
 (eval @emph{general-lisp-expression})
 @end lisp
-The value associated with an eval term is determined as follows. First,
+The @emph{value} associated with an @code{eval} term is determined as follows. First,
 any variable symbols which appear in @var{general-lisp-expression} and are
 bound are replaced by the values that they are bound to. Then, the
 entire expression is evaluated in Lisp. For example, if the variable
@@ -1023,31 +1023,30 @@ symbol @code{?foo} is bound to the value 3 then the term:
 will have as its value a list containing the numbers 4, 5, and 12. 
 
 @cindex quoting in call and eval terms
-Note
-that variable substitutions in eval terms are handled before any
+Note that variable substitutions in @code{eval} terms are handled before any
 evaluation of the expression, as in Lisp macros. One implication of this
 fact is that variables with symbolic values must be explicitly quoted if
 they are to be treated as Lisp symbols. For example, if the variable
-@var{?foo} is bound to the symbol @code{BAR}, the following eval term has the value
-@code{(BAR BAZ)}:
+@code{?foo} is bound to the symbol @code{bar}, the following @code{eval} term has the value
+@code{(bar baz)}:
 
 @lisp
-(eval (list '?foo 'BAZ))
+(eval (list '?foo 'baz))
 @end lisp
 @noindent
 But if this were written
 
 @lisp
-(eval (list ?foo 'BAZ))
+(eval (list ?foo 'baz))
 @end lisp
 @noindent
-it would cause a Lisp error when Lisp attempts to find the value of @code{BAR},
+it would cause a Lisp error when Lisp attempts to find the value of @code{bar},
 which it would believe to be a variable.
 
 @node Call Terms,  , Eval Terms, Terms
 @subsection Call terms
 @anchor{#call-terms}
-A @strong{call term} is not as expressive as an eval term. In
+A @strong{call} term is not as expressive as an @code{eval} term. In
 particular, it does not support the evaluation of Lisp macros
 (including macro characters such as backquote). Both @code{call} and
 @code{eval} are supported in @sysname {} because the former is
@@ -1055,7 +1054,7 @@ compatible with JSHOP 1.0 and the latter is compatible with SHOP
 1.x. @sysname {} users who are not interested in either form of
 compatibility may use either form.
 
-A @strong{call term} is an expression of the form
+A @strong{call} term is an expression of the form
 
 @lisp
 (call f @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
@@ -1185,14 +1184,14 @@ form
 @noindent
 where @var{E@sub{1}} and @var{E@sub{2}} are logical expressions, and
 @var{V} is the list of variables in @var{E@sub{1}}. To satisfy a
-@strong{universal quantification} expression, the following must hold:
+universally quantified expression, the following must hold:
 for each possible substitution @var{u} for variables in @var{V}, if
 @var{E@sub{1}@sup{u}} is satisfied then @var{E@sub{2}@sup{u}} must
-also be satisfied in the current state of the world. Note that this use
-of the keyword @code{forall} is distinct from its use in add and delete lists
-in operators (@pxref{Operators}): the latter is used to express a set of
-effects rather than a logical expression and consequently has a
-different syntax.
+also be satisfied in the current state of the world. Note that this
+use of the keyword @code{forall} is distinct from its use in
+@code{add} and @code{delete} lists in operators (@pxref{Operators}):
+the latter is used to express a set of effects rather than a logical
+expression and consequently has a different syntax.
 
 @node Assignments, Eval expressions, Universal Quantifications, Logical Expressions
 @subsection Assignments
@@ -1201,26 +1200,27 @@ different syntax.
 A simple @strong{assignment} expression has the form
 
 @lisp
-(assign @emph{v} @emph{e})
+(assign @var{v} @var{e})
 @end lisp
 
-@c FIXME: Fix the crossreference here.
 @noindent
-where @emph{v} is a variable symbol and @emph{e} is general Lisp
-expression. The intent of an assignment expression is to bind the value
-of @emph{e} to the variable symbol @emph{v}. Variable substitutions in
-assignment expressions are done using literal substitutions, as with
-eval terms (see Section 4.3.2). For example, if @code{?foo} is bound to the
-symbol @code{IF} and @code{?bar} is bound to the number 0 then the following
-expression will bind the variable @code{?baz} to the list @code{(IF FISH)}:
+where @var{v} is a variable symbol and @var{e} is general Lisp
+expression. The intent of an assignment expression is to bind the
+value of @var{e} to the variable symbol @var{v}. Variable
+substitutions in assignment expressions are done using literal
+substitutions, as with @code{eval} terms (see @ref{Eval Terms}). For
+example, if @var{?foo} is bound to the symbol @code{if} and @var{?bar}
+is bound to the number 0 then the following expression will bind the
+variable @var{?baz} to the list @code{(if fish)}:
 
 @lisp
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
 @end lisp
+@noindent
+Similarly, if @code{?foo} is bound to @code{list} and @code{?bar} is bound to @code{4} then the
+expression above will bind @code{?baz} to the list
+@code{(nil (list fish) 2)}.
 
-Similarly, if @code{?foo} is bound to @code{LIST} and @code{?bar} is bound to @code{4} then the
-expression above will bind @code{?baz }to the list @code{(NIL (LIST
-FISH) 2)}.@footnote{
 A somewhat cumbersome way to verify this is as follows:
 @lisp
 (defdomain test-domain ((:- (= ?x ?x) ())))
@@ -1230,7 +1230,7 @@ A somewhat cumbersome way to verify this is as follows:
         (shop::make-initial-state 'test-domain :mixed nil)  
         :domain 'test-domain)
 @end lisp
-}
+
 
 @b{Note:} @code{assign} is @emph{not} the default way to bind
 @sysname{}'s logical variables.  The default way to bind logical
@@ -1244,14 +1244,12 @@ expression (with @code{=} interpreted as unification)
 @lisp
 (= ?x foo)
 @end lisp
-
 @noindent
 will bind @code{?x} to the symbol @code{foo}, but 
 
 @lisp
 (assign ?x foo)
 @end lisp
-
 @noindent will cause a run-time error.  In the second example, @sysname
 will attempt to evaluate @code{foo} and report it as an unbound variable --
 unless this is evaluated in a context where @code{foo} is a variable,
@@ -1261,9 +1259,9 @@ in which case @code{?x} will be bound to the current value of @code{foo}.
 form:
 
 @lisp
-(assign* @emph{v} @emph{e})
+(assign* @var{v} @var{e})
 @end lisp
-
+@noindent
 
 As in the simple @code{assign}, @var{v} is a variable symbol and @var{e} is
 general Lisp expression. However, for @code{assign*}, @var{e} should evaluate
@@ -1319,13 +1317,13 @@ A @strong{setof} expression has the form
 @lisp
 (setof @emph{term expr set-var})
 @end lisp
-Find all solutions to @var{expr}, and bind the @emph{set of} values for
+Find all solutions to @var{expr}, and bind the @emph{set} of values for
 @var{term} in @var{expr} to @var{set-var}. For example
 
 @lisp
 (setof ?u (uav ?u) ?uavs)
 @end lisp
-
+@noindent
 will bind @code{?uavs} to the set of UAVs in the current state.
 
 @lisp
@@ -1333,7 +1331,7 @@ will bind @code{?uavs} to the set of UAVs in the current state.
   (and (uav ?u1) (uav ?u2) (line-of-sight ?u1 ?u2))
   ?pairs)
 @end lisp
-
+@noindent
 will bind @var{?pairs} to a set of terms, e.g., @code{((pair rotor1
 fw2) (pair rotor2 fw3))} indicating pairs of UAVs with line of sight
 from the first to the second.
@@ -1595,6 +1593,7 @@ to be presented in any special order -- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
+* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
@@ -2007,7 +2006,7 @@ A @strong{planning problem set} has the form
 where @var{set-name} is a symbol and each @var{p@sub{i}} is the name
 of a planning problem.
 
-@node  Plans, , Planning Problem Set, The SHOP3 Formalism
+@node  Plans, Simple example, Planning Problem Set, The SHOP3 Formalism
 @section  Plans
 @cindex plans
 
