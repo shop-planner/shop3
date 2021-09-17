@@ -457,4 +457,106 @@
     *expected-umt-plan*)))
 
 
+(in-package :fiveam)
 
+(defmacro arity-test::warns (condition-spec
+                   &body body)
+  "Generates a pass if BODY signals a warning of type
+CONDITION. BODY is evaluated in a block named NIL, CONDITION is
+not evaluated.
+  Is like SIGNALS, but does NOT abort the execution of BODY upon the signal
+being raised."
+  (let ((block-name (gensym))
+        (signaled-p (gensym)))
+    (destructuring-bind (condition &optional reason-control reason-args)
+        (ensure-list condition-spec)
+      `(let ((,signaled-p nil))
+         (block ,block-name
+           (handler-bind ((,condition (lambda (c)
+                                        (unless (typep c 'warning)
+                                          (error "Cannot use FiveAM \"warns\" check for non-warning conditions."))
+                                        ;; ok, body threw condition
+                                        (add-result 'test-passed
+                                                    :test-expr ',condition)
+                                        (setf ,signaled-p t)
+                                        (muffle-warning c))))
+             (block nil
+               ,@body))
+           (when ,signaled-p (return-from ,block-name t))
+           (process-failure
+            ',condition
+            ,@(if reason-control
+                  `(,reason-control ,@reason-args)
+                  `("Failed to signal a ~S" ',condition)))
+           (return-from ,block-name nil))))))
+
+(in-package :arity-test)
+
+(fiveam:def-suite* test-implicit-conjunction-warning)
+(test (implicit-conj-singleton-op :suite test-implicit-conjunction-warning)
+  (let ((shop:*define-silently* t))
+   (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+    (warns shop3::implicit-conjunction-warning
+      (defdomain implicit-conjunction-singleton
+          ((:op (!op1)
+            :precond ((c))
+            :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-singleton nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(c)
+                (shop::operator-preconditions op)))))
+
+(test (implicit-conj-singleton-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-singleton
+         ((:method (task2)
+            m2
+            ((a))
+            (:ordered (:task4) (task5))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-singleton))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(a) pre)))))
+
+
+(test (implicit-conj-conjunction-op :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:op (!op1)
+           :precond ((c) (d))
+           :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(and (c) (d))
+                (shop::operator-preconditions op)))))
+
+
+(test (implicit-conj-conjunction-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:method (task2)
+            m2
+            ((a) (b))
+            (:ordered (:task4) (task5)))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(and (a) (b)) pre))))

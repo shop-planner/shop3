@@ -211,7 +211,24 @@ console."
   (dolist (problem problems)
     (apply #'find-plans (cons problem keywords))))
 
-(defmethod process-pre (domain pre)
+;;; check for deprecated use of implicit conjunction
+(defmethod process-method-pre :around ((domain domain) precond method-name)
+  (cond ((and (listp (first precond))
+              (not (null precond))
+              (symbolp (first (first precond))))
+         (let ((new-precond (if (= (length precond) 1) (first precond) (cons 'and precond))))
+           (warn 'implicit-conjunction-warning
+                 :format-control "Method ~a has implicit conjunction in preconditions:~%~T~s.~%This is deprecated. Rewriting to:~%~t~S~%"
+                 :format-arguments (list method-name precond new-precond))
+           (call-next-method domain new-precond method-name)))
+        (t (call-next-method))))
+
+;;; Rewrite for the case where we have methods in SHOP that use SHOP's FORALL, in a domain
+;;; where the operators use PDDL's FORALL.
+(defmethod process-method-pre :around ((domain universal-preconditions-mixin) precond method-name)
+  (call-next-method domain (subst 'shop-forall 'forall precond) method-name))
+
+(defmethod process-pre (domain pre &optional method-name)
   "This is the main function that does the pre-processing, it
 looks through preconditions, add, and delete lists, finding the
 forall conditions and replacing the variables in them."
@@ -335,6 +352,7 @@ in a single `:method` expression with others).
                         with pre
                         with task-net
                         with var-table
+                        :with method-name
                         ;; there's only one task net
                         with singleton = (or (= (length tail) 1)
                                              ;; branch name and task net...
@@ -348,13 +366,14 @@ in a single `:method` expression with others).
                                 (symbolp (car tail))
                                 ;; could be a second-order HTN.
                                 (not (variablep (first tail))))
-                          collect (pop tail)
+                          collect (setf method-name (pop tail))
                         else
-                          collect (gensym (format nil "~A~D--"
-                                                  method-name branch-counter))
+                          collect (setf method-name
+                                        (gensym (format nil "~A~D--"
+                                                        method-name branch-counter)))
                         ;; collect the preconditions
-                        do (setf pre (pop tail))
-                           (setf task-net (pop tail))
+                        :do (setf pre (pop tail))
+                            (setf task-net (pop tail))
                            (setf var-table (harvest-variables (cons pre task-net)))
                            (push var-table body-var-tables)
                            (check-for-singletons var-table :context-table task-variables
@@ -362,16 +381,7 @@ in a single `:method` expression with others).
                                                            :construct-name method-name
                                                            :construct method
                                                            :branch-number (unless singleton (1+ branch-counter)))
-                        collect (process-pre domain
-                                             ;; we have to disambiguate
-                                             ;; preconditions if we are in a
-                                             ;; universal-preconditions-mixin,
-                                             ;; but are using SHOP2
-                                             ;; quantification instead of PDDL
-                                             ;; quantification (yuck) -- wish I could think of something better.
-                                             (if (typep domain 'universal-preconditions-mixin)
-                                                 (subst 'shop-forall 'forall pre)
-                                                 pre))
+                        collect (process-method-pre domain pre method-name)
                         collect (massage-task-net task-net)))))
         ;; just before returning, check for singletons in the method's head
         (check-for-singletons task-variables :context-tables body-var-tables
@@ -475,8 +485,12 @@ if any.")
         (when (and (listp (first precond))
                    (not (null precond))
                    (symbolp (first (first precond))))
-          (warn 'domain-style-warning :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
-                               :format-arguments (list task)))
+          (warn 'implicit-conjunction-warning
+                :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
+                :format-arguments (list task))
+          (if (= (length precond) 1)
+              (setf precond (first precond))
+              (setf precond (cons 'and precond))))
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
               :do (check-for-singletons table :context-tables others :construct-type keyword
@@ -654,6 +668,13 @@ breaks usage of *load-truename* by moving the FASLs.")
       (warn "Redefining domain named ~A" domain)))
   (setf (get (domain-name domain) :domain) domain))
 
+(defgeneric delete-domain (domain-desig)
+  (:method ((domain domain))
+    (setf (get (domain-name domain) :domain) nil))
+  (:method ((domain-name symbol))
+    (delete-domain (find-domain domain-name)) ; done to raise error if there's no such domain
+    ))
+
 (defun find-domain (name-or-obj &optional (if-not-found :error))
   "Find and return a domain object with the name NAME.  Will return
 the value in its IF-NOT-FOUND argument if no such domain is loaded.
@@ -681,9 +702,6 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
     (call-next-method goals state :just-one just-one :domain (find-domain domain)
                                   :record-dependencies record-dependencies)))
   
-
-(defun delete-domain (name)
-  (setf (get name :domain) nil))
 
 (defun set-domain (name)
   "NAME argument is a symbol.  Will set the global variable *DOMAIN*
