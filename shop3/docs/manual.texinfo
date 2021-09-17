@@ -1054,7 +1054,7 @@ compatible with JSHOP 1.0 and the latter is compatible with SHOP
 1.x. @sysname {} users who are not interested in either form of
 compatibility may use either form.
 
-A @strong{call term} is an expression of the form
+A @strong{call} term is an expression of the form
 
 @lisp
 (call f @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
@@ -1219,7 +1219,8 @@ variable @var{?baz} to the list @code{(if fish)}:
 @noindent
 Similarly, if @code{?foo} is bound to @code{list} and @code{?bar} is bound to @code{4} then the
 expression above will bind @code{?baz} to the list
-@code{(nil (list fish) 2)}.@footnote{
+@code{(nil (list fish) 2)}.
+
 A somewhat cumbersome way to verify this is as follows:
 @lisp
 (defdomain test-domain ((:- (= ?x ?x) ())))
@@ -1229,7 +1230,7 @@ A somewhat cumbersome way to verify this is as follows:
         (shop::make-initial-state 'test-domain :mixed nil)  
         :domain 'test-domain)
 @end lisp
-}
+
 
 @b{Note:} @code{assign} is @emph{not} the default way to bind
 @sysname{}'s logical variables.  The default way to bind logical
@@ -1592,6 +1593,7 @@ to be presented in any special order -- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
+* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
@@ -2004,7 +2006,7 @@ A @strong{planning problem set} has the form
 where @var{set-name} is a symbol and each @var{p@sub{i}} is the name
 of a planning problem.
 
-@node  Plans, , Planning Problem Set, The SHOP3 Formalism
+@node  Plans, Simple example, Planning Problem Set, The SHOP3 Formalism
 @section  Plans
 @cindex plans
 
