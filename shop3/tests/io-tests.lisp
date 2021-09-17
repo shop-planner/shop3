@@ -476,6 +476,7 @@
     (is (equalp '(c)
                 (shop::operator-preconditions op)))))
 
+(in-package :fiveam)
 (test (implicit-conj-singleton-meth :suite test-implicit-conjunction-warning)
   (ignore-errors
     (shop3::delete-domain 'implicit-conjunction-singleton))
@@ -494,6 +495,36 @@
            (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
     (is (equalp '(a) pre)))))
 
+(defmacro arity-test::warns (condition-spec
+                   &body body)
+  "Generates a pass if BODY signals a warning of type
+CONDITION. BODY is evaluated in a block named NIL, CONDITION is
+not evaluated.
+  Is like SIGNALS, but does NOT abort the execution of BODY upon the signal
+being raised."
+  (let ((block-name (gensym))
+        (signaled-p (gensym)))
+    (destructuring-bind (condition &optional reason-control reason-args)
+        (ensure-list condition-spec)
+      `(let ((,signaled-p nil))
+         (block ,block-name
+           (handler-bind ((,condition (lambda (c)
+                                        (unless (typep c 'warning)
+                                          (error "Cannot use FiveAM \"warns\" check for non-warning conditions."))
+                                        ;; ok, body threw condition
+                                        (add-result 'test-passed
+                                                    :test-expr ',condition)
+                                        (setf ,signaled-p t)
+                                        (muffle-warning c))))
+             (block nil
+               ,@body))
+           (when ,signaled-p (return-from ,block-name t))
+           (process-failure
+            ',condition
+            ,@(if reason-control
+                  `(,reason-control ,@reason-args)
+                  `("Failed to signal a ~S" ',condition)))
+           (return-from ,block-name nil))))))
 
 (test (implicit-conj-conjunction-op :suite test-implicit-conjunction-warning)
   (ignore-errors
