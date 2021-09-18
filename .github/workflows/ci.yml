@@ -109,6 +109,6 @@ jobs:
                (fiveam::test-passed nil)
                (fiveam::test-failure t)
                (null t)
-               (list (when (find-if #'test-fail-p test-result) t))
+               (list (find-if (function (lambda (x) (test-fail-p x))) test-result))
                (t t)))
-           (uiop:quit (if (test-fail-p (fiveam:run (quote ${{ matrix.test }}))) 1 0))"
+           (uiop:quit (if (test-fail-p (fiveam:run! (quote ${{ matrix.test }}))) 1 0))"
