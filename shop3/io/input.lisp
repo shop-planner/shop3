@@ -218,20 +218,19 @@ console."
               (symbolp (first (first precond))))
          (let ((new-precond (if (= (length precond) 1) (first precond) (cons 'and precond))))
            (warn 'implicit-conjunction-warning
-                 :format-control "Method ~a has implicit conjunction in preconditions:~%~T~s.~%This is deprecated. Rewriting to:~%~t~S~%"
-                 :format-arguments (list method-name precond new-precond))
+                 :context-type :method
+                 :context-name method-name
+                 :bad-conjunction precond
+                 :replacement new-precond)
            (call-next-method domain new-precond method-name)))
         (t (call-next-method))))
 
-;;; Rewrite for the case where we have methods in SHOP that use SHOP's FORALL, in a domain
-;;; where the operators use PDDL's FORALL.
-(defmethod process-method-pre :around ((domain universal-preconditions-mixin) precond method-name)
-  (call-next-method domain (subst 'shop-forall 'forall precond) method-name))
 
-(defmethod process-pre (domain pre &optional method-name)
+(defmethod process-pre (domain pre &optional context-name)
   "This is the main function that does the pre-processing, it
 looks through preconditions, add, and delete lists, finding the
 forall conditions and replacing the variables in them."
+  (declare (ignore context-name))
   (if (atom pre) pre
     (let ((pre1 (car pre)))
       (if (listp pre1)
@@ -485,12 +484,15 @@ if any.")
         (when (and (listp (first precond))
                    (not (null precond))
                    (symbolp (first (first precond))))
-          (warn 'implicit-conjunction-warning
-                :format-control "Operator ~a has implicit conjunction in preconditions.~%This is deprecated."
-                :format-arguments (list task))
-          (if (= (length precond) 1)
-              (setf precond (first precond))
-              (setf precond (cons 'and precond))))
+          (let ((new-precond (if (= (length precond) 1)
+                                 (first precond)
+               (cons 'and precond))))
+           (warn 'implicit-conjunction-warning
+                 :context-type :operator
+                 :context-name task
+                 :bad-conjunction precond
+                 :replacement new-precond)
+            (setf precond new-precond)))
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
               :do (check-for-singletons table :context-tables others :construct-type keyword

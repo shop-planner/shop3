@@ -944,6 +944,10 @@ looks through the preconditions finding the forall
         (4 `(:sort-by ,(second pre) ,(third pre) ,(translate-precondition domain (fourth pre)))))
       (translate-precondition domain pre)))
 
+;;; Rewrite for the case where we have methods in SHOP that use SHOP's FORALL, in a domain
+;;; where the operators use PDDL's FORALL.
+(defmethod process-method-pre :around ((domain universal-preconditions-mixin) precond method-name)
+  (call-next-method domain (subst 'shop-forall 'forall precond) method-name))
 
 ;;;---------------------------------------------------------------------------
 ;;; Process problem initial state for metric fluents
