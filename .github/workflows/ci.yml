@@ -96,8 +96,27 @@ jobs:
         ros -e "(cl:in-package :cl-user)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
            (prin1 \"${{ matrix.test }}\") (terpri)
+           (defvar *build-warning* nil)
+           (defvar *build-error* nil)
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$PWD/shop3/\") (:tree \"$PWD/jenkins/ext/\") :inherit-configuration))
            (declaim (optimize (speed 3)))
+           (handler-bind ((warning (function (lambda (x)
+                            ;; this is necessary because on SBCL
+                            ;; there's an EXTERNAL handler for some
+                            ;; uninteresting warnings.
+                            (signal x)
+                            (push x *build-warning*))))
+                          (error (function (lambda (x)
+                            (declare (ignore x))
+                            (setf *build-error* t)))))
+              (asdf:load-system :shop3 :force :all))
+           (cond
+             (*build-error*
+              (uiop:die 1 \"SHOP3 build failed with an error: ~a.~%\" *build-error*))
+             (*build-warning*
+              (uiop:die 2 \"SHOP3 build failed with warnings:~%~{~t~a~%~}\" *build-warning*))
+             (t
+              (format t \"SHOP3 build successful.~%\")))
            (asdf:load-system :shop3/test)
            (uiop:quit 0)"
 
