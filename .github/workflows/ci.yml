@@ -111,4 +111,7 @@ jobs:
                (null t)
                (list (find-if (function (lambda (x) (test-fail-p x))) test-result))
                (t t)))
-           (uiop:quit (if (test-fail-p (fiveam:run! (quote ${{ matrix.test }}))) 1 0))"
+           (let ((test-results (fiveam:run! (quote ${{ matrix.test }}))))
+               (format t \"Test results are:~%\")
+               (princ test-results) (terpri)
+               (uiop:quit (if (test-fail-p test-results) 1 0)))"
