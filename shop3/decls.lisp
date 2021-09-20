@@ -660,7 +660,7 @@ task keyword of TASK and LIBRARY-TASK are the same.")
   ((bad-conjunction
     :initarg :bad-conjunction)
    (context-type
-    :type (member (:method :operator))
+    :type (member :method :operator)
     :initarg :context-type)
    (context-name
     :initarg :context-name)
