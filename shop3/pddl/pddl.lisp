@@ -83,43 +83,54 @@ the VAL validator."))
   "Write the plan argument \(in a way sensitive to the domain type\)
 to the FILENAME or STREAM in a format that it can be checked by the validator.
 This is an easier to use interface to the validator-export function, qv."
-  (when (and filename stream-supplied-p)
-    (error "Cannot supply both a filename and stream destination for write-pddl-plan."))
-  (when filename
-    (setf stream (open filename :direction :output)))
-  (unwind-protect
-       (validator-export domain shop-plan stream)
-    (when filename (close stream))))
+  (let ((shop3-domain
+          (etypecase domain
+            (domain domain)
+            (symbol (find-domain domain)))))
+    (when (and filename stream-supplied-p)
+      (error "Cannot supply both a filename and stream destination for write-pddl-plan."))
+    (when filename
+      (setf stream (open filename :direction :output)))
+    (unwind-protect
+         (validator-export shop3-domain shop-plan stream)
+      (when filename (close stream)))))
 
-(defun validate-plan (plan domain-file problem-file &key (validator-progname *validator-progname*) (shop3-domain *domain*)
-                                                      (verbose *verbose*))
+(defun validate-plan (plan domain-file problem-file &key (validator-progname *validator-progname*) shop3-domain (verbose *verbose*))
   "Check the plan for validity. PLAN can be either lisp list
 or can be a filename.  DOMAIN-FILE and PROBLEM-FILE should be PDDL domain and problem
-files.  VALIDATOR-PROGNAME should be a string that names the 
+file designators.  VALIDATOR-PROGNAME should be a string that names the
 validator in a way that enables it to be found (either an absolute namestring, 
 absolute pathname, or a path-relative namestring)."
-  (flet ((validate-plan (plan-filename)
-           (multiple-value-bind (output error-output exit-code)
-               ;; -x option needed to exit with non-zero exit code on bad plan.
-               (uiop:run-program (format nil "~a -x ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
-                                 :ignore-error-status t
-                                 :error-output :string :output :string)
-             (setf output (string-left-trim (list #\return) output))
-             (if (zerop exit-code)
-                 (progn (when (> verbose 1)
-                          (format t "~&Validator output was: ~a~% Exit code was: ~d" output exit-code))
-                        t)
-                 (progn
-                   (format t "~&Validation of plan-file ~a failed with messages:~%~T~A~%~T~A" plan-filename output error-output)
-                   nil)))))
-   (if (stringp plan)
-       (validate-plan plan)
-       (let (validated)
-         (uiop:with-temporary-file (:stream str :pathname path :keep (not validated))
-           (write-pddl-plan plan :domain shop3-domain :stream str)
-           :close-stream
-           (setf validated (validate-plan path))
-           validated)))))
+  (let ((domain-file (etypecase domain-file
+                       (string domain-file)
+                       (pathname (namestring domain-file))))
+        (problem-file (etypecase problem-file
+                       (string problem-file)
+                       (pathname (namestring problem-file)))))
+    (flet ((validate-plan (plan-filename)
+             (multiple-value-bind (output error-output exit-code)
+                 ;; -x option needed to exit with non-zero exit code on bad plan.
+                 (uiop:run-program (format nil "~a -x ~a ~a ~a" validator-progname domain-file problem-file plan-filename)
+                                   :ignore-error-status t
+                                   :error-output :string :output :string)
+               (setf output (string-left-trim (list #\return) output))
+               (if (zerop exit-code)
+                   (progn (when (> verbose 1)
+                            (format t "~&Validator output was: ~a~% Exit code was: ~d" output exit-code))
+                          t)
+                   (progn
+                     (format t "~&Validation of plan-file ~a failed with messages:~%~T~A~%~T~A" plan-filename output error-output)
+                     nil)))))
+      (if (stringp plan)
+          (validate-plan plan)
+          (let (validated)
+            (unless shop3-domain
+              (setf shop3-domain (make-instance 'domain)))
+            (uiop:with-temporary-file (:stream str :pathname path :keep (not validated))
+              (write-pddl-plan plan :domain shop3-domain :stream str)
+              :close-stream
+              (setf validated (validate-plan path))
+              validated))))))
 
 
 ;;;---------------------------------------------------------------------------
@@ -146,7 +157,7 @@ PDDL operator definitions.")
   )
 
 (defclass universal-preconditions-mixin ()
-     ()
+u     ()
   )
 
 (defclass existential-preconditions-mixin ()
@@ -858,14 +869,14 @@ set of dependencies."
            new-deps))))))
         
 
-(defmethod validator-export ((domain simple-pddl-domain) (plan list) stream)
+(defmethod validator-export ((domain domain) (plan list) stream)
   (loop :for x :in (pddl-plan domain plan)
         :as i :from 0
         :do (format stream "~d: " i)
             (princ x stream)
             (terpri stream)))
 
-(defmethod pddl-plan ((domain simple-pddl-domain) (plan cons) &key (package *package*))
+(defmethod pddl-plan ((domain domain) (plan cons) &key (package *package*))
     ;; first check to see if there are costs in the plan...
   (when (numberp (second plan))
     (setf plan (remove-costs plan)))
