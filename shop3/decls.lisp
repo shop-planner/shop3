@@ -459,11 +459,11 @@ WHICH-PLANS argument for EQL-specialization.")
   (:documentation "Preprocess the PRECONDITION in accordance with
 rules established by the DOMAIN class.  Default method is to
 standardize universal quantification, creating new variable
-names for the bound variables in quantified expressions.
+names for the bound variables in quantified expressions."))
 
-Note that this name is a bad misnomer, since it is invoked not simply
-on preconditions, but also on add and delete lists.  Possibly it should
-be renamed \"process quantifier\"."))
+(defgeneric process-add-or-delete (domain expression &optional context-name)
+    (:documentation "Preprocess add and delete lists, finding the forall conditions and
+replacing the variables in them.  Extendable for subtypes of the DOMAIN class."))
 
 (defgeneric process-method-pre (domain precondition method-name)
   (:documentation "Wrapper around process-pre that takes responsibility for

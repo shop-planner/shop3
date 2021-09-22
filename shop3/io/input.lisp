@@ -225,6 +225,30 @@ console."
            (call-next-method domain new-precond method-name)))
         (t (call-next-method))))
 
+(defmethod process-add-or-delete ((domain domain) expr &optional context-name)
+  (if (atom expr) expr                  ; this is for meta predicates, like ASSERT
+      (let ((expr1 (car expr)))
+        (if (listp expr1)
+            (cons (process-add-or-delete domain expr1 context-name)
+                  (process-add-or-delete domain (cdr expr) context-name)))
+        (case expr1
+          ((shop-forall forall)
+           (unless (and (listp (second expr)) (every #'(lambda (x) (variablep x)) (second expr)))
+             (error "~ahe first argument to a FORALL expression should be a LIST of variables in ~S"
+                    (if context-name (format nil "In definition of ~a, t" context-name) "T")
+                    expr))
+           (unless (= (length expr) 4)
+             (error "~all-formed FORALL expression: ~s"
+                    (if context-name (format nil "In definition of ~a, i" context-name) "I")
+                    expr))
+           (destructuring-bind (op var-list condition consequent) expr
+             (declare (ignore op))
+             (multiple-value-bind (alist vlist) (get-alist var-list)
+               `(,expr1 ,vlist
+                        ;; precondition for the FORALL expression is processed differently
+                        ,(process-pre domain (apply-substitution condition alist) context-name)
+                        ,(process-add-or-delete domain (apply-substitution consequent alist) context-name)))))
+          (otherwise expr)))))
 
 (defmethod process-pre (domain pre &optional context-name)
   "This is the main function that does the pre-processing, it
@@ -232,23 +256,23 @@ looks through preconditions, add, and delete lists, finding the
 forall conditions and replacing the variables in them."
   (declare (ignore context-name))
   (if (atom pre) pre
-    (let ((pre1 (car pre)))
-      (if (listp pre1)
-          (cons (process-pre domain  pre1) (process-pre domain  (cdr pre))))
-      (case pre1
-        (or (cons 'or (process-pre domain  (cdr pre))))
-        (imply
-         (unless (= (length pre) 3)
-           (error "Ill-formed IMPLY expression: ~s" pre))
-         (cons 'imply (process-pre domain  (cdr pre))))
-        (:first (cons :first (process-pre domain  (cdr pre))))
-        ((shop-forall forall)
-         (unless (and (listp (second pre)) (every #'(lambda (x) (variablep x)) (second pre)))
-           (error "The first argument to a FORALL expression should be a LIST of variables in ~S"
-                  pre))
-         (unless (= (length pre) 4)
-           (error "Ill-formed FORALL expression: ~s" pre))
-         #|
+      (let ((pre1 (car pre)))
+        (if (listp pre1)
+            (cons (process-pre domain  pre1) (process-pre domain  (cdr pre))))
+        (case pre1
+          (or (cons 'or (process-pre domain  (cdr pre))))
+          (imply
+           (unless (= (length pre) 3)
+             (error "Ill-formed IMPLY expression: ~s" pre))
+           (cons 'imply (process-pre domain  (cdr pre))))
+          (:first (cons :first (process-pre domain  (cdr pre))))
+          ((shop-forall forall)
+           (unless (and (listp (second pre)) (every #'(lambda (x) (variablep x)) (second pre)))
+             (error "The first argument to a FORALL expression should be a LIST of variables in ~S"
+                    pre))
+           (unless (= (length pre) 4)
+             (error "Ill-formed FORALL expression: ~s" pre))
+           #|
          (unless (and (listp (third pre)) (listp (first (third pre))))
            (error "Ill-formed FORALL expression: ~s -- the bounds, ~s, should be a list of logical expressions" pre (third pre)))
          (unless (and (listp (fourth pre)) (listp (first (fourth pre))))
@@ -448,27 +472,27 @@ if any.")
     (cond ((= lopt 4)             ; a SHOP 1 operator, no cost specified
            (make-operator :head (second operator)
                           :preconditions nil
-                          :deletions (process-pre domain  (third operator))
-                          :additions (process-pre domain  (fourth operator))
+                          :deletions (process-add-or-delete domain  (third operator))
+                          :additions (process-add-or-delete domain  (fourth operator))
                           :cost-fun 1.0))
           ;; a SHOP 1 operator, with cost specified
           ((and (= lopt 5) (numberp (fifth operator)))
            (make-operator :head (second operator)
                           :preconditions nil
-                          :deletions (process-pre domain  (third operator))
-                          :additions (process-pre domain  (fourth operator))
+                          :deletions (process-add-or-delete domain  (third operator))
+                          :additions (process-add-or-delete domain  (fourth operator))
                           :cost-fun (process-pre domain  (fifth operator))))
           ((= lopt 5)             ; a SHOP 2 operator, no cost specified
            (make-operator :head (second operator)
                           :preconditions (process-pre domain  (third operator))
-                          :deletions (process-pre domain  (fourth operator))
-                          :additions (process-pre domain  (fifth operator))
+                          :deletions (process-add-or-delete domain  (fourth operator))
+                          :additions (process-add-or-delete domain  (fifth operator))
                           :cost-fun 1.0))
           ((= lopt 6)             ; a SHOP 2 operator, with cost specified
            (make-operator :head (second operator)
                           :preconditions (process-pre domain  (third operator))
-                          :deletions (process-pre domain  (fourth operator))
-                          :additions (process-pre domain  (fifth operator))
+                          :deletions (process-add-or-delete domain  (fourth operator))
+                          :additions (process-add-or-delete domain  (fifth operator))
                           :cost-fun (process-pre domain  (sixth operator))))
           (t (error (format nil "mal-formed operator ~A in process-operator" operator))))))
 
@@ -480,7 +504,8 @@ if any.")
              (del-table (harvest-variables delete))
              (precond-table (harvest-variables precond))
              (cost-table (harvest-variables cost))
-             (tables (list task-table add-table del-table precond-table cost-table)))
+             (tables (list task-table add-table del-table precond-table cost-table))
+             (opname (first task)))
         (when (and (listp (first precond))
                    (not (null precond))
                    (symbolp (first (first precond))))
@@ -489,24 +514,24 @@ if any.")
                (cons 'and precond))))
            (warn 'implicit-conjunction-warning
                  :context-type :operator
-                 :context-name task
+                 :context-name opname
                  :bad-conjunction precond
                  :replacement new-precond)
             (setf precond new-precond)))
         (loop :for table :in tables
               :as others = (remove table tables :test 'eq)
               :do (check-for-singletons table :context-tables others :construct-type keyword
-                                              :construct-name (first task)
-                                              :construct operator)))
-      ;; FIXME: to be honest, I don't know why PROCESS-PRE is not
-      ;; invoked on ADD and DELETE in the following.
-      ;; This should be checked. The asserts below are too aggressive -- they break 
-      ;; metaprogramming. [2019/04/04:rpg]
-      ;; (assert (and (listp add) (every #'(lambda (a) (symbolp (first a))) add)))
-      ;; (assert (and (listp delete) (every #'(lambda (d) (symbolp (first d))) delete)))
-      (make-operator :head task :preconditions (process-pre domain precond)
-                     :deletions delete
-                     :additions add :cost-fun cost))))
+                                              :construct-name opname
+                                              :construct operator))
+        ;; FIXME: to be honest, I don't know why PROCESS-ADD-OR-DELETE is not
+        ;; invoked on ADD and DELETE in the following.
+        ;; This should be checked. The asserts below are too aggressive -- they break
+        ;; metaprogramming. [2019/04/04:rpg]
+        ;; (assert (and (listp add) (every #'(lambda (a) (symbolp (first a))) add)))
+        ;; (assert (and (listp delete) (every #'(lambda (d) (symbolp (first d))) delete)))
+        (make-operator :head task :preconditions (process-pre domain precond opname)
+                       :deletions (process-add-or-delete domain delete opname)
+                       :additions (process-add-or-delete domain add opname) :cost-fun cost)))))
 
 (defun check-for-singletons (var-table &key context-tables context-table construct-type construct-name construct branch-number)
   (unless *ignore-singleton-variables*
