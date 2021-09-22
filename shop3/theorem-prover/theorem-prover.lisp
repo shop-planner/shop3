@@ -854,7 +854,8 @@ goal1 along with all of the other formulas in remaining."
                 ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
                 ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
                 (multiple-value-setq (answers depends)
-                  (answer-set-union new-answers answers new-depends depends))
+                  ;; modified to preferentially keep old answers
+                  (answer-set-union answers new-answers depends new-depends))
                 ;; (format t "~&Answers: ~s~%" answers)
                 ))))))
     (values answers found-match depends)))
@@ -901,10 +902,9 @@ also remove the corresponding entry from DEPENDENCY-LIST.
                           (values (append answer-list filtered-answers)
                                   (append dependency-list filtered-dependencies))))))
         (t
-         (iter (for answer in new-answer-list)
-               (unless (member answer answer-list :test 'equal)
-                 (collect answer into filtered-answers))
-               (finally (return-from answer-set-union (append answer-list filtered-answers)))))))
+         ;; Note: I think that this should never be reached: ANSWER-SET-UNION should only be called
+         ;; if *RECORD-DEPENDENCIES-P* is true. [2021/09/21:rpg]
+         (shop-union answer-list new-answer-list :test #'equal))))
   
 
 ;;; BINDINGS is a list of either variables or the values assigned to those bindings.
