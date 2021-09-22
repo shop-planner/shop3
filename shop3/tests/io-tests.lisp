@@ -345,48 +345,48 @@
                                           0)))))
     (is (equal (shop2::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
     (is (equal (shop2::operator-preconditions op)
-        '(
-                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
-                                           (= 0 ?alt)
-                                           (fuel ?p ?fuel)
-                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
-                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
-                                           (call >= ?fuel-remaining 0)
-                                           ;; uninformed hack FIXME
-                                           (assign ?duration 10)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           
-                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
-                                           (assign ?end (+ ?start ?duration))
-                                           )))
+               '(and
+                 (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                 (= 0 ?alt)
+                 (fuel ?p ?fuel)
+                 (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                 (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                 (call >= ?fuel-remaining 0)
+                 ;; uninformed hack FIXME
+                 (assign ?duration 10)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?t-write-at)
+                 (read-time (at ?p) ?t-read-at)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?t-write-fuel)
+                 (read-time (fuel ?p) ?t-read-fuel)
+                 (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                 (assign ?end (+ ?start ?duration))
+                 )))
     (is (equal (shop2::operator-additions op)
                '(
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?flight-alt))
-                                           (fuel ?p ?fuel-remaining)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?end)
-                                           (read-time (at ?p) ?end)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?end)
-                                           (read-time (fuel ?p) ?end)
-                                           )))
-    (is (equal (shop2::operator-deletions op) '(
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?alt))
-                                           (fuel ?p ?fuel)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           )))
+                 ;; update fuel and position
+                 (at ?p (pos ?north ?east ?flight-alt))
+                 (fuel ?p ?fuel-remaining)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?end)
+                 (read-time (at ?p) ?end)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?end)
+                 (read-time (fuel ?p) ?end)
+                 )))
+    (is (equal (shop2::operator-deletions op)
+               '(
+                 ;; update fuel and position
+                 (at ?p (pos ?north ?east ?alt))
+                 (fuel ?p ?fuel)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?t-write-at)
+                 (read-time (at ?p) ?t-read-at)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?t-write-fuel)
+                 (read-time (fuel ?p) ?t-read-fuel)
+                 )))
     (is (= (shop2::operator-cost-fun op) 0))))
 
     
@@ -457,4 +457,106 @@
     *expected-umt-plan*)))
 
 
+(in-package :fiveam)
 
+(defmacro arity-test::warns (condition-spec
+                   &body body)
+  "Generates a pass if BODY signals a warning of type
+CONDITION. BODY is evaluated in a block named NIL, CONDITION is
+not evaluated.
+  Is like SIGNALS, but does NOT abort the execution of BODY upon the signal
+being raised."
+  (let ((block-name (gensym))
+        (signaled-p (gensym)))
+    (destructuring-bind (condition &optional reason-control reason-args)
+        (ensure-list condition-spec)
+      `(let ((,signaled-p nil))
+         (block ,block-name
+           (handler-bind ((,condition (lambda (c)
+                                        (unless (typep c 'warning)
+                                          (error "Cannot use FiveAM \"warns\" check for non-warning conditions."))
+                                        ;; ok, body threw condition
+                                        (add-result 'test-passed
+                                                    :test-expr ',condition)
+                                        (setf ,signaled-p t)
+                                        (muffle-warning c))))
+             (block nil
+               ,@body))
+           (when ,signaled-p (return-from ,block-name t))
+           (process-failure
+            ',condition
+            ,@(if reason-control
+                  `(,reason-control ,@reason-args)
+                  `("Failed to signal a ~S" ',condition)))
+           (return-from ,block-name nil))))))
+
+(in-package :arity-test)
+
+(fiveam:def-suite* test-implicit-conjunction-warning)
+(test (implicit-conj-singleton-op :suite test-implicit-conjunction-warning)
+  (let ((shop:*define-silently* t))
+   (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+    (warns shop3::implicit-conjunction-warning
+      (defdomain implicit-conjunction-singleton
+          ((:op (!op1)
+            :precond ((c))
+            :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-singleton nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(c)
+                (shop::operator-preconditions op)))))
+
+(test (implicit-conj-singleton-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-singleton
+         ((:method (task2)
+            m2
+            ((a))
+            (:ordered (:task4) (task5))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-singleton))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(a) pre)))))
+
+
+(test (implicit-conj-conjunction-op :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:op (!op1)
+           :precond ((c) (d))
+           :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(and (c) (d))
+                (shop::operator-preconditions op)))))
+
+
+(test (implicit-conj-conjunction-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:method (task2)
+            m2
+            ((a) (b))
+            (:ordered (:task4) (task5)))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(and (a) (b)) pre))))

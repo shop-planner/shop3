@@ -25,5 +25,6 @@
                 #:test
                 #:signals
                 #:is
+                #:is-true
                 #:def-suite
                 #:in-suite))

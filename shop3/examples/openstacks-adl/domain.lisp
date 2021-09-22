@@ -7,7 +7,11 @@
   )
 )
 
-(defdomain (openstacks-sequencedstrips-ADL :type pddl-domain)
+(defdomain (openstacks-sequencedstrips-ADL
+            :type pddl-domain
+            :source-pddl-domain
+            #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*
+                                                         (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/"))))
     (
      (:requirements :typing :adl :action-costs)
      (:types order product count)
@@ -193,8 +197,11 @@
 (defdomain (openstacks-sequencedstrips-ADL-included
             :type pure-pddl-domain
             :source-pddl-domain
-            #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*)))
-    ((:include  openstacks-sequencedstrips-ADL-nocosts "domain-nocosts.pddl")
+            #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*
+                                                         (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/"))))
+    ((:include  openstacks-sequencedstrips-ADL-nocosts
+                #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*
+                                                         (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/"))))
      (:static includes next-count)
      
      (:pddl-method (plan)
@@ -387,7 +394,9 @@
 ;;pure-pddl-domain version with replanning functionality
 (defdomain (test-openstacks :type pure-pddl-domain
                             :source-pddl-domain #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*)))
-    ((:include  openstacks-sequencedstrips-ADL-nocosts "domain-nocosts.pddl")
+    ((:include  openstacks-sequencedstrips-ADL-nocosts
+                #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*
+                                                         (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/"))))
      (:static includes next-count)
      
      (:pddl-method (plan)

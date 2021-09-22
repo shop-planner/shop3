@@ -198,7 +198,7 @@ or all answers (nil)."
   (setq *inferences* (1+ *inferences*))
   (let ((goal1 goals) (remaining nil))
 
-    ;; If the provided list goals has a list as the head element,
+    ;; If the provided list of goals has a list as the head element,
     ;; then we interpret goals as a list of items to satisfy,
     ;; rather than as one single item.
     ;; FIXME: Heaven help us if the first element in the list is a
@@ -209,8 +209,9 @@ or all answers (nil)."
 
       ;; But if it's lists three down and not just two, then we
       ;; have an implicit "and" as the first item in the original
-      ;; list goals.  We make this explicit, so that "and" can be
-      ;; redefined in the methods.
+      ;; list of goals.  We make this explicit, so that "and" can be
+      ;; redefined in the methods for domain sub-types to specialize
+      ;; behaviors.
       (when (listp (car goal1))
         (setf goal1 (if (= (length goal1) 1)
                         (first goal1)
@@ -438,6 +439,9 @@ in the goal, so we ignore the extra reference."
                                       state bindings dependencies-in added-dependencies domain newlevel)
   (check-type dependencies-in raw-depend-list)
   (check-type added-dependencies list-raw-depend-lists)
+  ;; FIXME: the following two branches should be unified into one loop, since both cases can use
+  ;; ANSWER-SET-UNION.  Just need to avoid having the iteration stop on empty added-dependencies,
+  ;; and get the :dependencies argument to seek-satisfiers set properly for both alternatives.
   (let (answers depends)
     (if *record-dependencies-p*
         (iter (for unifier in unifiers)
@@ -825,21 +829,13 @@ goal1 along with all of the other formulas in remaining."
   (let (answers mgu1 found-match depends)
     (dolist (r (state-candidate-atoms-for-goal state goal1))
       (if (eql (setq mgu1 (unify goal1 r)) (shop-fail))
-          (progn
-            (trace-print :goals (car goal1) state
-                         "~2%Level ~s, candidate fact ~s fails to match goal ~s~%"
-                         level r goal1)
-            #+ignore(trace-print :goals (car goal1) state
-                         "~2%Level ~s, state fails goal ~s~%"
-                         level goal1)
-            nil)
+          (trace-print :goals (car goal1) state
+                       "~2%Level ~s, candidate fact ~s fails to match goal ~s~%"
+                       level r goal1)
         (progn
           (trace-print :goals (car goal1) state
                        "~2%Level ~s, state fact ~s satisfies goal ~s~%satisfiers ~s"
                        level r goal1 mgu1)
-          #+ignore(trace-print :goals (car goal1) state
-                       "~2%Level ~s, state satisfies goal ~s~%satisfiers ~s"
-                       level goal1 mgu1)
           (let ((updated-dependencies
                   (when *record-dependencies-p*
                     (let ((e (last-establisher state r)))
@@ -858,7 +854,8 @@ goal1 along with all of the other formulas in remaining."
                 ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
                 ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
                 (multiple-value-setq (answers depends)
-                  (answer-set-union new-answers answers new-depends depends))
+                  ;; modified to preferentially keep old answers
+                  (answer-set-union answers new-answers depends new-depends))
                 ;; (format t "~&Answers: ~s~%" answers)
                 ))))))
     (values answers found-match depends)))
@@ -905,10 +902,9 @@ also remove the corresponding entry from DEPENDENCY-LIST.
                           (values (append answer-list filtered-answers)
                                   (append dependency-list filtered-dependencies))))))
         (t
-         (iter (for answer in new-answer-list)
-               (unless (member answer answer-list :test 'equal)
-                 (collect answer into filtered-answers))
-               (finally (return-from answer-set-union (append answer-list filtered-answers)))))))
+         ;; Note: I think that this should never be reached: ANSWER-SET-UNION should only be called
+         ;; if *RECORD-DEPENDENCIES-P* is true. [2021/09/21:rpg]
+         (shop-union answer-list new-answer-list :test #'equal))))
   
 
 ;;; BINDINGS is a list of either variables or the values assigned to those bindings.
