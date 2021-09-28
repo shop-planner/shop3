@@ -465,10 +465,12 @@ names for the bound variables in quantified expressions."))
     (:documentation "Preprocess add and delete lists, finding the forall conditions and
 replacing the variables in them.  Extendable for subtypes of the DOMAIN class."))
 
-(defgeneric process-method-pre (domain precondition method-name)
+(defgeneric process-method-pre (domain precondition method-name &key strict)
   (:documentation "Wrapper around process-pre that takes responsibility for
-handling method-specific processing")
-  (:method ((domain domain) precondition method-name)
+handling method-specific processing.  If STRICT is non-NIL, warn about implicit
+conjunctions.")
+  (:method ((domain domain) precondition method-name &key strict)
+    (declare (ignore strict))
     (process-pre domain precondition method-name)))
 
 ;;;;;; I believe that two changes should be made to this function (at least!):

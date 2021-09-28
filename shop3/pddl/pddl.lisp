@@ -157,7 +157,7 @@ PDDL operator definitions.")
   )
 
 (defclass universal-preconditions-mixin ()
-u     ()
+     ()
   )
 
 (defclass existential-preconditions-mixin ()
@@ -950,14 +950,14 @@ looks through the preconditions finding the forall
  conditions and replacing the variables in that condition."
   (if (eq (first pre) :sort-by)
       (ecase (length pre)
-        ;; FIXME: PROCESS-PRE is the wrong function here...
         (3 `(:sort-by ,(second pre) ,(translate-precondition domain (third pre))))
         (4 `(:sort-by ,(second pre) ,(third pre) ,(translate-precondition domain (fourth pre)))))
       (translate-precondition domain pre)))
 
 ;;; Rewrite for the case where we have methods in SHOP that use SHOP's FORALL, in a domain
 ;;; where the operators use PDDL's FORALL.
-(defmethod process-method-pre :around ((domain universal-preconditions-mixin) precond method-name)
+(defmethod process-method-pre :around ((domain universal-preconditions-mixin) precond method-name &key strict)
+  (declare (ignore strict))
   (call-next-method domain (subst 'shop-forall 'forall precond) method-name))
 
 ;;;---------------------------------------------------------------------------

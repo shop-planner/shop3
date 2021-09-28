@@ -212,18 +212,20 @@ console."
     (apply #'find-plans (cons problem keywords))))
 
 ;;; check for deprecated use of implicit conjunction
-(defmethod process-method-pre :around ((domain domain) precond method-name)
-  (cond ((and (listp (first precond))
-              (not (null precond))
-              (symbolp (first (first precond))))
-         (let ((new-precond (if (= (length precond) 1) (first precond) (cons 'and precond))))
-           (warn 'implicit-conjunction-warning
-                 :context-type :method
-                 :context-name method-name
-                 :bad-conjunction precond
-                 :replacement new-precond)
-           (call-next-method domain new-precond method-name)))
-        (t (call-next-method))))
+(defmethod process-method-pre :around ((domain domain) precond method-name &key strict)
+  (if strict
+   (cond ((and (listp (first precond))
+               (not (null precond))
+               (symbolp (first (first precond))))
+          (let ((new-precond (if (= (length precond) 1) (first precond) (cons 'and precond))))
+            (warn 'implicit-conjunction-warning
+                  :context-type :method
+                  :context-name method-name
+                  :bad-conjunction precond
+                  :replacement new-precond)
+            (call-next-method domain new-precond method-name)))
+         (t (call-next-method)))
+   (call-next-method)))
 
 (defmethod process-add-or-delete ((domain domain) expr &optional context-name)
   (if (atom expr) expr                  ; this is for meta predicates, like ASSERT
