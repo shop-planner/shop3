@@ -345,24 +345,24 @@
                                           0)))))
     (is (equal (shop2::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
     (is (equal (shop2::operator-preconditions op)
-               '(and
-                 (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
-                 (= 0 ?alt)
-                 (fuel ?p ?fuel)
-                 (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
-                 (assign ?fuel-remaining (- ?fuel ?fuel-cost))
-                 (call >= ?fuel-remaining 0)
-                 ;; uninformed hack FIXME
-                 (assign ?duration 10)
-                 ;; timelines for at update
-                 (write-time (at ?p) ?t-write-at)
-                 (read-time (at ?p) ?t-read-at)
-                 ;; timelines for fuel update
-                 (write-time (fuel ?p) ?t-write-fuel)
-                 (read-time (fuel ?p) ?t-read-fuel)
-                 (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
-                 (assign ?end (+ ?start ?duration))
-                 )))
+        '(
+                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                           (= 0 ?alt)
+                                           (fuel ?p ?fuel)
+                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                           (call >= ?fuel-remaining 0)
+                                           ;; uninformed hack FIXME
+                                           (assign ?duration 10)
+                                           ;; timelines for at update
+                                           (write-time (at ?p) ?t-write-at)
+                                           (read-time (at ?p) ?t-read-at)
+                                           ;; timelines for fuel update
+                                           (write-time (fuel ?p) ?t-write-fuel)
+                                           (read-time (fuel ?p) ?t-read-fuel)
+                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                           (assign ?end (+ ?start ?duration))
+                                           )))
     (is (equal (shop2::operator-additions op)
                '(
                  ;; update fuel and position
@@ -492,6 +492,7 @@ being raised."
 
 (in-package :arity-test)
 
+#|
 (fiveam:def-suite* test-implicit-conjunction-warning)
 (test (implicit-conj-singleton-op :suite test-implicit-conjunction-warning)
   (let ((shop:*define-silently* t))
@@ -560,3 +561,4 @@ being raised."
            (body (progn (is (eql 5 (length meth))) (cddr meth)))
            (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
     (is (equalp '(and (a) (b)) pre))))
+|#
