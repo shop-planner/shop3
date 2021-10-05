@@ -296,6 +296,85 @@
   ;; Get the inner construct values
   (second (assoc key task-body)))
 
+
+(defmethod expand-conditional-body ((body-key (eql :if))
+				    task-body domain state
+				    in-unifier search-state)
+  (declare (ignorable search-state))
+  ;; TASK-BODY is the form (:IF (:COND ....) (:ORDERED ...) (:ELSE...))
+  (let* ((if-condition (block-body-condition :cond task-body))
+         (unifiers
+	   (find-satisfiers if-condition state
+			    :domain domain))
+         reductions)
+    (if unifiers
+	(iter
+	 (for u in unifiers)
+	 (let* ((u1 (compose-substitutions in-unifier u))
+		(then-body
+		  (apply-substitution
+		   (block-body-item :ordered task-body)
+		   u1)))
+	   (setf reductions (generate-reductions domain reductions
+						 then-body))))
+	;; ELSE -- do not use the unifiers from the IF condition; those should bind
+	;; the variables in the THEN clause. Instead, 
+	(let ((then-body
+		(apply-substitution
+		 (block-body-item :ordered task-body)
+		 in-unifier)))
+	  (setf reductions (generate-reductions domain reductions
+						then-body))))
+    reductions))
+
+(defmethod expand-conditional-body ((body-key (eql :when))
+				    task-body domain state
+				    in-unifier search-state)
+  (declare (ignorable search-state))
+  ;; TASK-BODY is the form (:WHEN (:COND ....) (:ORDERED ...))
+  (let* ((when-condition (block-body-condition :cond task-body))
+         (unifiers
+	   (find-satisfiers when-condition state
+			    :domain domain))
+         reductions)
+    (iter
+     (for u in unifiers)
+     (let* ((u1 (compose-substitutions in-unifier u))
+            (when-body
+	      (apply-substitution
+	       (block-body-item :ordered task-body)
+	       u1)))
+
+       
+       (setf reductions (generate-reductions domain reductions
+                                             when-body))))
+    reductions))
+
+
+(defmethod expand-conditional-body ((body-key (eql :unless))
+				    task-body domain state
+				    in-unifier search-state)
+  (declare (ignorable search-state))
+  ;; TASK-BODY is the form (:UNLESS (:COND ....) (:ORDERED ...))
+  (let* ((unless-condition (block-body-condition :cond task-body))
+         (unifiers
+	   (find-satisfiers `(not ,unless-condition) state
+			    :domain domain))
+         reductions)
+    (iter
+     (for u in unifiers)
+     (let* ((u1 (compose-substitutions in-unifier u))
+            ;; This is the ordered task list?
+            (unless-body
+	      (apply-substitution
+	       (block-body-item :ordered task-body)
+	       u1)))
+
+       
+       (setf reductions (generate-reductions domain reductions
+                                             unless-body))))
+    reductions))
+
 (defmethod expand-loop-body ((body-key (eql :cond))
                              task-body domain state
                              in-unifier search-state)
