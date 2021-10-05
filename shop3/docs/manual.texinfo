@@ -1132,6 +1132,8 @@ Also note that @emph{implicit conjunction} (list of logical expressions
 without an explicit @code{and}) is @strong{deprecated}, and will
 eventually be removed, as it significantly complicates @sysname{}'s
 parsing -- and reading @sysname{} code by humans.
+At present, @sysname{} will issue a Common Lisp @code{style-warning} when implicit
+conjunction is used; in a future version it will emit an error.
 
 @node Disjuncts, Negations, Conjuncts, Logical Expressions
 @subsection Disjuncts
@@ -1354,9 +1356,10 @@ duplicates, instead of a set.
 @node Logical Precondition, Axioms, Logical Expressions, The SHOP3 Formalism
 @section Logical Precondition
 @anchor{#logical-precondition}
-A @strong{logical precondition} is either a logical expression or one of
-the following special precondition forms: @strong{first satisfier}
-precondition, @strong{sorted} precondition.
+A @strong{logical precondition} is either a @strong{logical expression}
+(@pxref{Logical Expressions}) or one of
+the following special precondition forms: a @strong{first satisfier}
+precondition, or a @strong{sorted} precondition.
 @menu
 * First Satisfiers Precondition::
 * Sorted Precondition::

@@ -455,17 +455,23 @@ WHICH-PLANS argument for EQL-specialization.")
     (declare (ignorable domain unifier))
     (randomize-list tasks)))
 
-(defgeneric process-pre (domain precondition)
+(defgeneric process-pre (domain precondition &optional context-name)
   (:documentation "Preprocess the PRECONDITION in accordance with
 rules established by the DOMAIN class.  Default method is to
 standardize universal quantification, creating new variable
-names for the bound variables in quantified expressions.
+names for the bound variables in quantified expressions."))
 
-Note that this name is a bad misnomer, since it is invoked not simply
-on preconditions, but also on add and delete lists.  Possibly it should
-be renamed \"process quantifier\"."))
+(defgeneric process-add-or-delete (domain expression &optional context-name)
+    (:documentation "Preprocess add and delete lists, finding the forall conditions and
+replacing the variables in them.  Extendable for subtypes of the DOMAIN class."))
 
-
+(defgeneric process-method-pre (domain precondition method-name &key strict)
+  (:documentation "Wrapper around process-pre that takes responsibility for
+handling method-specific processing.  If STRICT is non-NIL, warn about implicit
+conjunctions.")
+  (:method ((domain domain) precondition method-name &key strict)
+    (declare (ignore strict))
+    (process-pre domain precondition method-name)))
 
 ;;;;;; I believe that two changes should be made to this function (at least!):
 ;;;;;; 1.  It should be renamed to apply-primitive and
@@ -651,6 +657,24 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 (define-condition domain-style-warning (shop-condition
                                         simple-condition style-warning)
   ())
+
+(define-condition implicit-conjunction-warning (domain-style-warning)
+  ((bad-conjunction
+    :initarg :bad-conjunction)
+   (context-type
+    :type (member :method :operator)
+    :initarg :context-type)
+   (context-name
+    :initarg :context-name)
+   (replacement
+    :initarg :replacement))
+  (:report (lambda (c stream)
+             (with-slots (bad-conjunction context-type context-name replacement) c
+               (format stream "~a ~a has implicit conjunction in preconditions:~%~T~s.~%This is deprecated. Rewriting to:~%~t~S~%"
+                       (string-upcase (symbol-name context-type))
+                       context-name
+                       bad-conjunction
+                       replacement)))))
 
 (define-condition domain-item-parse-warning (domain-parse-warning)
   ()

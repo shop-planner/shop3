@@ -281,118 +281,115 @@
                                            (write-time (fuel ?p) ?end)
                                            (read-time (fuel ?p) ?end)
                                            )))
-    (is (equal (shop2::operator-deletions op) '(
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?alt))
-                                           (fuel ?p ?fuel)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           )))
+    (is (equal (shop2::operator-deletions op)
+               '(
+                 ;; update fuel and position
+                 (at ?p (pos ?north ?east ?alt))
+                 (fuel ?p ?fuel)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?t-write-at)
+                 (read-time (at ?p) ?t-read-at)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?t-write-fuel)
+                 (read-time (fuel ?p) ?t-read-fuel)
+                 )))
     (is (= (shop2::operator-cost-fun op) 0)))
   (let ((op (with-fixture op-def-domain ()
-              (shop2::parse-domain-item domain :op
-                                        '(:op (!takeoff ?p ?flight-alt ?earliest-start ?start ?end)
-                                          :precond
-                                          (
-                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
-                                           (= 0 ?alt)
-                                           (fuel ?p ?fuel)
-                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
-                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
-                                           (call >= ?fuel-remaining 0)
-                                           ;; uninformed hack FIXME
-                                           (assign ?duration 10)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
+              (warns shop::implicit-conjunction-warning
+               (shop2::parse-domain-item domain :op
+                                         '(:op (!takeoff ?p ?flight-alt ?earliest-start ?start ?end)
+                                           :precond
+                                           (
+                                            (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                                            (= 0 ?alt)
+                                            (fuel ?p ?fuel)
+                                            (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                                            (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                                            (call >= ?fuel-remaining 0)
+                                            ;; uninformed hack FIXME
+                                            (assign ?duration 10)
+                                            ;; timelines for at update
+                                            (write-time (at ?p) ?t-write-at)
+                                            (read-time (at ?p) ?t-read-at)
+                                            ;; timelines for fuel update
+                                            (write-time (fuel ?p) ?t-write-fuel)
+                                            (read-time (fuel ?p) ?t-read-fuel)
                                            
-                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
-                                           (assign ?end (+ ?start ?duration))
-                                           )
-                                          :delete
-                                          (
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?alt))
-                                           (fuel ?p ?fuel)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           )
+                                            (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                                            (assign ?end (+ ?start ?duration))
+                                            )
+                                           :delete
+                                           (
+                                            ;; update fuel and position
+                                            (at ?p (pos ?north ?east ?alt))
+                                            (fuel ?p ?fuel)
+                                            ;; timelines for at update
+                                            (write-time (at ?p) ?t-write-at)
+                                            (read-time (at ?p) ?t-read-at)
+                                            ;; timelines for fuel update
+                                            (write-time (fuel ?p) ?t-write-fuel)
+                                            (read-time (fuel ?p) ?t-read-fuel)
+                                            )
                                           
-                                          :add
-                                          (
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?flight-alt))
-                                           (fuel ?p ?fuel-remaining)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?end)
-                                           (read-time (at ?p) ?end)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?end)
-                                           (read-time (fuel ?p) ?end)
-                                           )
-                                          :cost
-                                          0)))))
+                                           :add
+                                           (
+                                            ;; update fuel and position
+                                            (at ?p (pos ?north ?east ?flight-alt))
+                                            (fuel ?p ?fuel-remaining)
+                                            ;; timelines for at update
+                                            (write-time (at ?p) ?end)
+                                            (read-time (at ?p) ?end)
+                                            ;; timelines for fuel update
+                                            (write-time (fuel ?p) ?end)
+                                            (read-time (fuel ?p) ?end)
+                                            )
+                                           :cost
+                                           0))))))
     (is (equal (shop2::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
     (is (equal (shop2::operator-preconditions op)
-        '(
-                                           (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
-                                           (= 0 ?alt)
-                                           (fuel ?p ?fuel)
-                                           (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
-                                           (assign ?fuel-remaining (- ?fuel ?fuel-cost))
-                                           (call >= ?fuel-remaining 0)
-                                           ;; uninformed hack FIXME
-                                           (assign ?duration 10)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           
-                                           (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
-                                           (assign ?end (+ ?start ?duration))
-                                           )))
+               '(and
+                 (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                 (= 0 ?alt)
+                 (fuel ?p ?fuel)
+                 (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                 (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                 (call >= ?fuel-remaining 0)
+                 ;; uninformed hack FIXME
+                 (assign ?duration 10)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?t-write-at)
+                 (read-time (at ?p) ?t-read-at)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?t-write-fuel)
+                 (read-time (fuel ?p) ?t-read-fuel)
+                 (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                 (assign ?end (+ ?start ?duration))
+                 )))
     (is (equal (shop2::operator-additions op)
                '(
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?flight-alt))
-                                           (fuel ?p ?fuel-remaining)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?end)
-                                           (read-time (at ?p) ?end)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?end)
-                                           (read-time (fuel ?p) ?end)
-                                           )))
-    (is (equal (shop2::operator-deletions op) '(
-                                           ;; update fuel and position
-                                           (at ?p (pos ?north ?east ?alt))
-                                           (fuel ?p ?fuel)
-                                           ;; timelines for at update
-                                           (write-time (at ?p) ?t-write-at)
-                                           (read-time (at ?p) ?t-read-at)
-                                           ;; timelines for fuel update
-                                           (write-time (fuel ?p) ?t-write-fuel)
-                                           (read-time (fuel ?p) ?t-read-fuel)
-                                           )))
+                 ;; update fuel and position
+                 (at ?p (pos ?north ?east ?flight-alt))
+                 (fuel ?p ?fuel-remaining)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?end)
+                 (read-time (at ?p) ?end)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?end)
+                 (read-time (fuel ?p) ?end)
+                 )))
+    (is (equal (shop2::operator-deletions op)
+               '(
+                 ;; update fuel and position
+                 (at ?p (pos ?north ?east ?alt))
+                 (fuel ?p ?fuel)
+                 ;; timelines for at update
+                 (write-time (at ?p) ?t-write-at)
+                 (read-time (at ?p) ?t-read-at)
+                 ;; timelines for fuel update
+                 (write-time (fuel ?p) ?t-write-fuel)
+                 (read-time (fuel ?p) ?t-read-fuel)
+                 )))
     (is (= (shop2::operator-cost-fun op) 0))))
-
-    
-           
-
-
 
 (test check-problem-deletion
   (make-problem 'problem-for-deletion-test
@@ -404,57 +401,131 @@
 
 (in-package :shop-user)
 (defparameter arity-test::*expected-umt-plan*
-           '((!!ASSERT
-           ((GOAL (CLEAR)) (GOAL (DELIVERED PACKAGE2 LOCATION5))
-            (GOAL (DELIVERED PACKAGE1 LOCATION4))
-            (GOAL (DELIVERED PACKAGE0 LOCATION1))))
-          (!!CHECK PACKAGE2) (!!ADD-PACKAGE-LOCAL PACKAGE2)
-          (!!ADD-PACKAGE-NN PACKAGE2 LOCATION3 LOCATION3)
-          (!!ADD-PACKAGE-NN PACKAGE2 LOCATION3 LOCATION2)
-          (!!ADD-PACKAGE-NN PACKAGE2 LOCATION2 LOCATION3)
-          (!!ADD-PACKAGE-NN PACKAGE2 LOCATION2 LOCATION2) (!!CHECK PACKAGE1)
-          (!!ADD-PACKAGE-ROAD PACKAGE1 ROAD_ROUTE1)
-          (!!ADD-PACKAGE-NN PACKAGE1 LOCATION3 LOCATION1)
-          (!!ADD-PACKAGE-NN PACKAGE1 LOCATION3 LOCATION0)
-          (!!ADD-PACKAGE-NN PACKAGE1 LOCATION2 LOCATION1)
-          (!!ADD-PACKAGE-NN PACKAGE1 LOCATION2 LOCATION0) (!!CHECK PACKAGE0)
-          (!!ADD-PACKAGE-LOCAL PACKAGE0) (!COLLECT-FEES PACKAGE0)
-          (!!ADD-NEXT TRUCK3 LOCATION4) (!!EXP-WEIGHT-SET TRUCK3 CITY0 13)
-          (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE3 TRUCK3 LOCATION0 LOCATION4 CITY0)
-          (!!DELETE-PROTECTION (NEXT TRUCK3 LOCATION4)) (!!DEL-NEXT TRUCK3 LOCATION4)
-          (!!ADD-NEXT TRUCK3 LOCATION1) (!CONNECT-CHUTE TRUCK3)
-          (!FILL-HOPPER PACKAGE0 TRUCK3 LOCATION4) (!COLLECT-FEES PACKAGE1)
-          (!!ADD-NEXT TRUCK0 LOCATION5) (!!EXP-WEIGHT-SET TRUCK0 ROAD_ROUTE1 12)
-          (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE3 TRUCK0 LOCATION3 LOCATION5 CITY1)
-          (!!DELETE-PROTECTION (NEXT TRUCK0 LOCATION5)) (!!DEL-NEXT TRUCK0 LOCATION5)
-          (!!ADD-NEXT TRUCK0 LOCATION4) (!CONNECT-CHUTE TRUCK0)
-          (!FILL-HOPPER PACKAGE1 TRUCK0 LOCATION5) (!DELIVER PACKAGE2 LOCATION5)
-          (!DISCONNECT-CHUTE TRUCK3) (!DISCONNECT-CHUTE TRUCK0)
-          (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE2 TRUCK3 LOCATION4 LOCATION1 CITY0)
-          (!!DELETE-PROTECTION (NEXT TRUCK3 LOCATION1))
-          (!!EXP-WEIGHT-CLEAR TRUCK3 CITY0) (!CONNECT-CHUTE TRUCK3)
-          (!EMPTY-HOPPER PACKAGE0 TRUCK3 LOCATION1)
-          (!MOVE-VEHICLE-ROAD-ROUTE-CROSSCITY TRUCK0 LOCATION5 LOCATION4 CITY1 CITY0
-                                              ROAD_ROUTE1)
-          (!!DELETE-PROTECTION (NEXT TRUCK0 LOCATION4))
-          (!!EXP-WEIGHT-CLEAR TRUCK0 ROAD_ROUTE1) (!CONNECT-CHUTE TRUCK0)
-          (!EMPTY-HOPPER PACKAGE1 TRUCK0 LOCATION4) (!DISCONNECT-CHUTE TRUCK3)
-          (!DELIVER PACKAGE0 LOCATION1) (!DISCONNECT-CHUTE TRUCK0)
-          (!DELIVER PACKAGE1 LOCATION4) (!CLEAN-DOMAIN)))
+  '((!!ASSERT
+     ((GOAL (CLEAR)) (GOAL (DELIVERED PACKAGE2 LOCATION5))
+      (GOAL (DELIVERED PACKAGE1 LOCATION4))
+      (GOAL (DELIVERED PACKAGE0 LOCATION1))))
+    (!!CHECK PACKAGE2) (!!ADD-PACKAGE-LOCAL PACKAGE2)
+    (!!ADD-PACKAGE-NN PACKAGE2 LOCATION3 LOCATION3)
+    (!!ADD-PACKAGE-NN PACKAGE2 LOCATION3 LOCATION2)
+    (!!ADD-PACKAGE-NN PACKAGE2 LOCATION2 LOCATION3)
+    (!!ADD-PACKAGE-NN PACKAGE2 LOCATION2 LOCATION2) (!!CHECK PACKAGE1)
+    (!!ADD-PACKAGE-ROAD PACKAGE1 ROAD_ROUTE1)
+    (!!ADD-PACKAGE-NN PACKAGE1 LOCATION3 LOCATION1)
+    (!!ADD-PACKAGE-NN PACKAGE1 LOCATION3 LOCATION0)
+    (!!ADD-PACKAGE-NN PACKAGE1 LOCATION2 LOCATION1)
+    (!!ADD-PACKAGE-NN PACKAGE1 LOCATION2 LOCATION0) (!!CHECK PACKAGE0)
+    (!!ADD-PACKAGE-LOCAL PACKAGE0) (!COLLECT-FEES PACKAGE0)
+    (!!ADD-NEXT TRUCK3 LOCATION4) (!!EXP-WEIGHT-SET TRUCK3 CITY0 13)
+    (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE3 TRUCK3 LOCATION0 LOCATION4 CITY0)
+    (!!DELETE-PROTECTION (NEXT TRUCK3 LOCATION4)) (!!DEL-NEXT TRUCK3 LOCATION4)
+    (!!ADD-NEXT TRUCK3 LOCATION1) (!CONNECT-CHUTE TRUCK3)
+    (!FILL-HOPPER PACKAGE0 TRUCK3 LOCATION4) (!COLLECT-FEES PACKAGE1)
+    (!!ADD-NEXT TRUCK0 LOCATION5) (!!EXP-WEIGHT-SET TRUCK0 ROAD_ROUTE1 12)
+    (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE3 TRUCK0 LOCATION3 LOCATION5 CITY1)
+    (!!DELETE-PROTECTION (NEXT TRUCK0 LOCATION5)) (!!DEL-NEXT TRUCK0 LOCATION5)
+    (!!ADD-NEXT TRUCK0 LOCATION4) (!CONNECT-CHUTE TRUCK0)
+    (!FILL-HOPPER PACKAGE1 TRUCK0 LOCATION5) (!DELIVER PACKAGE2 LOCATION5)
+    (!DISCONNECT-CHUTE TRUCK3) (!DISCONNECT-CHUTE TRUCK0)
+    (!MOVE-VEHICLE-LOCAL-ROAD-ROUTE2 TRUCK3 LOCATION4 LOCATION1 CITY0)
+    (!!DELETE-PROTECTION (NEXT TRUCK3 LOCATION1))
+    (!!EXP-WEIGHT-CLEAR TRUCK3 CITY0) (!CONNECT-CHUTE TRUCK3)
+    (!EMPTY-HOPPER PACKAGE0 TRUCK3 LOCATION1)
+    (!MOVE-VEHICLE-ROAD-ROUTE-CROSSCITY TRUCK0 LOCATION5 LOCATION4 CITY1 CITY0
+     ROAD_ROUTE1)
+    (!!DELETE-PROTECTION (NEXT TRUCK0 LOCATION4))
+    (!!EXP-WEIGHT-CLEAR TRUCK0 ROAD_ROUTE1) (!CONNECT-CHUTE TRUCK0)
+    (!EMPTY-HOPPER PACKAGE1 TRUCK0 LOCATION4) (!DISCONNECT-CHUTE TRUCK3)
+    (!DELIVER PACKAGE0 LOCATION1) (!DISCONNECT-CHUTE TRUCK0)
+    (!DELIVER PACKAGE1 LOCATION4) (!CLEAN-DOMAIN)))
+
 (in-package :arity-test)
   
 ;;; FIXME: probably should undefine the problem and domain here.
 (test test-include-directive
   (shop-user::define-partitioned-umt-domain)
-  (fiveam:is
-   (equalp
-    (shop-user::remove-plan-costs
-     (first
-      (find-plans
-             'shop-user::umt-partitioned.pfile1
-             :which :first
-             :verbose 0)))
-    *expected-umt-plan*)))
+  (let ((plan (first
+               (find-plans
+                'shop-user::umt-partitioned.pfile1
+                :which :first
+                :verbose 0))))
+    (fiveam:is-true plan)
+    (fiveam:is-true
+     (validate-plan (shorter-plan plan)
+                    (asdf:system-relative-pathname "shop3" "examples/UMT2/from-archive/UMT.pddl")
+                    (asdf:system-relative-pathname "shop3" "examples/UMT2/from-archive/pfile01.pddl")))
+    (fiveam:is
+     (equalp
+      *expected-umt-plan*
+      (shop-user::remove-plan-costs plan)))))
+
+#|
+(fiveam:def-suite* test-implicit-conjunction-warning)
+(test (implicit-conj-singleton-op :suite test-implicit-conjunction-warning)
+  (let ((shop:*define-silently* t))
+   (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+    (warns shop3::implicit-conjunction-warning
+      (defdomain implicit-conjunction-singleton
+          ((:op (!op1)
+            :precond ((c))
+            :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-singleton nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(c)
+                (shop::operator-preconditions op)))))
+
+(test (implicit-conj-singleton-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+    (shop3::delete-domain 'implicit-conjunction-singleton))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-singleton
+         ((:method (task2)
+            m2
+            ((a))
+            (:ordered (:task4) (task5))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-singleton))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-singleton second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(a) pre)))))
 
 
+(test (implicit-conj-conjunction-op :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:op (!op1)
+           :precond ((c) (d))
+           :add ((a) (b)))))))
+  (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction nil))
+         (op (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction first domain.")
+                    (shop::operator dom '!op1))))
+    (is (equalp '(and (c) (d))
+                (shop::operator-preconditions op)))))
 
+
+(test (implicit-conj-conjunction-meth :suite test-implicit-conjunction-warning)
+  (ignore-errors
+   (shop3::delete-domain 'implicit-conjunction-conjunction))
+  (warns shop3::implicit-conjunction-warning
+    (let ((shop:*define-silently* t))
+     (defdomain implicit-conjunction-conjunction
+         ((:method (task2)
+            m2
+            ((a) (b))
+            (:ordered (:task4) (task5)))))))
+    (let* ((dom (shop::find-domain 'implicit-conjunction-conjunction))
+           (meths (progn (is-true (typep dom 'shop::domain) "Couldn't find definition of implicit-conjunction-conjunction second domain.")
+                         (shop::methods dom 'task2)))
+           (meth (progn (is (eql 1 (length meths))) (first meths)))
+           (body (progn (is (eql 5 (length meth))) (cddr meth)))
+           (pre (progn (is (eql 3 (length body))) (second body)))) ;first is name, second is precond, third is task net
+    (is (equalp '(and (a) (b)) pre))))
+|#
