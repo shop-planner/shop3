@@ -27,4 +27,6 @@
                 #:is
                 #:is-true
                 #:def-suite
-                #:in-suite))
+                #:in-suite
+
+                #:warns))

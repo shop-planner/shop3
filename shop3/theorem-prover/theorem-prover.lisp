@@ -854,8 +854,7 @@ goal1 along with all of the other formulas in remaining."
                 ;; Union of list-of-binding-lists (ANSWERS) with list of binding-lists
                 ;; NEW-ANSWERS.  So, e.g., eliminates duplicate copies of ((?X . 1) (?Y . 2))
                 (multiple-value-setq (answers depends)
-                  ;; modified to preferentially keep old answers
-                  (answer-set-union answers new-answers depends new-depends))
+                  (answer-set-union new-answers answers new-depends depends))
                 ;; (format t "~&Answers: ~s~%" answers)
                 ))))))
     (values answers found-match depends)))
