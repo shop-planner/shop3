@@ -52,8 +52,6 @@
          (expand-loop :ess domain current-task world-state tasks top-tasks
                       unifier ess-search-state)
        
-       (format t "~%Success: ~s" success)
-       (format t "~%Tasks1: ~s" tasks1)
        (when success
          (setf top-tasks top-tasks1
                tasks tasks1
@@ -134,7 +132,6 @@
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
 
-  (format t "~%Are we here? EXPAND-LOOP::ESS...")
   (let* ((task-body (apply-substitution (get-task-body task1) in-unifier))
          reductions)
 
@@ -309,9 +306,6 @@
           (find-satisfiers loop-condition state
                            :domain domain))
          reductions)
-
-    (format t "~%Loop condition: ~s" loop-condition)
-    (format t "~%Unifiers: ~s" unifiers)
     (iter
      (for u in unifiers)
      (let* ((u1 (compose-substitutions in-unifier u))
@@ -320,8 +314,8 @@
              (apply-substitution
               (loop-body-item :ordered task-body)
               u1)))
-       (format t "~%Loop body: ~s" loop-body)
-       (format t "~%U1: ~s" u1)
+
+       
        (setf reductions (generate-reductions domain reductions
                                              loop-body))))
     reductions))
@@ -331,11 +325,8 @@
                              in-unifier search-state)
   (declare (ignorable search-state state))
 
-  (format t "~%So we are testing this function right now???")
-  (format t "~%Task body: ~s" task-body)
   (let (reductions
         (loop-item (loop-body-item body-key task-body)))
-    (format t "~%Loop item: ~s" loop-item)
     (cond
       ;; it's a :FROM loop of some sort, supporting FROM TO for now.  
       ((loop-body-item-inner :from loop-item)
@@ -353,24 +344,26 @@
 
       ;; FOR over elements of a list
       ((loop-body-item-inner :in loop-item)
-       (format t "~%HEre in particular...")
        (let ((loop-var (loop-body-item-inner :var loop-item))
              (element-list (apply-substitution
                             (loop-body-item-inner :in loop-item)
                             in-unifier))
 	     (loop-body (loop-body-item :ordered task-body)))
 
-        (format t "~%Loop var: ~s" loop-var)
-        (format t "~%Loop element list: ~s" element-list)
-;        (read)
-         
          (iter
           (for el in element-list)
           (let* ((u `(,(make-binding loop-var el)))
                  (loop-body-instantiated (apply-substitution (copy-list loop-body)
-							     u)))
-	    (format t "~%Loop body instantiated: ~s" loop-body-instantiated)
-            (setf reductions (generate-reductions domain reductions loop-body-instantiated))
+							     u))
+		 (secondary-loop-item (loop-body-item :cond task-body)))
+
+	    ;; Modularize this into a function to share with EXPAND-LOOP-BODY(:COND)
+	    (if secondary-loop-item
+		(setf reductions (append reductions
+					 (expand-loop-body :cond task-body domain state
+							   in-unifier search-state)))
+		;; ELSE:
+		(setf reductions (generate-reductions domain reductions loop-body-instantiated)))
 	    (format t "~%Reductions: ~s" reductions))))))
 
     ;; RETURN
@@ -407,8 +400,6 @@
 
     (unless success
       (return-from seek-plans-loop nil))
-    ;; (format t "~%Tasks1: ~a" tasks1)
-    ;; (format t "~%Top-Tasks1: ~a" top-tasks1)
     (seek-plans domain state tasks1 top-tasks1 partial-plan
                 partial-plan-cost (1+ depth) which-plans
                 protections in-unifier1)))
@@ -442,15 +433,10 @@
    (finally (return renamed-tsk))))
 
 (defun generate-reductions (domain reductions subtasks)
-;  (format t "~%Reductions: ~s" reductions)
   (let ((renaming-table (make-hash-table :test #'equal)))
     (loop for tsk in subtasks
           as new-tsk = (resymbol-task tsk renaming-table)
                                 
           do (shop2::set-variable-property domain new-tsk)
              (setf reductions (append reductions (list new-tsk))))
-
-;    (format t "~%Reductions: ~s" reductions)
-;    (read)
-    reductions))  
-
+    reductions))
