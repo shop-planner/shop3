@@ -301,7 +301,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
-                    (make-add-dependencies depends))))))
+                    (make-add-dependencies :dependencies depends))))))
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
@@ -375,7 +375,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
-                (make-add-dependencies depends))))
+                (make-add-dependencies :dependencies depends))))
           (make-tag-map tag current-task planned-action))
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
         t))))
@@ -387,7 +387,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
   (setf (plan-tree:tree-node-expanded-task tree-node)
         expanded-task)
   (setf (gethash expanded-task hash-table) tree-node)
-  (make-record-expansion tree-node))
+  (make-record-expansion :tree-node tree-node))
 
 (defun make-dependencies (tree-node depend-lists hash-table)
   (iter (for depend in depend-lists)
@@ -488,9 +488,13 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                            :mode (mode state))
             (backtrack-stack state))
       state)))
+
+(declaim (ftype (function (search-state) choice-entry) stack-backtrack))
 (defun stack-backtrack (state)
-  "Chronological backtracking only, for now.
-Return the CHOICE-ENTRY where you stopped."
+  "Do a one-step, chronological backtrack, undoing all
+changes until we reach the next CHOICE-ENTRY.
+
+Return the CHOICE-ENTRY where backtracking stopped."
   (verbose-format 2 "~&Backtracking:~%")
   (iter (for entry = (pop (backtrack-stack state)))
     (verbose-format 2 "~T~a~%" entry)
@@ -500,14 +504,15 @@ Return the CHOICE-ENTRY where you stopped."
     (when (typep entry 'choice-entry)
       (return entry))))
 
+(declaim (ftype (function (search-state choice-entry) choice-entry) stack-backjump))
 (defun stack-backjump (state target)
-  (assert (typep target 'choice-entry))
+  (check-type target choice-entry)
   (iter (for entry = (stack-backtrack state))
     (when (eq entry target)
       (return target))))
 
 (defun remove-subtree-from-table (hash-table subtree)
-  (assert (typep subtree 'plan-tree:tree-node))
+  (check-type subtree plan-tree:tree-node)
   (labels ((remove-forest (forest)
                (if (null forest) nil
                    (or (remove-subtree (first forest))

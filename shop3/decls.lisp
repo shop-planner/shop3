@@ -745,3 +745,13 @@ task keyword of TASK and LIBRARY-TASK are the same.")
         do (rotatef (aref array (random i))
                     (aref array (1- i)))
         finally (return array)))
+
+;;;---------------------------------------------------------------------------
+;;; Type macro from Phoebe
+;;;---------------------------------------------------------------------------
+(deftype values! (&rest types)
+  "Like `cl:values', but implicit additional values are forbidden."
+  (flet ((rest-or-optional-p (thing)
+           (member thing '(&optional &rest) :test #'eq)))
+    (if (find-if #'rest-or-optional-p types) `(values ,@types)
+        `(values ,@types &optional))))
