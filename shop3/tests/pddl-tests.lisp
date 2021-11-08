@@ -1221,8 +1221,8 @@
                     '((JUG JUG0) (JUG JUG1) (FLUENT-VALUE (AMOUNT JUG1) 6) (FLUENT-VALUE (AMOUNT JUG0) 6)
                       (FLUENT-VALUE (CAPACITY JUG1) 12) (FLUENT-VALUE (CAPACITY JUG0) 12))
                     (state-atoms state) :test 'equalp))
-        (multiple-value-bind (bound-op state-tag protections cost unifier)
-            (apply-action domain state '(!empty jug0 jug1) action nil 0 nil)
+        (let ((bound-op
+                (apply-action domain state '(!empty jug0 jug1) action nil 0 nil)))
           (fiveam:is (equalp '(!empty jug0 jug1) bound-op))
           (fiveam:is (alexandria:set-equal '((JUG JUG0) (JUG JUG1) (FLUENT-VALUE (AMOUNT JUG1) 12) (FLUENT-VALUE (AMOUNT JUG0) 0)
                                              (FLUENT-VALUE (CAPACITY JUG1) 12) (FLUENT-VALUE (CAPACITY JUG0) 12))

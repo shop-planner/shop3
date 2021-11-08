@@ -138,6 +138,9 @@ Particularly useful for structures, but could be generally applicable."
          (tree-search plan-tree))
      (error "No tree node for task ~S in ~S" task plan-tree))))
 
+(declaim (ftype (function (cons &optional hash-table plan-tree:tree-node)
+                          (values plan-tree:tree-node &optional))
+                find-task-in-tree))
 (defun find-task-in-tree (task &optional hash-table plan-tree)
   "Return the PLAN-TREE:TREE-NODE in TREE corresponding to TASK."
   (let ((task (shop2::strip-task-sexp task)))

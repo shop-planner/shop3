@@ -32,7 +32,6 @@
 (test fill-states
   (with-fixture setup ()
    (iter (for encoding in '(:list :hash :mixed :doubly-hashed :bit))
-     (as state-type in '(shop3.common::list-state shop3.common::hash-state shop3.common::mixed-state shop3.common::doubly-hashed-state shop3.common::bit-state))
      (as state = (make-initial-state domain encoding nil))
      (iter (for fact in facts)
        (add-atom-to-state fact state 0 '(fake operator)))

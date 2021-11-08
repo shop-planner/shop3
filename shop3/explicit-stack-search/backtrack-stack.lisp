@@ -1,4 +1,4 @@
-(in-package :shop2)
+(in-package :shop)
 
 (defgeneric do-backtrack (stack-entry state)
   (:documentation "Update the STATE to restore the
@@ -11,12 +11,13 @@ classes."))
 
 (defclass bottom-of-stack (stack-entry)
   ()
-  )
+  (:documentation "Sentinel value for the bottom of the backtrack stack."))
 
 (defclass choice-entry (stack-entry)
   ((mode
     :initarg :mode
     :reader mode
+    :type symbol
     )
    (current-task
     :initarg :current-task
@@ -82,11 +83,13 @@ classes."))
    :initarg :parent
    :initform nil
    :reader parent
+   :type (or plan-tree:complex-tree-node null)
    )
   (child
    :initarg :child
    :initform nil
    :reader child
+   :type (or plan-tree:tree-node null)
    ))
   )
 
@@ -118,6 +121,7 @@ classes."))
   ((tree-node
     :initarg :tree-node
     :reader tree-node
+    :type plan-tree:tree-node
     ))
   (:documentation "Record the expansion of a TASK into an EXPANDED-TASK.
 What this means is that we are recording the match of the TASK as a
@@ -186,49 +190,73 @@ template against a standardized EXPANDED-TASK from the plan library.")
 
 ;;;---------------------------------------------------------------------------
 ;;; Constructors
+;;; These are just thin wrappers around MAKE-INSTANCE.
+;;; I have added explicit keyword arguments to make it more clear
+;;; what arguments need to be supplied.
 ;;;---------------------------------------------------------------------------
+;;; STACK-CONSTRUCTOR accepts:
+;;; NAME-ARG which is either a symbol of the form MAKE-<FOO>
+;;;   to construct a FOO class object, or
+;;;   (<arbitrary-name> <class-name>) which will create a
+;;;   function named <arbitrary-name> that will create an object
+;;;   of type <class-name)
+;;; a &REST argument that is a list of keyword argument specifications.
+;;;   These will be either keyword argument names (symbols) or two-element
+;;;   lists, where the first element is the name, and the second is a type
+;;;   specifier.  Names do *not* need to be in the keyword package --
+;;;   the macro will take care of that.
+;;; Also generates a type declaration for the function.
+(defmacro stack-constructor (name-arg &rest arglist)
+  (let (class-name name)
+   (if (listp name-arg)
+       (cond
+         ((= (length name-arg) 2)
+          (setf name (first name-arg)
+                class-name (second name-arg)))
+         ((= (length name-arg) 1)
+          (setf name (first name-arg)))
+         (t (error "Unexpected name-arg: expected one or two element list. Got ~s" name-arg)))
+       (setf name name-arg))
+    (let ((class (if class-name class-name
+                     (let ((prefix (subseq (symbol-name name) 0 5))
+                           (class-name (subseq (symbol-name name) 5)))
+                       (assert (string-equal "make-" prefix))
+                       (intern class-name :shop)))))
+      (multiple-value-bind (instance-arglist keywords keyword-types)
+       (iter (for arg in arglist)
+         (for name = (if (symbolp arg) arg
+                         (progn (assert (and (listp arg) (= (length arg) 2)))
+                                (first arg))))
+         (for type = (if (symbolp arg) t
+                         (progn (assert (and (listp arg) (= (length arg) 2)))
+                                (second arg))))
+         (as keyword = (intern (symbol-name name) :keyword))
+         (appending (list (intern (symbol-name name) :keyword) name) into instance-arglist)
+         (collecting (list keyword type) into keyword-types)
+         (collecting name into keywords)
+         (finally (return (values instance-arglist keywords keyword-types))))
+        `(progn
+           (declaim (ftype (function ,(cons '&key keyword-types) (values! ,class)) ,name))
+           (defun ,name ,(cons '&key keywords)
+             ,(format nil "Constructor for ~s objects." class)
+             (make-instance ',class
+                            ,@instance-arglist)))))))
 
-;;; keyword arguments just here so that it's easy to see what you can pass to
-;;; this function.
-(defun make-cs-state (&rest arglist &key mode alternatives current-task)
-  (declare (ignorable mode alternatives current-task))
-  (apply 'make-instance 'choice-entry
-         arglist))
+(stack-constructor (make-cs-state choice-entry) mode alternatives current-task)
 
-(defun make-world-state-tag (&rest arglist &key tag)
-  (declare (ignorable tag))
-  (apply 'make-instance 'state-tag
-         arglist))
+(stack-constructor (make-world-state-tag state-tag) tag)
 
-(defun make-prim-state-expand (&rest arglist
-                                     &key top-tasks
-                                     tasks protections partial-plan
-                                     unifier partial-plan-cost
-                                       parent child)
-  (declare (ignorable top-tasks
-                      tasks protections partial-plan
-                      unifier partial-plan-cost parent child))
-  (apply 'make-instance 'prim-state-expand
-         arglist))
+(stack-constructor make-prim-state-expand
+                   top-tasks
+                   tasks protections partial-plan
+                   unifier partial-plan-cost)
 
-(defun make-method-instantiation (&rest arglist &key unifier top-tasks tasks)
-  (declare (ignorable unifier top-tasks tasks))
-  (apply 'make-instance 'method-instantiation
-         arglist))
+(stack-constructor make-method-instantiation unifier top-tasks tasks)
 
-(defun make-update-parent (&key old-parent)
-  (assert old-parent)
-  (make-instance 'update-parent :old-parent old-parent))
+(stack-constructor make-add-dependencies dependencies)
 
-(defun make-add-dependencies (dependencies)
-  (make-instance 'add-dependencies
-    :dependencies dependencies))
+(stack-constructor make-add-child-to-tree
+                   (parent plan-tree:complex-tree-node)
+                   (child plan-tree:tree-node))
 
-
-(defun make-add-child-to-tree (&key parent child)
-  (make-instance 'add-child-to-tree
-                 :parent parent
-                 :child child))
-
-(defun make-record-expansion (task-node)
-  (make-instance 'record-expansion :tree-node task-node))
+(stack-constructor make-record-expansion tree-node)

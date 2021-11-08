@@ -7,6 +7,7 @@
     :accessor mode
     :documentation "Holds the mode -- the name -- of the current
 \"instruction\" in the explicit search virtual machine."
+    :type symbol
     )
    (current-task
     :initarg :current-task

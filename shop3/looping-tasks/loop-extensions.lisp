@@ -139,19 +139,8 @@
                                                               parent (plan-tree-lookup ess-search-state))))
                      
                      ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
-                     (push (make-add-child-to-tree :parent
-                                                   (if (typep child 'plan-tree::complex-tree-node)
-                                                       (plan-tree::complex-tree-node-task
-                                                        child)
-                                                       (plan-tree::primitive-tree-node-task
-                                                        child))
-                                                   :child
-                                                   (if (typep child 'plan-tree::complex-tree-node)
-                                                       (plan-tree::complex-tree-node-children
-                                                        child)
-                                                       (list (plan-tree::primitive-tree-node-task
-                                                              child)))
-                                                   )
+                     (push (make-add-child-to-tree :parent parent
+                                                   :child child)
                            backtrack-stack)
                      ))))))
           (format t "~%Loop task decomposed...~%")
