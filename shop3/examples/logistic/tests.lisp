@@ -33,7 +33,7 @@
                     (when plan-list
                       (remove-plan-costs (first plan-list))))))
            ,@body))
-       (fiveam:test ,dh-name
+       (fiveam:test (,dh-name :suite logistics-tests-dh)
          (flet ((log-plan (problem-name)
                   (logistics-domain)
                   (let ((plan-list (plan-quietly problem-name :state-type :doubly-hashed)))
@@ -49,7 +49,7 @@
                     (when plan-list
                       (remove-plan-costs (first plan-list))))))
            ,@body))
-       (fiveam:test ,dh-ess-name  
+       (fiveam:test (,dh-ess-name :suite logistics-tests-dh)
          (flet ((log-plan (problem-name)
                   (logistics-domain)
                   (let ((plan-list (ess-plan-quietly problem-name :state-type :doubly-hashed)))
@@ -60,6 +60,9 @@
              `(fiveam:is-true ,plan-call)))))))
 
 (fiveam:def-suite logistics-tests)
+(fiveam:def-suite logistics-tests-dh
+  :description "Logistics tests for doubly-hashed SHOP states."
+  )
 (fiveam:in-suite logistics-tests)
 
 (fiveam:test check-simple-logistic-plan
