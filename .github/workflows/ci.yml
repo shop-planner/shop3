@@ -40,6 +40,8 @@ jobs:
           - SHOP3-USER::UMT-DOMAIN-TESTS
           - SHOP3::ROVERS-TESTS
           - SHOP3::SHORT-PDDL-TESTS
+          - SHOP3-USER::DEPOT-TESTS
+          - TEST-STATES::TEST-SHOP-STATES
 
     steps:
     - uses: actions/checkout@v2
