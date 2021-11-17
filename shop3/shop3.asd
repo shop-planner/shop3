@@ -236,8 +236,8 @@ shop3."
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 5
                  (depot-tests . :shop3-user) ; 44
-                 (logistics-tests . :shop3-user) ; 204?
-                 (logistics-tests-dh . :shop3-user) ; 204?
+                 (logistics-tests . :shop3-user) ; 208
+                 (logistics-tests-dh . :shop3-user) ; 200
                  (singleton-tests . :shop3-user) ; 44
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
