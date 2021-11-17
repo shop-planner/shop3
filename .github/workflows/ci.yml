@@ -103,6 +103,7 @@ jobs:
         ros -e "(cl:in-package :cl-user)
            (require :asdf)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
+           (princ (uiop:run-program \"date\" :output :string))
            (prin1 \"${{ matrix.test }}\") (terpri)
            (asdf:initialize-source-registry  '(:source-registry (:directory \"$PWD/shop3/\") (:tree \"$PWD/jenkins/ext/\") :inherit-configuration))
            (declaim (optimize (speed 3)))
@@ -117,4 +118,5 @@ jobs:
            (let ((test-results (fiveam:run! (quote ${{ matrix.test }}))))
                (format t \"Test results are:~%\")
                (princ test-results) (terpri)
+               (princ (uiop:run-program \"date\" :output :string))
                (uiop:quit (if (test-fail-p test-results) 1 0)))"
