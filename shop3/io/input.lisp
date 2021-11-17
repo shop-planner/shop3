@@ -139,12 +139,15 @@ variable *PROBLEM*."
       (setf problem-name-etc (list problem-name-etc)))
     (destructuring-bind (problem-name &rest options
                          &key (type 'problem) domain
+                           redefine-ok
                            documentation
                          &allow-other-keys)
         problem-name-etc
+      (declare (ignorable redefine-ok))
       (let ((options (copy-tree options)))
         (remf options :type)
         (remf options :domain)
+        (remf options :redefine-ok)
         (when domain (setf domain-name domain))
         (unless *make-problem-silently*
           (unless *define-silently*
@@ -160,7 +163,8 @@ variable *PROBLEM*."
                   documentation))
           (setf *problem* problem-name)
           #+allegro
-          (excl:record-source-file problem-name :type :shop3-problem)
+          (let ((excl:*redefinition-warnings* (not redefine-ok)))
+           (excl:record-source-file problem-name :type :shop3-problem))
           problem-inst)))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
