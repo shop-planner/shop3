@@ -29,7 +29,7 @@
     shadow the default method.")
   (:method :after (domain task method-id &optional (backtrack-stack nil backtrack-stack-supplied-p))
     (when backtrack-stack-supplied-p
-      (push (make-record-expansion-for-replay task method-id)
+      (push (make-record-expansion-for-replay :task task :method-id method-id)
             backtrack-stack)))
   (:method ((domain domain) (task list) (method-id symbol) &optional backtrack-stack)
     (declare (ignorable backtrack-stack))

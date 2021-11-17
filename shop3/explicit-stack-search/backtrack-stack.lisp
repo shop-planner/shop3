@@ -253,7 +253,7 @@ This may later be used by the analogical replay code."))
          (collecting name into keywords)
          (finally (return (values instance-arglist keywords keyword-types))))
         `(progn
-           (declaim (ftype (function ,(cons '&key keyword-types) (values! ,class)) ,name))
+           (declaim (ftype (function ,(cons '&key keyword-types) (values ,class &optional)) ,name))
            (defun ,name ,(cons '&key keywords)
              ,(format nil "Constructor for ~s objects." class)
              (make-instance ',class
@@ -277,3 +277,4 @@ This may later be used by the analogical replay code."))
                    (child plan-tree:tree-node))
 
 (stack-constructor make-record-expansion tree-node)
+(stack-constructor make-record-expansion-for-replay (task list) (method-id symbol))

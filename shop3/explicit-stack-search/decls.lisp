@@ -93,6 +93,32 @@ functions."
     )
    ))
 
+
+
+(defclass plan-return ()
+  ((plan
+    :initarg :plan
+    :reader plan
+    )
+   (tree
+    :initarg :tree
+    :reader tree
+    :type (or null plan-tree:top-node)
+    )
+   (lookup-table
+    :initarg :lookup-table
+    :reader lookup-table
+    )
+   (replay-table
+    :initarg :replay-table
+    :reader replay-table
+    )
+   )
+  (:documentation "Store the multiple return aspects for a single SHOP plan."))
+
+
+
+
 (defmacro verbose-format (&rest args)
   (let ((threshold (if (integerp (first args))
                        (pop args)

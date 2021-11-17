@@ -110,6 +110,10 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
       
       (unless repairable
         (delete-state-tag-decoder)))))
+
+(declaim (ftype (function (search-state symbol) (values t t &optional))
+                test-for-done))
+
       
 (defun seek-plans-stack (state domain &key (which :first) repairable)
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP3 search
@@ -135,9 +139,6 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
          (if (empty-p state)
              ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
              (setf (mode state) 'extract-plan)
-             ;; (cond ((test-for-done state which-plans)
-             ;;        (setf (mode state) 'extract-plan))
-             ;;       (t (stack-backtrack state))))
              (setf (mode state) 'look-for-immediate-task)))
         (look-for-immediate-task
          (cond ((immediate-tasks state)
@@ -227,22 +228,29 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                (incf (depth state)))
              (stack-backtrack state)))
         (extract-plan
-         (let ((plans (test-plans-found state :repairable repairable)))
-           (when *enhanced-plan-tree*
-             (apply-substitution-to-tree (unifier state) (plan-tree state)))
-           (setf *plans-found* (append plans *plans-found*))
-           (when (> *verbose* 0)
-            (format t "~%~%Solution plan is found successfully...:~%~a"
-                    plans))
-           (return
-             (values plans
-                     (when *enhanced-plan-tree*
-                       (list
-                            (plan-tree state)))
-                     (when *enhanced-plan-tree*
-                       (list
-                        (plan-tree-lookup state)))
-                     state))))))))
+         (let ((plan (test-plan-found state :repairable repairable))
+               plan-return)
+           ;; FIXME: Replace this with the option of multiple plans.
+           (when plan
+             (setf plan-return
+              (make-instance 'plan-return
+                             :plan plan
+                             :tree (when *enhanced-plan-tree*
+                                     (apply-substitution-to-tree (unifier state) (plan-tree state)))
+                             :lookup-table (when *enhanced-plan-tree*
+                                             (plan-tree-lookup state))
+                             :replay-table *analogical-replay-table*))
+             (setf *plans-found* (cons plan *plans-found*))
+             (when (> *verbose* 0)
+               (format t "~%~%Solution plan is found successfully...:~%~a"
+                       plan))
+             (return
+               (with-slots (plan tree lookup-table replay-table) plan-return
+                 (values (list plan)
+                         (when tree (list tree))
+                         (when lookup-table (list lookup-table))
+                         state))))
+           (return nil)))))))
 
 ;;; Traverse the plan tree, applying the bindings to the
 ;;; EXPANDED-TASKs everywhere in the tree.
@@ -494,14 +502,12 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
 ;;; FIXME: for now we just extract the plan -- as if we only are
 ;;; finding the first plan.  Simplification to get things done
 ;;; more quickly.
-(defun test-plans-found (state &key repairable)
+(defun test-plan-found (state &key repairable)
   (with-slots (partial-plan) state
     (when partial-plan
-      (list ; comply with FIND-PLANS return type by returning a list of plans
-       ;; in this case always a singleton or nil.
-       (if repairable
-           (reverse partial-plan)
-           (strip-NOPs (reverse partial-plan)))))))
+      (if repairable
+          (reverse partial-plan)
+          (strip-NOPs (reverse partial-plan))))))
 (defun prepare-choose-immediate-task-state (state)
   (let ((immediates (immediate-tasks state)))
     (setf (alternatives state) immediates)
@@ -523,7 +529,10 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
   "Do a one-step, chronological backtrack, undoing all
 changes until we reach the next CHOICE-ENTRY.
 
-Return the CHOICE-ENTRY where backtracking stopped."
+Return the CHOICE-ENTRY where backtracking stopped.
+
+Note: Requires the dynamic variable *DOMAIN* to be properly
+bound around calls."
   (verbose-format 2 "~&Backtracking:~%")
   (iter (for entry = (pop (backtrack-stack state)))
     (verbose-format 2 "~T~a~%" entry)
