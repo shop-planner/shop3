@@ -1,0 +1,41 @@
+authors: 
+  -
+    affiliation: "SIFT, LLC"
+    family-names: Goldman
+    given-names: Robert P.
+    orcid: "https://orcid.org/0000-0002-5851-4851"
+  -
+    affiliation: "SIFT, LLC"
+    family-names: Kuter
+    given-names: Ugur
+title: "SHOP3 HTN Planner"
+
+preferred-citation:
+    type: conference-paper
+    title: "Hierarchical Task Network Planning in Common Lisp: the case of SHOP3"
+    collection-title: Proceedings of the 12th European Lisp Symposium
+    editors:
+        - family-names: Neuss
+          given-names: Nicolas
+    year: 2019
+    isbn: 978-2-9557474-3-8
+    issn: 2677-3465
+    conference:
+      name: European Lisp Symposium
+      location: Genova, Italy
+      date-start: 2019-04-01
+      date-end: 2019-04-02
+    authors: 
+      -
+        affiliation: "SIFT, LLC"
+        family-names: Goldman
+        given-names: Robert P.
+        orcid: "https://orcid.org/0000-0002-5851-4851"
+      -
+        affiliation: "SIFT, LLC"
+        family-names: Kuter
+        given-names: Ugur
+cff-version: "1.2.0"
+date-released: 2019-03-31
+message: "If you use this software, please cite it using this conference paper."
+version: 3.0.0
