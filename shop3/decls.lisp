@@ -614,6 +614,9 @@ DOMAIN (a SHOP ddomain).  When PACKAGE is supplied, put the
 symbols into that package (instead of into the value of *PACKAGE*,
 which should be the default)."))
 
+(defgeneric plan-cost (plan)
+  (:documentation "Return a float that is the cost of the plan argument."))
+
 
 
 ;;; ERRORP defaults to NIL only for backwards compatibility.  It might be better
