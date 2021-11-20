@@ -245,9 +245,9 @@ shop3."
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
-                 (analogical-replay-tests . :analogical-replay-tests) ; 12
+                 (analogical-replay-tests . :analogical-replay-tests) ; 24
                  )
-    :num-checks 944
+    :num-checks 956
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

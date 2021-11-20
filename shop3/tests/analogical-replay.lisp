@@ -54,6 +54,15 @@
       (when plans
         (is (= 1 (length plans)))
         (is (= 10 (second (first plans))))))
+    (let* ((prs (find-plans-stack 'bridge-out
+                                   :unpack-returns nil
+                                   :which :first :verbose 0))
+           plans)
+      (is-true prs)
+      (setf plans (mapcar #'shop::plan prs))
+      (when plans
+        (is (= 1 (length plans)))
+        (is (= 10 (second (first plans))))))
     (let ((plans (find-plans-stack 'bridge-out :which :all :verbose 0)))
       (is-true plans)
       (when plans
@@ -67,3 +76,32 @@
            (costs (mapcar #'second plans)))
       (is (= 2 (length plans)))
       (is (set-equal (list 1 10) costs :test '=)))))
+
+(test check-analogical-replay
+  (with-fixture ar-test-domain ()
+    (let ((prs (find-plans-stack 'bridge-out :unpack-returns nil
+                                             :which :first :verbose 0))
+         replay-table)
+      (let ((plans (mapcar #'shop::plan prs)))
+        (is-true plans)
+        (when plans
+          (is (= 1 (length plans)))
+          (is (= 10 (second (first plans))))))
+      (setf replay-table (shop::replay-table (first prs)))
+      (let ((prs (find-plans-stack 'bridge-not-out
+                                   :unpack-returns nil
+                                   :analogical-replay replay-table
+                                   :which :first :verbose 0)))
+        (let ((plans (mapcar #'shop::plan prs)))
+          (is-true plans)
+          (when plans
+            (is (= 1 (length plans)))
+            (is (= 10 (second (first plans)))))))
+      (let ((prs (find-plans-stack 'bridge-not-out
+                                   :unpack-returns nil
+                                   :which :first :verbose 0)))
+        (let ((plans (mapcar #'shop::plan prs)))
+          (is-true plans)
+          (when plans
+            (is (= 1 (length plans)))
+            (is (= 1 (shop::plan-cost (first plans))))))))))
