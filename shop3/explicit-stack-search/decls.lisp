@@ -113,6 +113,10 @@ functions."
     :initarg :replay-table
     :reader replay-table
     )
+   (world-state
+    :initarg :world-state
+    :reader world-state
+    )
    )
   (:documentation "Store the multiple return aspects for a single SHOP plan."))
 

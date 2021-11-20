@@ -1,4 +1,4 @@
-(in-package :shop2)
+(in-package :shop)
 
 (defun divergence-op-p (op)
   (or (eq op :add)

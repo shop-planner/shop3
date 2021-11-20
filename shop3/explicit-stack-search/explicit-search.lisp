@@ -24,6 +24,7 @@
                                    (out-stream t)
                                    (which :first)
                                    analogical-replay
+                                   (unpack-returns t)
                                    make-analogy-table)
   "Top level search function for explicit-state search in SHOP3.
 Does not support the full range of options supported by SHOP3: only
@@ -97,6 +98,7 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
 
     (unwind-protect
         (seek-plans-stack search-state domain
+                          :unpack-returns unpack-returns
                           :which which
                           :repairable repairable)
       (setq total-run-time (- (get-internal-run-time) start-run-time)
@@ -118,16 +120,21 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
                 test-for-done))
 
 
-(defun seek-plans-stack (state domain &key (which :first) repairable)
+(defun seek-plans-stack (state domain &key (which :first) repairable
+                                        (unpack-returns t))
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP3 search
 virtual machine, cycling through different virtual instructions depending
 on the value of the MODE slot of STATE.
-   Returns three values:
+   If UNPACK-RETURNS is non-NIL (the default):
+   Returns five values:
 List of PLANS -- currently there is always only one, but this complies
    with the return from conventional SHOP3.
 List of PLAN-TREES -- optional
 List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
-    supplied."
+    supplied.
+List of world states (SHOP states) -- optional
+List of analogical-replay tables -- optional
+   If UNPACK-RETURNS is NIL, returns a list of PLAN-RETURN objects."
   ;; kick off the stack VM
   (setf (mode state) 'test-for-done)
   (handler-case
@@ -247,18 +254,14 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                (:first
                 (if plan-return
                     (return-from seek-plans-stack
-                      (with-slots (plan tree lookup-table replay-table) plan-return
-                        (values (list plan)
-                                (when tree (list tree))
-                                (when lookup-table (list lookup-table))
-                                state)))
+                      (plan-returns *plans-found* unpack-returns))
                     (return-from seek-plans-stack nil)))
                (:all (stack-backtrack state)))))))
     (search-failed ()
       (case which
         (:all
          (when *plans-found*
-           (plan-returns *plans-found*)))
+           (plan-returns *plans-found* unpack-returns)))
         (otherwise nil)))))
 
 
@@ -281,8 +284,9 @@ the tasks in the original PLAN into the copy."
   (function (domain symbol &key (:state t) (:plan list) &allow-other-keys)
             (values plan-return &optional))
   make-plan-return))
-(defgeneric make-plan-return (domain which &key state plan &allow-other-keys)
-   (:method ((domain domain) (which (eql :all)) &key state plan)
+
+(defgeneric make-plan-return (domain which &key state plan replay-table &allow-other-keys)
+   (:method ((domain domain) (which (eql :all)) &key state plan replay-table)
      ;; if there are going to be multiple return values, we must make
      ;; sure that further search does not clobber them.
      (if (not (or *enhanced-plan-tree* *analogical-replay-table*))
@@ -302,32 +306,37 @@ the tasks in the original PLAN into the copy."
              :plan new-plan
              :tree plan-tree-copy
              :lookup-table lookup-table
-             :replay-table (when *analogical-replay-table*
-                             (alexandria:copy-hash-table *analogical-replay-table*)))))))
-  (:method ((domain domain) (which (eql :first)) &key plan state)
+             :world-state (copy-state (world-state state))
+             :replay-table (when replay-table
+                             (alexandria:copy-hash-table replay-table)))))))
+  (:method ((domain domain) (which (eql :first)) &key plan state replay-table)
     (populate-plan-return
      :plan plan
      :tree (when *enhanced-plan-tree*
              (apply-substitution-to-tree (unifier state) (plan-tree state)))
      :lookup-table (when *enhanced-plan-tree*
                      (plan-tree-lookup state))
-     :replay-table (when *analogical-replay-table*
-                             (alexandria:copy-hash-table *analogical-replay-table*)))))
+     :world-state (world-state state)
+     :replay-table (when replay-table
+                             (alexandria:copy-hash-table replay-table)))))
 
 (defun populate-plan-return (&rest args)
   (apply #'make-instance 'plan-return args))
 
-(defun plan-returns (pr-list)
+(defun plan-returns (pr-list &optional (unpack-returns t))
   "Unpack the return values from PR-LIST, which should be a list
 of PLAN-RETURN objects."
-  (iter (for pr in pr-list)
-    (check-type pr plan-return)
-    (with-slots (plan tree lookup-table replay-table) pr
-      (collecting plan into plans)
-      (collecting tree into trees)
-      (collecting lookup-table into lookup-tables)
-      (collecting replay-table into replay-tables)
-      (finally (return (values plans trees lookup-tables replay-tables))))))
+  (if unpack-returns
+   (iter (for pr in pr-list)
+     (check-type pr plan-return)
+     (with-slots (plan tree lookup-table replay-table world-state) pr
+       (collecting plan into plans)
+       (collecting tree into trees)
+       (collecting lookup-table into lookup-tables)
+       (collecting world-state into world-states)
+       (collecting replay-table into replay-tables)
+       (finally (return (values plans trees lookup-tables world-states replay-tables)))))
+   pr-list))
 
 ;;; Traverse the plan tree, applying the bindings to the
 ;;; EXPANDED-TASKs everywhere in the tree.
