@@ -15,7 +15,24 @@
 
 (defgeneric expand-primitive-state (state domain))
 
-
+(declaim
+ (ftype
+  (function ((or problem symbol) &key
+                                 (:domain (or domain symbol))
+                                 (:verbose (member 0 1 2))
+                                 (:plan-tree t)
+                                 (:gc t)
+                                 (:no-dependencies t)
+                                 (:repairable t)
+                                 (:rationale t)
+                                 (:state-type symbol)
+                                 (:out-stream (or t stream))
+                                 (:which (or :first :all))
+                                 (:analogical-replay t)
+                                 (:unpack-returns t)
+                                 (:make-analogy-table t))
+            t)
+  find-plans-stack))
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                    (no-dependencies nil)
                                    repairable
@@ -27,8 +44,44 @@
                                    (unpack-returns t)
                                    make-analogy-table)
   "Top level search function for explicit-state search in SHOP3.
-Does not support the full range of options supported by SHOP3: only
-supports finding the first solution to PROBLEM.  To comply with SHOP3,
+Does not support the full range of options supported by SHOP3's
+`find-plans-stack`.
+
+Keyword arguments:
+* domain : either a domain name (symbol) or a `shop:domain` object.
+* verbose : 0, 1, 2, 3; default 0
+* plan-tree : build and return a plan tree? (`plan-tree:top-node`),
+        defaults to `nil`.
+* gc : If possible, perform a full GC before starting to plan.  Default:
+        current value of `shop:*gc*`.
+* no-dependencies : if building a plan tree, build it *without* causal
+        dependencies.  Default: `nil`.
+* repairable : return plans that can be repaired.  Default: `nil`.
+* rationale : build a plan tree with rationale information.  Default: `nil`.
+* state-type : what state type should be used for representing world states?
+        (Note: world-state/SHOP state, *not* search-state). Default: `:mixed`.
+* out-stream : where should output be printed.  Default: `t` (standard output).
+* which : What/how many plans should be returned?  Supports only `:first` (the
+        default) and `:all`.
+* analogical-replay : Do search informed by the contents of the
+        `*analogical-replay-table*`. Default: `nil`.
+* make-analogy-table : Populate `*analogical-replay-table*` while planning.
+        Only works with `:which` = `:first`.  Default: `nil`.
+* unpack-returns : If true, return values in a way compatible with `find-plans`.
+        If false, return a list of `plan-return` objects instead.  See discussion
+        of return values, below.  Default: `t`.
+
+Return values:
+    There are two possible return types, selected by the keyword argument
+`unpack-returns`:
+
+1. Default/compatible with `find-plans`:
+    * List of plans
+    * List of plan trees (if computed)
+    * List of plan tree lookup tables
+    * List of final world states
+    * List of analogical replay tables (if computed)
+To comply with SHOP3,
 though, always returns a list of plans.
   If the PLAN-TREE keyword argument is non-NIL, will return an enhanced plan
 tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
@@ -45,8 +98,16 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
-         (*make-analogy-table* make-analogy-table)
-         (*analogical-replay* analogical-replay)
+         (*make-analogy-table* (progn
+                                 (or (and make-analogy-table (eq which :first))
+                                     (not make-analogy-table)
+                                     (error "Make analogy table only supported for :which == :first"))
+                                 make-analogy-table))
+         (*analogical-replay* (progn
+                                 (or (and analogical-replay (eq which :first))
+                                     (not analogical-replay)
+                                     (error "Analogical replay only supported for :which == :first"))
+                                 analogical-replay))
          (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
@@ -269,7 +330,10 @@ List of analogical-replay tables -- optional
                 make-plan-copy))
 (defun make-plan-copy (plan)
   "Copy the argument PLAN, and return the copy and a hash-table that maps
-the tasks in the original PLAN into the copy."
+the tasks in the original PLAN into the copy.
+  The hash table is essential because the plan tree is indexed by object
+equality, so when the plan is rewritten, any plan tree must be rewritten,
+as well."
   (iter (with lookup-table = (make-hash-table :test #'eq))
                (declare (ignorable rest))
                (for (task num . rest) on plan by 'cddr)
@@ -286,22 +350,24 @@ the tasks in the original PLAN into the copy."
   make-plan-return))
 
 (defgeneric make-plan-return (domain which &key state plan replay-table &allow-other-keys)
-   (:method ((domain domain) (which (eql :all)) &key state plan replay-table)
-     ;; if there are going to be multiple return values, we must make
-     ;; sure that further search does not clobber them.
-     (if (not (or *enhanced-plan-tree* *analogical-replay-table*))
-         ;; no danger of clobbering
-         (populate-plan-return :plan (copy-tree plan))
-         (multiple-value-bind (new-plan translation-table)
-             (make-plan-copy plan)
+  (:documentation "Make and return a PLAN-RETURN structure.  How return values are collected
+is directed by DOMAIN and WHICH arguments.")
+  (:method ((domain domain) (which (eql :all)) &key state plan replay-table)
+    ;; if there are going to be multiple return values, we must make
+    ;; sure that further search does not clobber them.
+    (if (not (or *enhanced-plan-tree* *analogical-replay-table*))
+        ;; no danger of clobbering
+        (populate-plan-return :plan (copy-tree plan))
+        (multiple-value-bind (new-plan translation-table)
+            (make-plan-copy plan)
           (multiple-value-bind (plan-tree-copy lookup-table)
               (if (slot-boundp state 'plan-tree)
-               (apply-substitution-to-tree
-                (unifier state)
-                (plan-tree:copy-plan-tree (plan-tree state)
-                                          (plan-tree-lookup state)
-                                          translation-table))
-               (values nil nil))
+                  (apply-substitution-to-tree
+                   (unifier state)
+                   (plan-tree:copy-plan-tree (plan-tree state)
+                                             (plan-tree-lookup state)
+                                             translation-table))
+                  (values nil nil))
             (populate-plan-return
              :plan new-plan
              :tree plan-tree-copy
@@ -318,8 +384,11 @@ the tasks in the original PLAN into the copy."
                      (plan-tree-lookup state))
      :world-state (world-state state)
      :replay-table (when replay-table
-                             (alexandria:copy-hash-table replay-table)))))
+                     (alexandria:copy-hash-table replay-table)))))
 
+
+;;; Internal function, just a helper for `make-plan-return`.
+(declaim (inline populate-plan-return))
 (defun populate-plan-return (&rest args)
   (apply #'make-instance 'plan-return args))
 
