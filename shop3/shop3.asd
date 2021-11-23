@@ -103,6 +103,7 @@
                              ;; dependency information.
                              (:file "plan-tree")
                              (:file "backtrack-stack")
+                             (:file "analogical-replay")
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
@@ -227,7 +228,7 @@ shop3."
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class shop-fiveam-tester
-    :test-names ((pddl-tests . :shop3)  ; 141
+    :test-names ((pddl-tests . :shop3)  ; 144
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (arity-test . :arity-test) ; 6
@@ -245,8 +246,9 @@ shop3."
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
+                 (analogical-replay-tests . :analogical-replay-tests) ; 24
                  )
-    :num-checks 932
+    :num-checks 956
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -282,7 +284,8 @@ shop3."
                                        (:file "io-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "state-tests" :depends-on ("at-package" "umt-domain"))
-                                       (:file "misc" :depends-on ("at-package" "umt-domain"))))
+                                       (:file "misc" :depends-on ("at-package" "umt-domain"))
+                                       (:file "analogical-replay-tests")))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"

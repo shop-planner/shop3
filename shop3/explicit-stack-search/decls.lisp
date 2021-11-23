@@ -93,6 +93,37 @@ functions."
     )
    ))
 
+
+
+(defclass plan-return ()
+  ((plan
+    :initarg :plan
+    :reader plan
+    )
+   (tree
+    :initarg :tree
+    :reader tree
+    :type (or null plan-tree:top-node)
+    )
+   (lookup-table
+    :initarg :lookup-table
+    :reader lookup-table
+    )
+   (replay-table
+    :initarg :replay-table
+    :reader replay-table
+    )
+   (world-state
+    :initarg :world-state
+    :reader world-state
+    )
+   )
+  (:documentation "Store the multiple return aspects for a single SHOP plan."))
+
+
+(defmethod plan-cost ((pr plan-return))
+  (plan-cost (plan pr)))
+
 (defmacro verbose-format (&rest args)
   (let ((threshold (if (integerp (first args))
                        (pop args)
@@ -103,3 +134,7 @@ functions."
   `(setf ,place
          (append ,place ,value)))
 
+(define-condition search-failed ()
+  ()
+  (:documentation "Condition to be signaled when the system has backtracked
+to the bottom of the stack."))

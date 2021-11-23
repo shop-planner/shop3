@@ -139,12 +139,15 @@ variable *PROBLEM*."
       (setf problem-name-etc (list problem-name-etc)))
     (destructuring-bind (problem-name &rest options
                          &key (type 'problem) domain
+                           redefine-ok
                            documentation
                          &allow-other-keys)
         problem-name-etc
+      (declare (ignorable redefine-ok))
       (let ((options (copy-tree options)))
         (remf options :type)
         (remf options :domain)
+        (remf options :redefine-ok)
         (when domain (setf domain-name domain))
         (unless *make-problem-silently*
           (unless *define-silently*
@@ -160,7 +163,8 @@ variable *PROBLEM*."
                   documentation))
           (setf *problem* problem-name)
           #+allegro
-          (excl:record-source-file problem-name :type :shop3-problem)
+          (let ((excl:*redefinition-warnings* (not redefine-ok)))
+           (excl:record-source-file problem-name :type :shop3-problem))
           problem-inst)))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
@@ -824,18 +828,24 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
 ;;;---------------------------------------------------------------------------
 ;;; Parse-domain-item methods
 ;;;---------------------------------------------------------------------------
+(declaim (ftype (function (domain symbol list) (values)) index-method-by-name))
 
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':method)) item)
   (multiple-value-bind (method-obj method-id)
       (process-method domain item)
-    (push method-obj
-          (gethash (first (method-expression-task domain item))
-              (slot-value domain 'methods)))
-    (with-slots (methods-to-names names-to-methods) domain
-      (assert (not (gethash method-obj methods-to-names)))
-      (setf (gethash method-obj methods-to-names) method-id)
-      (assert (not (gethash method-id names-to-methods)))
-      (setf (gethash method-id names-to-methods) method-obj))))
+    (index-method-on-domain domain method-id method-obj)))
+
+(defun index-method-on-domain (domain method-id method-obj)
+  "Record the METHOD-ID/METHOD-OBJ association in DOMAIN."
+  (push method-obj
+        (gethash (task-name (method-head domain method-obj))
+                 (slot-value domain 'methods)))
+  (with-slots (methods-to-names names-to-methods) domain
+    (assert (not (gethash method-obj methods-to-names)))
+    (setf (gethash method-obj methods-to-names) method-id)
+    (assert (not (gethash method-id names-to-methods)))
+    (setf (gethash method-id names-to-methods) method-obj))
+  (values))
 
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':operator)) item)
   (let ((op-name (first (second item))))

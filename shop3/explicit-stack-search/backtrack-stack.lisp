@@ -128,6 +128,18 @@ What this means is that we are recording the match of the TASK as a
 template against a standardized EXPANDED-TASK from the plan library.")
   )
 
+(defclass record-expansion-for-replay (stack-entry)
+  ((task
+    :initarg :task
+    :reader task
+    :type list)
+   (method-id
+    :initarg :method-id
+    :reader method-id
+    :type symbol)
+   )
+  (:documentation "Record the expansion of TASK according to METHOD-ID.
+This may later be used by the analogical replay code."))
 
 
 
@@ -187,6 +199,11 @@ template against a standardized EXPANDED-TASK from the plan library.")
   (setf (plan-tree:tree-node-expanded-task (tree-node entry)) nil)
   (values))
 
+(defmethod do-backtrack ((entry record-expansion-for-replay) (state search-state))
+  (with-slots (task method-id) entry
+    (%delete-a-decomposition *domain* task method-id))
+  (values))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Constructors
@@ -236,7 +253,7 @@ template against a standardized EXPANDED-TASK from the plan library.")
          (collecting name into keywords)
          (finally (return (values instance-arglist keywords keyword-types))))
         `(progn
-           (declaim (ftype (function ,(cons '&key keyword-types) (values! ,class)) ,name))
+           (declaim (ftype (function ,(cons '&key keyword-types) (values ,class &optional)) ,name))
            (defun ,name ,(cons '&key keywords)
              ,(format nil "Constructor for ~s objects." class)
              (make-instance ',class
@@ -260,3 +277,4 @@ template against a standardized EXPANDED-TASK from the plan library.")
                    (child plan-tree:tree-node))
 
 (stack-constructor make-record-expansion tree-node)
+(stack-constructor make-record-expansion-for-replay (task list) (method-id symbol))

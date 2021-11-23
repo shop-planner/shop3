@@ -116,6 +116,17 @@ will consult the user even in these cases.")
 (defvar *more-tasks-p* nil
   "When NIL, it is safe to tail-call any plan-seeking function.")
 
+(defvar *make-analogy-table* nil
+  "If this variable is bound to T, SHOP will build a table for analogical replay
+\(*analogical-replay-table*\) while planning.
+  Currently supported only in FIND-PLANS-STACK.")
+
+(defvar *analogical-replay* nil
+  "If this variable is bound to T, SHOP will use analogical replay to provide
+guidance in heuristic search while planning.
+  Currently supported only in FIND-PLANS-STACK.")
+
+
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Compiler Directives and Macros
 ;;;------------------------------------------------------------------------------------------------------
@@ -255,6 +266,10 @@ operator definitions."))
   (:method ((domain actions-domain-mixin) (method-id symbol))
     (gethash method-id (domain-name-to-method-table domain))))
 
+(defgeneric domain-id-for-method-lookup (domain method)
+  (:method ((domain actions-domain-mixin) (method list))
+    (gethash method (domain-method-to-name-table domain))))
+
 (defgeneric assign-domain-method-id (domain method method-id)
   (:method ((domain actions-domain-mixin) method (method-id symbol))
     (with-slots (methods-to-names names-to-methods) domain
@@ -332,6 +347,21 @@ structure could be removed, and a true struct could be used instead."
   deletions
   additions
   (cost-fun nil))
+
+;;;---------------------------------------------------------------------------
+;;; METHODS
+;;;---------------------------------------------------------------------------
+(defparameter +method-definition-keywords+
+  '(:method :pddl-method)
+  "This constant holds a list of method definition keywords that are valid for default
+SHOP domains.")
+
+(defgeneric method-head (domain method)
+  (:method ((domain domain) (method list))
+    (declare (ignorable domain))
+    (assert (member (first method) +method-definition-keywords+))
+    (second method)))
+
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; CLOS Generic Function Definitions
@@ -583,6 +613,9 @@ of SHOP extensions to extend or override the normal problem-building.")
 DOMAIN (a SHOP ddomain).  When PACKAGE is supplied, put the 
 symbols into that package (instead of into the value of *PACKAGE*,
 which should be the default)."))
+
+(defgeneric plan-cost (plan)
+  (:documentation "Return a float that is the cost of the plan argument."))
 
 
 

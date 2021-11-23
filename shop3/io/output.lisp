@@ -110,10 +110,10 @@
           (concatenate 'string trimmed-string "0")
         trimmed-string))))
 
-(defun plan-cost (plan)
+(defmethod plan-cost ((plan list))
   (if (null plan)
-    0
-    (+ (cadr plan) (plan-cost (cddr plan)))))
+      0
+      (+ (second plan) (plan-cost (cddr plan)))))
 
 (defun print-output-file (plan)
   (dolist (obj plan)

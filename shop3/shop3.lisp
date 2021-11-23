@@ -5,7 +5,7 @@
 ;;(defparameter *version* "SHOP2 version 2.0 alpha")
 
 (defconstant +shopyright+
-"Copyright (C) 2004-2019 SIFT, LLC.
+"Copyright (C) 2004-2021 SIFT, LLC.
 
 Original SHOP2 code Copyright (C) 2002  University of Maryland.
 
