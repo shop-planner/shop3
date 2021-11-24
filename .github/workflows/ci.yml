@@ -96,11 +96,11 @@ jobs:
     - name: compile lisp
       shell: bash
       run: |
-        ros -l $PWD/jenkins/build-shop3.lisp
+        ros --no-quicklisp -l $PWD/jenkins/build-shop3.lisp
     - name: tests
       shell: bash
       run: |
-        ros -e "(cl:in-package :cl-user)
+        ros --no-quicklisp -e "(cl:in-package :cl-user)
            (require :asdf)
            (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
            (princ (uiop:run-program \"date\" :output :string))
