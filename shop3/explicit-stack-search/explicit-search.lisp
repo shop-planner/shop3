@@ -348,7 +348,7 @@ as well."
 (defun populate-plan-return (&rest args)
   (apply #'make-instance 'plan-return args))
 
-
+#-sbcl                                  ; SBCL doesn't like FTYPE declaration for a generic function.
 (declaim
  (ftype
   (function (domain symbol &key (:state t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
