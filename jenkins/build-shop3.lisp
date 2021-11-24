@@ -15,16 +15,17 @@
 (defvar *build-warning* nil)
 (defvar *build-error* nil)
 
-(handler-bind ((warning #'(lambda (x)
-                            ;; this is necessary because on SBCL
-                            ;; there's an EXTERNAL handler for some
-                            ;; uninteresting warnings.
-                            (signal x)
-                            (push x *build-warning*)))
-               (error #'(lambda (x)
-                          (setf *build-error* t)
-                          (abort x))))
-  (asdf:load-system "shop3" :force :all))
+(catch 'build-failed
+ (handler-bind ((warning #'(lambda (x)
+                             ;; this is necessary because on SBCL
+                             ;; there's an EXTERNAL handler for some
+                             ;; uninteresting warnings.
+                             (signal x)
+                             (push x *build-warning*)))
+                (error #'(lambda (x)
+                           (setf *build-error* x)
+                           (throw 'build-failed t))))
+   (asdf:load-system "shop3" :force :all)))
 
 (cond
   (*build-error*
