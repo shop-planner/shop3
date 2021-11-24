@@ -27,7 +27,7 @@
                                  (:rationale t)
                                  (:state-type symbol)
                                  (:out-stream (or t stream))
-                                 (:which (or :first :all))
+                                 (:which (member :first :all))
                                  (:analogical-replay t)
                                  (:unpack-returns t)
                                  (:make-analogy-table t))
@@ -345,7 +345,7 @@ as well."
 
 (declaim
  (ftype
-  (function (domain symbol &key (:state t) (:plan list) &allow-other-keys)
+  (function (domain symbol &key (:state t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
             (values plan-return &optional))
   make-plan-return))
 
