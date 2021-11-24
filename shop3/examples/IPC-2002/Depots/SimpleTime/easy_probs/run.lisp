@@ -1,11 +1,9 @@
 (in-package :common-lisp-user)
 
-(asdf:load-system "shop2")
-(format t "*** Assume SHOP2 has been loaded ***~%~%")
+(asdf:load-system "shop3")
 
-(load (merge-pathnames "../../../solution-converter"
-                       *load-truename*))
-(load (merge-pathnames "../stdepots" *load-truename*))
+(load (asdf:system-relative-pathname "shop3" "examples/IPC-2002/solution-converter.lisp"))
+(load (asdf:system-relative-pathname "shop3" "examples/IPC-2002/Depots/SimpleTime/stdepots.lisp"))
 
 (in-package :shop-user)
 (defparameter *thisfile*
@@ -16,7 +14,7 @@
 (defun solve-domain (pname)
   (let ((probfile (merge-pathnames (concatenate 'string pname ".lisp") *thisfile*)))
     (unless (probe-file probfile)
-      (error "No SHOP2-translated version of the PDDL problem in ~a: have you run the problem-converter?"))
+      (error "No SHOP2-translated version of the PDDL problem ~a: have you run the problem-converter?" pname))
     (load probfile))
   (multiple-value-bind (sol soltime) (find-plans (intern (string-upcase pname) :shop-user))
     (if sol

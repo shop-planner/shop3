@@ -2,20 +2,25 @@
 
 (defparameter *debug-mode* t)
 
+(defparameter *thisfile*
+  (or *compile-file-truename* *load-truename*
+      (error "This file must be loaded in a context where *load-truename* or *compile-file-truename* is defined.")))
+
 (defun convert-problems (L)
   (dolist (fn L)
-    (problem-converter fn (concatenate 'string fn ".lisp") fn)
-  )
-)
+    (let* ((pathname (make-pathname :directory (pathname-directory *thisfile*) :name fn :type nil))
+           (shop-pathname (merge-pathnames (make-pathname :type "lisp") pathname)))
+      (problem-converter pathname shop-pathname fn))))
 
-(defun write-SHOP2-problem (shop2-problem-filename
+(defun write-shop3-problem (shop-problem-filename
                             problem-name
                             domain-name
                             objects-list
                             init-list
                             goal-list
                             metric-list)
-  (with-open-file (outfile shop2-problem-filename :direction :output
+  (declare (ignore metric-list))
+  (with-open-file (outfile shop-problem-filename :direction :output
                                                   :if-exists :supersede)
     (format outfile "(in-package :shop-user)~%")
     (format outfile  "(defproblem ~A ~A~%" problem-name domain-name)
@@ -76,7 +81,7 @@
   )
 )
 
-(defun problem-converter (pddl-problem-filename shop2-problem-filename problem-name)
+(defun problem-converter (pddl-problem-filename shop-problem-filename problem-name)
   (with-open-file (infile pddl-problem-filename :direction :input)
     (let* ((pddl-problem (read infile))
             ; problem-name
@@ -103,7 +108,7 @@
           (setf metric-list (second s)))
       )
 
-      (write-SHOP2-problem shop2-problem-filename
+      (write-shop3-problem shop-problem-filename
                            problem-name
                            domain-name
                            objects-list
@@ -138,3 +143,4 @@
   "pfile21"
   "pfile22"))
 
+(format t "~&Translated all Depots PDDL problems to SHOP problems")

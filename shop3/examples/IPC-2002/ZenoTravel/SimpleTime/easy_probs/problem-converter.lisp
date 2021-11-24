@@ -26,11 +26,16 @@
                  "pfile19"
                  "pfile20"))
 
+
+(defparameter *thisfile*
+  (or *compile-file-truename* *load-truename*
+      (error "This file must be loaded in a context where *load-truename* or *compile-file-truename* is defined.")))
+
 (defun all-convert()
     (dolist (prob problems)
-      (p-convert prob 
-                 (concatenate 'string "./" prob)
-                 (concatenate 'string "./" prob ".lisp"))))
+      (p-convert prob
+                 (make-pathname :directory (pathname-directory *thisfile*) :name prob :type nil)
+                 (make-pathname :directory (pathname-directory *thisfile*) :name prob :type "lisp"))))
     
 (defun p-convert (problem-name pddl-file shop-file)
   (progn
