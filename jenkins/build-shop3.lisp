@@ -22,8 +22,8 @@
                             (signal x)
                             (push x *build-warning*)))
                (error #'(lambda (x)
-                          (declare (ignore x))
-                          (setf *build-error* t))))
+                          (setf *build-error* t)
+                          (abort x))))
   (asdf:load-system "shop3" :force :all))
 
 (cond
