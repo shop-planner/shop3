@@ -28,6 +28,7 @@
     that are strictly MORE specific than (domain list symbol list) in order to
     shadow the default method.")
   (:method :after (domain task method-id &optional (backtrack-stack nil backtrack-stack-supplied-p))
+    (declare (ignorable domain))
     (when backtrack-stack-supplied-p
       (push (make-record-expansion-for-replay :task task :method-id method-id)
             backtrack-stack)))

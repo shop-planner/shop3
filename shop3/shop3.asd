@@ -98,10 +98,11 @@
 
        (:module "explicit-stack-search"
                 :serial t
-                :components ((:file "decls")
+                :components (
                              ;; this is for the new plan tree that contains
                              ;; dependency information.
                              (:file "plan-tree")
+                             (:file "decls")
                              (:file "backtrack-stack")
                              (:file "analogical-replay")
                              (:file "explicit-search")))

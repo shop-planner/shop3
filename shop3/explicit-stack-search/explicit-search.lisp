@@ -27,7 +27,7 @@
                                  (:rationale t)
                                  (:state-type symbol)
                                  (:out-stream (or t stream))
-                                 (:which (or :first :all))
+                                 (:which (member :first :all))
                                  (:analogical-replay t)
                                  (:unpack-returns t)
                                  (:make-analogy-table t))
@@ -343,9 +343,15 @@ as well."
                (setf (gethash task lookup-table) copied-task)
                (finally (return (values plan-copy lookup-table)))))
 
+;;; Internal function, just a helper for `make-plan-return`.
+(declaim (inline populate-plan-return))
+(defun populate-plan-return (&rest args)
+  (apply #'make-instance 'plan-return args))
+
+#-sbcl                                  ; SBCL doesn't like FTYPE declaration for a generic function.
 (declaim
  (ftype
-  (function (domain symbol &key (:state t) (:plan list) &allow-other-keys)
+  (function (domain symbol &key (:state t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
             (values plan-return &optional))
   make-plan-return))
 
@@ -386,11 +392,6 @@ is directed by DOMAIN and WHICH arguments.")
      :replay-table (when replay-table
                      (alexandria:copy-hash-table replay-table)))))
 
-
-;;; Internal function, just a helper for `make-plan-return`.
-(declaim (inline populate-plan-return))
-(defun populate-plan-return (&rest args)
-  (apply #'make-instance 'plan-return args))
 
 (defun plan-returns (pr-list &optional (unpack-returns t))
   "Unpack the return values from PR-LIST, which should be a list

@@ -4,6 +4,6 @@
 (in-package :openstacks-problem-translator-asd)
 
 (defsystem openstacks-problem-translator
-    :depends-on (:iterate :shop2 :shop2/pddl-helpers :alexandria)
+    :depends-on (:iterate :shop3 :shop3/pddl-helpers :alexandria)
   :components ((:file "problem-converter"))
   )

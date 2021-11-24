@@ -3,7 +3,7 @@
   )
 (in-package :translate-satellite-problems-asd)
 (defsystem translate-satellite-problems
-    :depends-on (:shop2/pddl-helpers :pddl-utils)
+    :depends-on (:shop3/pddl-helpers :pddl-utils)
   :serial t
   :components ((:file "package")
                (:file "translate-problems"))
