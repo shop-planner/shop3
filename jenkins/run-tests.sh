@@ -8,25 +8,31 @@ set -x
 # - quit with exit status >0 if an unhandled error occurs
 
 usage () {
-    echo "$0 [lisp invocation] [scripts-regex]"
-    echo " - read lisp forms one at a time from matching scripts"
+    echo "$0 [lisp invocation]"
+    echo " - run lisp tests"
     echo " - quit with exit status 0 on getting eof"
     echo " - quit with exit status >0 if an unhandled error occurs"
     echo " you need to supply the .script in the second argument"
-    echo " lisps include abcl, allegro, ccl (clozure),"
-    echo "  clisp, cmucl, ecl, gclcvs, sbcl, and scl."
+    echo " lisps include abcl, allegro, allegromodern, ccl (clozure),"
+    echo "  clisp, cmucl, ecl, ecl-bytecodes, lispworks, "
+    echo "  mkcl, and sbcl."
     echo "OPTIONS:"
     echo "    -d -- debug mode"
+    echo "    -b -- build only; do not run tests."
     echo "    -u -h -- show this message."
 }
 
 unset DEBUG_ASDF_TEST
+unset BUILD_ONLY
 
-while getopts "duh" OPTION
+while getopts "duhb" OPTION
 do
     case $OPTION in
         d)
             export DEBUG_ASDF_TEST=t
+            ;;
+        b)
+            export BUILD_ONLY=t
             ;;
         u)
             usage
@@ -58,8 +64,14 @@ do_tests() {
   ( DO $command $eval '(load "build-shop3.lisp")' )
   if [ $? -ne 0 ] ; then
     echo "Compilation FAILED" >&2
+    exit $?
   else
     echo "Compiled OK" >&2
+    if [ "${BUILD_ONLY}x" != "x" ]; then
+        echo success > tmp/results/status
+        exit 0
+    fi
+    compile_val=0
     test_count=0
     test_pass=0
     test_fail=0
