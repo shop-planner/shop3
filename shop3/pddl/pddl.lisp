@@ -238,6 +238,11 @@ add code for processing the actions that is parallel to process-operator."))
   effect
   (cost-fun nil))
 
+
+(defun pddl-action-name (pddl-action)
+  (first (pddl-action-head pddl-action)))
+
+
 (defmethod parse-domain-items :around ((domain fluents-mixin) items)
   (let ((fluents-axioms `((:- (is-fluent-function (?name . ?_))
                               ((call fluent-function-p ,domain '?name)))
@@ -263,17 +268,6 @@ add code for processing the actions that is parallel to process-operator."))
                                  ,@innocuous-items
                                  ,@(when functions-def (list functions-def))
                                  ,@(when types-def (list types-def)))))))
-
-
-(defun pddl-action-name (pddl-action)
-  (first (pddl-action-head pddl-action)))
-
-(defmethod parse-domain-items :around ((domain equality-mixin) items)
-  "Add the axiom that treats equality as a built-in predicate.  This should
-later be compiled into find-satisfiers or something."
-  (let ((equality-axiom '(:- (= ?x ?x) nil)))
-    (set-variable-property domain equality-axiom)
-    (call-next-method domain (cons equality-axiom items))))
 
 
 ;;; FIXME: if the preconditions are rewritten properly, we won't need

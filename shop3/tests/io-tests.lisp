@@ -34,8 +34,14 @@
   (let ((meth '(:method (achieve-goals ?goals)
           ()
           ((assert-goals ?goals nil)
-           (find-nomove) (add-new-goals) (find-movable) (move-block)))))
-    (&body)))
+           (find-nomove) (add-new-goals) (find-movable) (move-block))))
+        (named-meth
+          '(:method method-name (achieve-goals ?goals)
+            ()
+            ((assert-goals ?goals nil)
+             (find-nomove) (add-new-goals) (find-movable) (move-block)))))
+    (shop::with-method-name-table
+     (&body))))
 
 (def-fixture complex-method-def (&optional named)
   (let ((meth `(:method ,@(when named '(find-movable-meth)) (find-movable)
@@ -51,36 +57,43 @@
 
                 nil
                 nil)))
-    (&body)))
+    (shop::with-method-name-table
+     (&body))))
 
 (test method-tests
   (with-fixture empty-domain ()
     (with-fixture method-def ()
-      (is (equal (let ((meth-def (shop2::process-method *domain* meth)))
-                   ;; there will be a gensym in the third position -- the name that is
-                   ;; automatically supplied
-                   (setf (nth 2 meth-def) 'placeholder)
-                   meth-def)
-                 '(:method (achieve-goals ?goals)
+      (is (equal '(:method (achieve-goals ?goals)
                    placeholder
                    ()
                    '(:ordered (:task assert-goals ?goals nil)
-                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block))))))
+                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block)))
+                 (let ((meth-def (shop::process-method *domain* meth)))
+                   ;; there will be a gensym in the third position -- the name that is
+                   ;; automatically supplied
+                   (setf (nth 2 meth-def) 'placeholder)
+                   meth-def)))
+      (is (equal '(:method (achieve-goals ?goals)
+                   method-name
+                   ()
+                   '(:ordered (:task assert-goals ?goals nil)
+                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block)))
+                 (shop::process-method *domain* named-meth))))
     (with-fixture complex-method-def ()
       (is
-       (equal (let ((meth-def (shop2::process-method *domain* meth)))
-                ;; replace all the gensyms
-                (subst-if 'placeholder
-                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                          meth-def))
-              '(:method (find-movable)
+       (equal '(:method (find-movable)
                 placeholder
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
                 '(:ordered (:task !assert ((put-on-table ?x))) (:task find-movable))
                 placeholder
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
                 '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
-                placeholder nil '(:ordered (:task shop2::!!inop)))))))
+                placeholder nil '(:ordered (:task shop2::!!inop)))
+              (let ((meth-def (shop::process-method *domain* meth)))
+                ;; replace all the gensyms
+                (subst-if 'placeholder
+                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                          meth-def))))))
   (with-fixture empty-domain ()
    (with-fixture complex-method-def (t)
      (multiple-value-bind (meth-def meth-id)
@@ -88,9 +101,6 @@
        (is
         (equal 
          ;; replace all the gensyms
-         (subst-if 'placeholder
-                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                   meth-def)
          '(:method (find-movable)
            placeholder
            (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
@@ -98,7 +108,10 @@
            placeholder
            (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
            '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
-           placeholder nil '(:ordered (:task shop2::!!inop)))))
+           placeholder nil '(:ordered (:task shop2::!!inop)))
+         (subst-if 'placeholder
+                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                   meth-def)))
        (is (eq 'find-movable-meth meth-id))))))
 
 (test test-method-recording
@@ -135,9 +148,10 @@
                    (eval `(defdomain ,temp-domain-desig
                               (,meth)))
                    (find-domain temp-domain-desig)))
-         (translated (subst-if 'placeholder
-                               #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                               (shop::process-method domain meth))))
+         (translated (shop::with-method-name-table
+                         (subst-if 'placeholder
+                                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                                   (shop::process-method domain meth)))))
     
     (fiveam:is-true (typep domain 'domain))
     (is (equalp translated
@@ -161,7 +175,8 @@
                     (find-domain temp-domain-desig)))
           (translated (subst-if 'placeholder
                                 #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                                (shop::process-method domain meth))))
+                                (shop::with-method-name-table
+                                    (shop::process-method domain meth)))))
     
      (fiveam:is-true (typep domain 'domain))
      (is (= 1 (length (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))

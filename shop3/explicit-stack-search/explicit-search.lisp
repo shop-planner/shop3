@@ -182,8 +182,11 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL.
       (unless repairable
         (delete-state-tag-decoder)))))
 
-(declaim (ftype (function (search-state symbol) (values t t &optional))
-                test-for-done))
+(declaim
+ (ftype
+  (function (search-state &key (:repairable t))
+            (values (or t nil) &optional list))
+  test-plan-found))
 
 
 (defun seek-plans-stack (state domain &key (which :first) repairable
@@ -304,24 +307,30 @@ List of analogical-replay tables -- optional
                  (incf (depth state)))
                (stack-backtrack state)))
           (extract-plan
-           (let ((plan (test-plan-found state :repairable repairable))
-                 plan-return)
-             (when plan
-               (setf plan-return
-                     (make-plan-return domain which
-                                       :plan plan
-                                       :state state
-                                       :replay-table *analogical-replay-table*))
-               (setf *plans-found* (cons plan-return *plans-found*))
-               (when (> *verbose* 0)
-                 (format t "~%~%Solution plan found successfully...:~%~a"
-                         plan)))
+           (let (plan-return)
+             ;; did we find a new plan? If so, then store it
+             (multiple-value-bind (success plan)
+                 (test-plan-found state :repairable repairable)
+               (when success
+                 (setf plan-return
+                       (make-plan-return domain which
+                                         :plan plan
+                                         :state state
+                                         :repairable repairable
+                                         :replay-table *analogical-replay-table*))
+                 (setf *plans-found* (cons plan-return *plans-found*))
+                 (when (> *verbose* 0)
+                   (format t "~%~%Solution plan found successfully...:~%~a"
+                           plan))))
+             ;; handle *PLANS-FOUND* based on the value of WHICH
              (ecase which
                (:first
                 (if plan-return
                     (return-from seek-plans-stack
                       (plan-returns *plans-found* unpack-returns))
                     (return-from seek-plans-stack nil)))
+               ;; if we want all the plans, just keep searching until we fail,
+               ;; and then return any plans we have found.
                (:all (stack-backtrack state)))))))
     (search-failed ()
       (case which
@@ -356,43 +365,41 @@ as well."
 #-sbcl                                  ; SBCL doesn't like FTYPE declaration for a generic function.
 (declaim
  (ftype
-  (function (domain symbol &key (:state t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
+  (function (domain symbol &key (:state t) (:repairable t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
             (values plan-return &optional))
   make-plan-return))
 
-(defgeneric make-plan-return (domain which &key state plan replay-table &allow-other-keys)
+(defgeneric make-plan-return (domain which &key state plan replay-table repairable &allow-other-keys)
   (:documentation "Make and return a PLAN-RETURN structure.  How return values are collected
 is directed by DOMAIN and WHICH arguments.")
-  (:method ((domain domain) (which (eql :all)) &key state plan replay-table)
+  (:method ((domain domain) (which (eql :all)) &key state plan replay-table repairable)
+    (assert (not repairable))
     ;; if there are going to be multiple return values, we must make
     ;; sure that further search does not clobber them.
     (if (not (or *enhanced-plan-tree* *analogical-replay-table*))
         ;; no danger of clobbering
         (populate-plan-return :plan (copy-tree plan))
-        (multiple-value-bind (new-plan translation-table)
-            (make-plan-copy plan)
-          (multiple-value-bind (plan-tree-copy lookup-table)
-              (if (slot-boundp state 'plan-tree)
-                  (apply-substitution-to-tree
-                   (unifier state)
-                   (plan-tree:copy-plan-tree (plan-tree state)
-                                             (plan-tree-lookup state)
-                                             translation-table))
-                  (values nil nil))
-            (populate-plan-return
-             :plan new-plan
-             :tree plan-tree-copy
-             :lookup-table lookup-table
-             :world-state (copy-state (world-state state))
-             :replay-table (when replay-table
-                             (alexandria:copy-hash-table replay-table)))))))
-  (:method ((domain domain) (which (eql :first)) &key plan state replay-table)
+        (multiple-value-bind (new-plan new-tree)
+            (prv:prepare-return-values plan :bindings (unifier state)
+                                            :plan-tree (when (slot-boundp state 'plan-tree)
+                                                    (plan-tree state)))
+          (populate-plan-return
+           :plan new-plan
+           :tree new-tree
+           ;; lookup-table is unnecessary...
+           :lookup-table (when new-tree (plan-tree::top-node-lookup-table new-tree))
+           :world-state (copy-state (world-state state))
+           :replay-table (when replay-table
+                           (alexandria:copy-hash-table replay-table))))))
+  (:method ((domain domain) (which (eql :first)) &key plan state replay-table repairable)
     (populate-plan-return
      :plan plan
      :tree (when *enhanced-plan-tree*
-             (apply-substitution-to-tree (unifier state) (plan-tree state)))
+             (apply-substitution-to-tree (unifier state) (plan-tree state))
+             (plan-tree state))
      :lookup-table (when *enhanced-plan-tree*
                      (plan-tree-lookup state))
+     :search-state (when repairable state)
      :world-state (world-state state)
      :replay-table (when replay-table
                      (alexandria:copy-hash-table replay-table)))))
@@ -433,6 +440,10 @@ of PLAN-RETURN objects."
                (apply-bindings-and-recurse c))))
 
     (apply-bindings-and-recurse plan-tree)))
+
+
+
+
 
 
 
@@ -493,6 +504,7 @@ of PLAN-RETURN objects."
                        depth label current-task reduction)
           (setf (unifier state) unifier)))
       t)))
+
 (defun CHOOSE-METHOD-STATE (state domain)
   "Try to apply the first of the methods in the current set of 
 alternatives to the search-state STATE, using DOMAIN.  Return is
@@ -674,15 +686,16 @@ trigger backtracking."
 (defun EMPTY-P (state)
   (with-slots (top-tasks) state
     (or (null top-tasks) (equal top-tasks '(NIL)))))
-;;; FIXME: for now we just extract the plan -- as if we only are
-;;; finding the first plan.  Simplification to get things done
-;;; more quickly.
+
 (defun test-plan-found (state &key repairable)
+  "If there is a plan in STATE (a SEARCH-STATE), then
+return T and the plan, otherwise return NIL."
   (with-slots (partial-plan) state
     (when partial-plan
-      (if repairable
-          (reverse partial-plan)
-          (strip-NOPs (reverse partial-plan))))))
+      (values t
+              (if repairable
+                  (reverse partial-plan)
+                  (strip-NOPs (reverse partial-plan)))))))
 (defun prepare-choose-immediate-task-state (state)
   (let ((immediates (immediate-tasks state)))
     (setf (alternatives state) immediates)

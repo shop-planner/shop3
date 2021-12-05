@@ -103,6 +103,7 @@
                              ;; dependency information.
                              (:file "plan-tree")
                              (:file "decls")
+                             (:file "prepare-return-values")
                              (:file "backtrack-stack")
                              (:file "analogical-replay")
                              (:file "explicit-search")))
@@ -286,7 +287,7 @@ shop3."
                                        (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "state-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "misc" :depends-on ("at-package" "umt-domain"))
-                                       (:file "analogical-replay-tests")))
+                                       (:file "analogical-replay")))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"

@@ -117,6 +117,10 @@ functions."
     :initarg :world-state
     :reader world-state
     )
+   (search-state
+    :initarg :search-state
+    :reader search-state
+    )
    )
   (:documentation "Store the multiple return aspects for a single SHOP plan."))
 

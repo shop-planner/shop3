@@ -1,38 +1,3 @@
-(defpackage plan-tree
-  (:nicknames shop-extended-plan-tree)
-  (:use common-lisp iterate)
-  (:import-from :alexandria #:when-let)
-  (:export #:dependency
-           #:establisher
-           #:consumer
-           #:prop
-           #:tree-node
-           #:tree-node-task
-           #:tree-node-expanded-task
-           #:tree-node-dependencies
-           #:tree-node-parent
-           #:primitive-tree-node
-           #:make-primitive-tree-node
-           #:complex-tree-node
-           #:make-complex-tree-node
-           #:complex-tree-node-children
-           #:complex-tree-node-method-name
-           #:top-node
-           #:make-top-node
-           #:pseudo-node
-           #:unordered-tree-node
-           #:make-unordered-tree-node
-           #:make-ordered-tree-node
-           #:ordered-tree-node
-           #:make-dependency
-           ;; finders
-           #:find-plan-step
-           #:find-task-in-tree
-           #:find-tree-node-if
-
-           #:copy-plan-tree
-           ))
-
 (in-package :plan-tree)
 
 
@@ -67,7 +32,7 @@ cross-links for VAL using information in TABLE."))
     (error "No method for computing slot fillers for object ~s" obj)))
 
 ;;;---------------------------------------------------------------------------
-;;; 
+;;; DEPENDENCY structures
 ;;;---------------------------------------------------------------------------
 
 
@@ -85,11 +50,14 @@ cross-links for VAL using information in TABLE."))
   `((setf (consumer ,var-name) ,(slot-value-translator (consumer obj) table)
           (establisher ,var-name) ,(slot-value-translator (establisher obj) table))))
 
+
+
 ;;; this is an "abstract" class and should never be directly instantiated --
-;;; only primitive-tree-node and complext-tree-node should be instantiated.
+;;; only subclasses should be instantiated.
 (defstruct tree-node
   task
-  expanded-task
+  expanded-task                         ; the substituted method head.
+                                        ; should always be NIL for primitive tasks.
   dependencies ;; what does this tree node depend on -- dependencies IN
   parent
   )
