@@ -287,7 +287,8 @@ shop3."
                                        (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "state-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "misc" :depends-on ("at-package" "umt-domain"))
-                                       (:file "analogical-replay")))
+                                       (:file "analogical-replay")
+                                       (:file "minimal-subtree-tests")))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"
@@ -355,8 +356,6 @@ shop3."
                                                                    "Log_ran_problems_50"
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
-                 (:module "minimal-subtree"
-                          :components ((:file "tests")))
                  (:file "replan-tests" :pathname "tests/replan-tests")))
 
 
