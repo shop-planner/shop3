@@ -406,6 +406,79 @@
                  )))
     (is (= (shop2::operator-cost-fun op) 0))))
 
+;;; domain definition fixture to test checks for repeated method names
+(def-fixture method-name-domain-fix (unique-method-names)
+  (unwind-protect
+   (progn
+     (let ((*define-silently* t)
+           (shop2::*ignore-singleton-variables* t))
+       (eval
+        `(defdomain (non-unique-method-domain :redefine-ok t :unique-method-names ,unique-method-names)
+             (
+              (:method (in-city-delivery ?truck ?obj ?loc-from ?loc-to)
+
+                already-there
+                ((same ?loc-from ?loc-to))
+                ()
+
+                truck-across-town
+                ((in-city ?loc-from ?city)
+                 (truck ?truck ?city))
+                (:ordered (:task truck-at ?truck ?loc-from)
+                          (:task :immediate !load-truck ?obj ?truck ?loc-from)
+                          (:task truck-at ?truck ?loc-to)
+                          (:task :immediate !unload-truck ?obj ?truck ?loc-to)))
+
+
+;;;-------------------------------------------------
+
+              (:method (truck-at ?truck ?loc-to)
+
+                truck-not-in-right-location
+                ((truck-at ?truck ?loc-from)
+                 (different ?loc-from ?loc-to))
+                ((:task :immediate !drive-truck ?truck ?loc-from ?loc-to))
+
+                already-there
+                ((truck-at ?truck ?loc-from)
+                 (same ?loc-from ?loc-to))
+                ((:task :immediate !add-protection (truck-at ?truck ?loc-to)))))))
+       (&body)))
+    (ignore-errors (shop::delete-domain 'non-unique-method-domain))))
+
+(test check-unique-method-names
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (with-fixture method-name-domain-fix (nil)
+    (5am:is-true (shop:find-domain 'non-unique-method-domain nil)))
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (5am::warns shop::non-unique-method-name-warning
+   (with-fixture method-name-domain-fix (:warn)
+     (5am:is-true (shop:find-domain 'non-unique-method-domain nil))))
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (5am:signals shop::non-unique-method-name-error
+    (with-fixture method-name-domain-fix (t) nil))
+  (let (modified-method-task modified-method-name)
+   (handler-bind ((shop::non-unique-method-name-error
+                    #'(lambda (c)
+                        (setf modified-method-task (first (shop::task c))
+                              modified-method-name (shop::old-name c))
+                        (continue c))))
+     (with-fixture method-name-domain-fix (t)
+       (let ((domain (shop:find-domain 'non-unique-method-domain nil)))
+         (5am:is-true domain)
+         (let ((deliv-methods (shop::methods domain 'in-city-delivery))
+               (truck-methods (shop::methods domain 'truck-at)))
+           (5am:is (= (length deliv-methods) 1))
+           (5am:is (= (length truck-methods) 1))
+           (5am:is-true (or (eq modified-method-task 'in-city-delivery)
+                            (eq modified-method-task 'truck-at)))
+           (5am:is (eq 'already-there modified-method-name))
+           (case modified-method-task
+             (in-city-delivery (5am:is-true (member 'already-there (first truck-methods)))
+              (5am:is-false (member 'already-there (first deliv-methods))))
+             (truck-at (5am:is-false (member 'already-there (first truck-methods)))
+              (5am:is-true (member 'already-there (first  deliv-methods)))))))))))
+
 (test check-problem-deletion
   (make-problem 'problem-for-deletion-test
                 '((foo x) (bar y))

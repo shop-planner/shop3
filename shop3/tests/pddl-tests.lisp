@@ -125,7 +125,7 @@
     (fiveam:with-fixture action-test-fixtures ()
       #+nil(break "Domain is ~S" domain)
       (fiveam:is (equal '(and
-                          (and 
+                          (and
                            (enforce (vehicle ?v) "Parameter ~a unbound or ill-typed. Should be ~a"  '?v 'vehicle)
                            (enforce (location ?from) "Parameter ~a unbound or ill-typed. Should be ~a"  '?from 'location)
                            (enforce (location ?to) "Parameter ~a unbound or ill-typed. Should be ~a"  '?to 'location)
@@ -156,7 +156,7 @@
        (equal
         '(PDDL-ACTION (!WALK ?FROM ?TO)
           (and
-           (and  
+           (and
             (enforce (loc ?from) "Parameter ~a unbound or ill-typed. Should be ~a"  '?from 'loc)
             (enforce (loc ?to) "Parameter ~a unbound or ill-typed. Should be ~a"  '?to 'loc))
            (AT ROBOT ?FROM))
@@ -261,7 +261,7 @@
           (not (occupied ?s)))))
       (pddl-action-precondition act)))
 
-    (fiveam:is 
+    (fiveam:is
      (equal '(and
               (and (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
                (enforce (airplanetype ?t) "Parameter ~a unbound or ill-typed. Should be ~a"  '?t 'airplanetype)
@@ -305,7 +305,7 @@
                                    (not (= ?s ?s1)))
                                   (not (occupied ?s))))))))))
 
-    (fiveam:is 
+    (fiveam:is
      (equal '(and
               (and
                (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
@@ -336,7 +336,7 @@
                                   (not (= ?s ?s1)))
                                  (not (at ?a2 ?s)))))))))
 
-    (fiveam:is 
+    (fiveam:is
      (equal '(and
               (and
                (enforce (airplane ?a) "Parameter ~a unbound or ill-typed. Should be ~a"  '?a 'airplane)
@@ -428,9 +428,9 @@
 
 (fiveam:test simple-when
   (fiveam:with-fixture simple-when-fixtures ()
-    (fiveam:is 
+    (fiveam:is
      (equal
-      (sort 
+      (sort
        (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
        'prop-sorter)
       (sort
@@ -444,7 +444,7 @@
            (state-atoms state)))
        'prop-sorter)))
 
-    (fiveam:is 
+    (fiveam:is
      (equal
       '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
         (CARRYING CARGO) (loc new-jersey) (loc new-york))
@@ -472,9 +472,9 @@
                           (operator *domain* '!walk)
                           nil 0 nil)
           (declare (ignore op tag protections cost unifier))
-          (fiveam:is 
+          (fiveam:is
            (equal
-            (sort 
+            (sort
              (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
              'prop-sorter)
             (sort
@@ -501,7 +501,7 @@
                           (operator *domain* '!walk)
                           nil 0 nil)
           (declare (ignore op tag protections cost unifier))
-          (fiveam:is 
+          (fiveam:is
            (equal
             '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
               (CARRYING CARGO) (loc new-jersey) (loc new-york))
@@ -536,7 +536,7 @@
 
 (fiveam:test quantified-when
   (fiveam:with-fixture quantified-when-fixtures ()
-    (fiveam:is 
+    (fiveam:is
      (equal
       '((at bag1 new-jersey)
         (at bag2 new-jersey)
@@ -555,7 +555,7 @@
                                                                      (luggage bag3)))))
           (sort (state-atoms state) 'prop-sorter)))))
 
-    (fiveam:is 
+    (fiveam:is
      (equal
       '((at bag1 new-jersey)
         (at bag2 new-jersey)
@@ -582,7 +582,7 @@
           (sort (state-atoms state) 'prop-sorter)))))
 
 
-    (fiveam:is 
+    (fiveam:is
      (equal
       '((at bag1 new-york)
         (at bag2 new-jersey)
@@ -609,7 +609,7 @@
                         nil 0 nil)
           (sort (state-atoms state) 'prop-sorter)))))
 
-    (fiveam:is 
+    (fiveam:is
      (equal
       '((at bag1 new-york)
         (at bag2 new-jersey)
@@ -656,7 +656,7 @@
                           (operator *domain* '!walk)
                           nil 0 nil)
           (declare (ignore unifier state-tag op))
-          (fiveam:is 
+          (fiveam:is
            (equal
             '((at bag1 new-jersey)
               (at bag2 new-jersey)
@@ -690,7 +690,7 @@
                           (operator *domain* '!walk)
                           nil 0 nil)
           (declare (ignore unifier state-tag op))
-          (fiveam:is 
+          (fiveam:is
            (equal
             '((at bag1 new-york)
               (at bag2 new-jersey)
@@ -852,7 +852,7 @@
             store_of
             on_board)
            (:types rover waypoint store camera mode lander objective)
-           (:predicates (at ?x - rover ?y - waypoint) 
+           (:predicates (at ?x - rover ?y - waypoint)
                         (at_lander ?x - lander ?y - waypoint)
                         (can_traverse ?r - rover ?x - waypoint ?y - waypoint)
                         (equipped_for_soil_analysis ?r - rover)
@@ -862,7 +862,7 @@
                         (have_rock_analysis ?r - rover ?w - waypoint)
                         (have_soil_analysis ?r - rover ?w - waypoint)
                         (full ?s - store)
-                        (calibrated ?c - camera ?r - rover) 
+                        (calibrated ?c - camera ?r - rover)
                         (supports ?c - camera ?m - mode)
                         (available ?r - rover)
                         (visible ?w - waypoint ?p - waypoint)
@@ -928,14 +928,14 @@
          )
         (:TASK ACHIEVE-GOALS))
       )
-    (fiveam:is-false 
+    (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
                                        (forall (?m - mode)
                                         (not (communicate_image_data ?obj ?m)))))
             (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
             :record-dependencies nil :domain *domain*))
-    (fiveam:is-false 
+    (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
                                        (forall (?m - mode)
@@ -960,13 +960,13 @@
                                                       (problem-state (find-problem 'test-rover-problem))
                                                       :test 'equalp)
             :record-dependencies nil :domain *domain*))
-    (fiveam:is-false 
+    (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
                                        (not (communicate_image_data ?obj ?m))))
             (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
             :record-dependencies nil :domain *domain*))
-    (fiveam:is-false 
+    (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
                                        (not (communicate_image_data ?obj ?m))))
@@ -1004,7 +1004,7 @@
            (fiveam:is-true plans)
            (let ((valid
                    (when plans
-                     (shop3:validate-plan (first plans) 
+                     (shop3:validate-plan (first plans)
                                           (asdf:system-relative-pathname "shop3" "examples/rovers/strips/domain.pddl")
                                           (asdf:system-relative-pathname "shop3" (format nil "examples/rovers/strips/~a.pddl" (pathname-name probfile)))))))
              (fiveam:is-true valid)))))))
@@ -1013,7 +1013,7 @@
 (defmacro pddl-problem-tests ()
   `(progn
      ,@(iter (for probnum from 1 to 20)
-         (collecting 
+         (collecting
           (def-rover-test probnum)))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -1042,7 +1042,7 @@
 
 (fiveam:def-test test-fluent-value-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
   (let ((state (make-initial-state domain :mixed init-fluent-values)))
-    (let ((answers 
+    (let ((answers
             (query '((fluent-value (shop-user::amount shop-user::jug0) ?amt)
                      (fluent-value (shop-user::capacity shop-user::jug0) ?cap))
                    state :domain domain)))
@@ -1054,7 +1054,7 @@
 
 (fiveam:def-test test-f-exp-retrieval (:suite pddl-prover-tests :fixture mock-fluent-domain)
   (let ((state (make-initial-state domain :mixed init-fluent-values)))
-    (let ((answers 
+    (let ((answers
             (query '((f-exp-value (shop-user::amount shop-user::jug0) ?amt)
                      (f-exp-value (shop-user::capacity shop-user::jug0) ?cap))
                    state :domain domain)))
@@ -1063,7 +1063,7 @@
       (let ((bindings (first answers)))
         (fiveam:is (eql 6 (shop.unifier:binding-list-value '?amt bindings)))
         (fiveam:is (eql 12 (shop.unifier:binding-list-value '?cap bindings)))))
-    (let ((answers 
+    (let ((answers
             (query '((f-exp-value (- (shop-user::amount shop-user::jug0)) ?amt)
                      (f-exp-value (- 12) ?cap))
                    state :domain domain)))
@@ -1073,7 +1073,7 @@
         (fiveam:is (eql -6 (shop.unifier:binding-list-value '?amt bindings)))
         (fiveam:is (eql -12 (shop.unifier:binding-list-value '?cap bindings)))))
 
-    (let ((answers 
+    (let ((answers
             (query '((f-exp-value (* (shop-user::amount shop-user::jug0) 2) ?amt1)
                      (f-exp-value (/ (shop-user::amount shop-user::jug0) 2) ?amt2)
                      (f-exp-value (+ (* (shop-user::amount shop-user::jug0) 2) 12) ?amt3)
@@ -1160,7 +1160,7 @@
                                                  (and (assign (shop-user::amount ?jug1) 0)
                                                   (assign (shop-user::amount ?jug2)
                                                    (+ (shop-user::amount ?jug1) (shop-user::amount ?jug2))))))))
-  (fiveam:is (equalp '(forall (?jug1 ?jug2) 
+  (fiveam:is (equalp '(forall (?jug1 ?jug2)
                        (when (and (shop::fluent-check > (shop-user::amount ?jug2) 0)
                                   (robotic-jug ?jug2))
                          (and (shop::fluent-update assign (shop-user::amount ?jug1) 0)
@@ -1235,3 +1235,645 @@
           (fiveam:is-true trivial-plans)
           (fiveam:is (equalp '((!empty jug0 jug1) 1.0)
                              (first trivial-plans))))))))
+
+(fiveam:def-suite* pddl-method-name-checks :in pddl-tests)
+
+(defpackage :shop3-rovers-test
+  (:use common-lisp shop3)
+  (:import-from #:fiveam #:test #:def-fixture #:is-true #:is-false #:with-fixture #:signals #:warns)
+  (:import-from #:shop3 #:pddl-method-name-checks #:non-unique-method-name-error #:non-unique-method-name-warning)
+  (:intern
+   #:communicated_image_data
+   #:communicated_rock_data
+   #:communicated_soil_data
+
+   ;; rewrite for goals
+   #:communicate_image_data
+   #:communicate_rock_data
+   #:communicate_soil_data))
+(in-package :shop3-rovers-test)
+
+(defclass pure-pddl-domain (pure-logic-domain-mixin pddl-domain)
+  ())
+
+;;; this domain has been modified so that all the method names are unique
+(def-fixture new-rovers-domain (unique-method-names)
+  (progn
+    (let ((shop3::*define-silently* t))
+     (eval
+      `(defdomain (new-rovers-domain :type pure-pddl-domain :unique-method-names ,unique-method-names)
+           (
+            (:requirements :typing)
+            (:static
+             can_traverse
+             equipped_for_soil_analysis
+             equipped_for_rock_analysis
+             equipped_for_imaging
+             supports
+             visible
+             visible_from
+             store_of
+             on_board)
+            (:types rover waypoint store camera mode lander objective)
+            (:predicates (at ?x - rover ?y - waypoint)
+                         (at_lander ?x - lander ?y - waypoint)
+                         (can_traverse ?r - rover ?x - waypoint ?y - waypoint)
+                         (equipped_for_soil_analysis ?r - rover)
+                         (equipped_for_rock_analysis ?r - rover)
+                         (equipped_for_imaging ?r - rover)
+                         (empty ?s - store)
+                         (have_rock_analysis ?r - rover ?w - waypoint)
+                         (have_soil_analysis ?r - rover ?w - waypoint)
+                         (full ?s - store)
+                         (calibrated ?c - camera ?r - rover)
+                         (supports ?c - camera ?m - mode)
+                         (available ?r - rover)
+                         (visible ?w - waypoint ?p - waypoint)
+                         (have_image ?r - rover ?o - objective ?m - mode)
+                         (communicated_soil_data ?w - waypoint)
+                         (communicated_rock_data ?w - waypoint)
+                         (communicated_image_data ?o - objective ?m - mode)
+                         (at_soil_sample ?w - waypoint)
+                         (at_rock_sample ?w - waypoint)
+                         (visible_from ?o - objective ?w - waypoint)
+                         (store_of ?s - store ?r - rover)
+                         (calibration_target ?i - camera ?o - objective)
+                         (on_board ?i - camera ?r - rover)
+                         (channel_free ?l - lander)
+                         )
+
+            (:action navigate
+             :parameters (?x - rover ?y - waypoint ?z - waypoint)
+             :precondition (and (can_traverse ?x ?y ?z) (available ?x) (at ?x ?y)
+                                (visible ?y ?z)
+                                )
+             :effect (and (not (at ?x ?y)) (at ?x ?z)
+                          )
+             )
+
+            (:action sample_soil
+             :parameters (?x - rover ?s - store ?p - waypoint)
+             :precondition (and (at ?x ?p) (at_soil_sample ?p)
+                                (equipped_for_soil_analysis ?x) (store_of ?s ?x) (empty ?s)
+                                )
+             :effect (and (not (empty ?s)) (full ?s) (have_soil_analysis ?x ?p) (not (at_soil_sample ?p))
+                          )
+             )
+
+            (:action sample_rock
+             :parameters (?x - rover ?s - store ?p - waypoint)
+             :precondition (and (at ?x ?p) (at_rock_sample ?p) (equipped_for_rock_analysis ?x) (store_of ?s ?x)(empty ?s)
+                                )
+             :effect (and (not (empty ?s)) (full ?s) (have_rock_analysis ?x ?p) (not (at_rock_sample ?p))
+                          )
+             )
+
+            (:action drop
+             :parameters (?x - rover ?y - store)
+             :precondition (and (store_of ?y ?x) (full ?y)
+                                )
+             :effect (and (not (full ?y)) (empty ?y)
+                          )
+             )
+
+            (:action calibrate
+             :parameters (?r - rover ?i - camera ?t - objective ?w - waypoint)
+             :precondition (and (equipped_for_imaging ?r) (calibration_target ?i ?t) (at ?r ?w) (visible_from ?t ?w)(on_board ?i ?r)
+                                )
+             :effect (calibrated ?i ?r)
+             )
+
+            (:action take_image
+             :parameters (?r - rover ?p - waypoint ?o - objective ?i - camera ?m - mode)
+             :precondition (and (calibrated ?i ?r)
+                                (on_board ?i ?r)
+                                (equipped_for_imaging ?r)
+                                (supports ?i ?m)
+                                (visible_from ?o ?p)
+                                (at ?r ?p)
+                                )
+             :effect (and (have_image ?r ?o ?m)(not (calibrated ?i ?r))
+                          )
+             )
+
+            (:action communicate_soil_data
+             :parameters (?r - rover ?l - lander
+                             ;; the location from which ?r took the soil data
+                             ?p - waypoint
+                             ;; the location of the rover
+                             ?x - waypoint
+                             ;; the location of the lander
+                             ?y - waypoint)
+             :precondition (and (at ?r ?x)
+                                (at_lander ?l ?y)
+                                (have_soil_analysis ?r ?p)
+                                (visible ?x ?y)
+                                (available ?r)
+                                (channel_free ?l)
+                                )
+             :effect (and (not (available ?r))
+                          (not (channel_free ?l))
+                          (channel_free ?l)
+                          (communicated_soil_data ?p)
+                          (available ?r)
+                          )
+             )
+
+            (:action communicate_rock_data
+             :parameters (?r - rover ?l - lander ?p - waypoint ?x - waypoint ?y - waypoint)
+             :precondition (and (at ?r ?x)(at_lander ?l ?y)(have_rock_analysis ?r ?p)
+                                (visible ?x ?y)(available ?r)(channel_free ?l)
+                                )
+             :effect (and (not (available ?r))(not (channel_free ?l))(channel_free ?l)(communicated_rock_data ?p)(available ?r)
+                          )
+             )
+
+            (:action communicate_image_data
+             :parameters (?r - rover ?l - lander ?o - objective ?m - mode
+                             ;; rover position
+                             ?x - waypoint
+                             ;; lander location
+                             ?y - waypoint)
+             :precondition (and (at ?r ?x)(at_lander ?l ?y)(have_image ?r ?o ?m)(visible ?x ?y)(available ?r)(channel_free ?l))
+             :effect (and (not (available ?r))
+                          (not (channel_free ?l))
+                          (channel_free ?l)
+                          (communicated_image_data ?o ?m)
+                          (available ?r)
+                          )
+             )
+
+            ;; three imperatives that are used as in-memory representation of goals:
+            ;; (COMMUNICATE_SOIL_DATA ?GOAL-LOC)
+            ;; (COMMUNICATE_ROCK_DATA ?GOAL-LOC)
+            ;; (COMMUNICATE_IMAGE_DATA ?OBJ ?MODE)
+
+            ;; TOP LEVEL TASK:
+            (:pddl-method (achieve-goals)
+                          communicate-one-soil-data
+                          (communicate_soil_data ?goal-loc)
+                          (:ordered
+                           (communicated_soil_data ?goal-loc ?_rover)
+                           (achieve-goals)))
+
+            (:pddl-method (achieve-goals)
+                          communicate-one-rock-data
+                          (communicate_rock_data ?goal-loc)
+                          (:ordered
+                           (communicated_rock_data ?goal-loc ?_rover)
+                           (achieve-goals)))
+
+            (:method (achieve-goals)
+              communicate-one-image-data
+              (communicate_image_data ?obj ?mode)
+              (:ordered
+               (communicated_image_data ?obj ?mode ?_rover)
+               (achieve-goals)))
+
+            (:pddl-method (achieve-goals)
+                          check-for-all-goals-done
+                          (and (forall (?goal-loc - waypoint) (not (communicate_soil_data ?goal-loc)))
+                               (forall (?goal-loc - waypoint)(not (communicate_rock_data ?goal-loc)))
+                               (forall (?obj - objective)
+                                       (forall (?m - mode)
+                                               (not (communicate_image_data ?obj ?m)))))
+                          ())
+
+            (:method (empty-store ?s ?_rover)
+              already-empty
+              ((empty ?s))
+              ())
+
+            (:method (empty-store ?s ?rover)
+              drop-to-empty
+              ((not (empty ?s)))
+              ((!drop ?rover ?s)))
+
+            (:method (navigate ?rover ?to)
+              already-there
+              ((at ?rover ?to))
+              ())
+
+            (:method (navigate ?rover ?to)
+              go-there
+              ((not (at ?rover ?to))
+               (at ?rover ?from)
+               (assign ?visited nil)
+               (path ?rover ?from ?to ?path ?visited))
+              ((move ?rover ?from ?path)))
+
+            ;; this just traverses over the computed PATH
+            (:method (move ?_rover ?_from nil)
+              end-of-path
+              ()
+              ())
+
+            (:method (move ?rover ?from (?first . ?rest))
+              recursive-move
+              ()
+              ((!navigate ?rover ?from ?first)
+               (move ?rover ?first ?rest)))
+
+            (:method (communicated_soil_data ?goal-loc ?rover)
+              achieve-communicated-soil-data
+              ((store_of ?s ?rover))
+              ((navigate ?rover ?goal-loc)
+               (:immediate empty-store ?s ?rover)
+               (:immediate !sample_soil ?rover ?s ?goal-loc)
+               ;; FIXME: shouldn't there be a protection of the store until the communication is done?
+               (:immediate communicate soil ?goal-loc ?_rover-loc ?rover)
+               (:immediate !!retract ((COMMUNICATE_SOIL_DATA ?goal-loc)))))
+
+            (:method (communicated_rock_data ?goal-loc ?rover)
+              achieve-communicated-rock-data
+              ((store_of ?s ?rover))
+              ((navigate ?rover ?goal-loc)
+               (:immediate empty-store ?s ?rover)
+               (:immediate !sample_rock ?rover ?s ?goal-loc)
+               (:immediate communicate ROCK ?goal-loc ?_rover-loc ?rover)
+               (:immediate !!retract ((COMMUNICATE_ROCK_DATA ?goal-loc)))))
+
+            (:method (communicated_image_data ?obj ?mode ?rover)
+              achieve-communicated-image-data
+              ((on_board ?camera ?rover)
+               (supports ?camera ?mode)
+               (at_lander ?_lander ?lander-loc))
+              ((calibrate-camera ?rover ?camera)
+               (get-line-of-sight ?rover ?obj ?photo-loc)
+               (!take_image ?rover ?photo-loc ?obj ?camera ?mode)
+               ;; navigate to a transmission location and transmit
+               (communicate-image ?photo-loc ?lander-loc ?rover ?obj ?mode)
+               (:immediate !!retract ((COMMUNICATE_IMAGE_DATA ?obj ?mode)))))
+
+            (:method (calibrate-camera ?rover ?camera)
+              camera-already-calibrated
+              ((calibrated ?camera ?rover))
+              ())
+
+            (:method (calibrate-camera ?rover ?camera)
+              calibrate-the-camera
+              ((not (calibrated ?camera ?rover))
+               (calibration_target ?camera ?calibration-obj)
+               (visible_from ?calibration-obj ?calibration-loc))
+              (:ordered (navigate ?rover ?calibration-loc)
+                        (!calibrate ?rover ?camera ?calibration-obj ?calibration-loc)))
+
+            (:method (get-line-of-sight ?rover ?obj ?photo-loc)
+              have-line-of-sight-for-photo
+              ((at ?rover ?photo-loc)
+               (visible_from ?obj ?photo-loc))
+              ())
+
+            (:method (get-line-of-sight ?rover ?obj ?photo-loc)
+              need-line-of-sight
+              ((at ?rover ?rover-loc)
+               (not (visible_from ?obj ?rover-loc))
+               (visible_from ?obj ?photo-loc))
+              (:ordered (navigate ?rover ?photo-loc)))
+
+
+            ;; HELPERS
+            ;; the following shows a need for some higher-order method constructs
+
+            (:method (communicate soil ?analysis-loc ?rover-loc ?rover)
+              have-line-of-sight-for-soil
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (visible ?rover-loc ?lander-loc))
+              ((!communicate_soil_data ?rover ?l ?analysis-loc ?rover-loc
+                                       ?lander-loc)))
+
+
+            (:method (communicate soil ?analysis-loc ?rover-loc ?rover)
+              go-to-line-of-sight-for-soil
+              ;; Otherwise, go somewhere where the lander is visible
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (not (visible ?rover-loc ?lander-loc))
+               ;; FIXME: should pick a *good* location, instead of any location that has vi
+               (visible ?new-loc ?lander-loc))
+              ((navigate ?rover ?new-loc)
+               (!communicate_soil_data ?rover ?l ?analysis-loc ?new-loc
+                                       ?lander-loc)))
+
+            (:method (communicate rock ?analysis-loc ?rover-loc ?rover)
+              have-line-of-sight-for-rock
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (visible ?rover-loc ?lander-loc))
+              ((!communicate_rock_data ?rover ?l ?analysis-loc ?rover-loc
+                                       ?lander-loc)))
+
+            (:method (communicate rock ?analysis-loc ?rover-loc ?rover)
+              go-to-line-of-sight-for-rock
+              ;; Otherwise, go somewhere where the lander is visible
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (not (visible ?rover-loc ?lander-loc))
+               ;; FIXME: should pick a *good* location, instead of any location that has vi
+               (visible ?new-loc ?lander-loc))
+              ((navigate ?rover ?new-loc)
+               (!communicate_rock_data ?rover ?l ?analysis-loc ?new-loc
+                                       ?lander-loc)))
+
+            (:method (communicate image ?analysis-loc ?rover-loc ?rover)
+              have-line-of-sight-for-image
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (visible ?rover-loc ?lander-loc))
+              ((!communicate_image_data ?rover ?l ?analysis-loc ?rover-loc
+                                        ?lander-loc)))
+
+            (:method (communicate image ?analysis-loc ?rover-loc ?rover)
+              go-to-line-of-sight-for-image
+              ;; Otherwise, go somewhere where the lander is visible
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (not (visible ?rover-loc ?lander-loc))
+               ;; FIXME: should pick a *good* location, instead of any location that has vi
+               (visible ?new-loc ?lander-loc))
+              ((navigate ?rover ?new-loc)
+               (!communicate_image_data ?rover ?l ?analysis-loc ?new-loc
+                                        ?lander-loc)))
+
+            ;; end of helpers
+
+
+
+            (:method (communicate-IMAGE ?rover-loc ?lander-loc
+                      ?rover ?obj ?mode)
+              communicate-image
+              ((at ?rover ?rover-loc)
+               (at_lander ?l ?lander-loc)
+               (visible ?rover-loc ?lander-loc))
+              ((!communicate_image_data ?rover ?l ?obj ?mode ?rover-loc
+                                        ?lander-loc)))
+
+            (:method (communicate-IMAGE ?rover-loc ?lander-loc
+                      ?rover ?obj ?mode)
+              relocate-then-communicate-image
+              ((at ?rover ?loc)
+               (at_lander ?l ?lander-loc)
+               (not (visible ?rover-loc ?lander-loc))
+               (visible ?new-loc ?lander-loc)
+               (different ?loc ?new-loc))
+
+              ((navigate ?rover ?new-loc)
+               (!communicate_image_data ?rover ?l ?obj ?mode ?new-loc
+                                        ?lander-loc)))
+
+            (:op (!!retract ?g)
+             :delete ?g)
+
+            ;; State axioms
+            (:- (same ?x ?x) nil)
+            (:- (different ?x ?y) ((not (same ?x ?y))))
+
+
+            ;; This is a simple implementation that looks for an existence of a
+            ;; path, not necessarily a shortest or best path.
+            (:- (path ?_rover ?from ?from nil ?_visited)
+                nil)
+
+            (:- (path ?rover ?from ?to (?to . nil) ?_visited)
+                ((not (same ?from ?to))
+                 (can_traverse ?rover ?from ?to)))
+
+            (:- (path ?rover ?from ?to (?to1 . ?path1) ?visited)
+                ((not (same ?from ?to))
+                 (not (can_traverse ?rover ?from ?to))
+                 (can_traverse ?rover ?from ?to1)
+                 (not (eval (member '?to1 '?visited)))
+                 (path ?rover ?to1 ?to ?path1 (?from . ?visited))))
+            ))))
+    (&body)))
+
+;;; this domain has duplicated method names
+(def-fixture openstacks-domain (unique-method-names)
+  (progn
+    (let ((shop3::*define-silently* t))
+      (eval
+       `(defdomain (openstacks-sequencedstrips-ADL
+                    :unique-method-names ,unique-method-names
+                    :type pddl-domain
+                    :source-pddl-domain
+                    #.(merge-pathnames "domain-nocosts.pddl" (or *compile-file-truename* *load-truename*
+                                                                 (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/"))))
+            (
+             (:requirements :typing :adl :action-costs)
+             (:types order product count)
+             (:predicates (includes ?o - order ?p - product)
+                          (waiting ?o - order)
+                          (started ?o - order)
+                          (shipped ?o - order)
+                          (made ?p - product)
+                          (stacks-avail ?s - count)
+                          (next-count ?s ?ns - count))
+
+             ;;     (:functions (total-cost) - number)
+
+             (:action make-product
+              :parameters (?p - product)
+              :precondition (and (not (made ?p))
+                                 (forall (?o - order)
+                                         (imply (includes ?o ?p)
+                                                (started ?o))))
+              :effect (made ?p))
+
+             (:action start-order
+              :parameters (?o - order ?avail ?new-avail - count)
+              :precondition (and (waiting ?o)
+                                 (stacks-avail ?avail)
+                                 (next-count ?new-avail ?avail))
+              :effect (and (not (waiting ?o))
+                           (started ?o)
+                           (not (stacks-avail ?avail))
+                           (stacks-avail ?new-avail))
+              )
+
+             (:action ship-order
+              :parameters (?o - order ?avail ?new-avail - count)
+              :precondition (and (started ?o)
+                                 (forall (?p - product)
+                                         (imply (includes ?o ?p) (made ?p)))
+                                 (stacks-avail ?avail)
+                                 (next-count ?avail ?new-avail))
+              :effect (and (not (started ?o))
+                           (shipped ?o)
+                           (not (stacks-avail ?avail))
+                           (stacks-avail ?new-avail))
+              )
+
+             (:action open-new-stack
+              :parameters (?open ?new-open - count)
+              :precondition (and (stacks-avail ?open)
+                                 (next-count ?open ?new-open))
+              :effect (and (not (stacks-avail ?open))
+                           (stacks-avail ?new-open)
+                           ;; (increase (total-cost) 1)
+                           )
+              )
+
+             ;;This action should only be used during replanning to reset order status
+             ;;  (otherwise, the stack system will be offset and break the state)
+             (:action reset
+              :parameters (?o - order)
+              :precondition (and (started ?o) (not (shipped ?o)) (not (waiting ?o)))
+              :effect (and (waiting ?o) (not (started ?o)))
+              )
+
+             (:method (assert-goals nil)
+               ()
+               ())
+
+             (:method (assert-goals (?goal . ?goals))
+               ()
+               (:ordered (!!assert (goal ?goal))
+                         (assert-goals ?goals))
+               )
+
+             (:method (plan)
+               ((:goal (and . ?goals)))
+               ((:ordered (assert-goals ?goals)
+                          (open-all-stacks)
+                          (plan-for-goals))))
+
+             (:method (open-all-stacks)
+               open-one-stack
+               ((stacks-avail ?n)
+                (next-count ?n ?n1))
+               (:ordered (!open-new-stack ?n ?n1)
+                         (open-all-stacks))
+               done
+               ()
+               ()
+               )
+
+             (:method (plan-for-goals)
+               ((goal (shipped ?order))
+                (not (shipped ?order)))
+               (:ordered (one-step) (plan-for-goals))
+               ()
+               ((verify-orders)))
+
+             (:method (one-step)
+               ;; prefer to ship an order, if possible...
+               ((goal (shipped ?o))
+                (not (shipped ?o))
+                (forall (?p) (includes ?o ?p) (made ?p)))
+               ((ship-products ?o))
+               (:sort-by ?h
+                         (and (goal (shipped ?o))
+                              (not (shipped ?o))
+                              (includes ?o ?p)
+                              (not (made ?p))
+                              (ship-cost-heuristic ?p ?h)))
+               ((make-product ?p))
+               done
+               ()
+               ()
+               )
+
+             (:method (make-product ?p)
+               ()
+               (:ordered (start-orders ?p)
+                         (!make-product ?p)))
+
+             (:method (start-orders ?p)
+               ((includes ?o ?p)
+                (not (started ?o)))
+               ((start-an-order ?o)
+                (start-orders ?p))
+               done
+               ()
+               ())
+
+             (:method (verify-orders)
+               ((goal (shipped ?order))
+                (not (shipped ?order)))
+               (:eval (error "complete plan does not satisfy goals.  State is:" shop2:*current-state*))
+               ()
+               ())
+
+             (:method (start-an-order ?order)
+               ((stacks-avail ?next)
+                (next-count ?count ?next))
+               ((!start-order ?order ?next ?count)))
+
+             (:method (ship-products ?order)
+               ((stacks-avail ?count)
+                (next-count ?count ?next))
+               ((!ship-order ?order ?count ?next))
+               )
+
+             (:op (!!assert ?fact)
+              :add (?fact))
+
+             (:op (!!delete ?fact)
+              :delete (?fact))
+
+             (:- (ship-cost-heuristic ?p ?h)
+                 ((setof ?o (and (includes ?o ?p) (not (started ?o))) ?os)
+                  (order-costs ?os ?h 0))
+                 )
+
+             (:- (order-costs ?os ?h ?hin)
+                 ((= ?os (?o . ?os1))
+                  (order-cost ?o ?h1)
+                  (assign ?h2 (+ ?h1 ?hin))
+                  (order-costs ?os1 ?h ?h2))
+                 ((= ?os nil)
+                  (= ?h ?hin)))
+
+             (:- (order-cost ?o ?h)
+                 ((started ?o)
+                  (product-cost ?o ?pc)
+                  (assign ?h (1+ ?pc)))
+                 ((not (started ?o))
+                  (product-cost ?o ?h)))
+
+             (:- (product-cost ?o ?c)
+                 ((setof ?p
+                         (and (includes ?o ?p)
+                              (not (made ?p)))
+                         ?ps)
+                  (assign ?c (length '?ps))))
+             )
+          )))
+    (unwind-protect
+         (&body)
+      (ignore-errors
+       (shop::delete-domain 'openstacks-sequencedstrips-ADL)))))
+
+
+(test (ok-method-names :suite pddl-method-name-checks)
+  (with-fixture new-rovers-domain (t)
+    (is-true
+     (find-domain 'new-rovers-domain))
+    (shop::delete-domain 'new-rovers-domain))
+  (with-fixture new-rovers-domain (:warn)
+    (is-true
+     (find-domain 'new-rovers-domain))
+    (shop::delete-domain 'new-rovers-domain))
+  (with-fixture new-rovers-domain (nil)
+    (is-true
+     (find-domain 'new-rovers-domain))
+    (shop::delete-domain 'new-rovers-domain)))
+
+
+(test (bad-method-names :suite pddl-method-name-checks)
+  (signals non-unique-method-name-error
+    (with-fixture openstacks-domain (t)
+      nil))
+  (is-false (find-domain 'openstacks-sequencedstrips-ADL nil))
+  (warns non-unique-method-name-warning
+   (with-fixture openstacks-domain (:warn)
+     (is-true
+      (find-domain 'openstacks-sequencedstrips-ADL))))
+  (handler-bind ((non-unique-method-name-warning
+                   #'(lambda (e)
+                       (declare (ignorable e))
+                       (fiveam:fail "Inappropriately raised a non-unique-method name warning."))))
+   (with-fixture openstacks-domain (nil)
+     (is-true
+      (find-domain 'openstacks-sequencedstrips-ADL)))))
