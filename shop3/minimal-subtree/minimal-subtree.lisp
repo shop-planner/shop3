@@ -19,7 +19,7 @@
 ;;; to the same lists.  If you pull the plans out of SHOP2, that will
 ;;; be the case, but if you save and reload plans, it might not be.
 ;;; Caveat lisper!
-(defmethod find-failed-task ((domain shop2:domain) plan
+(defmethod find-failed-task ((domain domain) plan
                              (plan-tree plan-tree:tree-node) executed divergence
                              &key plan-tree-hash)
   "Default method for FIND-FAILED-TASK."

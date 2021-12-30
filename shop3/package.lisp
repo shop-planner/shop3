@@ -70,6 +70,8 @@
                   #:fluent-function-p
                   #:fluent-expr-p
                   #:fluent-comparison-p)
+    ;; so can be imported into prepare-return-values
+    (:intern #:make-plan-copy)
     (:import-from #:shop3.unifier #:+primitive-property-name+ #:primitive-symbol-p)
     #+sbcl
     (:shadow #:defconstant)
@@ -293,6 +295,66 @@
 
              ;; exporting so that it can be overridden
              plan-value))
+
+(defpackage plan-tree
+  (:nicknames shop-extended-plan-tree)
+  (:use common-lisp iterate)
+  (:intern #:top-node-lookup-table
+           #:copy-plan-tree-node)
+  (:import-from :alexandria #:when-let)
+  (:export #:dependency
+           #:establisher
+           #:consumer
+           #:prop
+           #:tree-node
+           #:tree-node-task
+           #:tree-node-expanded-task
+           #:tree-node-dependencies
+           #:tree-node-parent
+           #:primitive-tree-node
+           #:make-primitive-tree-node
+           #:complex-tree-node
+           #:make-complex-tree-node
+           #:complex-tree-node-children
+           #:complex-tree-node-method-name
+           #:top-node
+           #:make-top-node
+           #:pseudo-node
+           #:unordered-tree-node
+           #:make-unordered-tree-node
+           #:make-ordered-tree-node
+           #:ordered-tree-node
+           #:make-dependency
+           ;; finders
+           #:find-plan-step
+           #:find-task-in-tree
+           #:find-tree-node-if
+
+           #:copy-plan-tree
+           ))
+
+(defpackage prepare-return-values
+  (:nicknames #:prv)
+  (:use :common-lisp :iterate)
+  (:import-from #:shop3 #:apply-substitution #:make-plan-copy)
+  (:import-from #:alexandria #:when-let)
+  (:import-from #:plan-tree
+                #:tree-node
+                #:tree-node-task
+                #:tree-node-parent
+                #:tree-node-dependencies
+                #:primitive-tree-node
+                #:tree-node-expanded-task
+                #:top-node
+                #:top-node-lookup-table
+                #:dependency
+                #:make-dependency
+                #:establisher
+                #:consumer
+                #:prop
+                #:copy-plan-tree-node
+                #:complex-tree-node-children)
+  (:export #:prepare-return-values))
 
 (defpackage :shop3-user
     (:nicknames :shop-user :shop2-user)

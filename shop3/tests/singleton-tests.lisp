@@ -16,38 +16,39 @@
                   (muffle-warning w))))
          (setf ,retval ,@form)
          (values ,retval ,warnvar)))))
-                  
+
 (defun check-operator (sexp name)
   (shop2::set-variable-property (make-instance 'domain) sexp)
   (let ((table (shop2::harvest-variables sexp)))
-    (with-singleton-warnings 
+    (with-singleton-warnings
       (shop2::check-for-singletons table :construct-type :operator :construct-name name))))
 
 (defun check-method (sexp name)
   (shop2::set-variable-property (make-instance 'domain) sexp)
   (let ((table (shop2::harvest-variables sexp)))
-    (with-singleton-warnings 
+    (with-singleton-warnings
       (shop2::check-for-singletons table :construct-type :method :construct-name name))))
 
 ;;; better alternative than check-method...
 (defun test-process-method (sexp)
-  (shop2::set-variable-property (make-instance 'domain) sexp)
-  (with-singleton-warnings 
-    (shop2::process-method (make-instance 'domain) sexp)))
+  (shop::with-method-name-table
+      (shop2::set-variable-property (make-instance 'domain) sexp)
+    (with-singleton-warnings
+      (shop2::process-method (make-instance 'domain) sexp))))
 
 (defun test-process-operator (sexp)
   (shop2::set-variable-property (make-instance 'domain) sexp)
-  (with-singleton-warnings 
+  (with-singleton-warnings
     (shop2::process-operator (make-instance 'domain) sexp)))
 
 (defun test-process-axiom (sexp)
   (let ((d (make-instance 'domain)))
     (shop2::set-variable-property d sexp)
-    (with-singleton-warnings 
+    (with-singleton-warnings
       (shop2::process-axiom d sexp))))
 
 (fiveam:test blort-singleton
-  (let ((warning 
+  (let ((warning
           (nth-value 1
              (check-operator '(:operator (!assign-tanker-to-fire ?t ?x ?blort)
                                        ((available-tanker ?t))
@@ -65,7 +66,7 @@
                       (list '?blort)))))
 
 (fiveam:test anon-blort-singleton
-  (let ((warning 
+  (let ((warning
           (nth-value 1
              (check-operator '(:operator (!assign-tanker-to-fire ?t ?x ?_blort)
                                        ((available-tanker ?t))
@@ -80,7 +81,7 @@
     (fiveam:is (null warning))))
 
 (fiveam:test clean-operator
-  (let ((warning 
+  (let ((warning
           (nth-value 1
              (check-operator '(:operator (!assign-tanker-to-fire ?t ?x)
                                        ((available-tanker ?t))
@@ -95,7 +96,7 @@
     (fiveam:is (null warning))))
 
 (fiveam:test clean-method
-   (let ((warning 
+   (let ((warning
            (nth-value 1
                       (check-method
                        '(:method (assert-facts ?facts)
@@ -111,7 +112,7 @@
 
 
 (fiveam:test method-with-singleton
-   (let ((warning 
+   (let ((warning
            (nth-value 1
                       (check-method
                        '(:method (assess-fire ?s ?x)
@@ -136,7 +137,7 @@
 (fiveam:test mws-in-context
   (let ((warning
           (nth-value 1
-                     (test-process-method 
+                     (test-process-method
                       '(:method (assess-fire ?s ?x)
                         assess-fire
                         (;; preconditions
@@ -159,7 +160,7 @@
                           '(?fa))))))
     (let ((warning
           (nth-value 1
-                     (test-process-method 
+                     (test-process-method
                       '(:method (assess-fire ?s ?x)
                         assess-fire
                         (;; preconditions
@@ -173,7 +174,7 @@
       (fiveam:is-false warning))
     (let ((warning
           (nth-value 1
-                     (test-process-method 
+                     (test-process-method
                       '(:method (assess-fire ?s ?x ?context)
                         assess-fire
                         (;; preconditions
@@ -201,7 +202,7 @@
 
 (fiveam:test clean-in-context
   (let ((warning
-          (nth-value 1 
+          (nth-value 1
                      (test-process-method
                       '(:method (assert-facts ?facts)
                         done
@@ -215,7 +216,7 @@
 
 
 (fiveam:test anonymous-variables-distinct-head
-  (let ((method 
+  (let ((method
           (test-process-method
            '(:method (assert-facts ?facts ?_ ?_)
              done
@@ -239,7 +240,7 @@
              ((= ?facts (?fact . ?rest)))
              (:ordered (!!assert ?fact)
               (:immediate assert-facts ?rest))))
-         (method 
+         (method
           (test-process-method raw-method)))
     (let* ((done-precs (fourth method))
            (check-pred (second done-precs)))
@@ -264,7 +265,7 @@
             (op-prec (third raw-op))
             (op-del (fourth raw-op))
             (op-add (fifth raw-op)))
-        ;; here are all the ?_t's 
+        ;; here are all the ?_t's
         (fiveam:is (eq (second op-head) (second (first op-prec))))
         (fiveam:is (eq (second op-head) (second (first op-del))))
         (fiveam:is (eq (second op-head) (second (first op-add)))))
@@ -272,7 +273,7 @@
             (op-prec (third op))
             (op-del (fourth op))
             (op-add (fifth op)))
-        ;; here are all the ?_t's 
+        ;; here are all the ?_t's
         (fiveam:is-false (eq (second op-head) (second (first op-prec))))
         (fiveam:is-false (eq (second op-head) (second (first op-del))))
         (fiveam:is-false (eq (second op-head) (second (first op-add))))))))
@@ -322,7 +323,3 @@
                       '(:- (foo ?x)
                         ((bar ?x)))))))
     (fiveam:is-false warning)))
-
-
-    
-

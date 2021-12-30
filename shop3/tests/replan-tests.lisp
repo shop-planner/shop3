@@ -31,9 +31,12 @@
                       (pddl-problem  (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/p01.pddl"))
                       (package :shop3-openstacks))
   (let ((r (make-initial-plan :problem problem)))
-    (destructuring-bind ((plan) (plan-tree) (plan-tree-hash) search-state)
-        r
-      ;; (shop-trace :tasks :states)
+    (declare (type shop::plan-return r))
+    ;; the following ugliness could be a with-accessors
+    (let ((plan (shop::plan r))
+          (plan-tree (shop::tree r))
+          (plan-tree-hash (shop::lookup-table r))
+          (search-state (shop::search-state r)))
       (let* ((executed (executed-prefix failed-action plan))
              (domain (shop3::find-domain (shop3::domain-name problem))))
         (assert (every #'(lambda (x) (member x plan :test 'eql)) executed))
@@ -58,13 +61,17 @@
            domain
            divergence))))))
 
+(declaim
+ (ftype
+  (function (&key (:problem (or symbol shop3::problem)) (:problem-file (or pathname string)))
+            (values shop::plan-return &optional))
+  make-initial-plan))
 (defun make-initial-plan (&key (problem 'shop3-openstacks::os-sequencedstrips-p5_1i)
                             (problem-file (asdf:system-relative-pathname "shop3" "examples/openstacks-adl/p01-manual.lisp")))
   (load problem-file)
-  (let ((r (multiple-value-list (find-plans-stack
-                                 problem :verbose 0 :plan-tree t :repairable t))))
-    (unless (first r) (error "Failed to generate a plan for openstacks problem."))
-    r))
+  (let ((r (find-plans-stack problem :unpack-returns nil
+                                     :verbose 0 :plan-tree t :repairable t)))
+    (or (first r) (error "Failed to generate a plan for openstacks problem."))))
 
 
 ;;; never used.  But useful....

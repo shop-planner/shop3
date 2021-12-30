@@ -34,8 +34,14 @@
   (let ((meth '(:method (achieve-goals ?goals)
           ()
           ((assert-goals ?goals nil)
-           (find-nomove) (add-new-goals) (find-movable) (move-block)))))
-    (&body)))
+           (find-nomove) (add-new-goals) (find-movable) (move-block))))
+        (named-meth
+          '(:method method-name (achieve-goals ?goals)
+            ()
+            ((assert-goals ?goals nil)
+             (find-nomove) (add-new-goals) (find-movable) (move-block)))))
+    (shop::with-method-name-table
+     (&body))))
 
 (def-fixture complex-method-def (&optional named)
   (let ((meth `(:method ,@(when named '(find-movable-meth)) (find-movable)
@@ -51,36 +57,43 @@
 
                 nil
                 nil)))
-    (&body)))
+    (shop::with-method-name-table
+     (&body))))
 
 (test method-tests
   (with-fixture empty-domain ()
     (with-fixture method-def ()
-      (is (equal (let ((meth-def (shop2::process-method *domain* meth)))
-                   ;; there will be a gensym in the third position -- the name that is
-                   ;; automatically supplied
-                   (setf (nth 2 meth-def) 'placeholder)
-                   meth-def)
-                 '(:method (achieve-goals ?goals)
+      (is (equal '(:method (achieve-goals ?goals)
                    placeholder
                    ()
                    '(:ordered (:task assert-goals ?goals nil)
-                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block))))))
+                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block)))
+                 (let ((meth-def (shop::process-method *domain* meth)))
+                   ;; there will be a gensym in the third position -- the name that is
+                   ;; automatically supplied
+                   (setf (nth 2 meth-def) 'placeholder)
+                   meth-def)))
+      (is (equal '(:method (achieve-goals ?goals)
+                   method-name
+                   ()
+                   '(:ordered (:task assert-goals ?goals nil)
+                     (:task find-nomove) (:task add-new-goals) (:task find-movable) (:task move-block)))
+                 (shop::process-method *domain* named-meth))))
     (with-fixture complex-method-def ()
       (is
-       (equal (let ((meth-def (shop2::process-method *domain* meth)))
-                ;; replace all the gensyms
-                (subst-if 'placeholder
-                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                          meth-def))
-              '(:method (find-movable)
+       (equal '(:method (find-movable)
                 placeholder
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
                 '(:ordered (:task !assert ((put-on-table ?x))) (:task find-movable))
                 placeholder
                 (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
                 '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
-                placeholder nil '(:ordered (:task shop2::!!inop)))))))
+                placeholder nil '(:ordered (:task shop2::!!inop)))
+              (let ((meth-def (shop::process-method *domain* meth)))
+                ;; replace all the gensyms
+                (subst-if 'placeholder
+                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                          meth-def))))))
   (with-fixture empty-domain ()
    (with-fixture complex-method-def (t)
      (multiple-value-bind (meth-def meth-id)
@@ -88,9 +101,6 @@
        (is
         (equal 
          ;; replace all the gensyms
-         (subst-if 'placeholder
-                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                   meth-def)
          '(:method (find-movable)
            placeholder
            (:first (clear ?x) (not (dont-move ?x)) (goal (on-table ?x)) (not (put-on-table ?x)))
@@ -98,7 +108,10 @@
            placeholder
            (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y)) (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
            '(:ordered (:task !assert ((stack-on-block ?x ?y))) (:task find-movable))
-           placeholder nil '(:ordered (:task shop2::!!inop)))))
+           placeholder nil '(:ordered (:task shop2::!!inop)))
+         (subst-if 'placeholder
+                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                   meth-def)))
        (is (eq 'find-movable-meth meth-id))))))
 
 (test test-method-recording
@@ -135,9 +148,10 @@
                    (eval `(defdomain ,temp-domain-desig
                               (,meth)))
                    (find-domain temp-domain-desig)))
-         (translated (subst-if 'placeholder
-                               #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                               (shop::process-method domain meth))))
+         (translated (shop::with-method-name-table
+                         (subst-if 'placeholder
+                                   #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
+                                   (shop::process-method domain meth)))))
     
     (fiveam:is-true (typep domain 'domain))
     (is (equalp translated
@@ -161,7 +175,8 @@
                     (find-domain temp-domain-desig)))
           (translated (subst-if 'placeholder
                                 #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
-                                (shop::process-method domain meth))))
+                                (shop::with-method-name-table
+                                    (shop::process-method domain meth)))))
     
      (fiveam:is-true (typep domain 'domain))
      (is (= 1 (length (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))
@@ -390,6 +405,79 @@
                  (read-time (fuel ?p) ?t-read-fuel)
                  )))
     (is (= (shop2::operator-cost-fun op) 0))))
+
+;;; domain definition fixture to test checks for repeated method names
+(def-fixture method-name-domain-fix (unique-method-names)
+  (unwind-protect
+   (progn
+     (let ((*define-silently* t)
+           (shop2::*ignore-singleton-variables* t))
+       (eval
+        `(defdomain (non-unique-method-domain :redefine-ok t :unique-method-names ,unique-method-names)
+             (
+              (:method (in-city-delivery ?truck ?obj ?loc-from ?loc-to)
+
+                already-there
+                ((same ?loc-from ?loc-to))
+                ()
+
+                truck-across-town
+                ((in-city ?loc-from ?city)
+                 (truck ?truck ?city))
+                (:ordered (:task truck-at ?truck ?loc-from)
+                          (:task :immediate !load-truck ?obj ?truck ?loc-from)
+                          (:task truck-at ?truck ?loc-to)
+                          (:task :immediate !unload-truck ?obj ?truck ?loc-to)))
+
+
+;;;-------------------------------------------------
+
+              (:method (truck-at ?truck ?loc-to)
+
+                truck-not-in-right-location
+                ((truck-at ?truck ?loc-from)
+                 (different ?loc-from ?loc-to))
+                ((:task :immediate !drive-truck ?truck ?loc-from ?loc-to))
+
+                already-there
+                ((truck-at ?truck ?loc-from)
+                 (same ?loc-from ?loc-to))
+                ((:task :immediate !add-protection (truck-at ?truck ?loc-to)))))))
+       (&body)))
+    (ignore-errors (shop::delete-domain 'non-unique-method-domain))))
+
+(test check-unique-method-names
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (with-fixture method-name-domain-fix (nil)
+    (5am:is-true (shop:find-domain 'non-unique-method-domain nil)))
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (5am::warns shop::non-unique-method-name-warning
+   (with-fixture method-name-domain-fix (:warn)
+     (5am:is-true (shop:find-domain 'non-unique-method-domain nil))))
+  (5am:is-false (shop:find-domain 'non-unique-method-domain nil))
+  (5am:signals shop::non-unique-method-name-error
+    (with-fixture method-name-domain-fix (t) nil))
+  (let (modified-method-task modified-method-name)
+   (handler-bind ((shop::non-unique-method-name-error
+                    #'(lambda (c)
+                        (setf modified-method-task (first (shop::task c))
+                              modified-method-name (shop::old-name c))
+                        (continue c))))
+     (with-fixture method-name-domain-fix (t)
+       (let ((domain (shop:find-domain 'non-unique-method-domain nil)))
+         (5am:is-true domain)
+         (let ((deliv-methods (shop::methods domain 'in-city-delivery))
+               (truck-methods (shop::methods domain 'truck-at)))
+           (5am:is (= (length deliv-methods) 1))
+           (5am:is (= (length truck-methods) 1))
+           (5am:is-true (or (eq modified-method-task 'in-city-delivery)
+                            (eq modified-method-task 'truck-at)))
+           (5am:is (eq 'already-there modified-method-name))
+           (case modified-method-task
+             (in-city-delivery (5am:is-true (member 'already-there (first truck-methods)))
+              (5am:is-false (member 'already-there (first deliv-methods))))
+             (truck-at (5am:is-false (member 'already-there (first truck-methods)))
+              (5am:is-true (member 'already-there (first  deliv-methods)))))))))))
 
 (test check-problem-deletion
   (make-problem 'problem-for-deletion-test

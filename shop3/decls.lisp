@@ -126,6 +126,12 @@ will consult the user even in these cases.")
 guidance in heuristic search while planning.
   Currently supported only in FIND-PLANS-STACK.")
 
+(defvar *unique-method-names* nil
+  "This variable will be dynamically bound by code for parsing domains
+\(and should *not* be set by users\).  If T, the system will raise an error
+if methods do not have unique names.  If :WARN, the system will issue a warning.
+If NIL, the system will accept non-unique names quietly.")
+
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Compiler Directives and Macros
@@ -337,6 +343,8 @@ IF-THEN-ELSE semantics in methods."))
 ;;;---------------------------------------------------------------------------
 ;;; OPERATORS
 ;;;---------------------------------------------------------------------------
+(deftype operator () '(satisfies operator-p))
+(deftype pddl-action () '(satisfies pddl-action-p))
 
 (defstruct (operator :named (:type list))
   "This structure definition was added in order to make the
@@ -347,6 +355,9 @@ structure could be removed, and a true struct could be used instead."
   deletions
   additions
   (cost-fun nil))
+
+(defun operator-name (operator)
+  (first (operator-head operator)))
 
 ;;;---------------------------------------------------------------------------
 ;;; METHODS
@@ -361,6 +372,32 @@ SHOP domains.")
     (declare (ignorable domain))
     (assert (member (first method) +method-definition-keywords+))
     (second method)))
+
+
+(defgeneric method-p (domain sexpr)
+  (:documentation "Is SEXPR a method object relative to DOMAIN?")
+  (:method ((domain domain) obj)
+    (declare (ignorable domain obj))
+    nil)
+  (:method ((domain domain) (sexpr list))
+    (declare (ignorable domain))
+    (eq (first sexpr) :method)))
+
+(defgeneric method-task (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (second sexpr)))
+
+(defgeneric method-name (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (third sexpr)))
+
+(defgeneric method-preconditions (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (fourth sexpr)))
+
+(defgeneric method-task-net (domain sexpr)
+  (:method ((domain domain) (sexpr list))
+    (fifth sexpr)))
 
 
 ;;;------------------------------------------------------------------------------------------------------
@@ -495,13 +532,13 @@ names for the bound variables in quantified expressions."))
     (:documentation "Preprocess add and delete lists, finding the forall conditions and
 replacing the variables in them.  Extendable for subtypes of the DOMAIN class."))
 
-(defgeneric process-method-pre (domain precondition method-name &key strict)
+(defgeneric process-method-pre (domain precondition method-id &key strict)
   (:documentation "Wrapper around process-pre that takes responsibility for
 handling method-specific processing.  If STRICT is non-NIL, warn about implicit
 conjunctions.")
-  (:method ((domain domain) precondition method-name &key strict)
+  (:method ((domain domain) precondition method-id &key strict)
     (declare (ignore strict))
-    (process-pre domain precondition method-name)))
+    (process-pre domain precondition method-id)))
 
 ;;;;;; I believe that two changes should be made to this function (at least!):
 ;;;;;; 1.  It should be renamed to apply-primitive and
@@ -610,7 +647,7 @@ of SHOP extensions to extend or override the normal problem-building.")
 
 (defgeneric pddl-plan (domain plan &key package)
   (:documentation "Return a PDDL plan representation of PLAN for
-DOMAIN (a SHOP ddomain).  When PACKAGE is supplied, put the 
+DOMAIN (a SHOP ddomain).  When PACKAGE is supplied, put the
 symbols into that package (instead of into the value of *PACKAGE*,
 which should be the default)."))
 
@@ -626,15 +663,15 @@ which should be the default)."))
       ;; make FIND-PROBLEM idempotent...
       name-or-problem
       (let* ((name name-or-problem)
-             (found 
+             (found
                (find name *all-problems* :key #'name)))
         (cond (found
                found)
               (errorp
                (error "No such problem: ~a" name))
               (t nil)))))
-        
-    
+
+
 
 
 ;;;---------------------------------------------------------------------------
@@ -687,6 +724,10 @@ task keyword of TASK and LIBRARY-TASK are the same.")
   ()
   )
 
+(define-condition domain-parse-error (shop-condition error)
+  ()
+  )
+
 (define-condition domain-style-warning (shop-condition
                                         simple-condition style-warning)
   ())
@@ -708,6 +749,19 @@ task keyword of TASK and LIBRARY-TASK are the same.")
                        context-name
                        bad-conjunction
                        replacement)))))
+
+(define-condition non-unique-method-name-mixin ()
+  ((old-name
+    :initarg :old-name
+    :reader old-name)
+   (task
+    :initarg :task
+    :reader task))
+  (:report (lambda (c stream)
+             (format stream "Non-unique method name ~a for task ~a" (old-name c) (task c)))))
+
+(define-condition non-unique-method-name-warning  (non-unique-method-name-mixin domain-style-warning) ())
+(define-condition non-unique-method-name-error  (non-unique-method-name-mixin domain-parse-error) ())
 
 (define-condition domain-item-parse-warning (domain-parse-warning)
   ()

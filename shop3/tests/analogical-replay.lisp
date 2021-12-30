@@ -80,7 +80,8 @@
 (test check-analogical-replay
   (with-fixture ar-test-domain ()
     (let ((prs (find-plans-stack 'bridge-out :unpack-returns nil
-                                             :which :first :verbose 0))
+                                 :make-analogy-table t
+                                 :which :first :verbose 0))
          replay-table)
       (let ((plans (mapcar #'shop::plan prs)))
         (is-true plans)

@@ -238,11 +238,13 @@ Otherwise it returns FAIL."
   (declare (ignore protections))        ; do we really want to ignore protections?
   (let ((standardized-method (standardize method))
         task-unifier state-unifiers dependencies
-        pre tail)
+        method-head
+        (task-name (first task-body)))
+    (declare (type symbol task-name))
 
-    (when (and (well-formed-listp (second standardized-method))
+    (when (and (well-formed-listp (setf method-head (method-head domain standardized-method)))
                (well-formed-listp task-body))
-      (unless (= (length (second standardized-method))
+      (unless (= (length method-head)
                  (length task-body))
       (error 'task-arity-mismatch
              :task task-body
@@ -250,11 +252,11 @@ Otherwise it returns FAIL."
              :library-entry method)))
 
     ;; see if the standardized-method's head unifies with TASK-BODY
-    (setq task-unifier (unify (second standardized-method)
+    (setq task-unifier (unify method-head
                               (apply-substitution task-body in-unifier)))
     (when *traced-tasks*
-      (when (member (first task-body) *traced-tasks*)
-        (trace-print :tasks (first task-body) state
+      (when (member task-name *traced-tasks*)
+        (trace-print :tasks task-name state
                      "~2%Depth ~s, trying a method for task ~s~%"
                      depth
                      task-body)))
@@ -264,23 +266,23 @@ Otherwise it returns FAIL."
       ;; STANDARDIZED-METHOD's CDDR is a list
       ;; (label_1 pre_1 d_1 label_2 pre_2 d_2 ...) which acts like an
       ;; if-then-else: we look for the first true pre_i, and then evaluate d_i
-      (do* ((body (cddr standardized-method) (cdddr body)))
-           ((null body) nil)
-
+      (iter (for body on (cddr standardized-method) by 'cdddr)
+        (as method-name = (first body))
         ;; apply v to PRE and TAIL
-        (setq pre (apply-substitution (second body) task-unifier))
-        (setq tail (apply-substitution (third body) task-unifier))
+        (as pre = (apply-substitution (second body) task-unifier))
+        (as tail = (apply-substitution (third body) task-unifier))
+        (declare (type symbol method-name) (type list pre tail))
 
         ;; check for tracing
         (when *traced-methods*
-          (when (member (first body) *traced-methods*)
-            (break "Attempting to apply method ~A" (first body))))
+          (when (member method-name *traced-methods*)
+            (break "Attempting to apply method ~A" method-name)))
 
-        (trace-print :methods (first body) state
-                           "~2%Depth ~s, trying method ~s~%      for task ~s~%"
-                           depth
-                           (first body)
-                           task-body)
+        (trace-print :methods method-name state
+                     "~2%Depth ~s, trying method ~s~%      for task ~s~%"
+                     depth
+                     method-name
+                     task-body)
 
         ;; find all matches to the current state
         (multiple-value-setq (state-unifiers dependencies)
@@ -295,7 +297,7 @@ Otherwise it returns FAIL."
                                 (mapcar
                                  #'(lambda (reduction)
                                      (list
-                                      (cons (first body) reduction)
+                                      (cons method-name reduction)
                                       ;;keep the unifier around a bit longer...
                                       ;; [2003/06/25:rpg]
                                       unifier
@@ -309,7 +311,7 @@ Otherwise it returns FAIL."
                                 (mapcar
                                  #'(lambda (reduction)
                                      (list
-                                      (cons (first body) reduction)
+                                      (cons method-name reduction)
                                       ;;keep the unifier around a bit longer...
                                       ;; [2003/06/25:rpg]
                                       unifier))
@@ -317,28 +319,28 @@ Otherwise it returns FAIL."
                                   (eval (apply-substitution tail unifier))))))
                           state-unifiers)))
                    (answers-and-unifiers
-                    (remove-duplicates answers-with-duplicates
-                                       ;; added this to ignore the unifiers....
-                                       :key #'car
-                                       :test #'equal :from-end t))
+                     (remove-duplicates answers-with-duplicates
+                                        ;; added this to ignore the unifiers....
+                                        :key #'car
+                                        :test #'equal :from-end t))
                    (answers (mapcar #'first answers-and-unifiers))
                    (unifiers (mapcar #'second answers-and-unifiers))
                    (depends (when *record-dependencies-p* (mapcar #'third answers-and-unifiers))))
-              (trace-print :methods (first body) state
+              (trace-print :methods method-name state
                            "~2%Depth ~s, applicable method ~s~%      task ~s~%reductions ~s"
                            depth
-                           (first body)
+                           method-name
                            task-body
                            answers)
               (return-from apply-method 
                 (values answers unifiers depends (apply-substitution (second standardized-method) task-unifier))))
-            (progn
-              (trace-print :methods (first body) state
+            ;; no unifier
+            (trace-print :methods method-name state
                          "~2%Depth ~s, inapplicable method ~s~%      task ~s"
                          depth
-                         (first body)
-                         task-body)
-              nil))))))
+                         method-name
+                         task-body))
+        (finally (return nil))))))
 
 ;;; This function forces there to be at least one immediate task in any
 ;;;  reduction so that when a method is reduced, it is immediately

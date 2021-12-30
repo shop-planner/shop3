@@ -150,36 +150,38 @@
              (equalp (plan-tree:tree-node-task node) '(task5)))
          plan-tree)
         (find-failed-task (subseq plan 0 2) '((:add (d))))))))))
-     
+
 
 ;;; check to make sure that variable bindings will be reflected in the
 ;;; enhanced plan tree.
-(defdomain check-tree-construction
-    (
-     (:method (foo ?x ?y)
-       ((parent ?x ?y))
-       ((!give-allowance ?x ?y)))
+(fiveam:def-fixture tree-construction-fixture ()
+  (progn
+   (defdomain check-tree-construction
+       (
+        (:method (foo ?x ?y)
+          ((parent ?x ?y))
+          ((!give-allowance ?x ?y)))
 
-     (:op (!give-allowance ?x ?y)
-      :add ((has ?y (dollars 10)))
-      :delete ((has ?x (dollars 10))))))
+        (:op (!give-allowance ?x ?y)
+         :add ((has ?y (dollars 10)))
+         :delete ((has ?x (dollars 10))))))
+   (defproblem tree-construction-problem
+     check-tree-construction
+     ((has robert (dollars 10))
+      (parent robert phoebe))
+     (foo ?x ?y))
+   (&body)))
 
-
-(defproblem tree-construction-problem
-  check-tree-construction
-  ((has robert (dollars 10))
-   (parent robert arthur))
-  (foo ?x ?y))
-    
 
 (fiveam:def-suite* enhanced-plan-tree)
 
 (fiveam:test test-tree-unify-upwards
-  (multiple-value-bind (plans trees)
-      (find-plans-stack 'tree-construction-problem :plan-tree t)
-    (fiveam:is-true (first plans))
-    (let ((tree (first trees)))
-      (fiveam:is
-       (equalp '(foo robert arthur)
-               (plan-tree:tree-node-expanded-task
-                (first (plan-tree:complex-tree-node-children tree))))))))
+  (fiveam:with-fixture tree-construction-fixture ()
+   (multiple-value-bind (plans trees)
+       (find-plans-stack 'tree-construction-problem :plan-tree t)
+     (fiveam:is-true (first plans))
+     (let ((tree (first trees)))
+       (fiveam:is
+        (equalp '(foo robert phoebe)
+                (plan-tree:tree-node-expanded-task
+                 (first (plan-tree:complex-tree-node-children tree)))))))))
