@@ -7,8 +7,6 @@
 (defvar *no-dependencies*
   NIL
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
-
-(defvar *include-rationale* nil)
         
 (defgeneric unfold-loop-task (domain state)
   (:documentation "Driver for the looping tasks."))
@@ -36,7 +34,6 @@ tree, with causal links, unless NO-DEPENDENCIES is non-NIL."
          (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
-         (*include-rationale* rationale)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
@@ -163,6 +160,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
               (setf (mode state) 'expand-primitive-task))
              ((eql (get-task-name task) :loop)
               (setf (mode state) 'unfold-looping-task))
+	     ((eql (get-task-name task) (or :if :when :unless))
+              (setf (mode state) 'expand-conditional-task))
              (t ; original nonprimitive:
               (setf (mode state) 'prepare-to-choose-method)))))
 
@@ -179,7 +178,22 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                              "~2%Depth ~s, backtracking from task~%      task ~s"
                              depth
                              current-task)
-                (stack-backtrack state))))
+	       (stack-backtrack state))))
+
+	(expand-conditional-task
+         (when (> *verbose* 2) (format t "~%Starting to expand the conditional block..."))
+         (if (expand-conditional-task domain state)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             ;; Else, 
+             (with-slots (current-task depth world-state) state
+	       (when (> *verbose* 0) (format t "~%Could not expand the conditional successfully..."))
+	       (trace-print :tasks (get-task-name current-task) world-state
+			    "~2%Depth ~s, backtracking from task~%      task ~s"
+			    depth
+			    current-task)
+	       (stack-backtrack state))))
 
         (expand-primitive-task
          (if (expand-primitive-state state domain)
@@ -276,32 +290,18 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
           (when *enhanced-plan-tree*
             (let* ((parent (plan-tree:find-task-in-tree current-task (plan-tree-lookup state)))
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
-              ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links
-              ;; PARENT and CHILD.
-#|            (format t "~%Subtree1: ~s"  (make-add-child-to-tree :parent (apply-substitution
-                                                (plan-tree::complex-tree-node-task parent) unifier)
-                                       :child (apply-substitution
-                                                (plan-tree::complex-tree-node-children
-                                                 child)
-                                                unifier)))
-              (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
-              |#
-              (push
-               (if *include-rationale*
-                   (make-add-child-to-tree :parent (apply-substitution
-                                                    (plan-tree::complex-tree-node-task parent) unifier)
-                                           :child (apply-substitution
-                                                   (plan-tree::complex-tree-node-children
-                                                    child)
-                                                   unifier))
-                   ;; else
-                   (make-add-child-to-tree :parent parent :child child))
-               backtrack-stack)       
+              (push (make-add-child-to-tree :parent parent :child child)
+		    backtrack-stack)
+	      (format t "~%Depends: ~s" depends)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
+		  (format t "~%Depends: ~s" depends)
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
                     (make-add-dependencies :dependencies depends))))))
+
+
+	  
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
@@ -332,6 +332,7 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                 
                 (push (record-node-expansion task-node task-expansion plan-tree-lookup)
                       backtrack-stack)))
+
             (setf alternatives
                   (if *record-dependencies-p*
                       (mapcar #'list expansions unifiers dependencies)
@@ -357,6 +358,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                                   :unifier unifier
                                   :partial-plan-cost cost)
           backtrack-stack)
+
+    (format t "~%In primitive state?")
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
                           depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)
@@ -373,6 +376,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (push (record-node-expansion tree-node planned-action (plan-tree-lookup state))
                   (backtrack-stack state))
             (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
+	      (format t "~%Depends prim: ~s" depends)
+
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
                 (make-add-dependencies :dependencies depends))))

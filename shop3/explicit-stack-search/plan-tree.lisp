@@ -31,8 +31,8 @@
 (in-package :plan-tree)
 
 (defstruct (dependency (:conc-name nil))
-  establisher
-  consumer
+  establisher ;; tree-node
+  consumer ;; tree-node
   prop
   )
 
