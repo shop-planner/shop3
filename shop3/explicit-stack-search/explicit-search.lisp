@@ -105,7 +105,6 @@ objects."
          (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
-         (*include-rationale* rationale)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
@@ -249,43 +248,76 @@ List of analogical-replay tables -- optional
                (setf (mode state) 'expand-task)
                (stack-backtrack state)))
 
-          (expand-task
-           (let ((task (current-task state)))
-             (trace-print :tasks (get-task-name task) (world-state state)
-                          "~2%Depth ~s, trying task ~s"
-                          (depth state)
-                          (apply-substitution task (unifier state)))
-             (incf *expansions*)
-             (cond
-               ((primitivep (get-task-name task))
-                (setf (mode state) 'expand-primitive-task))
-               ((eql (get-task-name task) :loop)
-                (setf (mode state) 'unfold-looping-task))
-               (t ; original nonprimitive:
-                (setf (mode state) 'prepare-to-choose-method)))))
+        (expand-task
+         (let ((task (current-task state)))
+           (trace-print :tasks (get-task-name task) (world-state state)
+                        "~2%Depth ~s, trying task ~s"
+                        (depth state)
+                        (apply-substitution task (unifier state)))
+           (incf *expansions*)
+           (format t "~%Task name: ~s" (get-task-name task))
+           (cond
+             ((primitivep (get-task-name task))
+              (setf (mode state) 'expand-primitive-task))
+             ((eql (get-task-name task) :loop)
+              (setf (mode state) 'unfold-looping-task))
+	         ((member (get-task-name task) '(:if :when :unless))
+              (setf (mode state) 'expand-conditional-task))
+             (t ; original nonprimitive:
+              (setf (mode state) 'prepare-to-choose-method)))))
 
-          (unfold-looping-task
-           (when (> *verbose* 2) (format t "~%Starting to unfold the loop..."))
-           (if (unfold-loop-task domain state)
-               (progn
-                 (setf (mode state) 'test-for-done)
-                 (incf (depth state)))
-               ;; Else,
-               (with-slots (current-task depth world-state) state
-                 (when (> *verbose* 0) (format t "~%Could not unfold the loop successfully..."))
-                 (trace-print :tasks (get-task-name current-task) world-state
-                              "~2%Depth ~s, backtracking from task~%      task ~s"
-                              depth
-                              current-task)
-                 (stack-backtrack state))))
+        (unfold-looping-task
+         (when (> *verbose* 2) (format t "~%Starting to unfold the loop..."))
+         (if (unfold-loop-task domain state)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             ;; Else, 
+             (with-slots (current-task depth world-state) state
+                (trace-print :tasks (get-task-name current-task) world-state
+                             "~2%Could not unfold the loop successfully...~2T~%Depth ~s, backtracking from task~%      task ~s"
+                             depth
+                             current-task)
+                (stack-backtrack state))))
 
-          (expand-primitive-task
-           (if (expand-primitive-state state domain)
-               (progn
-                 (setf (mode state) 'test-for-done)
-                 (incf (depth state)))
-               (with-slots (current-task depth world-state) state
-                 (trace-print :tasks (get-task-name current-task) world-state
+	  (expand-conditional-task
+         (when (> *verbose* 2) (format t "~%Starting to expand the conditional block..."))
+         (if (expand-conditional-task domain state)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             ;; Else, 
+             (with-slots (current-task depth world-state) state
+	           (trace-print :tasks (get-task-name current-task) world-state
+			    "~2%Could not expand the conditional successfully...~%Depth ~s, backtracking from task~%      task ~s"
+			    depth
+			    current-task)
+	          (stack-backtrack state))))
+
+        (expand-primitive-task
+         (if (expand-primitive-state state domain)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             (with-slots (current-task depth world-state) state
+               (trace-print :tasks (get-task-name current-task) world-state
+                            "~2%Depth ~s, backtracking from task~%      task ~s"
+                            depth
+                            current-task)
+               (stack-backtrack state))))
+        (prepare-to-choose-method
+         (let* ((task-name (get-task-name (current-task state)))
+                (methods (methods domain task-name)))
+           (setf (alternatives state) (sort-methods domain methods which))
+           (setf (mode state) 'choose-method)))
+        (choose-method
+         (if (choose-method-state state domain)
+             (setf (mode state) 'choose-method-bindings)
+             (progn
+               (let ((task1 (current-task state))
+                     (depth (depth state))
+                     (state (world-state state)))
+                 (trace-print :tasks (get-task-name task1) state
                               "~2%Depth ~s, backtracking from task~%      task ~s"
                               depth
                               current-task)
@@ -488,14 +520,6 @@ of PLAN-RETURN objects."
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
               ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links
               ;; PARENT and CHILD.
-#|            (format t "~%Subtree1: ~s"  (make-add-child-to-tree :parent (apply-substitution
-                                                (plan-tree::complex-tree-node-task parent) unifier)
-                                       :child (apply-substitution
-                                                (plan-tree::complex-tree-node-children
-                                                 child)
-                                                unifier)))
-              (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
-              |#
               (push
                (if *include-rationale*
                    (make-add-child-to-tree :parent (apply-substitution
@@ -509,9 +533,13 @@ of PLAN-RETURN objects."
                backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
+		  (format t "~%Depends: ~s" depends)
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
                     (make-add-dependencies :dependencies depends))))))
+
+
+	  
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
@@ -579,6 +607,8 @@ trigger backtracking."
                                   :unifier unifier
                                   :partial-plan-cost cost)
           backtrack-stack)
+
+    (format t "~%In primitive state?")
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
                           depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)

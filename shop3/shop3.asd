@@ -105,13 +105,17 @@
                              (:file "plan-tree")
                              (:file "decls")
                              (:file "prepare-return-values")
+			                 (:file "plan-tree-simple-print")
                              (:file "backtrack-stack")
                              (:file "analogical-replay")
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
-                :serial t
-                :components ((:file "loop-extensions")))
+	:serial t
+	:components ((:file "exts-common")
+		         (:file "loop-extensions")
+		         (:file "conditional-extensions")))
+       
 
 
        ;; this is for the original SHOP3 plan trees.
