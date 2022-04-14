@@ -15,7 +15,7 @@
 
 @settitle SHOP3 Manual
 @copying
-Copyright @copyright{} 2018-2021 SIFT, LLC.
+Copyright @copyright{} 2018-2022 SIFT, LLC.
 Original materials @copyright{} 2002 University of Maryland.
 
 This document is made available under the Creative Commons
@@ -1406,8 +1406,8 @@ A @strong{sorted precondition} has the form
 @noindent
 where @var{?v} is a variable symbol, @var{e} is a general Lisp
 expression (which should evaluate to a comparison function), and
-@var{l} is a logical expression. Such a precondition causes @sysname
-{} to consider bindings for @var{?v} in a specific order: bindings are
+@var{l} is a logical expression. Such a precondition causes @sysname{}
+to consider bindings for @var{?v} in a specific order: bindings are
 sorted such that if the comparison function holds between values
 @var{x} and @var{y} then bindings of @var{?v} to @var{x} may not occur
 after bindings of @var{?v} to @var{y}. For example consider the
