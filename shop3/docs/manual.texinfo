@@ -132,7 +132,7 @@ Prof. Dana Nau's research group.  This manual draws heavily on
 material from the manual for @sc{Shop2}, which was, in turn based, in
 part, on the JSHOP documentation written by Füsun Yaman, with
 additional material from Yue Cao's December 2000 draft of the @sc{Shop2}
-documentation and pseudocode from Nau @emph{et al.}
+documentation and pseudocode from Nau @i{et al.}
 (@pxref{NauEtAl2001, ,Nau et al.@comma{} 2001}).
 Some
 updates to the @sc{Shop2} manual were made by Robert P. Goldman and
@@ -1208,7 +1208,7 @@ the latter is used to express a set of effects rather than a logical
 expression and consequently has a different syntax.
 
 There is no need for @strong{existential} quantifications.
-See [Ghallab @emph{et al.}, 2004] or @ref{Internal Knowledge Structures}.
+See [Ghallab @i{et al.}, 2004] or @ref{Internal Knowledge Structures}.
 
 
 @node Assignments, Eval expressions, Universal Quantifications, Logical Expressions
@@ -3793,12 +3793,14 @@ of Maryland, SIFT, or the United States Government.
 
 @anchor{DeanBoddy1998}
 [Dean and Boddy, 1998] T. Dean and M. Boddy. An analysis of
-time-dependent planning. In @emph{AAAI-88}, 1988.
+time-dependent planning. In @i{AAAI-88}, 1988.
 
+@noindent
 @anchor{GhallabEtAl2004}
-[Ghallab @emph{et al.}, 2004] M. Ghallab, D. Nau, P. Traverso. Automated
+[Ghallab @i{et al.}, 2004] M. Ghallab, D. Nau, P. Traverso. Automated
 Planning: Theory and Practice, Morgan Kaufmann, 2004.
 
+@noindent
 @anchor{GoldmanKuter2019}
 [Goldman & Kuter, 2019] Goldman, R. P., & Kuter, U.
 @uref{https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf,
@@ -3806,18 +3808,23 @@ Hierarchical Task Network Planning in Common Lisp: the case of SHOP3}.
 @i{ Proceedings of the 12th European Lisp Symposium}. European Lisp
 Symposium, Genova, Italy, April 2019.
 
-[Nau @emph{et al.}, 1999] D. Nau, Y. Cao, A. Lotem, and H. Muñoz-Avila.
-SHOP: Simple Hierarchical Ordered Planner. In @emph{IJCAI-99}, 1999.
+@noindent
+@anchor{NauEtAl1999}
+[Nau @i{et al.}, 1999] D. Nau, Y. Cao, A. Lotem, and H. Muñoz-Avila.
+SHOP: Simple Hierarchical Ordered Planner. In @i{IJCAI-99}, 1999.
 
-[Nau @emph{et al.}, 2000] D. S. Nau, Y. Cao, A. Lotem, and H.
+@noindent
+@anchor{NauEtAl2000}
+[Nau @i{et al.}, 2000] D. S. Nau, Y. Cao, A. Lotem, and H.
 Muñoz-Avila. SHOP and M-SHOP: Planning with Ordered Task Decomposition.
 Tech report TR 4157, University of Maryland, College Park, MD, June
 2000.
 
+@noindent
 @anchor{NauEtAl2001}
-[Nau @emph{et al.}, 2001] D. S. Nau, H. Muñoz-Avila Y. Cao, A. Lotem,
+[Nau @i{et al.}, 2001] D. S. Nau, H. Muñoz-Avila Y. Cao, A. Lotem,
 and.S. Mitchell. Totally Ordered Planning with Partially Ordered
-Subtasks. In @emph{IJCAI-01}, 2001.
+Subtasks. In @i{IJCAI-01}, 2001.
 
 @node Function Index, Type and Class Index, References, Top
 @unnumbered Function and Macro Index
