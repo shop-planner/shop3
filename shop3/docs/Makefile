@@ -1,3 +1,5 @@
+MAKEINFO?=makeinfo
+
 .PHONY: clean
 
 all: html pdf info
@@ -30,13 +32,13 @@ include-stamp: ../*.lisp ../*.asd
 # 	--eval '(quit)'
 
 %.html: %.texinfo style.css include-stamp
-	makeinfo --html --no-split --css-include=style.css $<
+	${MAKEINFO} --html --no-split --css-include=style.css $<
 
 %.pdf: %.texinfo include-stamp
 	texi2dvi -p $<
 
 %.info: %.texinfo include-stamp
-	makeinfo --no-split $<
+	${MAKEINFO} --no-split $<
 
 html: manual.html
 
