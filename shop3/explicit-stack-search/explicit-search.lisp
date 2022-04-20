@@ -155,12 +155,14 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         (depth state)
                         (apply-substitution task (unifier state)))
            (incf *expansions*)
+           (format t "~%Task name: ~s" (get-task-name task))
            (cond
              ((primitivep (get-task-name task))
               (setf (mode state) 'expand-primitive-task))
              ((eql (get-task-name task) :loop)
               (setf (mode state) 'unfold-looping-task))
-	     ((eql (get-task-name task) (or :if :when :unless))
+	           ((member (get-task-name task) '(:if :when :unless))
+              (format t "~%SHOP3 catches the task keyword...")
               (setf (mode state) 'expand-conditional-task))
              (t ; original nonprimitive:
               (setf (mode state) 'prepare-to-choose-method)))))
