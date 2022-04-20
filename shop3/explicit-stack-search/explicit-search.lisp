@@ -182,20 +182,20 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                              current-task)
 	       (stack-backtrack state))))
 
-	(expand-conditional-task
+	  (expand-conditional-task
          (when (> *verbose* 2) (format t "~%Starting to expand the conditional block..."))
          (if (expand-conditional-task domain state)
-             (progn
-               (setf (mode state) 'test-for-done)
-               (incf (depth state)))
-             ;; Else, 
-             (with-slots (current-task depth world-state) state
-	       (when (> *verbose* 0) (format t "~%Could not expand the conditional successfully..."))
-	       (trace-print :tasks (get-task-name current-task) world-state
-			    "~2%Depth ~s, backtracking from task~%      task ~s"
-			    depth
-			    current-task)
-	       (stack-backtrack state))))
+            (progn
+              (setf (mode state) 'test-for-done)
+              (incf (depth state)))
+            ;; Else, 
+            (with-slots (current-task depth world-state) state
+	            (when (> *verbose* 0) 
+                (format t "~%Could not expand the conditional successfully..."))
+	              (trace-print :tasks (get-task-name current-task) world-state
+			                         "~2%Depth ~s, backtracking from task~%      task ~s"
+			                        depth current-task)
+	            (stack-backtrack state))))
 
         (expand-primitive-task
          (if (expand-primitive-state state domain)

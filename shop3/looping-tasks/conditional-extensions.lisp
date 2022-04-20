@@ -23,7 +23,7 @@
 
 
 (defun conditional-p (task-name)
-  (equal task-name (or :if :when :unless)))
+  (member task-name '(:if :when :unless)))
 
 (defmethod do-backtrack ((entry conditional-state-expand) (state search-state))
   (setf (top-tasks state) (top-tasks entry)
@@ -104,13 +104,14 @@
   (declare (ignorable search-state))
   ;; TASK-BODY is the form (:IF (:COND ....) (:ORDERED ...) (:ELSE...))
 
+    (format t "~%Hello??")
+
   (let* ((if-condition (block-body-condition :cond task-body))
          (unifiers
 	   (find-satisfiers if-condition state
 			    :domain domain))
          reduction)
 
-    (format t "~%Hello??")
     (if unifiers
 	(iter
 	 (for u in unifiers)
@@ -140,21 +141,21 @@
   ;; TASK-BODY is the form (:WHEN (:COND ....) (:ORDERED ...))
   (let* ((when-condition (block-body-condition :cond task-body))
          (unifiers
-	   (find-satisfiers when-condition state
-			    :domain domain))
+	          (find-satisfiers when-condition state :domain domain))
          reduction)
     (iter
      (for u in unifiers)
      (let* ((u1 (compose-substitutions in-unifier u))
             (when-body
-	      (apply-substitution
-	       (block-body-item :ordered task-body)
-	       u1)))
-
-       
+	            (apply-substitution
+	              (block-body-item :ordered task-body)
+	              u1)))       
        (setf reduction (generate-reduction domain reduction when-body))))
+    
+    (unless reduction
+      (setf reduction `(:ordered (:task !!inop))))
+    (format t "~%WHEN Reduction: ~s" reduction)
     reduction))
-
 
 (defmethod expand-conditional-body ((body-key (eql :unless))
 				    task-body domain state
@@ -178,6 +179,9 @@
        
        (setf reduction (generate-reduction domain reduction
 					   unless-body))))
+
+    (unless reduction
+      (setf reduction `(:ordered (:task !!inop))))
     reduction))
 
 (defmethod seek-plans-conditional ((domain looping-domain) task1 state tasks

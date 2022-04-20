@@ -74,6 +74,8 @@
     (unless reduction
       (return-from expand-loop (values nil nil nil nil)))
 
+    (format t "~%Loop reduction: ~s" reduction)
+    (read)
     (setf ess-search-state (save-reduction ess-search-state reduction))
     (setf reduction (push :ordered reduction))
 
