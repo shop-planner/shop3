@@ -148,7 +148,7 @@
      (let* ((u1 (compose-substitutions in-unifier u))
             (when-body
 	            (apply-substitution
-	              (block-body-item :ordered task-body)
+                     (block-body-item1 :ordered task-body)
 	              u1)))       
        (setf reduction (generate-reduction domain reduction when-body))))
     
@@ -173,7 +173,7 @@
             ;; This is the ordered task list?
             (unless-body
 	      (apply-substitution
-	       (block-body-item :ordered task-body)
+	       (block-body-item1 :ordered task-body)
 	       u1)))
 
        
