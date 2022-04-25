@@ -75,7 +75,6 @@
       (return-from expand-loop (values nil nil nil nil)))
 
     (format t "~%Loop reduction: ~s" reduction)
-    (read)
     (setf ess-search-state (save-reduction ess-search-state reduction))
     (setf reduction (push :ordered reduction))
 
@@ -248,9 +247,9 @@
             (loop-body
              (apply-substitution
               (loop-body-item :ordered task-body)
-              u1)))       
-       (setf reductions (generate-reduction domain reduction
-					     ;; One possible reduction:
+              u1)))
+       (setf reduction (generate-reduction domain reduction
+                                             ;; One possible reduction:
                                              loop-body))))
     reduction))
 
