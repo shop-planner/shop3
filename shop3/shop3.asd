@@ -237,6 +237,7 @@ shop3."
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (arity-test . :arity-test) ; 6
                  (io-tests . :arity-test) ; 40
+                 (conditionals-suite . :shop3-conditionals-tests) ;; 12
                  ;; end of internal tests
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 5
@@ -250,7 +251,7 @@ shop3."
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  )
-    :num-checks 932
+    :num-checks 944
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -284,6 +285,7 @@ shop3."
                                            (:static-file "axioms.lisp")
                                            (:static-file "operators.lisp")))
                                        (:file "io-tests" :depends-on ("at-package" "umt-domain"))
+                                       (:file "conditional-tests")
                                        (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "state-tests" :depends-on ("at-package" "umt-domain"))
                                        (:file "misc" :depends-on ("at-package" "umt-domain"))))
