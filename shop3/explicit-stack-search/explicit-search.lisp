@@ -155,14 +155,16 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                         (depth state)
                         (apply-substitution task (unifier state)))
            (incf *expansions*)
-           (format t "~%Task name: ~s" (get-task-name task))
+           (when (>= *verbose* 2)
+             (format t "~%Task name: ~s" (get-task-name task)))
            (cond
              ((primitivep (get-task-name task))
               (setf (mode state) 'expand-primitive-task))
              ((eql (get-task-name task) :loop)
               (setf (mode state) 'unfold-looping-task))
-	           ((member (get-task-name task) '(:if :when :unless))
-              (format t "~%SHOP3 catches the task keyword...")
+             ((member (get-task-name task) '(:if :when :unless))
+              (when (>= *verbose* 2)
+                (format t "~%SHOP3 catches the task keyword..."))
               (setf (mode state) 'expand-conditional-task))
              (t ; original nonprimitive:
               (setf (mode state) 'prepare-to-choose-method)))))
@@ -294,10 +296,12 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
               (push (make-add-child-to-tree :parent parent :child child)
 		    backtrack-stack)
-	      (format t "~%Depends: ~s" depends)
+              (when (>= *verbose* 2)
+                (format t "~%Depends: ~s" depends))
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
-		  (format t "~%Depends: ~s" depends)
+                  (when (>= *verbose* 2)
+                    (format t "~%Depends: ~s" depends))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
                     (make-add-dependencies :dependencies depends))))))
@@ -361,7 +365,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
                                   :partial-plan-cost cost)
           backtrack-stack)
 
-    (format t "~%In primitive state?")
+    (when (>= *verbose* 2)
+      (format t "~%In primitive state?"))
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
                           depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)
@@ -378,7 +383,8 @@ List of indices into PLAN-TREES -- optional, will be supplied if PLAN-TREES
             (push (record-node-expansion tree-node planned-action (plan-tree-lookup state))
                   (backtrack-stack state))
             (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
-	      (format t "~%Depends prim: ~s" depends)
+              (when (>= *verbose* 2)
+                (format t "~%Depends prim: ~s" depends))
 
               (when depends
                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
