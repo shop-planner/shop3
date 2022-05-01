@@ -255,7 +255,8 @@ List of analogical-replay tables -- optional
                         (depth state)
                         (apply-substitution task (unifier state)))
            (incf *expansions*)
-           (format t "~%Task name: ~s" (get-task-name task))
+           (when (>= *verbose* 2)
+             (format t "~%Task name: ~s" (get-task-name task)))
            (cond
              ((primitivep (get-task-name task))
               (setf (mode state) 'expand-primitive-task))
@@ -533,7 +534,8 @@ of PLAN-RETURN objects."
                backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
-		  (format t "~%Depends: ~s" depends)
+                  (when (>= *verbose* 2)
+                    (format t "~%Depends: ~s" depends))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
                     (make-add-dependencies :dependencies depends))))))
@@ -608,7 +610,8 @@ trigger backtracking."
                                   :partial-plan-cost cost)
           backtrack-stack)
 
-    (format t "~%In primitive state?")
+    (when (>= *verbose* 2)
+      (format t "~%In primitive state?"))
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
                           depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)
