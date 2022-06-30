@@ -33,16 +33,16 @@
                    ((holding ?e) (clear ?f)))
 
         ;; book-keeping methods & ops, to keep track of what needs to be done
-        (:operator (!assert ?g)
+        (:operator (!!assert ?g)
                    ()
                    ?g
-                   ;; Since !ASSERT isn't a real blocks-world operator, make its cost 0
+                   ;; Since !!ASSERT isn't a real blocks-world operator, make its cost 0
                    0)
 
-        (:operator (!remove ?g)
+        (:operator (!!remove ?g)
                    ?g
                    ()
-                   ;; Since !REMOVE isn't a real blocks-world operator, make its cost 0
+                   ;; Since !!REMOVE isn't a real blocks-world operator, make its cost 0
                    0)
 
         ;; The method for the top-layer task
@@ -70,7 +70,7 @@
 
         (:method (assert-goals nil ?out)
            ()
-           ((!assert ?out)))
+           ((!!assert ?out)))
 
         ;; Find those blocks which don't need to be moved.
         ;; This is called once in the beginning of the process.
@@ -78,7 +78,7 @@
         ;; dont-move predicate in the world state
         (:method (find-nomove)
            (:first (block ?x) (not (dont-move ?x)) (not (need-to-move ?x)))
-           ((!assert ((dont-move ?x))) (find-nomove))
+           ((!!assert ((dont-move ?x))) (find-nomove))
            nil
            nil)
 
@@ -90,7 +90,7 @@
            (:first (block ?x) (not (dont-move ?x)) (not (goal (on-table ?x)))
                    (not (goal (on ?x ?y))))
            ;;Decomposition
-           ((!assert ((goal (on-table ?x)))) (add-new-goals))
+           ((!!assert ((goal (on-table ?x)))) (add-new-goals))
 
            nil
            nil)
@@ -103,12 +103,12 @@
            (:first (clear ?x) (not (dont-move ?x))
                    (goal (on-table ?x)) (not (put-on-table ?x)))
                                         ; Decomposition
-           ((!assert ((put-on-table ?x))) (find-movable))
+           ((!!assert ((put-on-table ?x))) (find-movable))
 
            (:first (clear ?x) (not (dont-move ?x)) (goal (on ?x ?y))
                    (not (stack-on-block ?x ?y)) (dont-move ?y) (clear ?y))
                                         ;Decomposition
-           ((!assert ((stack-on-block ?x ?y))) (find-movable))
+           ((!!assert ((stack-on-block ?x ?y))) (find-movable))
 
            nil
            nil)
@@ -118,7 +118,7 @@
         ;; position.
         (:method (check ?x)
            (:first (goal (on ?y ?x)) (clear ?y))
-           ((!assert ((stack-on-block ?y ?x))))
+           ((!!assert ((stack-on-block ?y ?x))))
            nil
            nil)
 
@@ -129,7 +129,7 @@
         ;; not need a verification.
         (:method (check2 ?x)
            (:first (dont-move ?x) (goal (on ?y ?x)) (clear ?y))
-           ((!assert ((stack-on-block ?y ?x))))
+           ((!!assert ((stack-on-block ?y ?x))))
            nil
            nil)
 
@@ -140,9 +140,9 @@
            (:first (dont-move ?x))
            nil
            (:first (goal (on ?x ?y)) (clear ?y) (dont-move ?y))
-           ((!assert ((stack-on-block ?x ?y))))
+           ((!!assert ((stack-on-block ?x ?y))))
            (:first (goal (on-table ?x)))
-           ((!assert ((put-on-table ?x))))
+           ((!!assert ((put-on-table ?x))))
            nil
            nil)
 
@@ -159,16 +159,16 @@
            (:first (on ?x ?y))
                                         ;Decomposition
            ((!unstack ?x ?y) (!stack ?x ?z)
-            (!assert ((dont-move ?x)))
-            (!remove ((stack-on-block ?x ?z)))
+            (!!assert ((dont-move ?x)))
+            (!!remove ((stack-on-block ?x ?z)))
             (check ?x) (check2 ?y) (check3 ?y))
 
            method-for-moving-x-from-table-to-z
            nil
                                         ; Decomposition
            ((!pickup ?x) (!stack ?x ?z)
-            (!assert ((dont-move ?x)))
-            (!remove ((stack-on-block ?x ?z)))
+            (!!assert ((dont-move ?x)))
+            (!!remove ((stack-on-block ?x ?z)))
             (check ?x)))
 
         ;; This is the main method. It first moves the blocks that are directly
@@ -186,8 +186,8 @@
            (:first (put-on-table ?x) (on ?x ?y))
                                         ;Decomposition
            ((!unstack ?x ?y) (!putdown ?x)
-            (!assert ((dont-move ?x)))
-            (!remove ((put-on-table ?x)))
+            (!!assert ((dont-move ?x)))
+            (!!remove ((put-on-table ?x)))
             (check ?x) (check2 ?y) (check3 ?y) (move-block))
 
            method-for-moving-x-out-of-the-way
