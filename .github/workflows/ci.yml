@@ -60,9 +60,9 @@ jobs:
 
     steps:
     - name: Get validate deps
-      uses: ConorMacBride/install-package@v1
-      with:
-        apt: cmake make g++ flex bison
+      shell: bash
+      run: |
+        apt-get install cmake make g++ flex bison
 
     - uses: actions/checkout@v2
 
