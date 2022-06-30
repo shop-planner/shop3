@@ -37,26 +37,26 @@ jobs:
               containers.common-lisp.net/cl-docker-images/ccl:latest
             lisp: ccl
 
-        test:
-          - ARITY-TEST::ALL-SHOP3-INTERNAL-TESTS
-          - PROTECTION-TEST::PROTECTION-TEST
-          - SHOP-REPLAN-TESTS::TEST-PLAN-REPAIR
-          - SHOP-THEOREM-PROVER-TESTS::THEOREM-PROVER-TESTS
-          - SHOP3-OPENSTACKS::PLAN-OPENSTACKS
-          - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL
-          - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL-explicit-stack-search
-          - SHOP3-USER::BLOCKS-TESTS
-          - SHOP3-USER::ENHANCED-PLAN-TREE
-          - SHOP3-USER::LOGISTICS-TESTS
-          - SHOP3-USER::LOGISTICS-TESTS-DH
-          - SHOP3-USER::MINIMAL-SUBTREE-TESTS
-          - SHOP3-USER::MISC-TESTS
-          - SHOP3-USER::SINGLETON-TESTS
-          - SHOP3-USER::UMT-DOMAIN-TESTS
-          - SHOP3::ROVERS-TESTS
-          - SHOP3::SHORT-PDDL-TESTS
-          - SHOP3-USER::DEPOT-TESTS
-          - TEST-STATES::TEST-SHOP-STATES
+        # test:
+        #   - ARITY-TEST::ALL-SHOP3-INTERNAL-TESTS
+        #   - PROTECTION-TEST::PROTECTION-TEST
+        #   - SHOP-REPLAN-TESTS::TEST-PLAN-REPAIR
+        #   - SHOP-THEOREM-PROVER-TESTS::THEOREM-PROVER-TESTS
+        #   - SHOP3-OPENSTACKS::PLAN-OPENSTACKS
+        #   - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL
+        #   - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL-explicit-stack-search
+        #   - SHOP3-USER::BLOCKS-TESTS
+        #   - SHOP3-USER::ENHANCED-PLAN-TREE
+        #   - SHOP3-USER::LOGISTICS-TESTS
+        #   - SHOP3-USER::LOGISTICS-TESTS-DH
+        #   - SHOP3-USER::MINIMAL-SUBTREE-TESTS
+        #   - SHOP3-USER::MISC-TESTS
+        #   - SHOP3-USER::SINGLETON-TESTS
+        #   - SHOP3-USER::UMT-DOMAIN-TESTS
+        #   - SHOP3::ROVERS-TESTS
+        #   - SHOP3::SHORT-PDDL-TESTS
+        #   - SHOP3-USER::DEPOT-TESTS
+        #   - TEST-STATES::TEST-SHOP-STATES
 
     steps:
     - uses: actions/checkout@v2
