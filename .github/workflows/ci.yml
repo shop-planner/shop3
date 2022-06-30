@@ -62,6 +62,7 @@ jobs:
     - name: Get validate deps
       shell: bash
       run: |
+        apt-get update
         apt-get install cmake make g++ flex bison
 
     - uses: actions/checkout@v2
