@@ -59,6 +59,11 @@ jobs:
         #   - TEST-STATES::TEST-SHOP-STATES
 
     steps:
+    - name: Get validate deps
+      uses: ConorMacBride/install-package@v1
+      with:
+        apt: flex bison
+
     - uses: actions/checkout@v2
 
     - name: Checkout submodules
