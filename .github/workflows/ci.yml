@@ -63,7 +63,7 @@ jobs:
       shell: bash
       run: |
         apt-get update
-        apt-get install cmake make g++ flex bison
+        apt-get install -y cmake make g++ flex bison
 
     - uses: actions/checkout@v2
 
