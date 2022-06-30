@@ -85,9 +85,8 @@ jobs:
 
     - name: tests
       shell: bash
-      with:
-        path: jenkins
-      run:
+      run: |
+        cd jenkins
         ./run-tests.sh ${{ matrix.lisp }}
     # - name: tests
     #   shell: bash
