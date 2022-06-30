@@ -49,7 +49,20 @@
         (:method (achieve-goals ?goals)
            ()
            ((assert-goals ?goals nil)
-            (find-nomove) (add-new-goals) (find-movable) (move-block)))
+            (find-nomove) (add-new-goals) (find-movable) (move-block) (verify-solution)))
+
+        (:method (verify-solution)
+          (and (setof ?g (goal ?g) ?gs)
+               (all-true ?gs))
+          ()
+          )
+
+        (:- (all-true nil)
+            ())
+
+        (:- (all-true (?g . ?rest))
+            (and ?g
+                 (all-true ?rest)))
 
         (:method (assert-goals (?goal . ?goals) ?out)
            ()
