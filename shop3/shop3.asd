@@ -237,7 +237,8 @@ shop3."
                  (io-tests . :arity-test) ; 40
                  ;; end of internal tests
                  (umt-domain-tests . :shop3-user) ; 8
-                 (blocks-tests . :shop3-user) ; 5
+                 (blocks-tests . :shop3-user) ; 8
+                 (blocks-plan-validation . :shop3-user) ; 6
                  (depot-tests . :shop3-user) ; 44
                  (logistics-tests . :shop3-user) ; 208
                  (logistics-tests-dh . :shop3-user) ; 200
@@ -250,7 +251,7 @@ shop3."
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
                  )
-    :num-checks 980
+    :num-checks 997
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -306,7 +307,8 @@ shop3."
                                        (:file "problem200")
                                        (:file "problem300")
                                        (:file "tests"
-                                              :depends-on ("problem100" "problem200" "problem300"))))
+                                              :depends-on ("problem100" "problem200" "problem300"))
+                                       (:file "validate-tests")))
                  (:module "shop-depots"
                           :pathname "examples/depots/"
                           :components ((:file "depots")
