@@ -241,6 +241,9 @@ methods for expanding such tasks."))
   (:documentation "Returns a hash-table mapping primitive task names to
 operator definitions."))
 
+(defgeneric domain-items (domain-designator)
+  (:documentation "Return the source code for the items used to define this DOMAIN."))
+
 (defclass actions-domain-mixin ()
      ((methods
        :initarg :methods
@@ -264,9 +267,25 @@ operator definitions."))
   )
 
 (defclass domain (actions-domain-mixin shop3.theorem-prover:thpr-domain)
-     ()
+     ((items
+       :documentation "Cached copy of the ITEMS source."
+       :reader domain-items))
   (:documentation "An object representing a SHOP domain.")
   )
+
+(defparameter +method-definition-keywords+
+  '(:method :pddl-method)
+  "This constant holds a list of method definition keywords that are valid for default
+SHOP domains.")
+
+(defgeneric method-definition-keywords (domain-designator)
+  (:documentation "Keywords that are acceptable for use in method definitions.
+Used for checking domain definitions.")
+  (:method :around ((domain-name symbol))
+    (call-next-method (find-domain domain-name)))
+  (:method ((domain domain))
+    (declare (ignorable domain))
+    +method-definition-keywords+))
 
 (defgeneric domain-method-id-lookup (domain method-id)
   (:method ((domain actions-domain-mixin) (method-id symbol))
@@ -282,6 +301,10 @@ operator definitions."))
      (assert (not (gethash method-id names-to-methods)))
       (setf (gethash method-id names-to-methods) method
             (gethash method methods-to-names) method-id))))
+
+
+(defmethod domain-items ((domain-name symbol))
+  (domain-items (find-domain domain-name)))
 
 
 (defclass pure-logic-domain-mixin ()
@@ -362,15 +385,12 @@ structure could be removed, and a true struct could be used instead."
 ;;;---------------------------------------------------------------------------
 ;;; METHODS
 ;;;---------------------------------------------------------------------------
-(defparameter +method-definition-keywords+
-  '(:method :pddl-method)
-  "This constant holds a list of method definition keywords that are valid for default
-SHOP domains.")
+
 
 (defgeneric method-head (domain method)
   (:method ((domain domain) (method list))
     (declare (ignorable domain))
-    (assert (member (first method) +method-definition-keywords+))
+    (assert (member (first method) (method-definition-keywords domain)))
     (second method)))
 
 

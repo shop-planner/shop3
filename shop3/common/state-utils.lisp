@@ -56,7 +56,7 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
-(in-package :shop2.common)
+(in-package :shop.common)
 
 
 
