@@ -419,6 +419,9 @@ Otherwise it returns FAIL."
       (append previous (list (first unordered-list)))))))
 
 (defun get-task-name (task1)
+  "Return the name of the TASK in a task expression.
+This is more than just taking the first element because that
+could be :TASK, could be modified by :IMMEDIATE, etc."
   (cond ((eq (first task1) :task)
          (if (eq (second task1) :immediate)
              (third task1)
