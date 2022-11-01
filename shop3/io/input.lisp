@@ -140,7 +140,6 @@ variable *PROBLEM*."
 
   (let ((extra (unless (keywordp (first extras)) (pop extras))))
     ;; if extra is given, then the args are problem-name, domain-name, state, tasks
-    ;; in that case, we want to ignore domain-name
     (when extra
       (setf domain-name state
             state tasks
@@ -693,7 +692,7 @@ breaks usage of *load-truename* by moving the FASLs.")
       (setf name-and-options (list name-and-options)))
   ;; it makes more sense to me that defdomain have a &rest argument,
   ;; instead of a single argument that's a list.... [2006/07/31:rpg]
-  (push '(:operator (!!inop) () () () 0) items)
+  (pushnew '(:operator (!!inop) () () () 0) items :test 'equalp)
   `(let ((*defdomain-pathname* ,(or *compile-file-truename*
                                     *load-truename*)))
       #+allegro (excl:without-redefinition-warnings
@@ -724,7 +723,8 @@ breaks usage of *load-truename* by moving the FASLs.")
          ;; I suspect that this should go away and be handled by
          ;; initialize-instance... [2006/07/31:rpg]
          (apply #'handle-domain-options domain options)
-         (setf items (expand-includes domain items))
+         (setf (slot-value domain 'items) ; cache domain items
+               (setf items (expand-includes domain items)))
          (let (warnings)
            (handler-bind
                ((domain-item-parse-warning
@@ -880,7 +880,8 @@ location of the domain definition file, and *DEFAULT-PATHNAME-DEFAULTS*."
 (defmethod parse-domain-item ((domain domain) (item-key (eql ':method)) item)
   (multiple-value-bind (method-obj method-id)
       (process-method domain item)
-    (index-method-on-domain domain method-id method-obj)))
+    (index-method-on-domain domain method-id method-obj)
+    method-obj))
 
 (defun index-method-on-domain (domain method-id method-obj)
   "Record the METHOD-ID/METHOD-OBJ association in DOMAIN."
