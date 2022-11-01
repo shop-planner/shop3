@@ -40,7 +40,7 @@
 
 (test sort-lowest-first
   (let ((plans
-          (with-fixture sort-by-highest-domain ()
+          (with-fixture sort-by-domain ()
             (with-fixture simple-sort-by-problem ()
               (find-plans 'simple-sort-by :domain 'sort-by)))))
     (is-true plans)
@@ -58,7 +58,7 @@
 
 (test sort-lowest-first-all
   (let ((plans
-          (with-fixture sort-by-highest-domain ()
+          (with-fixture sort-by-domain ()
             (with-fixture simple-sort-by-problem ()
               (find-plans 'simple-sort-by :domain 'sort-by :which :all)))))
     (is-true plans)
