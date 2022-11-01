@@ -19,6 +19,7 @@
   (:nicknames #:at #:arity-tests)
   (:use #:common-lisp #:shop3)
   (:export #:all-shop3-internal-tests)
+  (:import-from #:alexandria #:set-equal)
   (:import-from #:fiveam
                 #:def-fixture
                 #:with-fixture
@@ -27,6 +28,8 @@
                 #:is
                 #:is-true
                 #:def-suite
+                #:def-suite*
                 #:in-suite
+                #:run!
 
                 #:warns))
