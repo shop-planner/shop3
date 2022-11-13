@@ -180,10 +180,11 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                        (*domain* *domain*)
                        (t
                         (error "Domain not supplied and problem does not specify domain."))))
-         (state (if (eq which :mcts)
-                    (progn
-                      (assert (and state-supplied-p state))
-                      state)
+         ;; FIXME: Embarrassed to admit that I don't recall why
+         ;; state must always be supplied for Monte Carlo Tree Search [2022/11/10:rpg]
+         (state (if (and (eq which :mcts)
+                         state-supplied-p)
+                    state
                      (apply 'make-initial-state domain
                             (if state-type-supplied-p
                                 state-type
