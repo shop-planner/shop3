@@ -496,7 +496,7 @@ the entire state atom (as in the `:hash` type state).")
 
 (defmethod copy-state ((st mixed-state))
   (let ((the-copy (make-mixed-state nil)))
-    (setf (state-body the-copy) (copy-hash-table (state-body st)))
+    (setf (state-body the-copy) (copy-hash-table (state-body st) 'copy-list))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
     (setf (tagged-state-block-at the-copy)
