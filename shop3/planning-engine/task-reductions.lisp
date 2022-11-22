@@ -332,7 +332,7 @@ Otherwise it returns FAIL."
                            method-name
                            task-body
                            answers)
-              (return-from apply-method 
+              (return-from apply-method
                 (values answers unifiers depends (apply-substitution (second standardized-method) task-unifier))))
             ;; no unifier
             (trace-print :methods method-name state
@@ -671,4 +671,3 @@ could be :TASK, could be modified by :IMMEDIATE, etc."
          (if (and (not deleted) (equal TASK L))
              (return-from delete-task-main-list :task)
            (return-from delete-task-main-list nil)))))))
-

@@ -90,6 +90,8 @@
              #:replay-state-changes
              #:state->state-type
 
+             #:tagged-state
+
              ;; recording establishers
              #:decode-tag
              #:tag-for-action

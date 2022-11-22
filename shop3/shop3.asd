@@ -148,7 +148,8 @@ minimal affected subtree."
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")
-                 (:file "state-utils")))
+                 (:file "state-utils")
+                 (:file "tagged-state")))
 
 (defsystem :shop3/theorem-prover
     :serial t

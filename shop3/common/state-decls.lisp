@@ -13,7 +13,7 @@
 ;;; retract-state-changes (from apply-operator and seek-plans-primitive)
 ;;; add-atom-to-state (from invoke-external-query and apply-operator)
 ;;; delete-atom-from-state (from apply-operator)
- 
+
 ;;; I hope the preceding list is useful for clarifying the interface that states
 ;;; should present to the outside world.
 
@@ -26,7 +26,7 @@
 ;;;---------------------------------------------------------------------------
 ;;; Additional interface functions
 ;;;---------------------------------------------------------------------------
-;;; add-protection-to-state 
+;;; add-protection-to-state
 ;;; make-initial-state
 
 ;;;---------------------------------------------------------------------------
@@ -48,10 +48,10 @@ theorem-prover and SHOP3."))
 Always takes a list of atoms, for special domain types, may take
 keyword arguments for additional state components."))
 
-; The following generic functions should be implemented by every state
+;;; The following generic functions should be implemented by every state
 
-; Insert the atom into the state. The return value is undefined.
-; This function destructively modifies its state argument.
+;;; Insert the atom into the state. The return value is undefined.
+;;; This function destructively modifies its state argument.
 (defgeneric insert-atom (atom state)
   (:documentation
    "Insert the atom into the state.  The return value is
@@ -61,8 +61,8 @@ keyword arguments for additional state components."))
    pred . args representing a first order logic positive literal."
    ))
 
-; Remove the atom from the state. The return value is undefined.
-; This function destructively modifies its state argument.
+;;; Remove the atom from the state. The return value is undefined.
+;;; This function destructively modifies its state argument.
 (defgeneric remove-atom (atom state)
   (:documentation
    "Delete the atom from the statebody.  The return value is
@@ -71,11 +71,11 @@ keyword arguments for additional state components."))
       Note that an atom is NOT a lisp atom --- it is actually a list of
    pred . args representing a first order logic positive literal."))
 
-; Returns the atoms of the state as a list.
+;;; Returns the atoms of the state as a list.
 (defgeneric state-atoms (state)
   (:documentation "Return the atoms of the state in a plain list"))
 
-; Returns nil iff the atom is not in the state.
+;;; Returns nil iff the atom is not in the state.
 (defgeneric atom-in-state-p (atom state)
   (:documentation "Is the atom in the state?"))
 
@@ -84,7 +84,7 @@ keyword arguments for additional state components."))
 by the theorem-prover.  Must be implemented when adding a new state structure type."))
 
 (defgeneric state-candidate-atoms-for-goal (state goal)
-    (:documentation "Return all atoms in STATE relevant to GOAL.  Used internally
+  (:documentation "Return all atoms in STATE relevant to GOAL.  Used internally
 by the theorem-prover.  Must be implemented when adding a new state structure type."))
 
 ; Returns a copy of the state.
@@ -92,16 +92,15 @@ by the theorem-prover.  Must be implemented when adding a new state structure ty
   (:documentation "Return a copy of the state"))
 
 (defgeneric tag-state (state &optional increment)
-  (:documentation "Add a tag to a state; used to make tagged-states, which 
-provide information about how to backtrack over state updates.")
-  )
+  (:documentation "Add a tag to a state; used to make tagged-states, which
+provide information about how to backtrack over state updates."))
 
 (defgeneric include-in-tag (action atom state)
   (:documentation "Add to the current tag a state update \(characterized by ACTION\)
 performed with ATOM \(a literal\) as operand."))
 
 (defgeneric retract-state-changes (state tag)
-  (:documentation "Restore STATE to its contents *before* the 
+  (:documentation "Restore STATE to its contents *before* the
 changes added by TAG.  Side-effecting function:  will undo
 individual changes step-by-step.  Returns nothing of interest."))
 
@@ -122,14 +121,14 @@ Used in plan repair."))
 (defgeneric replay-state-changes (state update-list &optional stop-at))
 
 (defgeneric add-atom-to-state (atom state depth operator)
-  (:documentation "Destructively modifies STATE by adding ATOM 
+  (:documentation "Destructively modifies STATE by adding ATOM
 \(a positive literal\) to the state.  DEPTH and OPERATOR are
 used only for debugging purposes.  Will update tag information
 in state.")
   )
 
 (defgeneric delete-atom-from-state (atom state depth operator)
-    (:documentation "Destructively modifies STATE by removing ATOM 
+    (:documentation "Destructively modifies STATE by removing ATOM
 \(a positive literal\) from the state.  DEPTH and OPERATOR are
 used only for debugging purposes.  Will update tag information
 in state.")
@@ -159,3 +158,52 @@ before STATE."))
   (:documentation "Return the state-type keyword for STATE.")
   (:method (state)
     (error "No state type recorded for ~a." state)))
+
+;;;---------------------------------------------------------------------------
+;;; Structure and other type declarations
+;;;---------------------------------------------------------------------------
+
+;;; The "state" class
+
+(defstruct (state (:constructor nil) (:copier nil))
+  body)
+
+(defstruct (tagged-state (:include state) (:constructor nil) (:copier nil))
+  "The `tagged-state` type encapsulates the behaviors needed to support
+backtracking and backjumping."
+  (tags-info (list (list 0)))
+  ;; from this point back, can't undo...
+  (block-at 0 :type fixnum))
+
+(defstruct state-update
+  (action 'add :type action-type)
+  (literal nil :type list))
+
+(deftype action-type () '(member add delete redundant-add redundant-delete))
+
+(defstruct (list-state (:include tagged-state)
+                       (:constructor makeliststate)
+                       (:copier nil)))
+
+(defstruct (hash-state (:include tagged-state)
+                       (:constructor makehashstate)
+                       (:copier nil)))
+
+(defstruct (mixed-state (:include tagged-state)
+                        (:constructor makemixedstate)
+                        (:copier nil))
+  "A `:mixed` state is a singly-hashed state. I.e., the body is
+represented as a hash table, hashed on the predicate, not on
+the entire state atom (as in the `:hash` type state).")
+
+(defstruct (doubly-hashed-state (:include tagged-state)
+                        (:constructor makedoubly-hashedstate)
+                        (:copier nil))
+  "A `:doubly-hashed` state is like singly-hashed (`:mixed`) state. I.e., the body is
+represented as a hash table, hashed on the predicate, not on
+the entire state atom (as in the `:hash` type state).  *Unlike* a singly-hashed
+state, the entry for a predicate will be a sub-hash table for the second argument.")
+
+(defstruct (bit-state (:include tagged-state)
+                      (:constructor %make-bit-state)
+                      (:copier nil)))
