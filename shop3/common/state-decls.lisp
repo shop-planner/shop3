@@ -175,11 +175,11 @@ backtracking and backjumping."
   ;; from this point back, can't undo...
   (block-at 0 :type fixnum))
 
+(deftype action-type () '(member add delete redundant-add redundant-delete))
+
 (defstruct state-update
   (action 'add :type action-type)
   (literal nil :type list))
-
-(deftype action-type () '(member add delete redundant-add redundant-delete))
 
 (defstruct (list-state (:include tagged-state)
                        (:constructor makeliststate)
