@@ -32,3 +32,6 @@
 [submodule "jenkins/ext/cl-dot"]
 	path = jenkins/ext/cl-dot
 	url = https://github.com/michaelw/cl-dot.git
+[submodule "jenkins/ext/random-state"]
+	path = jenkins/ext/random-state
+	url = https://github.com/rpgoldman/random-state.git
