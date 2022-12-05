@@ -116,12 +116,6 @@ do NOT emit singleton variable warnings.")
 
 #+allegro (excl::define-simple-parser make-problem second :shop3-problem)
 
-;;; this must be a variable, rather than an optional argument, because
-;;; of the unpleasant way make-problem has extra arguments for
-;;; backward compatibility. [2005/01/07:rpg]
-(defvar *make-problem-silently* nil
-  "If this variable is bound to t, make-problem will NOT print a message.")
-
 #+sbcl
 (defmethod documentation ((symbol symbol) (type (eql :shop3-problem)))
   (get symbol :shop3-problem-docstring nil))
@@ -150,6 +144,7 @@ variable *PROBLEM*."
                          &key (type 'problem) domain
                            redefine-ok
                            documentation
+                           (silently *define-silently*)
                          &allow-other-keys)
         problem-name-etc
       (declare (ignorable redefine-ok))
@@ -158,9 +153,8 @@ variable *PROBLEM*."
         (remf options :domain)
         (remf options :redefine-ok)
         (when domain (setf domain-name domain))
-        (unless *make-problem-silently*
-          (unless *define-silently*
-            (format t "~%Defining problem ~s ...~%" problem-name)))
+        (unless silently
+          (format t "~%Defining problem ~s ...~%" problem-name))
         (let ((problem-inst (make-instance type
                                            :domain-name domain-name
                                            :name problem-name)))
@@ -704,9 +698,10 @@ breaks usage of *load-truename* by moving the FASLs.")
   (with-method-name-table
     (destructuring-bind (name &rest options
                               &key (type 'domain) noset redefine-ok unique-method-names
-                         &allow-other-keys)
+                                   (silently *define-silently*)
+                              &allow-other-keys)
         name-and-options
-      (unless *define-silently*
+      (unless silently
         (when *defdomain-verbose*
           (format t "~%Defining domain ~a...~%" name)))
       (unless (subtypep type 'domain)
@@ -715,7 +710,7 @@ breaks usage of *load-truename* by moving the FASLs.")
       (remf options :redefine-ok)
       (remf options :noset)
       (remf options :unique-method-names)
-      (setf redefine-ok (or redefine-ok *define-silently*))
+      (setf redefine-ok (or redefine-ok silently))
       (let ((*unique-method-names* unique-method-names))
        (let ((domain (apply #'make-instance type
                             :name name
