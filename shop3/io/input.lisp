@@ -766,15 +766,33 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
 ;;; make QUERY easier to use -- this around method is here because FIND-DOMAIN isn't available in
 ;;; the SHOP THEOREM-PROVER system.
 (defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
-                                                             (record-dependencies *record-dependencies-p*))
+                                                             (record-dependencies *record-dependencies-p*) (state-type :mixed))
   (let* ((domain
-           (if (symbolp domain)
-               (find-domain domain)
-               domain))
-         (state (if (listp state)
-                    (make-initial-state domain :mixed state)
-                    state)))
-    (call-next-method goals state :just-one just-one :domain (find-domain domain)
+           (cond ((symbolp domain)
+                  (find-domain domain))
+                 ((typep domain 'domain)
+                  domain)
+                 (t (error 'type-error :datum domain :expected-type 'domain-designator))))
+         (state-atoms
+           (cond ((typep state 'problem)
+                  (problem-state state))
+                 ((typep state 'state)
+                  nil)
+                 ((listp state) state)
+                 ;; this must come after the above, because NIL is both a list AND a symbol
+                 ((typep state 'symbol)
+                  (problem-state (find-problem state)))
+                 (t (error 'type-error :datum state :expected-type 'state-designator))))
+         (state (cond ((typep state 'state)
+                       (assert (null state-atoms))
+                       state)
+                      ((listp state-atoms)
+                       (make-initial-state domain
+                                           (or state-type
+                                               (default-state-type domain))
+                                           state-atoms))
+                      (t (error "should not reach this point.")))))
+    (call-next-method goals state :just-one just-one :domain domain
                                   :record-dependencies record-dependencies)))
 
 
