@@ -249,6 +249,11 @@ of SHOP2."
           (pddl-action
            (apply-action domain state task-body m protections depth unifier)))
       (when (eq planned-action 'fail)
+        (when (operators-dont-fail domain)
+          (cerror "Continue planning, accepting the failure"
+                  "Attempt to add ~:[operator~;pddl-action~] ~s to plan failed unexpectedly."
+                  (typep m 'pddl-action)
+                  task-body))
         (return-from seek-plans-primitive-1 nil))
 
       (when *plan-tree*

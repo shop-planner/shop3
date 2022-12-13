@@ -245,25 +245,33 @@ operator definitions."))
   (:documentation "Return the source code for the items used to define this DOMAIN."))
 
 (defclass actions-domain-mixin ()
-     ((methods
-       :initarg :methods
-       :reader domain-methods
-       )
-      (operators
-       :initarg :operators
-       :reader domain-operators
-       )
-      (methods-to-names
-       :initform (make-hash-table :test 'eq)
-       :reader domain-method-to-name-table
-       :documentation "Map from methods (by object identity) to method IDs (symbols)."
-       )
-      (names-to-methods
-       :initform (make-hash-table :test 'eq)
-       :reader domain-name-to-method-table
-       :documentation "Map from method IDs (symbols) to methods."
-       )
-      )
+  ((methods
+    :initarg :methods
+    :reader domain-methods
+    )
+   (operators
+    :initarg :operators
+    :reader domain-operators
+    )
+   (methods-to-names
+    :initform (make-hash-table :test 'eq)
+    :reader domain-method-to-name-table
+    :documentation "Map from methods (by object identity) to method IDs (symbols)."
+    )
+   (names-to-methods
+    :initform (make-hash-table :test 'eq)
+    :reader domain-name-to-method-table
+    :documentation "Map from method IDs (symbols) to methods."
+    )
+   (operators-dont-fail
+    :documentation "Boolean. If true, then it is an error if an operator
+fails -- all operators are expected to be put in the plan in states
+that satisfy their preconditions. Debugging util."
+    :initarg :operators-dont-fail
+    :reader operators-dont-fail
+    )
+   )
+  (:default-initargs :operators-dont-fail nil)
   )
 
 (defclass domain (actions-domain-mixin shop3.theorem-prover:thpr-domain)
