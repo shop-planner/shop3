@@ -91,6 +91,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 ;;; Top-level calls to the planner
 ;;; ------------------------------------------------------------------------
 (defun find-plans (problem
+                   &rest options
                    &key domain (which *which*) (verbose *verbose*)
                         (gc *gc*) (pp *pp*)
                         (plan-tree *plan-tree*) (optimize-cost *optimize-cost*)
@@ -102,7 +103,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                         (tasks nil tasks-supplied-p)
                         (state-type nil state-type-supplied-p)
                         hand-steer leashed
-                        (out-stream t))
+                        (out-stream t)
+                     &allow-other-keys)
   "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
    The keyword arguments are as follows:
      :WHICH tells what kind of search to do.  Its possible values are:
@@ -204,9 +206,14 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*leashed* leashed)
          (*domain* domain)
          )
-    (find-plans-1 domain state tasks which problem out-stream)))
+    (apply 'find-plans-1 domain state tasks which problem :out-stream out-stream
+           (alexandria:remove-from-plist options
+                                         :which :domain :out-stream :verbose :gc :pp
+                                         :plan-tree :optimize-cost :collect-state
+                                         :time-limit :explanation :depth-cutoff
+                                         :state-type :tasks :hand-steer :leashed))))
 
-(defun find-plans-1 (domain state tasks which problem &optional (out-stream t))
+(defun find-plans-1 (domain state tasks which problem &key (out-stream t) &allow-other-keys)
   (let ((total-expansions 0) (total-inferences 0)
          (old-expansions 0) (old-inferences 0)
          (total-run-time 0) (total-real-time 0)
