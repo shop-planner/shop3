@@ -235,11 +235,15 @@ If NIL, the system will accept non-unique names quietly.")
 ;;;---------------------------------------------------------------------------
 (defgeneric domain-methods (domain)
   (:documentation "Returns a hash-table mapping complex task names to
-methods for expanding such tasks."))
+methods for expanding such tasks.")
+  (:method ((domain-name symbol))
+    (domain-methods (find-domain domain-name))))
 
 (defgeneric domain-operators (domain)
   (:documentation "Returns a hash-table mapping primitive task names to
-operator definitions."))
+operator definitions.")
+  (:method ((domain-name symbol))
+    (domain-operators (find-domain domain-name))))
 
 (defgeneric domain-items (domain-designator)
   (:documentation "Return the source code for the items used to define this DOMAIN."))
