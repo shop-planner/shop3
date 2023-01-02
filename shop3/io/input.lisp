@@ -706,36 +706,38 @@ breaks usage of *load-truename* by moving the FASLs.")
           (format t "~%Defining domain ~a...~%" name)))
       (unless (subtypep type 'domain)
         (error "Type argument to defdomain must be a subtype of DOMAIN. ~A is not acceptable." type))
-      (remf options :type)
-      (remf options :redefine-ok)
-      (remf options :noset)
-      (remf options :unique-method-names)
-      (setf redefine-ok (or redefine-ok silently))
-      (let ((*unique-method-names* unique-method-names))
-       (let ((domain (apply #'make-instance type
-                            :name name
-                            options)))
-         ;; I suspect that this should go away and be handled by
-         ;; initialize-instance... [2006/07/31:rpg]
-         (apply #'handle-domain-options domain options)
-         (setf (slot-value domain 'items) ; cache domain items
-               (setf items (expand-includes domain items)))
-         (let (warnings)
-           (handler-bind
-               ((domain-item-parse-warning
-                  #'(lambda (c)
-                      (push c warnings)
-                      (muffle-warning c))))
-             (parse-domain-items domain items))
-           (when warnings
-             (let ((*print-pprint-dispatch* *shop-pprint-table*))
-               (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
-         (install-domain domain redefine-ok)
-         (unless noset
-           (setf *domain* domain))
-         ;; previous addition of noset changed the behavior of defdomain to make
-         ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
-         domain)))))
+      (let ((options (copy-list options)))
+        (remf options :type)
+        (remf options :redefine-ok)
+        (remf options :noset)
+        (remf options :unique-method-names)
+        (remf options :silently)
+        (setf redefine-ok (or redefine-ok silently))
+        (let ((*unique-method-names* unique-method-names))
+          (let ((domain (apply #'make-instance type
+                               :name name
+                               options)))
+            ;; I suspect that this should go away and be handled by
+            ;; initialize-instance... [2006/07/31:rpg]
+            (apply #'handle-domain-options domain options)
+            (setf (slot-value domain 'items) ; cache domain items
+                  (setf items (expand-includes domain items)))
+            (let (warnings)
+              (handler-bind
+                  ((domain-item-parse-warning
+                     #'(lambda (c)
+                         (push c warnings)
+                         (muffle-warning c))))
+                (parse-domain-items domain items))
+              (when warnings
+                (let ((*print-pprint-dispatch* *shop-pprint-table*))
+                  (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
+            (install-domain domain redefine-ok)
+            (unless noset
+              (setf *domain* domain))
+            ;; previous addition of noset changed the behavior of defdomain to make
+            ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
+            domain))))))
 
 (defmethod install-domain ((domain domain) &optional redefine-ok)
   (when (get (domain-name domain) :domain)
