@@ -105,7 +105,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                         hand-steer leashed
                         (out-stream t)
                      &allow-other-keys)
-  "FIND-PLANS looks for solutions to the planning problem named PROBLEM.
+  "FIND-PLANS looks for solutions to the planning PROBLEM.
+   PROBLEM should be a problem-designator (a PROBLEM or a symbol naming one).
    The keyword arguments are as follows:
      :WHICH tells what kind of search to do.  Its possible values are:
         :FIRST      - depth-first search, returning the first plan found.
