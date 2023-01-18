@@ -473,6 +473,8 @@ and return the new RESULTS and UNIFIERS.")
 (defgeneric operator (domain task-name)
   (:documentation "Return the SHOP operator (if any)
 defined for TASK-NAME in DOMAIN.")
+  (:method :around ((domain-name symbol) op-name)
+    (operator (find-domain domain-name) op-name))
   (:method ((domain domain) (name symbol))
     (gethash name (domain-operators domain))))
 

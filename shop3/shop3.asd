@@ -94,7 +94,8 @@
                 :pathname "planning-engine/"
                 :components ((:file "protections")
                              (:file "task-reductions")
-                             (:file "search")))
+                             (:file "search")
+                             (:file "plan-trajectory")))
 
        (:module "explicit-stack-search"
                 :serial t
