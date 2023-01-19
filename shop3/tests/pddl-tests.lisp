@@ -934,14 +934,14 @@
                                        (forall (?m - mode)
                                         (not (communicate_image_data ?obj ?m)))))
             (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
                                        (forall (?m - mode)
                                         (not (communicate_image_data ?obj ?m)))))
             (problem-state (find-problem 'test-rover-problem))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-true
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
@@ -950,7 +950,7 @@
             (make-initial-state *domain* :list (remove '(communicate_image_data objective1 high_res)
                                                        (problem-state (find-problem 'test-rover-problem))
                                                        :test 'equalp))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-true
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective)
@@ -959,19 +959,19 @@
             (remove '(communicate_image_data objective1 high_res)
                                                       (problem-state (find-problem 'test-rover-problem))
                                                       :test 'equalp)
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
                                        (not (communicate_image_data ?obj ?m))))
             (make-initial-state *domain* :list (problem-state (find-problem 'test-rover-problem)))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-false
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
                                        (not (communicate_image_data ?obj ?m))))
             (problem-state (find-problem 'test-rover-problem))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-true
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
@@ -979,7 +979,7 @@
             (make-initial-state *domain* :list (remove '(communicate_image_data objective1 high_res)
                                                        (problem-state (find-problem 'test-rover-problem))
                                                        :test 'equalp))
-            :record-dependencies nil :domain *domain*))
+            :return-dependencies nil :domain *domain*))
     (fiveam:is-true
      (query (process-pddl-method-pre *domain*
                                      '(forall (?obj - objective ?m - mode)
@@ -987,7 +987,7 @@
             (remove '(communicate_image_data objective1 high_res)
                                                       (problem-state (find-problem 'test-rover-problem))
                                                       :test 'equalp)
-            :record-dependencies nil :domain *domain*))))
+            :return-dependencies nil :domain *domain*))))
 
 
 (fiveam:def-suite rovers-tests :in pddl-tests)

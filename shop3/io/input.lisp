@@ -768,11 +768,21 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
 ;;; make QUERY easier to use -- this around method is here because FIND-DOMAIN isn't available in
 ;;; the SHOP THEOREM-PROVER system.
 (defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
-                                                             (record-dependencies *record-dependencies-p*) (state-type :mixed))
+                                                             (return-dependencies *record-dependencies-p* return-dependencies-supplied-p)
+                                                             (record-dependencies nil record-dependencies-supplied-p)
+                                                             (state-type :mixed))
+  ;; handle deprecated RECORD-DEPENDENCIES keyword argument
+  (when record-dependencies-supplied-p
+    (if return-dependencies-supplied-p
+        (warn 'style-warning "Do not need to supply :record-dependencies if :return-dependencies is present.")
+        (progn
+          (warn "The :record-dependencies keyword argument for QUERY is deprecated and will be removed. ~
+Please use :return-dependencies instead.")
+          (setf return-dependencies record-dependencies))))
   (let* ((domain
            (cond ((symbolp domain)
                   (find-domain domain))
-                 ((typep domain 'domain)
+                 ((typep domain 'thpr-domain)
                   domain)
                  (t (error 'type-error :datum domain :expected-type 'domain-designator))))
          (state-atoms
@@ -795,7 +805,7 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
                                            state-atoms))
                       (t (error "should not reach this point.")))))
     (call-next-method goals state :just-one just-one :domain domain
-                                  :record-dependencies record-dependencies)))
+                                  :return-dependencies return-dependencies)))
 
 
 (defun set-domain (name)

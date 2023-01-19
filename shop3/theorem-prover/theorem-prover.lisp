@@ -88,12 +88,47 @@ non-NIL."
            (real-seek-satisfiers ,d ,goals ,state
                                  ,var-val-list ,level ,just1 ,dependencies)))))
 
-(defgeneric query (goals state &key just-one domain record-dependencies)
-  (:documentation 
-   "More convenient top-level alternative to FIND-SATISFIERS.
-Manages optional arguments and ensures that the variable property
+(defgeneric query (goals state &key just-one domain return-dependencies record-dependencies)
+  (:documentation
+   "Find and return a list of binding lists that represents the answer to goals.
+QUERY is a more convenient top-level alternative to FIND-SATISFIERS, the function
+used internally by SHOP3.
+
+Parameters:
+
+   GOALS
+      A list of goals; implicitly a conjunction (this may change).
+   STATE
+      A SHOP3 state object with the currently-true facts or a list of positive
+      literals to be assembled into a state.
+   JUST-ONE
+        Boolean: If true, return only one solution instead of all
+        solutions.
+   DOMAIN
+        A SHOP3 Theorem-prover domain designator.
+   RETURN-DEPENDENCIES
+        Boolean: If true, return dependencies (establishing actions)
+        for the answer(s).
+   RECORD-DEPENDENCIES
+        Deprecated synonym for RETURN-DEPENDENCIES.
+   STATE-TYPE
+        If supplied, and the state is a list of facts, what sort of state should
+        query create from the facts?
+Returns:
+
+   ANSWERS
+        List of answers for the query.  Each answer is a list of variable bindings
+        for the variables in the query (GOALS).
+   DEPENDENCIES
+        Optional. List of dependencies, one for each of the answers in the query.
+
+Note: Manages optional arguments and ensures that the variable property
 is properly set in GOALS.")
-  (:method (goals state &key just-one (domain *domain*) (record-dependencies *record-dependencies-p*))
+  (:method (goals state &key just-one (domain *domain*)
+                          return-dependencies
+                          record-dependencies)
+    (when record-dependencies
+      (error "RECORD-DEPENDENCIES argument should have been removed by :AROUND method."))
     (set-variable-property domain goals)
     (let ((*record-dependencies-p* record-dependencies))
       (find-satisfiers goals state :just-one just-one :domain domain))))
