@@ -2,7 +2,13 @@
 
 (defun plan-states (plan &key domain problem)
   "Return a trajectory of states corresponding to the plan-sequence.  The
-states will be a list of lists of atoms."
+trajectory will be a list of states in which each state will be a list of
+atoms.
+
+  DOMAIN is a domain designator.  PROBLEM is a SHOP problem designator.
+  The PROBLEM  keyword argument is *mandatory*.  It must also be possible to
+find a domain, but this can be done either by supplying it directly, or taking
+it from the problem. "
   (let ((final-state (plan-final-state plan :domain domain :problem problem)))
     (values (shop.common::state-trajectory (copy-state final-state))
             final-state)))

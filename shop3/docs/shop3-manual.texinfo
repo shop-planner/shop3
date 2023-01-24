@@ -82,6 +82,7 @@ College Park, MD 20742, USA
 * The SHOP Unifier::
 * Plan Grapher::
 * Data Structures::
+* Miscellaneous Functionality::
 * General Notes on @sysname{}: General Notes on SHOP3.
 * Internal Technical Information::
 * Acknowledgments::
@@ -1623,13 +1624,12 @@ to be presented in any special order -- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
-* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
 @end menu
 
-@node  Internal Operators, Operators must be deterministic, , Operators
+@node  Internal Operators, Operators must be deterministic, Operators, Operators
 
 @subsection Internal Operators
 @cindex internal operators
@@ -1656,7 +1656,7 @@ exists in @sysname{} is so that automated systems which use @sysname{} plans as 
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
-@node Operators must be deterministic, Protection conditions, Internal Operators, Operators
+@node Operators must be deterministic, Protection conditions, Operators, Operators
 @subsection Operators must be deterministic
 @cindex Operators, deterministic
 
@@ -2411,7 +2411,9 @@ built on top of the more difficult-to-use @emph{find-satisfiers}:
 
 The theorem prover has its own notion of a @emph{domain} object, but
 unlike the full @sysname{} domain, this one supports only specification
-of axioms (although it can be extended by the programmer).
+of axioms (although it can be extended by the programmer).  Note that
+any @sysname{} domain is a theorem-prover domain, but not necessarily
+@i{vice versa}.
 
 @include include/class-shopthpr-thpr-domain.texinfo
 
@@ -2488,7 +2490,7 @@ we have developed the @sysname{} plan grapher.
 @include include/class-spg-enhanced-plan-tree-graph.texinfo
 @include include/class-spg-plan-tree-graph.texinfo
 
-@node Data Structures, General Notes on SHOP3, Plan Grapher, Top
+@node Data Structures, Miscellaneous Functionality, Plan Grapher, Top
 @chapter Data Structures
 
 @menu
@@ -2567,8 +2569,13 @@ generic functions:
 
 @include include/fun-shop3cmn-copy-state.texinfo
 
+@node Miscellaneous Functionality, General Notes on SHOP3, Data Structures, Top
+@chapter Miscellaneous Functionality
 
-@node General Notes on SHOP3, Internal Technical Information, Data Structures, Top
+@include include/fun-shop-plan-states.texinfo
+
+
+@node General Notes on SHOP3, Internal Technical Information, Miscellaneous Functionality, Top
 @chapter General Notes on @sysname{}
 
 @menu

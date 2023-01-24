@@ -80,6 +80,8 @@ to be returned by FIND-SATISFIERS.
 2. a list of dependencies, which will be computed if *RECORD-DEPENDENCIES-P* is
 non-NIL."
   (let ((d (gensym)))
+    ;; FIXME: the resolution of d here does not need to be deferred:
+    ;; it can be resolved at macroexpansion time.
     `(let ((,d (if ,domain-supp-p ,domain *domain*)))
        (if (null ,goals)
            ;; return value is list-ified because the SEEK-SATISFIERS query is
@@ -130,7 +132,7 @@ is properly set in GOALS.")
     (when record-dependencies
       (error "RECORD-DEPENDENCIES argument should have been removed by :AROUND method."))
     (set-variable-property domain goals)
-    (let ((*record-dependencies-p* record-dependencies))
+    (let ((*record-dependencies-p* return-dependencies))
       (find-satisfiers goals state :just-one just-one :domain domain))))
 
 ;;; FIND-SATISFIERS returns a list of all satisfiers of GOALS in AXIOMS
@@ -172,7 +174,7 @@ or all answers (nil)."
                                         ;(format t "~%sat: ~s~%" satisfiers) ;***
 
           (cond ((eq (first goals) :sort-by)
-                 (values 
+                 (values
                   (sort satisfiers
                         (if (= (length goals) 3) #'<
                             (eval (third goals)))
@@ -371,7 +373,7 @@ in the goal, so we ignore the extra reference."
   (declare (ignorable domain op goal other-goals state bindings level just1 dependencies-in))
   (unless (eql (length goal) 2)
     (error 'incorrect-arity-error :expression goal :correct-arity 1 :op 'not)))
-  
+
 
 (def-logical-keyword (eval domain)
   (:satisfier-method (goal other-goals state bindings level just1 dependencies-in)
@@ -587,6 +589,9 @@ in the goal, so we ignore the extra reference."
         (ans (eval (second arguments))))
     (cond
       ((variablep var)
+       ;; FIXME: according to SBCL, the following is unreachable code,
+       ;; /specifically/ the calls to `apply-substitution, which is
+       ;; disturbing [2022/11/23:rpg]
        (seek-satisfiers
         (apply-substitution other-goals (list (make-binding var ans)))
         state (apply-substitution bindings (list (make-binding var ans)))
@@ -697,7 +702,7 @@ in the goal, so we ignore the extra reference."
            ;; when we check the bounds, they must be static, so we don't record dependencies.
            (let ((*record-dependencies-p* nil))
              (find-satisfiers bounds state :level (1+ newlevel) :domain domain))))
-    ;; here I have started to 
+    ;; here I have started to
     (dolist (m2 mgu2)
       (multiple-value-bind (success new-depends)
           ;; FIXME: I have my doubts that this is actually correct.
@@ -767,13 +772,16 @@ in the goal, so we ignore the extra reference."
       (unless raw-results (return-from setof-bagof-helper nil))
       (let ((new-binding
               (make-binding outvar
-                             (iter (for binding-list in raw-results)
-                               (as val = (apply-substitution term binding-list))
-                               (with prev)
-                               (ecase mode
-                                 (:setof (pushnew val prev :test 'equal))
-                                 (:bagof (push val prev)))
-                               (finally (return (nreverse prev)))))))
+                            (iter (for binding-list in raw-results)
+                              (as val = (apply-substitution term binding-list))
+                              (with prev)
+                              (ecase mode
+                                ;; FIXME: according to SBCL, there's
+                                ;; some unreachable code in this
+                                ;; PUSHNEW [2022/11/23:rpg]
+                                (:setof (pushnew val prev :test 'equal))
+                                (:bagof (push val prev)))
+                              (finally (return (nreverse prev)))))))
         (seek-satisfiers (apply-substitution other-goals (list new-binding))
                          state (apply-substitution bindings (list new-binding))
                          newlevel just1 :domain domain :dependencies dependencies-in)))))
@@ -788,7 +796,7 @@ in the goal, so we ignore the extra reference."
         (find-satisfiers arguments state :level newlevel :domain domain)))
     (when new-unifiers
       (incorporate-unifiers new-unifiers other-goals just1 state bindings dependencies-in new-depends domain newlevel))))
-   
+
 (defun standard-satisfiers-for-and (domain arguments other-goals
                                     state bindings newlevel just1 dependencies-in)
   (multiple-value-bind (new-unifiers new-depends)
@@ -851,7 +859,7 @@ goal1 along with all of the other formulas in remaining."
             ;; DO-CONJUNCT returns a list of lists of variable bindings,
             ;; each for a different answer.
             (answer-set-union answers axiom-answers dependencies axiom-dependencies))
-          (progn 
+          (progn
             (trace-print :goals (car goal1) state
                          "~2%Level ~s, couldn't match goal ~s" level goal1)
             nil)))))
@@ -939,7 +947,7 @@ also remove the corresponding entry from DEPENDENCY-LIST.
          ;; Note: I think that this should never be reached: ANSWER-SET-UNION should only be called
          ;; if *RECORD-DEPENDENCIES-P* is true. [2021/09/21:rpg]
          (shop-union answer-list new-answer-list :test #'equal))))
-  
+
 
 ;;; BINDINGS is a list of either variables or the values assigned to those bindings.
 ;;; Note that this is a SINGLE (partial) solution -- but below here we recursively
@@ -978,7 +986,12 @@ also remove the corresponding entry from DEPENDENCY-LIST.
                     (seek-satisfiers
                      (apply-substitution (append (list ax-branch) `((%cut%)) remaining)
                                          mgu1)
-                     state (apply-substitution bindings mgu1) (1+ level)
+                     state
+                     ;; FIXME: according to SBCL, this call to
+                     ;; APPLY-SUBSTITUTION is
+                     ;; unreachable. [2022/11/23:rpg]
+                     (apply-substitution bindings mgu1)
+                     (1+ level)
                      new-just1 :domain domain :dependencies dependencies-in))
               (if new-answers
                   (progn
@@ -1319,32 +1332,32 @@ also remove the corresponding entry from DEPENDENCY-LIST.
 ;        (RETURN-FROM SHOP2.THEOREM-PROVER::STANDARD-SATISFIERS-FOR-ASSIGN*
 ;          (VALUES SHOP2.THEOREM-PROVER::RESULTING-ANSWERS
 ;                  SHOP2.THEOREM-PROVER::RESULTING-DEPENDS))))
-; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
-; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF NULL IF IF 
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF NULL IF IF
 ; ==>
 ;   SHOP2.THEOREM-PROVER::OTHER-GOALS
-; 
+;
 ; note: deleting unreachable code
 
-; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
-; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF VALUES LIST 
-; --> CONS IF 
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF VALUES LIST
+; --> CONS IF
 ; ==>
 ;   SHOP2.THEOREM-PROVER::BINDINGS
-; 
+;
 ; note: deleting unreachable code
 
-; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET 
-; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF 
-; --> SHOP2.THEOREM-PROVER::REAL-SEEK-SATISFIERS IF 
+; --> LET* BLOCK TAGBODY PROGN IF MULTIPLE-VALUE-SETQ VALUES PROG1 LET
+; --> SETF MULTIPLE-VALUE-BIND MULTIPLE-VALUE-CALL LET IF
+; --> SHOP2.THEOREM-PROVER::REAL-SEEK-SATISFIERS IF
 ; ==>
 ;   SHOP2.THEOREM-PROVER::OTHER-GOALS
-; 
+;
 ; note: deleting unreachable code
 
 ; ==>
 ;   SHOP2.THEOREM-PROVER::BINDINGS
-; 
+;
 ; note: deleting unreachable code
 
 ; compiling (DEFUN STANDARD-SATISFIERS-FOR-ASSIGN ...)

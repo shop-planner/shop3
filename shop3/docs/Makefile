@@ -32,16 +32,16 @@ include-stamp: ../*.lisp ../*.asd
 # 	--eval '(quit)'
 
 %.html: %.texinfo style.css include-stamp
-	${MAKEINFO} --html --no-split --css-include=style.css $<
+	${MAKEINFO} --html --output=shop3-manual.html --no-split --css-include=style.css $<
 
 %.pdf: %.texinfo include-stamp
-	texi2dvi -p $<
+	texi2dvi --output=shop3-manual.pdf --pdf $<
 
 %.info: %.texinfo include-stamp
-	${MAKEINFO} --no-split $<
+	${MAKEINFO} --output shop3-manual.info --no-split $<
 
-html: manual.html
+html: shop3-manual.html
 
-pdf: manual.pdf
+pdf: shop3-manual.pdf
 
-info: manual.info
+info: shop3-manual.info
