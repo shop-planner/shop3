@@ -5,12 +5,11 @@
 
 This repository contains the open source version of the SHOP3 Hierarchical Task Network (HTN) AI planner.
 
-## Exciting news (2021-04-22)
+## Version 3.8.1 Release (2023-01-25)
 
-SHOP3 has been incorporated into [Quicklisp](https://www.quicklisp.org/beta/) which
-is very exciting news, since it means that SHOP3 can now be installed with a single,
-simple command, that will download it, build it, and start it.  We have updated the
-installation instructions accordingly.
+In support of work I (RPG) have done to add Monte Carlo Tree Search to SHOP3, I have made a number
+of minor improvements, bugfixes, etc.  These changes are of general interest/value, so they are
+now released as version 3.8.1 of SHOP.  Descriptions of the changes may be found in [the ChangeLog](shop3/docs/ChangeLog.md).
 
 ## License
 
@@ -159,6 +158,21 @@ produce the manual in HTML, Emacs info, and PDF formats.
 If you have questions, please post them using the [Discussions](https://github.com/shop-planner/shop3/discussions) link.
 
 Now that GitHub has added discussions, we would prefer to keep issues for actual bug reports.
+
+## Citing SHOP3
+The best way to cite SHOP3 is to cite the paper ["Hierarchical Task Network Planning in Common Lisp: the case of SHOP3"](https://rpgoldman.goldman-tribe.org/papers/2019-els-SHOP3.pdf):  Goldman, R.P. and Kuter, U. (2019) ‘Hierarchical Task Network Planning in Common Lisp: the case of SHOP3’, in Proceedings of the 12th European Lisp Symposium. European Lisp Symposium, Genova, Italy.
+
+BibTeX:
+```
+@inproceedings{GoldmanKuter:SHOP3ELS,
+  title = {Hierarchical {{Task Network Planning}} in {{Common Lisp}}: The Case of {{SHOP3}}},
+  booktitle = {Proceedings of the 12th {{European Lisp Symposium}}},
+  author = {Goldman, Robert P and Kuter, Ugur},
+  year = {2019},
+  month = apr,
+  address = {{Genova, Italy}}
+}
+```
 
 
 
