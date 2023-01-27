@@ -221,6 +221,6 @@
             ((on ?x ?w) (need-to-move ?w)))
         ))))
 
-(eval-when (:load-toplevel)
+(eval-when (:load-toplevel :execute)
   (define-blocks-domain))
 
