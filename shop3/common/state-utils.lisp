@@ -59,16 +59,8 @@
 (in-package :shop.common)
 
 
-
-
-;;;
-
-;;; The "state" class
-
-(defstruct (state (:constructor nil) (:copier nil))
-  body)
-
-;; here for backward compatibility  -- don't use this  
+;; here for backward compatibility  -- don't use this
+#|
 (defun make-state (atoms &optional (state-encoding *state-encoding*))
   (warn "MAKE-STATE is deprecated and will be removed; you should be ~
 using MAKE-INITIAL-STATE.")
@@ -77,6 +69,7 @@ using MAKE-INITIAL-STATE.")
     (:mixed (make-mixed-state atoms))
     (:hash (make-hash-state atoms))
     (:bit (make-bit-state atoms))))
+|#
 
 ;;; very large states can be difficult and time-consuming to print.
 (defmethod print-object ((s state) str)
@@ -84,205 +77,9 @@ using MAKE-INITIAL-STATE.")
       (call-next-method)
       (print-unreadable-object (s str :type t :identity t))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; The "tagged-state" class
-
-;;; Tags-info is a list of tag-info entries.  Each tag-info is a list whose
-;;; first element is a tag (represented by an integer) and whose remaining
-;;; elements are a list of changes made to the state while that tag was active.
-;;; The command tag-state activates a new tag and returns it.  The command
-;;; retract-state-changes retracts all changes which were made while the given
-;;; tag was active.  It is expected that retractions will typically involve the
-;;; most recently added tag, but the system does allow older tags to be
-;;; retracted instead.
-
-(defstruct (tagged-state (:include state) (:constructor nil) (:copier nil))
-  (tags-info (list (list 0)))
-  ;; from this point back, can't undo...
-  (block-at 0 :type fixnum))
-
-(defun tagged-state-tags-info-tag (tagged-state)
-  (caar (tagged-state-tags-info tagged-state)))
-
-(deftype action-type () '(member add delete redundant-add redundant-delete))
-
-(defstruct state-update
-  (action 'add :type action-type)
-  (literal nil :type list))
-
-(defmethod tag-state ((st tagged-state) &optional (increment 2))
-  ;; bumped this by TWO instead of one to permit special increments for plan repair.
-  (let ((new-tag (+ increment (tagged-state-tags-info-tag st))))
-    (push (list new-tag) (tagged-state-tags-info st))
-    new-tag))
-
-(defmethod last-establisher ((st tagged-state) literal)
-  (let* ((negative (eq (first literal) 'not))
-         (literal (if negative (second literal) literal)))
-    (iter outer (for (tag . updates) in (tagged-state-tags-info st))
-      (iter (for update in updates)
-        (when (equalp (state-update-literal update) literal)
-          (when (or (and negative (member (state-update-action update)
-                                      '(delete redundant-delete) :test 'eq))
-                    (member (state-update-action update) '(add redundant-add) :test 'eq))
-            (if (zerop tag)
-                ;; this case seems never to happen -- the zero tag all
-                ;; seems empty.
-                (return-from last-establisher :init)
-                (return-from last-establisher (decode-tag tag)))))))
-    ;; atom is established/deleted in the initial state...
-    :init))
-
-(defun decode-tag (tag)
-  (let ((hash-val (gethash tag *state-tag-map*)))
-       (if hash-val
-           (values-list hash-val)            ;task
-           (error "No action/operator instance stored for state update tag ~A" tag))))
-
-(defun tag-for-action (action)
-  (or (gethash action *action-to-tag-map*)
-      (error "No tag instance stored for action ~A" action)))
-
-(defun prepare-state-tag-decoder ()
-  (setf *state-tag-map* (make-hash-table :test 'eq))
-  (setf *action-to-tag-map* (make-hash-table :test 'eq)))
-
-(defun delete-state-tag-decoder ()
-  (setf *state-tag-map* nil
-        *action-to-tag-map* nil))
-
-(defun make-tag-map (tag task primitive)
-  "Record association of TAG with operator/action instance OPERATOR."
-  (setf (gethash tag *state-tag-map*) (list task primitive)
-        (gethash primitive *action-to-tag-map*) tag))
-
-(defun delete-tag-map (tag)
-  "Erase association of TAG with its operator/action instance."
-  (let ((prim (nth-value 1 (decode-tag tag))))
-    (assert prim)
-    (remhash tag *state-tag-map*)
-    (remhash prim *action-to-tag-map*)
-    (values)))
-
-
-
-(defmethod include-in-tag (action atom (st tagged-state))
-  (unless (typep action 'action-type)
-    (error "Unacceptable action ~S" action))
-  (push (make-state-update :action action :literal atom)
-        (rest (first (tagged-state-tags-info st)))))
-
-(defmethod retract-state-changes ((st tagged-state) tag)
-  (multiple-value-bind (new-tags-info changes)
-      (pull-tag-info (tagged-state-tags-info st) tag (tagged-state-block-at st))
-    (setf (tagged-state-tags-info st) new-tags-info)
-    (dolist (change changes)
-      (undo-state-update (state-update-action change) change st)))
-  (values))
-
-(defmethod replay-state-changes ((st tagged-state) tags-info-list &optional stop-at)
-  (catch 'stop-replay
-    (dolist (tagged-updates tags-info-list)
-      (destructuring-bind (tag . updates) tagged-updates
-        (assert (> tag (tagged-state-tags-info-tag st)))
-        (when (and stop-at (= stop-at tag))
-          (throw 'stop-replay nil))
-        (dolist (update updates)
-          (redo-state-update (state-update-action update) update st)))
-      (push tagged-updates (tagged-state-tags-info st))))
-  (values))
-
-(defmethod undo-state-update ((keyword (eql 'add)) change state)
-  (remove-atom (state-update-literal change) state))
-
-(defmethod undo-state-update ((keyword (eql 'delete)) change state)
-  ;; FIXME: delete this!!!!
-  (assert (not (member (state-update-literal change) (state-atoms state) :test 'equalp)))
-  (insert-atom (state-update-literal change) state))
-
-(defmethod undo-state-update ((keyword (eql 'redundant-add)) change state)
-  (declare (ignorable keyword change state))
-  (values))
-
-(defmethod undo-state-update ((keyword (eql 'redundant-delete)) change state)
-  (declare (ignorable keyword change state))
-  (values))
-
-
-;;; We REDO state updates when we are repairing a plan.  We have
-;;; introduced a divergence into the plan, so at some point a
-;;; precondition will fail, but we will stop redoing before we get to
-;;; this point.
-(defmethod redo-state-update ((keyword (eql 'add)) change state)
-  (unless (atom-in-state-p (state-update-literal change) state)
-    (insert-atom (state-update-literal change) state)))
-
-(defmethod redo-state-update ((keyword (eql 'delete)) change state)
-  (when (atom-in-state-p (state-update-literal change) state)
-    (remove-atom (state-update-literal change) state)))
-
-;;; The distinction between redundant modifications and stock
-;;; modifications only matters when unwinding effects, because we need
-;;; to avoid repeated undos.  But this doesn't matter when redoing,
-;;; because redoing, unlike undoing is idempotent
-(defmethod redo-state-update ((keyword (eql 'redundant-add)) change state)
-  (redo-state-update 'add change state)
-  (values))
-
-(defmethod redo-state-update ((keyword (eql 'redundant-delete)) change state)
-  (redo-state-update 'delete change state)
-  (values))
-
-
-
-(defmethod add-atom-to-state (atom (st tagged-state) depth operator)
-;;;  (let ((shop2::state st))
-;;;    ;; the above binding makes the trace-print work properly --- it references state [2006/12/06:rpg]
-  (trace-print :effects (car atom) st
-               "~2%Depth ~s, adding atom to current state~%      atom ~s~%  operator ~s"
-               depth atom operator)
-;;;  )
-  (let ((in-state-p (atom-in-state-p atom st)))
-    (cond ((and in-state-p *state-tag-map*)
-           (include-in-tag 'redundant-add atom st))
-          ((not in-state-p)
-           (include-in-tag 'add atom st)
-           (insert-atom atom st)))))
-
-(defmethod delete-atom-from-state (atom (st tagged-state) depth operator)
-;;;  (let ((shop2::state st))
-;;;    ;; the above binding makes the trace-print work properly --- it references state [2006/12/06:rpg]
-    (trace-print :effects (car atom) st
-                 "~2%Depth ~s, deleting atom from current state~%      atom ~s~%  operator ~s"
-                 depth atom operator)
-;;;    )
-  (cond ((atom-in-state-p atom st)
-         (include-in-tag 'delete atom st)
-         (remove-atom atom st))
-        (*state-tag-map*
-         (include-in-tag 'redundant-delete atom st))))
-
-;;; TAGS-INFO is the tags-info list of a tagged-state, TAG is the
-;;; state to roll back to, and STOP-AT can be used to record how much
-;;; of the plan has been executed, because we can't roll back past
-;;; this point.
-(defun pull-tag-info (tags-info tag &optional (stop-at 0))
-  (iter (for (first-info . rest-info) on tags-info)
-    (as this-tag = (first first-info))
-    (when (null first-info)
-      (error "Attempt to retract to nonexistent tag ~d" tag))
-    (until (or (< this-tag tag)
-               (= this-tag stop-at)))
-    (appending (rest first-info) into undone)
-    (finally (return-from pull-tag-info
-               (values (cons first-info rest-info) undone)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "list-state" class
-
-(defstruct (list-state (:include tagged-state)
-                       (:constructor makeliststate)
-                       (:copier nil)))
 
 (defmethod state->state-type ((state list-state))
   :list)
@@ -372,10 +169,6 @@ using MAKE-INITIAL-STATE.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "hash-state" class
 
-(defstruct (hash-state (:include tagged-state)
-                       (:constructor makehashstate)
-                       (:copier nil)))
-
 (defmethod make-initial-state (domain (state-encoding (eql :hash)) atoms &key)
   (declare (ignore domain))
   (make-hash-state atoms))
@@ -435,13 +228,6 @@ using MAKE-INITIAL-STATE.")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "mixed-state" class
 
-(defstruct (mixed-state (:include tagged-state)
-                        (:constructor makemixedstate)
-                        (:copier nil))
-  "A `:mixed` state is a singly-hashed state. I.e., the body is
-represented as a hash table, hashed on the predicate, not on
-the entire state atom (as in the `:hash` type state).")
-
 (defmethod make-initial-state (domain (state-encoding (eql :mixed)) atoms &key)
   (declare (ignore domain))
    (make-mixed-state atoms))
@@ -496,7 +282,7 @@ the entire state atom (as in the `:hash` type state).")
 
 (defmethod copy-state ((st mixed-state))
   (let ((the-copy (make-mixed-state nil)))
-    (setf (state-body the-copy) (copy-hash-table (state-body st)))
+    (setf (state-body the-copy) (copy-hash-table (state-body st) 'copy-list))
     (setf (tagged-state-tags-info the-copy)
           (copy-tree (tagged-state-tags-info st)))
     (setf (tagged-state-block-at the-copy)
@@ -516,14 +302,6 @@ the entire state atom (as in the `:hash` type state).")
 ;;; The "doubly-hashed-state" class
 (defconstant +VARIABLE-TERM+ (uiop:find-symbol* '#:%variable% (find-package (symbol-name '%shop3-common-private%))))
 (defconstant +SINGLETON-TERM+ (uiop:find-symbol* '#:%singleton% (find-package (symbol-name '%shop3-common-private%))))
-(defstruct (doubly-hashed-state (:include tagged-state)
-                        (:constructor makedoubly-hashedstate)
-                        (:copier nil))
-  "A `:doubly-hashed` state is like singly-hashed (`:mixed`) state. I.e., the body is
-represented as a hash table, hashed on the predicate, not on
-the entire state atom (as in the `:hash` type state).  *Unlike* a singly-hashed
-state, the entry for a predicate will be a sub-hash table for the second argument.")
-
 (defmethod make-initial-state (domain (state-encoding (eql :doubly-hashed)) atoms &key)
   (declare (ignore domain))
    (make-doubly-hashed-state atoms))
@@ -618,10 +396,6 @@ state, the entry for a predicate will be a sub-hash table for the second argumen
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "bit-state" class
-
-(defstruct (bit-state (:include tagged-state)
-                      (:constructor %make-bit-state)
-                      (:copier nil)))
 
 
 

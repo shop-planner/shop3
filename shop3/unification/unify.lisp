@@ -149,7 +149,7 @@ variable."
 
 (defmethod make-load-form ((obj binding) &optional env)
   (declare (ignore env))
-  `(make-binding (quote ,(binding-var obj)) ,(binding-val obj)))
+  `(make-binding (quote ,(binding-var obj)) (quote ,(binding-val obj))))
 
 (defun find-binding (target binding-list)
   "Find and return the value of TARGET that's recorded in BINDING-LIST."

@@ -332,7 +332,7 @@ Otherwise it returns FAIL."
                            method-name
                            task-body
                            answers)
-              (return-from apply-method 
+              (return-from apply-method
                 (values answers unifiers depends (apply-substitution (second standardized-method) task-unifier))))
             ;; no unifier
             (trace-print :methods method-name state
@@ -380,20 +380,20 @@ Otherwise it returns FAIL."
 
 (defun force-immediate-reduction (reduction)
   (cond
-   ((null reduction) nil)
-   ((already-immediate-p reduction)
-    (list reduction))
-   ((eq (first reduction) :task)
-    (list `(:task :immediate ,@(get-task-body reduction))))
-   ((eq (first reduction) :ordered)
-    (mapcar #'(lambda (ordered-term)
-    (append (list :ordered ordered-term)
-      (rest (rest reduction))))
-      (force-immediate-reduction (second reduction))))
-   ((eq (first reduction) :unordered)
-    (mapcar #'(lambda (unordered-result)
-    (cons :unordered unordered-result))
-      (force-immediate-unordered (rest reduction))))))
+    ((null reduction) nil)
+    ((already-immediate-p reduction)
+     (list reduction))
+    ((eq (first reduction) :task)
+     (list `(:task :immediate ,@(get-task-body reduction))))
+    ((eq (first reduction) :ordered)
+     (mapcar #'(lambda (ordered-term)
+                 (append (list :ordered ordered-term)
+                         (rest (rest reduction))))
+             (force-immediate-reduction (second reduction))))
+    ((eq (first reduction) :unordered)
+     (mapcar #'(lambda (unordered-result)
+                 (cons :unordered unordered-result))
+             (force-immediate-unordered (rest reduction))))))
 
 (defun already-immediate-p (reduction)
   (cond
@@ -428,11 +428,12 @@ could be :TASK, could be modified by :IMMEDIATE, etc."
              (second task1)))
         (t (first task1))))
 
+;; FIXME: This should be idempotent, but was not. Should be fixed now, but should have some
+;; tests.
 (defun get-task-body (task1)
-  (if (eq (second task1) :immediate)
-    (cddr task1)
-    (cdr task1)))
-
+  (case (first task1)
+    ((:immediate :task) (get-task-body (rest task1)))
+    (otherwise task1)))
 
 (defun internal-operator-p (operator-name)
   (if (symbolp operator-name)
@@ -671,4 +672,3 @@ could be :TASK, could be modified by :IMMEDIATE, etc."
          (if (and (not deleted) (equal TASK L))
              (return-from delete-task-main-list :task)
            (return-from delete-task-main-list nil)))))))
-

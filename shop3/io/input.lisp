@@ -116,12 +116,6 @@ do NOT emit singleton variable warnings.")
 
 #+allegro (excl::define-simple-parser make-problem second :shop3-problem)
 
-;;; this must be a variable, rather than an optional argument, because
-;;; of the unpleasant way make-problem has extra arguments for
-;;; backward compatibility. [2005/01/07:rpg]
-(defvar *make-problem-silently* nil
-  "If this variable is bound to t, make-problem will NOT print a message.")
-
 #+sbcl
 (defmethod documentation ((symbol symbol) (type (eql :shop3-problem)))
   (get symbol :shop3-problem-docstring nil))
@@ -150,6 +144,7 @@ variable *PROBLEM*."
                          &key (type 'problem) domain
                            redefine-ok
                            documentation
+                           (silently *define-silently*)
                          &allow-other-keys)
         problem-name-etc
       (declare (ignorable redefine-ok))
@@ -158,9 +153,8 @@ variable *PROBLEM*."
         (remf options :domain)
         (remf options :redefine-ok)
         (when domain (setf domain-name domain))
-        (unless *make-problem-silently*
-          (unless *define-silently*
-            (format t "~%Defining problem ~s ...~%" problem-name)))
+        (unless silently
+          (format t "~%Defining problem ~s ...~%" problem-name))
         (let ((problem-inst (make-instance type
                                            :domain-name domain-name
                                            :name problem-name)))
@@ -704,43 +698,46 @@ breaks usage of *load-truename* by moving the FASLs.")
   (with-method-name-table
     (destructuring-bind (name &rest options
                               &key (type 'domain) noset redefine-ok unique-method-names
-                         &allow-other-keys)
+                                   (silently *define-silently*)
+                              &allow-other-keys)
         name-and-options
-      (unless *define-silently*
+      (unless silently
         (when *defdomain-verbose*
           (format t "~%Defining domain ~a...~%" name)))
       (unless (subtypep type 'domain)
         (error "Type argument to defdomain must be a subtype of DOMAIN. ~A is not acceptable." type))
-      (remf options :type)
-      (remf options :redefine-ok)
-      (remf options :noset)
-      (remf options :unique-method-names)
-      (setf redefine-ok (or redefine-ok *define-silently*))
-      (let ((*unique-method-names* unique-method-names))
-       (let ((domain (apply #'make-instance type
-                            :name name
-                            options)))
-         ;; I suspect that this should go away and be handled by
-         ;; initialize-instance... [2006/07/31:rpg]
-         (apply #'handle-domain-options domain options)
-         (setf (slot-value domain 'items) ; cache domain items
-               (setf items (expand-includes domain items)))
-         (let (warnings)
-           (handler-bind
-               ((domain-item-parse-warning
-                  #'(lambda (c)
-                      (push c warnings)
-                      (muffle-warning c))))
-             (parse-domain-items domain items))
-           (when warnings
-             (let ((*print-pprint-dispatch* *shop-pprint-table*))
-               (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
-         (install-domain domain redefine-ok)
-         (unless noset
-           (setf *domain* domain))
-         ;; previous addition of noset changed the behavior of defdomain to make
-         ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
-         domain)))))
+      (let ((options (copy-list options)))
+        (remf options :type)
+        (remf options :redefine-ok)
+        (remf options :noset)
+        (remf options :unique-method-names)
+        (remf options :silently)
+        (setf redefine-ok (or redefine-ok silently))
+        (let ((*unique-method-names* unique-method-names))
+          (let ((domain (apply #'make-instance type
+                               :name name
+                               options)))
+            ;; I suspect that this should go away and be handled by
+            ;; initialize-instance... [2006/07/31:rpg]
+            (apply #'handle-domain-options domain options)
+            (setf (slot-value domain 'items) ; cache domain items
+                  (setf items (expand-includes domain items)))
+            (let (warnings)
+              (handler-bind
+                  ((domain-item-parse-warning
+                     #'(lambda (c)
+                         (push c warnings)
+                         (muffle-warning c))))
+                (parse-domain-items domain items))
+              (when warnings
+                (let ((*print-pprint-dispatch* *shop-pprint-table*))
+                  (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
+            (install-domain domain redefine-ok)
+            (unless noset
+              (setf *domain* domain))
+            ;; previous addition of noset changed the behavior of defdomain to make
+            ;; it NOT return the defined domain; this is inappropriate. [2009/03/26:rpg]
+            domain))))))
 
 (defmethod install-domain ((domain domain) &optional redefine-ok)
   (when (get (domain-name domain) :domain)
@@ -771,16 +768,44 @@ IF-NOT-FOUND defaults to :error, which will raise an error condition."
 ;;; make QUERY easier to use -- this around method is here because FIND-DOMAIN isn't available in
 ;;; the SHOP THEOREM-PROVER system.
 (defmethod shop3.theorem-prover:query :around (goals state &key just-one (domain *domain*)
-                                                             (record-dependencies *record-dependencies-p*))
+                                                             (return-dependencies *record-dependencies-p* return-dependencies-supplied-p)
+                                                             (record-dependencies nil record-dependencies-supplied-p)
+                                                             (state-type :mixed))
+  ;; handle deprecated RECORD-DEPENDENCIES keyword argument
+  (when record-dependencies-supplied-p
+    (if return-dependencies-supplied-p
+        (warn 'style-warning "Do not need to supply :record-dependencies if :return-dependencies is present.")
+        (progn
+          (warn "The :record-dependencies keyword argument for QUERY is deprecated and will be removed. ~
+Please use :return-dependencies instead.")
+          (setf return-dependencies record-dependencies))))
   (let* ((domain
-           (if (symbolp domain)
-               (find-domain domain)
-               domain))
-         (state (if (listp state)
-                    (make-initial-state domain :mixed state)
-                    state)))
-    (call-next-method goals state :just-one just-one :domain (find-domain domain)
-                                  :record-dependencies record-dependencies)))
+           (cond ((symbolp domain)
+                  (find-domain domain))
+                 ((typep domain 'thpr-domain)
+                  domain)
+                 (t (error 'type-error :datum domain :expected-type 'domain-designator))))
+         (state-atoms
+           (cond ((typep state 'problem)
+                  (problem-state state))
+                 ((typep state 'state)
+                  nil)
+                 ((listp state) state)
+                 ;; this must come after the above, because NIL is both a list AND a symbol
+                 ((typep state 'symbol)
+                  (problem-state (find-problem state)))
+                 (t (error 'type-error :datum state :expected-type 'state-designator))))
+         (state (cond ((typep state 'state)
+                       (assert (null state-atoms))
+                       state)
+                      ((listp state-atoms)
+                       (make-initial-state domain
+                                           (or state-type
+                                               (default-state-type domain))
+                                           state-atoms))
+                      (t (error "should not reach this point.")))))
+    (call-next-method goals state :just-one just-one :domain domain
+                                  :return-dependencies return-dependencies)))
 
 
 (defun set-domain (name)

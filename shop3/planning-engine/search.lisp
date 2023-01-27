@@ -249,6 +249,11 @@ of SHOP2."
           (pddl-action
            (apply-action domain state task-body m protections depth unifier)))
       (when (eq planned-action 'fail)
+        (when (operators-dont-fail domain)
+          (cerror "Continue planning, accepting the failure"
+                  "Attempt to add ~:[operator~;pddl-action~] ~s to plan failed unexpectedly."
+                  (typep m 'pddl-action)
+                  task-body))
         (return-from seek-plans-primitive-1 nil))
 
       (when *plan-tree*
@@ -272,10 +277,11 @@ of SHOP2."
                    (sort-results domain result1 unifier1 which-plans)
                  (loop for ((label . reduction) . results) on result1
                        as u1 in unifier1
-                       when *plan-tree* do (record-reduction task1 reduction u1)
-                         do (trace-print :methods label state
-                                         "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
-                                         depth label task1 (fourth method) reduction)
+                       ;; the following is done by `apply-method-bindings` call below.
+                       ;; when *plan-tree* do (record-reduction task1 reduction u1)
+                       do (trace-print :methods label state
+                                       "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
+                                       depth label task1 (fourth method) reduction)
                             (trace-print :tasks task-name state
                                          "~2%Depth ~s, reduced task ~s~% reduction ~s"
                                          depth task1 reduction)
@@ -462,7 +468,6 @@ This function just throws away the costs."
 
 ;;; This function returns true iff there is a time limit and it has expired.
 (defun time-expired-p ()
-  (if *internal-time-limit*
+  (when *internal-time-limit*
       (>= (- (get-internal-run-time) *start-run-time*)
-          *internal-time-limit*)
-    nil))
+          *internal-time-limit*)))

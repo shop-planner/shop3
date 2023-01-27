@@ -94,7 +94,8 @@
                 :pathname "planning-engine/"
                 :components ((:file "protections")
                              (:file "task-reductions")
-                             (:file "search")))
+                             (:file "search")
+                             (:file "plan-trajectory")))
 
        (:module "explicit-stack-search"
                 :serial t
@@ -148,7 +149,8 @@ minimal affected subtree."
     :components ((:file "package-common")
                  (:file "common")
                  (:file "state-decls")
-                 (:file "state-utils")))
+                 (:file "state-utils")
+                 (:file "tagged-state")))
 
 (defsystem :shop3/theorem-prover
     :serial t

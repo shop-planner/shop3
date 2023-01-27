@@ -162,6 +162,8 @@
              #:do-problems
              #:shop-trace
              #:shop-untrace
+             #:plan-states
+             #:plan-final-state
 
              ;; domain objects and their functions...
              #:defdomain
