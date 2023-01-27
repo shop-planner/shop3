@@ -18,10 +18,15 @@ clean:
 	rm -f *.aux *.cp *.fn *.fns *.ky *.log *.pg *.toc *.tp *.tps *.vr
 	rm -f include-stamp
 
-include-stamp: ../*.lisp ../*.asd
+LISP_SOURCE_DIRS := .. ../common ../explicit-stack-search ../io ../looping-tasks ../minimal-subtree ../pddl \
+    ../plan-grapher ../planning-engine ../planning-tree ../shop-theorem-prover.api ../theorem-prover ../unification
+LISP_SOURCES := $(foreach dir,$(LISP_SOURCE_DIRS), $(wildcard $(dir)/*.lisp))
+LISP_ASDS := $(foreach dir,$(LISP_SOURCE_DIRS), $(wildcard $(dir)/*.asd))
+
+include-stamp: $(LISP_SOURCES} $(LISP_ASDS)
 	sbcl --no-userinit --eval '(require :asdf)' \
 	--eval '(progn (require :sb-texinfo)(asdf:load-system :shop3 :force :all) (require :shop3-thmpr-api) (require :shop3/plan-grapher))' \
-	--eval '(sb-texinfo:generate-includes "include/" (list :shop3 :shop3.unifier :shop3.common :shop3.theorem-prover :shop3.theorem-prover-api :shop3.plan-grapher) :base-package :shop3 :extra-symbols (list (quote shop3.unifier::binding) (quote shop3.common::insert-atom) (quote shop3.common::remove-atom) (quote shop3.common::atom-in-state-p) (quote shop3.common::state-all-atoms-for-predicate) (quote shop3.common::state-candidate-atoms-for-goal)))' \
+	--eval '(sb-texinfo:generate-includes "include/" (list :shop3 :shop3.unifier :shop3.common :shop3.theorem-prover :shop3.theorem-prover-api :shop3.plan-grapher :shop-user) :base-package :shop3 :extra-symbols (list (quote shop3.unifier::binding) (quote shop3.common::insert-atom) (quote shop3.common::remove-atom) (quote shop3.common::atom-in-state-p) (quote shop3.common::state-all-atoms-for-predicate) (quote shop3.common::state-candidate-atoms-for-goal)))' \
 	--eval '(quit)'
 	touch include-stamp
 

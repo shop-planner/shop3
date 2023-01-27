@@ -60,6 +60,7 @@
 
 (defpackage :shop3
     (:nicknames :shop :shop2)
+    (:documentation "The SHOP3 package is the package that exposes SHOP3's API.")
     (:use :common-lisp :shop3.unifier :shop3.common :shop3.theorem-prover
           :iterate)
     (:import-from #:shop3.common #:domain-core)
@@ -360,4 +361,7 @@
 
 (defpackage :shop3-user
     (:nicknames :shop-user :shop2-user)
+    (:documentation "SHOP3-USER is a \"scratch\" package for
+experimenting with the SHOP3 API. Typically any real work
+should be moved to a dedicated package you create for yourself.")
     (:use :shop3 :common-lisp))

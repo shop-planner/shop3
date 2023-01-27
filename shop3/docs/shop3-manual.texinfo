@@ -229,6 +229,9 @@ Steel Bank Common Lisp, v. 1.4+ on x86 and x86_64, Linux and Mac OSX.
 @item
 Clozure Common Lisp, version 1.11 on Mac OS X and Linux.
 
+@item
+Lispworks v. 8.0
+
 @c @item
 @c GNU clisp, version 2.49 on Mac OS X and Linux.
 
@@ -361,11 +364,19 @@ which should, at least, @code{:use} the @code{SHOP3} and @code{COMMON-LISP} pack
 
 @c FIXME: Introductory paragraph goes here.
 
+The primary purpose of running SHOP3 is to find one or more @emph{plans} for a
+SHOP planning @emph{problem} (@pxref{Planning Problem}).
+This planning problem will reference a @emph{domain}
+(@pxref{Planning Domain}), which contains a description of the actions
+and methods available to the planner.
+This can be done using either the
+original form of SHOP search, @code{find-plans} or the new version, @code{find-plans-stack}.
 
 
 @menu
 * @code{find-plans}: find-plans.
-* find-plans-stack::
+* @code{find-plans-stack}: find-plans-stack.
+* Planning Example::
 * @code{do-problems}: do-problems.
 * Common Keyword Arguments::
 @end menu
@@ -389,6 +400,106 @@ full state trajectories for the plans.
 
 @include include/fun-shop-find-plans-stack.texinfo
 
+@node Planning Example, do-problems, find-plans-stack, Executing the Planner
+@subsection Planning Example
+For an example of running SHOP3, let's consider the blocks world
+domain.  The domain and problem files are in the @code{examples/blocks/}
+subdirectory of the @code{shop3} directory (see
+@url{https://github.com/shop-planner/shop3/tree/master/shop3/examples/blocks,
+the blocks world in the source repository}).
+
+We may start by loading the domain and a problem to solve:
+
+@lisp
+(in-package :shop-user)
+(load (asdf:system-relative-pathname
+            "shop3" "examples/blocks/block2.lisp"))
+(load (asdf:system-relative-pathname
+            "shop3" "examples/blocks/problem100.lisp"))
+@end lisp
+
+This loads the SHOP3 domain @code{blocks-normal} from the file
+@code{block2.lisp} and the problem @code{bw_ran_100_1} from
+@code{problem100.lisp}.
+
+We can now ask SHOP3 to solve the problem:
+@lisp
+(find-plans-stack 'bw_ran_100_1)
+@end lisp
+
+If we have everything installed properly, then this will show something
+like the following:
+@example
+(((!!ASSERT
+   ((GOAL (CLEAR B100)) (GOAL (ON B100 B92)) (GOAL (ON-TABLE B92))
+    (GOAL (CLEAR B99)) (GOAL (ON B99 B89)) (GOAL (ON-TABLE B89))
+    (GOAL (CLEAR B98)) (GOAL (ON B98 B84)) (GOAL (ON B84 B80))
+    (GOAL (ON B80 B66)) (GOAL (ON B66 B63)) (GOAL (ON-TABLE B63))
+    (GOAL (CLEAR B93)) (GOAL (ON B93 B75)) (GOAL (ON B75 B68))
+    (GOAL (ON B68 B50)) (GOAL (ON B50 B49)) (GOAL (ON-TABLE B49))
+    ....)))
+  0 (!!ASSERT ((DONT-MOVE B22))) 0 (!!ASSERT ((DONT-MOVE B16))) 0
+  (!!ASSERT ((DONT-MOVE B2))) 0 (!!ASSERT ((DONT-MOVE B1))) 0
+  (!!ASSERT ((PUT-ON-TABLE B92))) 0 (!UNSTACK B92 B89) 1.0
+  (!PUTDOWN B92) 1.0  (!!ASSERT ((DONT-MOVE B92))) 0
+  (!!REMOVE ((PUT-ON-TABLE B92))) 0
+  (!!ASSERT ((STACK-ON-BLOCK B100 B92))) 0
+  (!!ASSERT ((PUT-ON-TABLE B89))) 0
+  (!UNSTACK B100 B95) 1.0 (!STACK B100 B92) 1.0
+  (!!ASSERT ((DONT-MOVE B100))) 0
+  (!!REMOVE ((STACK-ON-BLOCK B100 B92))) 0 (!UNSTACK B89 B88) 1.0
+  (!PUTDOWN B89) 1.0 (!!ASSERT ((DONT-MOVE B89))) 0
+  (!!REMOVE ((PUT-ON-TABLE B89))) 0
+  (!UNSTACK B99 B90) 1.0 (!STACK B99 B89) 1.0
+  (!!REMOVE ((STACK-ON-BLOCK B99 B89))) ... a lot more! ...
+(NIL)
+(NIL)
+(#<SHOP3.COMMON::MIXED-STATE @{7005260003@}>)
+(#<HASH-TABLE :TEST EQ :COUNT 0 @{7009BFAB43@}>)
+@end example
+
+@code{find-plans} would give something quite similar.
+
+Here we see that SHOP3 has returned five values, but right now we are
+only interested in the first one:
+a @emph{list of} plans -- in this case a singleton list, because we have
+only asked for a single plan.
+
+The plan is a sequence made up of alternating pairs: first an
+@emph{action} -- a ground primitive operator -- and a @emph{cost}.
+Action names all start with an @samp{!}.  For example @samp{(!PUTDOWN
+B89)}.
+Some action names start with
+@emph{two} exclamation points.  These are @emph{internal} operators
+(@pxref{Internal Operators}),
+typically not part of the plan proper -- just operators that do
+bookkeeping for SHOP3, for example @samp{(!!ASSERT ((DONT-MOVE B22)))}.
+To see the part of the plan that you really care about, you will often
+want to use the function @samp{shorter-plan}.
+For example,
+@code{(shorter-plan (first (find-plans 'bw_ran_100_1)))} will return:
+
+@example
+((!UNSTACK B92 B89) (!PUTDOWN B92) (!UNSTACK B100 B95) (!STACK B100 B92)
+ (!UNSTACK B89 B88) (!PUTDOWN B89) (!UNSTACK B99 B90) (!STACK B99 B89)
+ (!UNSTACK B90 B64) (!PUTDOWN B90) (!UNSTACK B64 B63) (!PUTDOWN B64)
+ (!UNSTACK B63 B60) (!PUTDOWN B63) (!UNSTACK B60 B49) (!PUTDOWN B60)
+ (!UNSTACK B49 B41) (!PUTDOWN B49) (!UNSTACK B41 B21) (!PUTDOWN B41)
+ (!UNSTACK B21 B19) (!PUTDOWN B21) (!UNSTACK B19 B17) (!PUTDOWN B19)
+ (!UNSTACK B17 B15) (!PUTDOWN B17) (!UNSTACK B15 B13) (!PUTDOWN B15)
+ (!UNSTACK B13 B11) (!PUTDOWN B13) (!UNSTACK B11 B8) (!PUTDOWN B11)
+ (!UNSTACK B88 B77) (!PUTDOWN B88) (!UNSTACK B95 B91) (!PUTDOWN B95)
+ (!UNSTACK B91 B87) (!PUTDOWN B91) (!UNSTACK B87 B71) (!PUTDOWN B87)
+ (!UNSTACK B71 B55) (!PUTDOWN B71) (!UNSTACK B55 B52) (!PUTDOWN B55)
+ (!UNSTACK B52 B34) (!PUTDOWN B52) (!UNSTACK B34 B31) (!PUTDOWN B34)
+ (!UNSTACK B31 B26) (!PUTDOWN B31) (!UNSTACK B98 B78) (!PUTDOWN B98)
+ (!UNSTACK B78 B70) (!PUTDOWN B78) (!UNSTACK B70 B62) (!PUTDOWN B70)
+ (!UNSTACK B62 B51) (!PUTDOWN B62) (!UNSTACK B51 B50) (!PUTDOWN B51)
+ (!PICKUP B50) (!STACK B50 B49) (!UNSTACK B58 B38) (!PUTDOWN B58)
+ ...and a lot more...
+@end example
+
+
 @node do-problems, Common Keyword Arguments, find-plans-stack, Executing the Planner
 @subsection @code{do-problems}
 
@@ -396,6 +507,8 @@ The @code{do-problems} function has one mandatory argument, which can either be
 the name of a planning problem set or a list of names of planning
 problems. It executes @code{find-plans} on each of the given planning problems
 and returns @code{nil}.
+
+Note that @code{do-problems} is legacy code, and may well no longer work.
 
 @include include/fun-shop-do-problems.texinfo
 
@@ -1624,6 +1737,7 @@ to be presented in any special order -- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
+* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
