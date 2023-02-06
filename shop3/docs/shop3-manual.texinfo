@@ -1242,19 +1242,16 @@ weather as @code{(clear)}.
 @section Logical Expressions
 @anchor{#logical-expressions} A @strong{logical expression} is a
 logical @strong{atom} or any of the following complex expressions:
-@strong{conjuncts}, @strong{disjuncts}, @strong{negations},
+@strong{conjunctions}, @strong{disjunctions}, @strong{negations},
 @strong{implications}, @strong{universal quantifications},
 @strong{assignments}, @strong{eval}, @strong{call}, @strong{enforce},
 @strong{setof}, and @strong{bagof}.  @emph{Terms} enter into
 logical expressions via atoms.
 
-@c FIXME: We use the term "conjunct" ("disjunct") where we should use
-@c "conjunction" ("disjunction").
-
 
 @menu
-* Conjuncts::
-* Disjuncts::
+* Conjunctions::
+* Disjunctions::
 * Negations::
 * Implications::
 * Universal Quantifications::
@@ -1266,10 +1263,10 @@ logical expressions via atoms.
 * Bagof expressions::
 @end menu
 
-@node Conjuncts, Disjuncts, Logical Expressions, Logical Expressions
-@subsection Conjuncts
+@node Conjunctions, Disjunctions, Logical Expressions, Logical Expressions
+@subsection Conjunctions
 @anchor{#conjuncts}
-A @strong{conjunct} has the form
+A @strong{conjunction} has the form
 
 @lisp
 ([and]@var{l@sub{1}} @var{l@sub{2}} @dots{} @var{l@sub{n}})
@@ -1279,15 +1276,15 @@ A @strong{conjunct} has the form
 where each @var{l@sub{i}} is a logical expression.
 
 @cindex implicit conjunction
-Also note that @emph{implicit conjunction} (list of logical expressions
+Note that @emph{implicit conjunction} (list of logical expressions
 without an explicit @code{and}) is @strong{deprecated}, and will
 eventually be removed, as it significantly complicates @sysname{}'s
 parsing -- and reading @sysname{} code by humans.
 
-@node Disjuncts, Negations, Conjuncts, Logical Expressions
-@subsection Disjuncts
+@node Disjunctions, Negations, Conjunctions, Logical Expressions
+@subsection Disjunctions
 @anchor{#disjuncts}
-A @strong{disjunct} is an expression of the form
+A @strong{disjunction} is an expression of the form
 
 @lisp
 (or @var{l@sub{1}} @var{l@sub{2}} @dots{} @var{l@sub{n}})
@@ -1296,7 +1293,7 @@ A @strong{disjunct} is an expression of the form
 where @var{l@sub{1}}, @var{l@sub{2}} @dots{} @var{l@sub{n}} are logical
 expressions.
 
-@node Negations, Implications, Disjuncts, Logical Expressions
+@node Negations, Implications, Disjunctions, Logical Expressions
 @subsection Negations
 @anchor{#negations}
 A @strong{negation} is an expression of the form
@@ -1772,7 +1769,7 @@ etc. are processed as @emph{keyword} (named) arguments.
 * Operators Legacy Syntax::
 @end menu
 
-@node  Internal Operators, Operators must be deterministic, , Operators
+@node  Internal Operators, Operators must be deterministic, Operators, Operators
 
 @subsection Internal Operators
 @cindex internal operators
@@ -1799,7 +1796,7 @@ exists in @sysname{} is so that automated systems which use @sysname{} plans as 
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
-@node Operators must be deterministic, Protection conditions, Internal Operators, Operators
+@node Operators must be deterministic, Protection conditions, Operators, Operators
 @subsection Operators must be deterministic
 @cindex Operators, deterministic
 
@@ -2778,7 +2775,7 @@ recursive queries will cause the theorem-prover to go away forever.
 @item
 @strong{Axioms vs. facts.}
 Since the null conjunct is always true, an axiom of the form @code{(:-
-a nil)} is equivalent to asserting the atom @var{a} as a basic
+@var{a} nil)} is equivalent to asserting the atom @var{a} as a basic
 fact. The difference is that the expression @code{(:- a nil)} is what
 one would put into the set of axioms for the problem domain, whereas
 the atom @var{a} is what one would put into a state description. Such
@@ -2972,7 +2969,7 @@ mgu's for @emph{d} and @emph{e} are equivalent.
 @subsection States and Satisfiers
 @anchor{#states-and-satisfiers}
 A @strong{state} is a list of ground atoms intended to represent some
-``state of the world''.  A conjunct @var{C} is a @strong{consequent} of a
+``state of the world''.  A conjunction @var{C} is a @strong{consequent} of a
 state @var{S} and an axiom list @var{X} if every logical expression
 @var{l} in @var{C} is a consequent of @var{S} and @var{X}. A logical
 expression @var{l} is a consequent of @var{S} and @var{X} if one of
@@ -3060,7 +3057,7 @@ strict generalization of @var{C} that is also a consequent of @var{S}
 and @var{X}.
 
 Let @var{S} be a state, @var{X} be an axiom list, and @var{C} be an
-ordinary conjunct. If there is a substitution @var{u} such that
+ordinary conjunction. If there is a substitution @var{u} such that
 @var{C@sup{u}} is a consequent of @var{S} and @var{X}, then we say
 that @var{S} and @var{X} @strong{satisfy} @var{C} and that @var{u}
 is the @strong{satisfier}. The satisfier @var{u} is a @strong{most
@@ -3075,17 +3072,22 @@ the ``walking distance'' axiom given earlier, and @var{S} is the state
  (distance home supermarket 2))
 @end lisp
 @noindent
-Then for the conjunct @code{((walking-distance ?y))}, there are two mgs's from
+Then for the conjunction @code{((walking-distance ?y))}, there are two mgs's from
 @var{S} and @var{X}: @code{((?y . convenience-store))} and @code{((?y .
 supermarket))}.
 
+@strong{Note:} Originally, SHOP literally used cons cells like
+ @code{(?y . convenience-store)} to represent variable
+ bindings. However, in @sysname{}, we use CL binding structures instead
+ of cons cells for efficiency and type-safety.
+
 Let @var{S} be a state, @var{X} be an axiom list, and @code{@var{C} =
-(:first @var{C'})} be a tagged conjunct. If @var{S} and @var{X} satisfy
+(:first @var{C'})} be a tagged conjunction. If @var{S} and @var{X} satisfy
 @var{C'}, then the mgs (most general satisfier) for @var{C} from
 @var{S} and @var{X} is the @emph{first} mgs for @var{C'} that would be
 found by a left-to-right depth-first search. For example, if @var{S}
 and @var{X} are as in the previous example, then for the tagged
-conjunct @code{(:first (walking-distance ?y))}, the mgs from @var{S}
+conjunction @code{(:first (walking-distance ?y))}, the mgs from @var{S}
 and @var{X} is @code{((?y . convenience-store))}.
 
 @node Formal Semantics, Key Functions in SHOP3, Internal Knowledge Structures, Internal Technical Information
@@ -3573,7 +3575,7 @@ if they are unifiable, and returns @code{fail} otherwise.
 (find-satisfiers C S &optional just-one)
 
 @quotation
-If @emph{C} is a conjunct and @emph{S} is a state, then this function
+If @emph{C} is a conjunction and @emph{S} is a state, then this function
 returns a list of mgs's, one for every most general instance of @emph{C}
 that is satisfied by @emph{S}. If the optional argument @emph{just-one}
 is not nil, then the function returns the first mgs it finds, rather
@@ -3678,11 +3680,11 @@ find-satisfiers(conditions@sup{u}, S) is not equal to nil @strong{then}
 
 @strong{let} u be the unifier
 
-@strong{if} tail(x) contains a conjunct D such that
+@strong{if} tail(x) contains a conjunction D such that
 
 find-satisfiers(append(D@sup{u}, B@sup{u}), S) is not nil @strong{then}
 
-@strong{let} D be the first such conjunct
+@strong{let} D be the first such conjunction
 
 @strong{for} every v in find-satisfiers(append(D@sup{u}, B@sup{u}), S)
 
