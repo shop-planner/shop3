@@ -1128,7 +1128,7 @@ The last two are @emph{function} terms in first-order logic parlance.
 A @strong{list term} is a term having the form
 
 @lisp
-([@var{list}] @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n} [. @var{l}]})
+([@code{list}] @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n} [. @var{l}]})
 @end lisp
 
 @noindent
@@ -1138,6 +1138,8 @@ is a term. This specifies that @var{t@sub{1}} @var{t@sub{2}} @dots{}
 is included, the item @var{l} should evaluate to a list; all items in
 @var{l} are included in the list after @var{t@sub{1}} through
 @var{t@sub{n}}.
+@c FIXME -- I don't think that the list term CAN have the optional
+@c `list` keyword. [2023/02/06:rpg]
 
 List terms are highly expressive since each @var{t@sub{i}} can itself
 be a list.  Also, the ``@code{.}'' notation allows, for example, to
@@ -1155,7 +1157,7 @@ The @emph{value} associated with an @code{eval} term is determined as follows. F
 any variable symbols which appear in @var{general-lisp-expression} and are
 bound are replaced by the values that they are bound to. Then, the
 entire expression is evaluated in Lisp. For example, if the variable
-symbol @var{?foo} is bound to the value 3 then the term:
+symbol @code{?foo} is bound to the value 3 then the term:
 
 @lisp
 (eval (mapcar #'(lambda (x) (+ x ?foo)) `(1 2 ,(* ?foo ?foo))))
@@ -1165,11 +1167,12 @@ will have as its value a list containing the numbers 4, 5, and 12.
 
 @cindex quoting variables in call and eval terms
 @strong{Variable substitutions:}
-Note that variable substitutions in @code{eval} terms are handled
-before any evaluation of the expression, as in Lisp macros. One
+Note that variable substitutions in @code{eval} (as well as @code{call}
+terms, @pxref{Call Terms}) terms are handled
+before any evaluation of the expression. One
 implication of this fact is that variables with symbolic values must
 be explicitly quoted if they are to be treated as Lisp symbols. For
-example, if the variable @var{?foo} is bound to the symbol @code{bar},
+example, if the variable @code{?foo} is bound to the symbol @code{bar},
 the following @code{eval} term has the value @code{(bar baz)}:
 
 @lisp
@@ -1223,14 +1226,17 @@ Precondition, preconditions} and @ref{Task Lists}).
 @node Logical Atoms , Logical Expressions, Terms, The SHOP3 Formalism
 @section Logical Atoms
 @anchor{#logical-atoms}
-A @strong{logical atom} (atomic formula) has the form:
+A @strong{logical atom} (atomic formula or positive literal) has the form:
 
 @lisp
 (@var{p} @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
 @end lisp
 @noindent
-where @var{p} is a predicate symbol, each @var{t@sub{i}} is a term
-other than an @code{eval} or @code{call} term, and @math{n} can be 0.
+where @var{p} is a predicate symbol, each @var{t@sub{i}} is a term.
+Note that @code{eval} and @code{call} terms are @emph{not} permitted in
+logical atoms.  Note also that @math{n} can be 0: there can be
+predicates that take no arguments. For example, one might record the
+weather as @code{(clear)}.
 
 @node Logical Expressions, Logical Precondition, Logical Atoms , The SHOP3 Formalism
 @section Logical Expressions
@@ -1241,6 +1247,11 @@ logical @strong{atom} or any of the following complex expressions:
 @strong{assignments}, @strong{eval}, @strong{call}, @strong{enforce},
 @strong{setof}, and @strong{bagof}.  @emph{Terms} enter into
 logical expressions via atoms.
+
+@c FIXME: We use the term "conjunct" ("disjunct") where we should use
+@c "conjunction" ("disjunction").
+
+
 @menu
 * Conjuncts::
 * Disjuncts::
@@ -1266,9 +1277,6 @@ A @strong{conjunct} has the form
 
 @noindent
 where each @var{l@sub{i}} is a logical expression.
-
-Note that if there are 0 conjuncts (e.g., the expression is @code{()})
-then the form always evaluates to true.
 
 @cindex implicit conjunction
 Also note that @emph{implicit conjunction} (list of logical expressions
@@ -1364,8 +1372,8 @@ following expression will bind the variable @var{?baz} to the list
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
 @end lisp
 @noindent
-Similarly, if @var{?foo} is bound to @code{list} and @var{?bar} is bound to @code{4} then the
-expression above will bind @var{?baz }to the list @code{(nil (list
+Similarly, if @code{?foo} is bound to @code{list} and @code{?bar} is bound to @code{4} then the
+expression above will bind @code{?baz} to the list @code{(nil (list
 fish) 2)}.@footnote{
 A somewhat cumbersome way to verify this is as follows:
 @lisp
@@ -1392,15 +1400,15 @@ expression (with @code{=} interpreted as unification)
 (= ?x foo)
 @end lisp
 @noindent
-will bind @var{?x} to the symbol @code{foo}, but
+will bind @code{?x} to the symbol @code{foo}, but
 
 @lisp
 (assign ?x foo)
 @end lisp
 @noindent will cause a run-time error.  In the second example, @sysname
-will attempt to evaluate @var{foo} and report it as an unbound variable --
-unless this is evaluated in a context where @var{foo} is a variable,
-in which case @var{?x} will be bound to the current value of @var{foo}.
+will attempt to evaluate @code{foo} and report it as an unbound variable --
+unless this is evaluated in a context where @code{foo} is a variable,
+in which case @code{?x} will be bound to the current value of @code{foo}.
 
 @sysname{} also offers a @strong{compound assignment} expression of this
 form:
@@ -1474,7 +1482,7 @@ Find all solutions to @var{expr}, and bind the @emph{set} of values for
 (setof ?u (uav ?u) ?uavs)
 @end lisp
 @noindent
-will bind @var{?uavs} to the set of UAVs in the current state.
+will bind @code{?uavs} to the set of UAVs in the current state.
 
 @lisp
 (setof (pair ?u1 ?u2)
@@ -1482,7 +1490,7 @@ will bind @var{?uavs} to the set of UAVs in the current state.
   ?pairs)
 @end lisp
 @noindent
-will bind @var{?pairs} to a set of terms, e.g., @code{((pair rotor1
+will bind @code{?pairs} to a set of terms, e.g., @code{((pair rotor1
 fw2) (pair rotor2 fw3))} indicating pairs of UAVs with line of sight
 from the first to the second.
 
@@ -1552,7 +1560,7 @@ precondition:
 
 
 This precondition will cause @sysname{} to consider bindings in decreasing
-(high to low) order of the value of @var{?d}. If the comparison
+(high to low) order of the value of @code{?d}. If the comparison
 function @var{e} is omitted, it defaults to @kbd{#'<}, indicating
 increasing (low to high) order.
 
@@ -1711,7 +1719,7 @@ body of the operator.
 
 @item
 The operator's
-@var{add-list} is a list in which each element may be any of following:
+@var{add-list} is a list in which each element may be any of the following:
 
 @itemize
 @item
@@ -1738,7 +1746,9 @@ E.g. we cannot add the atoms @code{holds 1}, ..., @code{holds 4} by
 because here @var{?i} is unbound in the @sysname{} sense.
 
 We finally note that a @code{forall} expression can, for example, be
-used to implement PDDL's @emph{conditional effects}.
+used to implement the equivalent of PDDL's @emph{conditional effects}.
+For readers familiar with PDDL, the @sysname{} @code{forall} operator
+combines together both PDDL's @code{forall} and its @code{when}.
 
 @end itemize
 
@@ -1825,9 +1835,10 @@ expression of the form
 @end lisp
 
 @noindent
-where @emph{a} is a logical atom. The purpose of a protection condition
-in the @code{add} list is to tell @sysname{} that it should not execute any operator
-that deletes @emph{a}. The purpose of a protection condition in the
+where @emph{a} is a logical atom. The purpose of a protection condition,
+@code{(:protection @var{a})}
+in the @code{add} list is to tell @sysname{} that going forward it should not plan any operator
+that deletes @var{a}, until that protection is deleted.. The purpose of a protection condition in the
 @code{delete} list is to cancel a previously added protection condition. For
 example, if we drive a delivery truck to a certain location in order to
 pick up a package, then we might not want to allow the truck to be moved
@@ -2068,6 +2079,13 @@ Currently this defaults to @code{NIL}, to provide for
 backward compatibility, but I would like to see this move to defaulting
 to @code{T}.  See discussion of @code{*domain*} below.
 @cindex domain :noset argument
+
+@item
+@ @code{:silently} argument.  If true, then do @emph{not} print a
+message when defining the domain. @sysname{} defaults to printing a
+message
+when any domain (or problem) is defined, which can be annoying when
+domains are programmatically generated.
 
 @end itemize
 
@@ -3106,7 +3124,9 @@ support in @sysname. [12 June 2018 -- rpg]}
 The intent of an operator is to specify that the task @var{h} can be
 accomplished at a cost of @var{c}, by modifying the current state of
 the world to remove every logical atom in @var{D} and add every logical
-atom in @var{A} if @var{P} is satisfied in the current state. In order
+atom in @var{A} if @var{P} is satisfied in the current state
+(if @var{P} is @emph{not} satisfied in the current state, operator
+insertion fails, and the planner must backtrack. In order
 to prevent plans from being ambiguous, there should be at most one
 operator for each primitive task symbol. @emph{Furthermore, whenever an
 action is inserted into a plan, it must be @strong{ground} -- there must
@@ -3143,13 +3163,13 @@ remove every protection condition in @var{D@sup{u}} from the list of
 protected conditions;
 
 @item
-for every expression @code{(forall V Y Z)} in @var{D@sup{u}} and every
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{D@sup{u}} and every
 satisfier @var{v} such that @var{S} and @var{X} satisfy
 @var{Y@sup{v}}, remove every logical atom in @var{Z@sup{u}} from the
 current state;
 
 @item
-for every expression @code{(forall V Y Z)} in @var{D@sup{u}} and every
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{D@sup{u}} and every
 satisfier @var{v} such that @var{S} and @var{X} satisfy
 @var{Y@sup{v}}, remove every protection condition in @var{Z@sup{u}}
 from the list of protected conditions;
@@ -3162,13 +3182,7 @@ add every protection condition in @var{A@sup{u}} to the list of
 protected conditions;
 
 @item
-for every expression @code{(forall V Y Z)} in @var{A@sup{u}} and every
-satisfier @var{v} such that @var{S} and @var{X} satisfy
-@var{Y@sup{v}}, add every logical atom in @var{Z@sup{u}} to the
-current state;
-
-@item
-for every expression @code{(forall V Y Z)} in @var{A@sup{u}} and every
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{A@sup{u}} and every
 satisfier @var{v} such that @var{S} and @var{X} satisfy
 @var{Y@sup{v}}, add every protection condition in @var{Z@sup{u}} to
 the list of protected conditions.
