@@ -108,7 +108,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
   "FIND-PLANS looks for solutions to the planning PROBLEM.
    PROBLEM should be a problem-designator (a PROBLEM or a symbol naming one).
    The keyword arguments are as follows:
+
      :WHICH tells what kind of search to do.  Its possible values are:
+
         :FIRST      - depth-first search, returning the first plan found.
         :ALL        - depth-first search for *all* plans.
         :SHALLOWEST - depth-first search for the shallowest plan in the
@@ -120,7 +122,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :RANDOM     - Randomized search.  Used by Monroe. Not for normal
                       SHOP3 domains, since normal SHOP3 domains have order-
                       dependent semantics.
-        :MCTS       - Monte Carlo Tree Search mode (experimental and unstable).
+
      :VERBOSE says how much information to print about the plans SHOP3
               finds.  Its values can be any of the following:
         0 or NIL    - print nothing

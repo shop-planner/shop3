@@ -399,8 +399,6 @@ full state trajectories for the plans.
 @subsection @code{find-plans-stack}
 
 @include include/fun-shop-find-plans-stack.texinfo
-@comment something's wrong near the end of the above file. The enum list produces only one item.
-@comment I did not try to fix it.
 
 @node Planning Example, do-problems, find-plans-stack, Executing the Planner
 @subsection Planning Example
