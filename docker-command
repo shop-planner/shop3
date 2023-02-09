@@ -1,0 +1,2 @@
+#!
+sbcl --core /shop/sbcl-shop3.core "$@"
