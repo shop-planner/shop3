@@ -81,11 +81,13 @@ Return values:
     * List of plan tree lookup tables
     * List of final world states
     * List of analogical replay tables (if computed)
-To comply with SHOP3,
-though, always returns a list of plans.
+To comply with SHOP3, always returns a list of plans.
   If the PLAN-TREE keyword argument is non-NIL, will return an enhanced plan
-tree, with causal links, unless NO-DEPENDENCIES is non-NIL.
-  Returns the values returned by SEEK-PLANS-STACK, qv."
+tree, with causal links, unless NO-DEPENDENCIES is true.
+  Returns the values returned by SEEK-PLANS-STACK, qv.
+
+2. If UNPACK-RETURNS is NIL, then return one or more appropriate PLAN-RETURN
+objects."
   (when gc
     (trivial-garbage:gc :full t))
 

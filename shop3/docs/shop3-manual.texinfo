@@ -1128,7 +1128,7 @@ The last two are @emph{function} terms in first-order logic parlance.
 A @strong{list term} is a term having the form
 
 @lisp
-([@var{list}] @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n} [. @var{l}]})
+([@code{list}] @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n} [. @var{l}]})
 @end lisp
 
 @noindent
@@ -1138,6 +1138,12 @@ is a term. This specifies that @var{t@sub{1}} @var{t@sub{2}} @dots{}
 is included, the item @var{l} should evaluate to a list; all items in
 @var{l} are included in the list after @var{t@sub{1}} through
 @var{t@sub{n}}.
+@c FIXME -- I don't think that the list term CAN have the optional
+@c `list` keyword. [2023/02/06:rpg]
+
+List terms are highly expressive since each @var{t@sub{i}} can itself
+be a list.  Also, the ``@code{.}'' notation allows, for example, to
+represent a list by a head (or list of heads) and a tail.
 
 @node Eval Terms, Call Terms, List Terms, Terms
 @subsection Eval Terms
@@ -1159,9 +1165,11 @@ symbol @code{?foo} is bound to the value 3 then the term:
 @noindent
 will have as its value a list containing the numbers 4, 5, and 12.
 
-@cindex quoting in call and eval terms
-Note that variable substitutions in @code{eval} terms are handled
-before any evaluation of the expression, as in Lisp macros. One
+@cindex quoting variables in call and eval terms
+@strong{Variable substitutions:}
+Note that variable substitutions in @code{eval} (as well as @code{call}
+terms, @pxref{Call Terms}) terms are handled
+before any evaluation of the expression. One
 implication of this fact is that variables with symbolic values must
 be explicitly quoted if they are to be treated as Lisp symbols. For
 example, if the variable @code{?foo} is bound to the symbol @code{bar},
@@ -1198,46 +1206,52 @@ A @strong{call} term is an expression of the form
 @end lisp
 @noindent
 where @var{f} is a function symbol and each @var{t@sub{i}} is a term
-or a @code{call} term. A @code{call} term has a special meaning to @sysname, because it
-tells @sysname{} that @var{f} is an attached procedure, i.e., that whenever
-@sysname{} needs to evaluate a precondition or task list that contains a
-@code{call} term, @sysname{} should replace the @code{call} term with the result of
-applying the function @var{f} to the arguments @var{t@sub{1},
-t@sub{2}, @dots{}, t@sub{n}}.  We later will define preconditions
-(@pxref{Logical Precondition, preconditions}) and task lists
-(@pxref{Task Lists}).
-
-For example, the following @code{call} term would have the value 6:
+or a @code{call} term. For example, the following @code{call} term
+would have the value 6:
 
 @lisp
 (call + (call + 1 2) 3)
 @end lisp
 
+A @code{call} term tells @sysname{} that @var{f} is an attached
+procedure, i.e., that whenever @sysname{} needs to evaluate a
+precondition or task list that contains a @code{call} term, it
+should replace the @code{call} term with the result of applying the
+function @var{f} to the arguments @var{t@sub{1}, t@sub{2}, @dots{},
+t@sub{n}}.  (For preconditions and task lists @pxref{Logical
+Precondition, preconditions} and @ref{Task Lists}).
+
+
 
 @node Logical Atoms , Logical Expressions, Terms, The SHOP3 Formalism
 @section Logical Atoms
 @anchor{#logical-atoms}
-A @strong{logical atom} has the form:
+A @strong{logical atom} (atomic formula or positive literal) has the form:
 
 @lisp
 (@var{p} @var{t@sub{1}} @var{t@sub{2}} @dots{} @var{t@sub{n}})
 @end lisp
 @noindent
-where @var{p} is a predicate symbol, each @var{t@sub{i}} is a term
-other than an @code{eval} or @code{call} term, and @math{n} can be 0.
+where @var{p} is a predicate symbol, each @var{t@sub{i}} is a term.
+Note that @code{eval} and @code{call} terms are @emph{not} permitted in
+logical atoms.  Note also that @math{n} can be 0: there can be
+predicates that take no arguments. For example, one might record the
+weather as @code{(clear)}.
 
 @node Logical Expressions, Logical Precondition, Logical Atoms , The SHOP3 Formalism
 @section Logical Expressions
 @anchor{#logical-expressions} A @strong{logical expression} is a
 logical @strong{atom} or any of the following complex expressions:
-@strong{conjuncts}, @strong{disjuncts}, @strong{negations},
+@strong{conjunctions}, @strong{disjunctions}, @strong{negations},
 @strong{implications}, @strong{universal quantifications},
 @strong{assignments}, @strong{eval}, @strong{call}, @strong{enforce},
 @strong{setof}, and @strong{bagof}.  @emph{Terms} enter into
 logical expressions via atoms.
+
+
 @menu
-* Conjuncts::
-* Disjuncts::
+* Conjunctions::
+* Disjunctions::
 * Negations::
 * Implications::
 * Universal Quantifications::
@@ -1249,32 +1263,28 @@ logical expressions via atoms.
 * Bagof expressions::
 @end menu
 
-@node Conjuncts, Disjuncts, Logical Expressions, Logical Expressions
-@subsection Conjuncts
+@node Conjunctions, Disjunctions, Logical Expressions, Logical Expressions
+@subsection Conjunctions
 @anchor{#conjuncts}
-A @strong{conjunct} has the form
+A @strong{conjunction} has the form
 
 @lisp
-([and]@emph{l@sub{1}} @emph{l@sub{2}} @dots{} @emph{l@sub{n}})
+([and]@var{l@sub{1}} @var{l@sub{2}} @dots{} @var{l@sub{n}})
 @end lisp
 
 @noindent
-where each @emph{l@sub{i }} is a logical expression.
-
-Note that if there
-are 0 conjuncts (e.g., the expression is ()) then the form always
-evaluates to true.
+where each @var{l@sub{i}} is a logical expression.
 
 @cindex implicit conjunction
-Also note that @emph{implicit conjunction} (list of logical expressions
+Note that @emph{implicit conjunction} (list of logical expressions
 without an explicit @code{and}) is @strong{deprecated}, and will
 eventually be removed, as it significantly complicates @sysname{}'s
 parsing -- and reading @sysname{} code by humans.
 
-@node Disjuncts, Negations, Conjuncts, Logical Expressions
-@subsection Disjuncts
+@node Disjunctions, Negations, Conjunctions, Logical Expressions
+@subsection Disjunctions
 @anchor{#disjuncts}
-A @strong{disjunct} is an expression of the form
+A @strong{disjunction} is an expression of the form
 
 @lisp
 (or @var{l@sub{1}} @var{l@sub{2}} @dots{} @var{l@sub{n}})
@@ -1283,7 +1293,7 @@ A @strong{disjunct} is an expression of the form
 where @var{l@sub{1}}, @var{l@sub{2}} @dots{} @var{l@sub{n}} are logical
 expressions.
 
-@node Negations, Implications, Disjuncts, Logical Expressions
+@node Negations, Implications, Disjunctions, Logical Expressions
 @subsection Negations
 @anchor{#negations}
 A @strong{negation} is an expression of the form
@@ -1312,8 +1322,7 @@ Note that the context should not leave free variables in
 @node Universal Quantifications, Assignments, Implications, Logical Expressions
 @subsection Universal Quantifications
 @anchor{#universal-quantifications}
-A @strong{universal quantification} expression is an expression of the
-form
+A @strong{universal quantification} expression has the form
 
 @lisp
 (forall @emph{V E@sub{1} E@sub{2}})
@@ -1345,13 +1354,16 @@ A simple @strong{assignment} expression has the form
 @end lisp
 @noindent
 where @var{v} is a variable symbol and @var{e} is general Lisp
-expression. The intent of an assignment expression is to bind the
-value of @var{e} to the variable symbol @var{v}. Variable
-substitutions in assignment expressions are done using literal
-substitutions, as with @code{eval} terms (see @ref{Eval Terms}). For
-example, if @var{?foo} is bound to the symbol @code{if} and @var{?bar}
-is bound to the number 0 then the following expression will bind the
-variable @var{?baz} to the list @code{(if fish)}:
+expression. The intent of an assignment expression is to @emph{bind}
+the value of @var{e} to the variable symbol @var{v}@footnote{So,
+despite the usual connotations of ``assign'', once you @code{assign}
+to @var{v}, you cannot re-@code{assign} to it. See also the
+@strong{Note} below.}.  Variable substitutions in assignment
+expressions are done using literal substitutions, as with @code{eval}
+terms (see @ref{Eval Terms}). For example, if @var{?foo} is bound to
+the symbol @code{if} and @var{?bar} is bound to the number 0 then the
+following expression will bind the variable @var{?baz} to the list
+@code{(if fish)}:
 
 @lisp
 (assign ?baz (?foo (< ?bar 3) (list '?foo 'fish) (/ 8 ?bar)))
@@ -1379,6 +1391,7 @@ variables to.  To that end, @code{assign} expects that its second
 argument will be a Lisp expression and it will @emph{evaluate} that
 expression.  It is because of this evaluation process that the following
 expression (with @code{=} interpreted as unification)
+@comment this needs some explanation, as ``='' has no built-in meaning in SHOP3
 
 @lisp
 (= ?x foo)
@@ -1449,7 +1462,7 @@ it fails, will call error with @emph{error-args.} For example
           "~A x-position undefined." (quote ?aircraft))
 @end lisp
 
-Enforce expressions are useful when debugging domains.
+@code{enforce} expressions are useful when debugging domains.
 
 @node Setof expressions, Bagof expressions, Enforce expressions, Logical Expressions
 @subsection Setof expressions
@@ -1478,11 +1491,12 @@ will bind @code{?pairs} to a set of terms, e.g., @code{((pair rotor1
 fw2) (pair rotor2 fw3))} indicating pairs of UAVs with line of sight
 from the first to the second.
 
-@b{Note:} The semantics of @code{setof} are to @emph{fail} if the
+@b{Note 1:} The semantics of @code{setof} are to @emph{fail} if the
 @var{expr} is an unsatisfiable goal, rather than to succeed with
 @var{set-var} bound to @code{()}.
+Here success is interpreted as @emph{true} whereas failure is interpreted as @emph{false}.
 
-@b{Note:} Support for general terms as the first argument to
+@b{Note 2:} Support for general terms as the first argument to
 @code{setof} and @code{bagof} (@pxref{Bagof expressions}) is new in
 version 3.4 of @sysname{}.  Code that depends on it should use a
 corresponding version dependency qualifier in, e.g., ASDF (@code{(:version "shop3" "3.4")}).
@@ -1491,7 +1505,7 @@ corresponding version dependency qualifier in, e.g., ASDF (@code{(:version "shop
 @subsection Bagof expressions
 @anchor{#bagof-expressions}
 The syntax for @code{bagof} is the same as for @code{setof} (@pxref{Setof expressions}), but
-binds @emph{set-var} to a @emph{bag} of results, which may contain
+binds @var{set-var} to a @emph{bag} of results, which may contain
 duplicates, instead of a set.
 
 @node Logical Precondition, Axioms, Logical Expressions, The SHOP3 Formalism
@@ -1544,7 +1558,7 @@ precondition:
 
 This precondition will cause @sysname{} to consider bindings in decreasing
 (high to low) order of the value of @code{?d}. If the comparison
-function (@var{e}) is omitted, it defaults to @code{#'<}, indicating
+function @var{e} is omitted, it defaults to @kbd{#'<}, indicating
 increasing (low to high) order.
 
 @node Axioms, Task Atoms, Logical Precondition, The SHOP3 Formalism
@@ -1574,9 +1588,8 @@ domain descriptions by looking at traces of @sysname's behavior.
 
 @cindex short-circuit evaluation
 The intended meaning of an axiom is that @var{a} is true if
-@var{E@sub{1}} @math{\vee \cdots \vee} @var{E@sub{n}}, and the
-evaluation stops when, for @math{i=1,2,\ldots}, the first true
-@var{E@sub{i}} is encountered.
+@var{E@sub{1}} @math{\lor \cdots \lor} @var{E@sub{n}}, where the
+evaluation stops when the first true @var{E@sub{i}} is encountered.
 
 For example, the following axiom says that a location is in walking
 distance if the weather is good and the location is within two miles
@@ -1703,7 +1716,7 @@ body of the operator.
 
 @item
 The operator's
-@var{add-list} is a list for which each element may be any of following:
+@var{add-list} is a list in which each element may be any of the following:
 
 @itemize
 @item
@@ -1717,14 +1730,27 @@ an expression of the form @code{(forall @var{V} @var{E} @var{L})},
 where @var{V} is a list of variables in @var{E}, @var{E} is a logical
 expression, and @var{L} is a list of logical atoms.
 
-Such an expression can, for example, be used to implement PDDL's
-@emph{conditional effects}.
+The semantics are that for each tuple of values of @var{V} that
+satisfies @var{E}, the list @var{L} of atoms involving @var{V} will be
+added.  Note: the variables @var{V} must be @emph{bound} in
+@var{E}, in the @sysname{} sense (i.e. the 1st-order logic sense).
+E.g. we cannot add the atoms @code{holds 1}, ..., @code{holds 4} by
+
+@lisp
+(forall (?i) (and (eval (>= ?i 1)) (eval (<= ?i 4))) ((holds ?i))
+@end lisp
+
+because here @var{?i} is unbound in the @sysname{} sense.
+
+We finally note that a @code{forall} expression can, for example, be
+used to implement the equivalent of PDDL's @emph{conditional effects}.
+For readers familiar with PDDL, the @sysname{} @code{forall} operator
+combines together both PDDL's @code{forall} and its @code{when}.
 
 @end itemize
 
 @item
-The operator's @var{delete-list} is a list of logical atoms of the
-same form as the @var{add-list}.
+The operator's @var{delete-list} has the same form as its @var{add-list}.
 
 @item
 @var{cost-fn} (the operator's @strong{cost}) is a general Lisp expression. If
@@ -1732,8 +1758,8 @@ same form as the @var{add-list}.
 
 @end itemize
 
-Note that the components of an @code{:op} expression do @emph{not} need
-to be presented in any special order -- @code{:add}, @code{:delete},
+The components of an @code{:op} expression do @emph{not} need
+to be presented in any special order-- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
@@ -1806,10 +1832,11 @@ expression of the form
 @end lisp
 
 @noindent
-where @emph{a} is a logical atom. The purpose of a protection condition
-in the add list is to tell @sysname{} that it should not execute any operator
-that deletes @emph{a}. The purpose of a protection condition in the
-delete list is to cancel a previously added protection condition. For
+where @emph{a} is a logical atom. The purpose of a protection condition,
+@code{(:protection @var{a})}
+in the @code{add} list is to tell @sysname{} that going forward it should not plan any operator
+that deletes @var{a}, until that protection is deleted.. The purpose of a protection condition in the
+@code{delete} list is to cancel a previously added protection condition. For
 example, if we drive a delivery truck to a certain location in order to
 pick up a package, then we might not want to allow the truck to be moved
 away from that location until after we have picked up the package.@  To
@@ -2044,10 +2071,18 @@ warn when the domain @emph{domain-name} is already defined.
 
 @item
 A @code{:noset} argument. Should the dynamic variable @code{*domain*} be
-bound as a side-effect of evaluating the @code{defdomain} expression?Currently this defaults to @code{NIL}, to provide for
+bound as a side-effect of evaluating the @code{defdomain} expression?
+Currently this defaults to @code{NIL}, to provide for
 backward compatibility, but I would like to see this move to defaulting
 to @code{T}.  See discussion of @code{*domain*} below.
 @cindex domain :noset argument
+
+@item
+@ @code{:silently} argument.  If true, then do @emph{not} print a
+message when defining the domain. @sysname{} defaults to printing a
+message
+when any domain (or problem) is defined, which can be annoying when
+domains are programmatically generated.
 
 @end itemize
 
@@ -2740,7 +2775,7 @@ recursive queries will cause the theorem-prover to go away forever.
 @item
 @strong{Axioms vs. facts.}
 Since the null conjunct is always true, an axiom of the form @code{(:-
-a nil)} is equivalent to asserting the atom @var{a} as a basic
+@var{a} nil)} is equivalent to asserting the atom @var{a} as a basic
 fact. The difference is that the expression @code{(:- a nil)} is what
 one would put into the set of axioms for the problem domain, whereas
 the atom @var{a} is what one would put into a state description. Such
@@ -2934,7 +2969,7 @@ mgu's for @emph{d} and @emph{e} are equivalent.
 @subsection States and Satisfiers
 @anchor{#states-and-satisfiers}
 A @strong{state} is a list of ground atoms intended to represent some
-``state of the world''.  A conjunct @var{C} is a @strong{consequent} of a
+``state of the world''.  A conjunction @var{C} is a @strong{consequent} of a
 state @var{S} and an axiom list @var{X} if every logical expression
 @var{l} in @var{C} is a consequent of @var{S} and @var{X}. A logical
 expression @var{l} is a consequent of @var{S} and @var{X} if one of
@@ -3022,7 +3057,7 @@ strict generalization of @var{C} that is also a consequent of @var{S}
 and @var{X}.
 
 Let @var{S} be a state, @var{X} be an axiom list, and @var{C} be an
-ordinary conjunct. If there is a substitution @var{u} such that
+ordinary conjunction. If there is a substitution @var{u} such that
 @var{C@sup{u}} is a consequent of @var{S} and @var{X}, then we say
 that @var{S} and @var{X} @strong{satisfy} @var{C} and that @var{u}
 is the @strong{satisfier}. The satisfier @var{u} is a @strong{most
@@ -3037,17 +3072,22 @@ the ``walking distance'' axiom given earlier, and @var{S} is the state
  (distance home supermarket 2))
 @end lisp
 @noindent
-Then for the conjunct @code{((walking-distance ?y))}, there are two mgs's from
+Then for the conjunction @code{((walking-distance ?y))}, there are two mgs's from
 @var{S} and @var{X}: @code{((?y . convenience-store))} and @code{((?y .
 supermarket))}.
 
+@strong{Note:} Originally, SHOP literally used cons cells like
+ @code{(?y . convenience-store)} to represent variable
+ bindings. However, in @sysname{}, we use CL binding structures instead
+ of cons cells for efficiency and type-safety.
+
 Let @var{S} be a state, @var{X} be an axiom list, and @code{@var{C} =
-(:first @var{C'})} be a tagged conjunct. If @var{S} and @var{X} satisfy
+(:first @var{C'})} be a tagged conjunction. If @var{S} and @var{X} satisfy
 @var{C'}, then the mgs (most general satisfier) for @var{C} from
 @var{S} and @var{X} is the @emph{first} mgs for @var{C'} that would be
 found by a left-to-right depth-first search. For example, if @var{S}
 and @var{X} are as in the previous example, then for the tagged
-conjunct @code{(:first (walking-distance ?y))}, the mgs from @var{S}
+conjunction @code{(:first (walking-distance ?y))}, the mgs from @var{S}
 and @var{X} is @code{((?y . convenience-store))}.
 
 @node Formal Semantics, Key Functions in SHOP3, Internal Knowledge Structures, Internal Technical Information
@@ -3083,81 +3123,77 @@ discussed in many treatments of the PDDL specification. We hope to add
 an explanation later. See Chapter} @emph{7 for discussion of PDDL
 support in @sysname. [12 June 2018 -- rpg]}
 
-The intent of an operator is to specify that the task @emph{h} can be
-accomplished at a cost of @emph{c}, by modifying the current state of
-the world to remove every logical atom in @emph{D} and add every logical
-atom in @emph{A} if @emph{P} is satisfied in the current state. In order
+The intent of an operator is to specify that the task @var{h} can be
+accomplished at a cost of @var{c}, by modifying the current state of
+the world to remove every logical atom in @var{D} and add every logical
+atom in @var{A} if @var{P} is satisfied in the current state
+(if @var{P} is @emph{not} satisfied in the current state, operator
+insertion fails, and the planner must backtrack. In order
 to prevent plans from being ambiguous, there should be at most one
 operator for each primitive task symbol. @emph{Furthermore, whenever an
 action is inserted into a plan, it must be @strong{ground} -- there must
 be no unbound parameters in its task head. [Inserted 12 June 2018 based
 on discussions with Ugur -- rpg]}
 
-Let @emph{S} be a state, @emph{X} be the list of axioms, @emph{L} be the
-list of protected conditions, @emph{t} be a primitive task atom, and
-@emph{o} be a planning operator whose head, precondition, delete list,
-add list, and cost are @emph{h}, @emph{P}, @emph{D}, @emph{A}, and
-@emph{c}, respectively. Suppose that there is an mgu @emph{u} for
-@emph{t} and @emph{h}, such that @emph{h@sup{u}} is ground, that none of
-the ground atoms in @emph{D@sup{u}} are in the list of protected
-conditions, and @emph{P@sup{u}} is satisfied in S. Then we say that
-@emph{o@sup{u}} is @strong{applicable} to @emph{t}, and that
-@emph{h@sup{u}} is a @strong{simple plan} for @emph{t}. If @emph{S} is a
+Let @var{S} be a state, @var{X} be the list of axioms, @var{L} be the
+list of protected conditions, @var{t} be a primitive task atom, and
+@var{o} be a planning operator whose head, precondition, delete list,
+add list, and cost are @var{h}, @var{P}, @var{D}, @var{A}, and
+@var{c}, respectively. Suppose that there is an mgu @var{u} for
+@var{t} and @var{h}, such that @var{h@sup{u}} is ground, that none of
+the ground atoms in @var{D@sup{u}} are in the list of protected
+conditions, and @var{P@sup{u}} is satisfied in S. Then we say that
+@var{o@sup{u}} is @strong{applicable} to @var{t}, and that
+@var{h@sup{u}} is a @strong{simple plan} for @var{t}. If @var{S} is a
 state, then the state and the protection list produced by executing
-@emph{o@sup{u}} (or equivalently, @emph{h@sup{u}}) in @emph{S} and
-@emph{L} is the new state:
+@var{o@sup{u}} (or equivalently, @var{h@sup{u}}) in @var{S} and
+@var{L} is the new state:
 
-(@emph{S'},@emph{L'}) = result(@emph{S,L,h@sup{u}}) =
-result(@emph{S,L,o@sup{u}}) = (@emph{S - D@sup{u}}) U @emph{A@sup{u}.}
+(@var{S'},@var{L'}) = result(@var{S,L,h@sup{u}}) =
+result(@var{S,L,o@sup{u}}) = (@var{S - D@sup{u}}) U @var{A@sup{u}.}
 
 @noindent
-where @emph{S'} and @emph{L'} are obtained by modifying the current
+where @var{S'} and @var{L'} are obtained by modifying the current
 state of the world and the list of protected conditions as follows:
 
 @itemize
 @item
-remove every logical atom in @emph{D@sup{u}} from the current state;
+remove every logical atom in @var{D@sup{u}} from the current state;
 
 @item
-remove every protection condition in @emph{D@sup{u}} from the list of
+remove every protection condition in @var{D@sup{u}} from the list of
 protected conditions;
 
 @item
-for every expression (forall V Y Z) in @emph{D@sup{u}} and every
-satisfier @emph{v} such that @emph{S} and @emph{X} satisfy
-@emph{Y@sup{v}}, remove every logical atom in @emph{Z@sup{u}} from the
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{D@sup{u}} and every
+satisfier @var{v} such that @var{S} and @var{X} satisfy
+@var{Y@sup{v}}, remove every logical atom in @var{Z@sup{u}} from the
 current state;
 
 @item
-for every expression (forall V Y Z) in @emph{D@sup{u}} and every
-satisfier @emph{v} such that @emph{S} and @emph{X} satisfy
-@emph{Y@sup{v}},, remove every protection condition in @emph{Z@sup{u}}
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{D@sup{u}} and every
+satisfier @var{v} such that @var{S} and @var{X} satisfy
+@var{Y@sup{v}}, remove every protection condition in @var{Z@sup{u}}
 from the list of protected conditions;
 
 @item
-add every logical atom in @emph{A@sup{u}} to the current state;
+add every logical atom in @var{A@sup{u}} to the current state;
 
 @item
-add every protection condition in @emph{A@sup{u}} to the list of
+add every protection condition in @var{A@sup{u}} to the list of
 protected conditions;
 
 @item
-for every expression (forall V Y Z) in @emph{A@sup{u}} and every
-satisfier @emph{v} such that @emph{S} and @emph{X} satisfy
-@emph{Y@sup{v}}, add every logical atom in @emph{Z@sup{u}} to the
-current state;
-
-@item
-for every expression (forall V Y Z) in @emph{A@sup{u}} and every
-satisfier @emph{v} such that @emph{S} and @emph{X} satisfy
-@emph{Y@sup{v}}, add every protection condition in @emph{Z@sup{u}} to
+for every expression @code{(forall @var{V} @var{Y} @var{Z})} in @var{A@sup{u}} and every
+satisfier @var{v} such that @var{S} and @var{X} satisfy
+@var{Y@sup{v}}, add every protection condition in @var{Z@sup{u}} to
 the list of protected conditions.
 
 @end itemize
 
 Here is an example:
 
-@multitable {Result(@emph{S,h@sup{u}})result(@emph{S,o@sup{u}})} {(:operator (!set-money ?person ?old ?new)((has-money ?person ?old))((has-money ?person ?old))((has-money ?person ?new)))}
+@multitable {Result(@emph{S,h@sup{u}})} {(:operator (!set-money ?person ?old ?new)((has-money ?person ?old))((has-money ?person ?old))((has-money ?person ?new)))}
 @item
 @emph{S}
  @tab @code{((has-money john 40) (has-money mary 30))}
@@ -3191,17 +3227,16 @@ Here is an example:
 @emph{h@sup{u}}
  @tab @code{(!set-money john 40 35)}
 @item
-Result(@emph{S,h@sup{u}})
-
+result(@emph{S,h@sup{u}})
+ @tab @code{((has-money john 35) (has-money mary 30) )}
+@item
 result(@emph{S,o@sup{u}})
  @tab @code{((has-money john 35) (has-money mary 30) )}
-
-@code{((has-money john 35) (has-money mary 30) )}
 @end multitable
 
-Here is an example using the forall keyword
+Here is an example using the @code{forall} keyword
 
-@multitable {Result(@emph{S,h@sup{u}}) result(@emph{S,o@sup{u}})} {(:operator (!clear-locations)@ @  ((forall (?l) ((location ?l)(not (truck-at ?t ?l)))@  ((location ?l))))())}
+@multitable {result(@emph{S,h@sup{u}})} {(:operator (!clear-locations) @  ((forall (?l) ((location ?l)(not (truck-at ?t ?l)))@  ((location ?l))))())}
 @item
 @emph{S}
  @tab @code{((location l1) (location l2) (location l3) (truck-at truck1 l1))}
@@ -3236,12 +3271,12 @@ Here is an example using the forall keyword
 @end lisp
 
 @item
-@emph{h@sup{u}} =
+@emph{h@sup{u}}
  @tab @code{(!clear-locations)}
 @item
-Result(@emph{S,h@sup{u}})
- @tab @code{((location l1) (truck-at truck1 l1))}
- @item
+result(@emph{S,h@sup{u}})
+@tab @code{((location l1) (truck-at truck1 l1))}
+@item
 result(@emph{S,o@sup{u}})
 @tab
 @code{((location l1) (truck-at truck1 l1))}
@@ -3297,18 +3332,18 @@ t@sub{2} .. t@sub{n})}). Each task list @var{r} in @var{R} is called a
 @strong{simple reduction} of @var{t} by @var{m} in @var{S} and
 @var{X}. Here is an example:
 
-@multitable {@emph{call}((@emph{T@sup{u}})@emph{@sup{v}})} {(:method (transfer-money ?p1 ?p2 ?amount)((has-money ?p1 ?m1)(has-money ?p2 ?m2)(call >= ?m1 ?amount))(:ordered (:task !set-money ?p1 ?m1(call - ?m1 ?amount))(:task !set-money ?p2 ?m2(call + ?m2 ?amount))))}
+@multitable {@code{call}((@var{T@sup{u}})@var{@sup{v}})} {(:method (transfer-money ?p1 ?p2 ?amount)((has-money ?p1 ?m1)(has-money ?p2 ?m2)(call >= ?m1 ?amount))(:ordered (:task !set-money ?p1 ?m1(call - ?m1 ?amount))}
 @item
-@emph{S}
+@var{S}
  @tab @code{((has-money john 40) (has-money mary 30))}
 @item
-@emph{X}
+@var{X}
  @tab @code{nil}
 @item
-@emph{t}
+@var{t}
  @tab @code{(transfer-money john mary 5)}
 @item
-@emph{M }
+@var{M}
  @tab
 @lisp
  (:method (transfer-money ?p1 ?p2 ?amount)
@@ -3316,38 +3351,36 @@ t@sub{2} .. t@sub{n})}). Each task list @var{r} in @var{R} is called a
      (has-money ?p2 ?m2)
      (call >= ?m1 ?amount))
     (:ordered (:task !set-money ?p1 ?m1 (call - ?m1 ?amount))
-                   (:task !set-money ?p2 ?m2 (call + ?m2 ?amount))))
+              (:task !set-money ?p2 ?m2 (call + ?m2 ?amount))))
 @end lisp
 
 @item
-@emph{u}
+@var{u}
  @tab @code{((?p1 . john) (?p2 . mary) (?amount . 5))}
 @item
-@emph{h@sup{u}}
+@var{h@sup{u}}
  @tab @code{(transfer-money john mary 5)}
 @item
-@emph{C@sub{1}@sup{u}}
+@var{C@sub{1}@sup{u}}
  @tab
  @lisp
 ((has-money john ?m1)
  (has-money mary ?m2)
  (call >= ?m1 5))
 @end lisp
-
 @item
-@emph{T@sub{1}@sup{u}}
+@var{T@sub{1}@sup{u}}
  @tab
  @lisp
 (:ordered
      (:task !set-money john ?m1 (call - ?m1 5))
      (:task !set-money mary ?m2 (call + ?m2 5)))
 @end lisp
-
 @item
-@emph{v}
+@var{v}
  @tab @code{((?m1 . 40) (?m2 . 30))}
 @item
-(@emph{C@sub{1}@sup{u}})@emph{@sup{v}}
+(@var{C@sub{1}@sup{u}})@var{@sup{v}}
  @tab
  @lisp
 ((has-money john 40)
@@ -3356,7 +3389,7 @@ t@sub{2} .. t@sub{n})}). Each task list @var{r} in @var{R} is called a
 @end lisp
 
 @item
-(@emph{T@sup{u}})@emph{@sup{v}}
+(@var{T@sup{u}})@var{@sup{v}}
  @tab
  @lisp
 (:ordered
@@ -3364,7 +3397,7 @@ t@sub{2} .. t@sub{n})}). Each task list @var{r} in @var{R} is called a
      (:task !set-money mary 30 (call + 30 5)))
 @end lisp
 @item
-@emph{call}((@emph{T@sup{u}})@emph{@sup{v}})
+@code{call}((@var{T@sup{u}})@var{@sup{v}})
  @tab
  @lisp
 (:ordered
@@ -3378,87 +3411,84 @@ t@sub{2} .. t@sub{n})}). Each task list @var{r} in @var{R} is called a
 @subsection Semantics of Plans
 @anchor{#semantics-of-plans}
 Recall that a planning domain contains axioms, operators, and methods,
-and that a planning problem is a 4-tuple (@emph{S,M,L,D}), where
-@emph{S} is a state, @emph{M} is a task list, @emph{L} is a protection
-list, and @emph{D} is a domain representation.@  Let @emph{T} be the
-list of tasks in @emph{M} that have no predecessor (i.e., those tasks
-can be performed at this time if they are applicable).@ @  If @emph{t}
-is a task in @emph{T,} and @emph{S} is a state, then a
-@strong{reduction} of @emph{t} in @emph{S} and D with respect to
-@emph{M} and @emph{L} that results in a new planning problem
-(@emph{S',M',L',D)@ } is defined as follows:
+and that a planning problem is a 4-tuple (@var{S,M,L,D}), where
+@var{S} is a state, @var{M} is a task list, @var{L} is a protection
+list, and @var{D} is a domain representation.@  Let @var{T} be the
+list of tasks in @var{M} that have no predecessor (i.e., those tasks
+can be performed at this time if they are applicable).@ @  If @var{t}
+is a task in @var{T} and @var{S} is a state, then a
+@strong{reduction} of @var{t} in @var{S} and @var{D} with respect to
+@var{M} and @var{L} that results in a new planning problem
+(@var{S',M',L',D)} is defined as follows:
 
 @quotation
-@strong{if} @emph{t} is a primitive task, @strong{then}
+@strong{if} @var{t} is a primitive task @strong{then}
+@indentedblock
+(@var{S'}, @var{L'}) = result(@var{S,L,t})
 
-(@emph{S'}, @emph{L'}) = result(@emph{S,L,t});
+@var{M'} = the task list produced by removing @var{t} from @var{M}
+@end indentedblock
+@strong{else} @var{t} is a compound task @strong{then}
+@indentedblock
+(@var{S'}, @var{L'}) = (@var{S}, @var{L})
 
-@emph{M'} = the task list produced by removing @emph{t} from @emph{M}
+Suppose @var{m} is an applicable method to @var{t} in @var{S}, with
+unifier @var{u}, the active precondition @var{C@sub{i}} and the active
+tail @var{T@sub{i}}. Then
 
-@strong{else} @emph{t} is a compound task, @strong{then}
-
-@emph{S'} = @emph{S};
-
-@emph{L'} = @emph{L};
-
-Suppose @emph{m} is an applicable method to @emph{t} in @emph{S}, with
-unifier @emph{u,} the active precondition @emph{C@sub{i}} and the active
-tail @emph{T@sub{i}.}
-
-@emph{M' =} the task list produced by replace @emph{t} with
-@emph{T@sub{i}@sup{u}} in @emph{M}
-@end quotation
+@var{M'} = the task list produced by replacing @var{t} with
+@var{T@sub{i}@sup{u}} in @var{M}
+@end indentedblock
 @strong{endif}
+@end quotation
 
-If @emph{P} = (@emph{p}@sub{1} @emph{p}@sub{2} @dots{} @emph{p@sub{n}}) is a
-plan, then we say that @emph{P} @strong{solves} (@emph{S,M,L,D}), or
-equivalently, that @emph{P} achieves @emph{M} from @emph{S} in @emph{D}
-(we will omit the phrase "in @emph{D}" if the identity of @emph{D} is
+If @var{P} = (@var{p}@sub{1} @var{p}@sub{2} @dots{} @var{p@sub{n}}) is a
+plan, then we say that @var{P} @strong{solves} (@var{S,M,L,D}), or
+equivalently, that @var{P} achieves @var{M} from @var{S} in @var{D}
+(we will omit the phrase ``in @var{D}'' if the identity of @var{D} is
 obvious) in any of the following cases:
 
 @strong{Case 1}.
 
-both @emph{M} and @emph{P} are empty.
+both @var{M} and @var{P} are empty.
 
 @strong{Case 2}.
 
 @quotation
-@emph{T} = (@emph{t}@sub{1} @emph{t}@sub{2} @dots{} @emph{t@sub{k}}) is a
-list of tasks in @emph{M} that have no predecessor for which there is a
-task @emph{t}@sub{i} that has the @code{:immediate} keyword and is applicable
-to the current state @emph{S}.@  Let (@emph{S', M', L'}) =
-reduction(@emph{t@sub{i}, S, M, L}).@  We say @emph{P}
-@strong{solves}(@emph{S,M,L,D}) if either of the following is true.
+@var{T} = (@var{t}@sub{1} @var{t}@sub{2} @dots{} @var{t@sub{k}}) is a
+list of tasks in @var{M} that have no predecessor for which there is a
+task @var{t}@sub{i} that has the @code{:immediate} keyword and is applicable
+to the current state @var{S}.@  Let (@var{S', M', L'}) =
+reduction(@var{t@sub{i}, S, M, L}).@  We say @var{P}
+@strong{solves}(@var{S,M,L,D}) if either of the following is true.
 @end quotation
 @itemize
 @item
-@emph{t@sub{i}} is primitive and@  @emph{p@sub{1} = t@sub{i}} and
-(@emph{p@sub{2}@  p@sub{3} @dots{} p@sub{n}}) solves (@emph{S', M', L', D})
+@var{t@sub{i}} is primitive and@  @var{p@sub{1} = t@sub{i}} and
+(@var{p@sub{2}@  p@sub{3} @dots{} p@sub{n}}) solves (@var{S', M', L', D})
 
 @item
-@emph{t@sub{i}} is not primitive, and @emph{P} solves (@emph{S', M', L',
-D})
+@var{t@sub{i}} is not primitive, and @var{P} solves (@var{S', M', L', D})
 
 @end itemize
 
 @strong{Case 3.}
 
 @quotation
-@emph{T} = (@emph{t}@sub{1} @emph{t}@sub{2} @dots{} @emph{t@sub{k}}) is a
-list of tasks in @emph{M} that have no predecessor, where
-@emph{t}@sub{i} is a task in @emph{T} that's applicable to the current
-state @emph{S}.@  Let (@emph{S', M', L'}) = reduction(@emph{t@sub{i}, S,
-M, L}).@  We say @emph{P} @strong{solves} (@emph{S,M,L,D}) if either of
+@var{T} = (@var{t}@sub{1} @var{t}@sub{2} @dots{} @var{t@sub{k}}) is a
+list of tasks in @var{M} that have no predecessor, where
+@var{t}@sub{i} is a task in @var{T} that's applicable to the current
+state @var{S}.@  Let (@var{S', M', L'}) = reduction(@var{t@sub{i}, S,
+M, L}).@  We say @var{P} @strong{solves} (@var{S,M,L,D}) if either of
 the following is true.
 @end quotation
 @itemize
 @item
-@emph{t@sub{i}} is primitive and @emph{p@sub{1} = t@sub{i}} and
-(@emph{p@sub{2}@  p@sub{3} @dots{} p@sub{n}}) solves (@emph{S', M', L', D})
+@var{t@sub{i}} is primitive and @var{p@sub{1} = t@sub{i}} and
+(@var{p@sub{2}@  p@sub{3} @dots{} p@sub{n}}) solves (@var{S', M', L', D})
 
 @item
-@emph{t@sub{i}} is not primitive and @emph{P} solves (@emph{S', M', L',
-D})
+@var{t@sub{i}} is not primitive and @var{P} solves (@var{S', M', L', D})
 
 @end itemize
 
@@ -3478,7 +3508,7 @@ T
  @tab @code{((:task do-both op1 op2))}
 @item
 L
- @tab nil
+ @tab @code{nil}
 @item
 D
  @tab
@@ -3540,12 +3570,12 @@ This function is equivalent to (apply-substitution e (standardizer e)).
 
 @quotation
 This procedure returns an mgu for the expressions @emph{d} and @emph{e}
-if they are unifiable, and returns fail otherwise.
+if they are unifiable, and returns @code{fail} otherwise.
 @end quotation
 (find-satisfiers C S &optional just-one)
 
 @quotation
-If @emph{C} is a conjunct and @emph{S} is a state, then this function
+If @emph{C} is a conjunction and @emph{S} is a state, then this function
 returns a list of mgs's, one for every most general instance of @emph{C}
 that is satisfied by @emph{S}. If the optional argument @emph{just-one}
 is not nil, then the function returns the first mgs it finds, rather
@@ -3650,11 +3680,11 @@ find-satisfiers(conditions@sup{u}, S) is not equal to nil @strong{then}
 
 @strong{let} u be the unifier
 
-@strong{if} tail(x) contains a conjunct D such that
+@strong{if} tail(x) contains a conjunction D such that
 
 find-satisfiers(append(D@sup{u}, B@sup{u}), S) is not nil @strong{then}
 
-@strong{let} D be the first such conjunct
+@strong{let} D be the first such conjunction
 
 @strong{for} every v in find-satisfiers(append(D@sup{u}, B@sup{u}), S)
 
@@ -3686,7 +3716,7 @@ then this function does the following:
 @itemize
 @item
 If @emph{m} is not applicable to @emph{t} in @emph{S}, then the function
-returns the symbol @code{FAIL}.
+returns the symbol @code{fail}.
 
 @item
 If @emph{m} is applicable to @emph{t} in @emph{S} and @emph{C@sub{i}} is
@@ -3707,7 +3737,7 @@ If there is an mgu @emph{u} for @emph{o} and @emph{t}, then it returns
 the state produced by executing @emph{o@sup{u}} in @emph{S}.
 
 @item
-Otherwise, it returns FAIL.
+Otherwise, it returns @code{fail}.
 @end itemize
 
 @code{(find-plans problem &key which verbose pshort gc pp state plan-tree optimize-cost time-limit explanation)}
@@ -3732,9 +3762,9 @@ predecessors
 
 <@emph{r,R'}> = reduction (@emph{S},@emph{t})
 
-@strong{if} @emph{r} = FAIL @strong{then }
+@strong{if} @emph{r} = fail @strong{then }
 
-@strong{return} FAIL
+@strong{return} fail
 
 @strong{endif}
 
@@ -3760,12 +3790,12 @@ replacing @emph{t} with @emph{R'}
 
 @strong{if} @emph{t} is a primitive task @strong{then }
 
-@strong{return} <@emph{t},NIL>
+@strong{return} <@emph{t},nil>
 
 @strong{else if} no method is applicable to @emph{t} in @emph{S}
 @strong{then}
 
-@strong{return} <FAIL,NIL>
+@strong{return} <fail,nil>
 
 @strong{endif}
 
@@ -3779,9 +3809,9 @@ by @emph{m} from @emph{t}
 
 <@emph{r',R'}> = reduction (@emph{S},@emph{r})
 
-@strong{if} @emph{r'} = FAIL @strong{then }
+@strong{if} @emph{r'} = fail @strong{then }
 
-@strong{return} <FAIL,NIL>
+@strong{return} <fail,nil>
 
 @strong{endif}
 

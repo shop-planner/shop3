@@ -147,7 +147,7 @@ run the regression test suite, you may type:
 
 WARNING:  this may take a couple of days to finish!  This runs all the
 domain descriptions distributed with SHOP2, and checks the results
-against saved plans.  
+against saved plans.
 
 We would be particularly interested in getting bug reports (or, better
 yet, patches!) from people who have tried to use SHOP2 with lisps
@@ -161,7 +161,7 @@ This distribution contains the following files:
 shop2.lisp  The SHOP2 program; at the top of the program file
             is the SHOP2 license
 
-state-utils.lisp 
+state-utils.lisp
             Additional source code for SHOP2.  A first step in
 	    decomposing SHOP2 into mutliple files.
 
@@ -214,9 +214,3 @@ IPC-2000/       The logistics domain in the second international planning
 
 		[This directory should probably have been placed in the
                 examples.]
-
-
- 
-
-
-
