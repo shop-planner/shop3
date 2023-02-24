@@ -854,7 +854,7 @@ task keyword of TASK and LIBRARY-TASK are the same.")
 (defun randomize-list (list)
   "Return a copy of LIST with all its members in a random order."
   (if (cdr list)
-      (nshuffle-list list)
+      (nshuffle-list (copy-list list))
       list))
 
 (defun nshuffle-list (list)
