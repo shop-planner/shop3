@@ -38,3 +38,10 @@
 [submodule "jenkins/ext/cl-store"]
 	path = jenkins/ext/cl-store
 	url = https://github.com/skypher/cl-store.git
+[submodule "jenkins/ext/lparallel"]
+	path = jenkins/ext/lparallel
+	url = https://github.com/siftech/lparallel
+	branch = lparallel-2.8.4
+[submodule "jenkins/ext/bordeaux-threads"]
+	path = jenkins/ext/bordeaux-threads
+	url = https://github.com/sionescu/bordeaux-threads.git
