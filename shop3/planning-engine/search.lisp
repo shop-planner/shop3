@@ -383,7 +383,10 @@ of SHOP2."
    ;; bother recording the states, otherwise [2012/07/11:rpg]
    (when *collect-state*
      (push-last (copy-state state) *states-found*))
-   (push-last unifier *unifiers-found*)))
+    ;; we only need to keep the unifiers if we are building
+    ;; a plan tree. [2023/03/07:rpg]
+    (when *plan-tree*
+      (push-last unifier *unifiers-found*))))
 
 ;;; helpers for SEEK-PLANS-NULL [2005/01/07:rpg]
 (defun dump-previous-plans! ()
