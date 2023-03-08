@@ -353,14 +353,9 @@ if they do, or FAIL (*NOT* nil) if they don't."
          ;; should be a cons with car and cdr...
          (or (occurs variable-name (car expr)) (occurs variable-name (cdr expr))))))
 
-#+sbcl
-(defparameter *symbol-collections* (make-hash-table :weakness :value :test 'equal))
-
 (defun variable-gensym (&optional base-name)
   "Return a new variable, made from BASE-NAME"
   (let ((sym (if base-name (gensym (string base-name)) (gensym "?"))))
-    #+sbcl
-    (setf (gethash (symbol-name sym) *symbol-collections*) sym)
     (setf (get sym +variable-property-name+) t)
     (when (eql (aref (symbol-name sym) 1) #\_)
       (setf (get sym +anonymous-property-name+) t))
