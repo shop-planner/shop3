@@ -78,11 +78,14 @@
              #:variable-p
              #:anonymous-var-p
              #:uniquify-anonymous-variables
-             ;; this is defined as a type, so you can use typep with it. [2009/10/06:rpg]
+
+             ;; data types
+             ;; defined as types, so you can use typep [2023/02/28:rpg]
              #:shop-variable
+             #:binding-list
+
              #:set-variable-property
              #:variable-gensym
-
 
              ;; utilities used internally by shop
              #:shop-union

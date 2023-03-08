@@ -147,6 +147,12 @@ variable."
   (setf (documentation 'binding-val 'function) "Binding structure accessor")
   )
 
+(deftype binding-list ()
+  `(and alexandria:proper-list (satisfies all-elements-bindings)))
+
+(defun all-elements-bindings (lst)
+  (every #'binding-p lst))
+
 (defmethod make-load-form ((obj binding) &optional env)
   (declare (ignore env))
   `(make-binding (quote ,(binding-var obj)) (quote ,(binding-val obj))))
@@ -402,7 +408,7 @@ so that all anonymous variables are distinct."
   (labels ((iter (sexp)
              (cond ((null sexp) nil)
                    ((anonymous-var-p sexp)
-                    (shop2.unifier::variable-gensym sexp))
+                    (variable-gensym sexp))
                    ((consp sexp)
                     (cons
                      (iter (car sexp))
@@ -440,6 +446,7 @@ so that all anonymous variables are distinct."
 (defun anonymous-var-symbol-p (x)
   (let ((name (symbol-name x)))
     (and (> (length name) 1)
+         (eql (elt name 0) #\?)
          (eql (elt name 1) #\_))))
 
 (defun primitive-symbol-p (x)

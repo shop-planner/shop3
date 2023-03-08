@@ -114,8 +114,9 @@
              #:extract-variables #:shop-union
              #:get-alist
 
-             ;; defined lisp type
+             ;; defined lisp types
              #:shop-variable
+             #:binding-list
              ;; end of shop-unifier stuff
 
 
