@@ -166,6 +166,7 @@ minimal affected subtree."
 (defsystem :shop3/unifier
   :serial t
   :pathname "unification/"
+  :depends-on ("alexandria")
   :in-order-to ((test-op (test-op "shop3/test-unifier")))
   :version (:read-file-form "shop-version.lisp-expr")
   :components ((:file "package-unifier")
