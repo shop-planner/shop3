@@ -212,8 +212,11 @@
              #:shorter-plan
              #:internal-operator-p
 
-             ;; classes and methods to be specialized
+             ;; classes
              #:domain
+             #:problem
+
+             ;; generic functions to be specialized
              #:task-sorter
              #:sort-tasks
              #:sort-methods
