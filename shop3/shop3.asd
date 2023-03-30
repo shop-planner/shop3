@@ -71,7 +71,6 @@
     :depends-on ((:version "shop3/common" (:read-file-form "shop-version.lisp-expr"))
                  (:version "shop3/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
                  "trivial-garbage"
-                 "random-state"
                  :alexandria
                  :iterate)
     :version (:read-file-form "shop-version.lisp-expr")
@@ -159,7 +158,7 @@ minimal affected subtree."
 (defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop3/common" "shop3/unifier")
+    :depends-on ("shop3/common" "shop3/unifier" "random-state")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")
