@@ -256,7 +256,7 @@ shop3."
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
                  (enhanced-plan-tree . :shop3-user) ; 2
-                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
+                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 8
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
