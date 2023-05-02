@@ -356,6 +356,13 @@ IF-THEN-ELSE semantics in methods."))
          is intended for use with a particular domain definition."))
   (:documentation "An object representing a SHOP problem."))
 
+(defmethod make-load-form ((problem problem) &optional environment)
+  (declare (ignore environment))
+  (with-slots ((problem-name name) domain-name state-atoms tasks) problem
+    `(make-problem '(,problem-name ,@ (when domain-name `(:domain ,domain-name)))
+                   (quote ,state-atoms)
+                   (quote ,tasks))))
+
 (defmethod domain-name ((probspec symbol))
   (domain-name (find-problem probspec t)))
 
