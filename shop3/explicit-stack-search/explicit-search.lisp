@@ -575,16 +575,18 @@ trigger backtracking."
               partial-plan (cons prim-cost (cons planned-action (partial-plan state)))
               unifier unifier1)
         (incf cost prim-cost)
-        (when (and *enhanced-plan-tree* *record-dependencies-p*)
+        (when *enhanced-plan-tree*
           (let ((tree-node
                   (plan-tree:find-task-in-tree current-task (plan-tree-lookup state))))
             (push (record-node-expansion tree-node planned-action (plan-tree-lookup state))
                   (backtrack-stack state))
-            (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
-              (when depends
-                (setf (plan-tree:tree-node-dependencies tree-node) depends)
-                (make-add-dependencies :dependencies depends))))
-          (make-tag-map tag current-task planned-action))
+            (when  *record-dependencies-p*
+             (let ((depends (make-dependencies tree-node depends (plan-tree-lookup state))))
+               (when depends
+                 (setf (plan-tree:tree-node-dependencies tree-node) depends)
+                 (make-add-dependencies :dependencies depends)))
+             ;; tag map is only needed for dependency tracking. [2023/05/02:rpg]
+             (make-tag-map tag current-task planned-action))))
         (push (make-world-state-tag :tag tag) (backtrack-stack state))
         t))))
 
