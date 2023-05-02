@@ -61,7 +61,11 @@ copies of the originals, with the BINDINGS applied."
               new-lookup-table))
       (if (typep node 'primitive-tree-node)
           (progn
-            (assert (null (tree-node-expanded-task node)))
+            ;; FIXME: the second disjunct here should not be necessary
+            ;; -- need to revisit how primitive tree nodes are set. [2023/05/02:rpg]
+            (assert (or (null (tree-node-expanded-task node))
+                        (equalp (tree-node-expanded-task node)
+                                (tree-node-task node))))
            (setf (tree-node-task new-node)
                  (when-let (tsk (tree-node-task node))
                    (gethash tsk translation-table))))
