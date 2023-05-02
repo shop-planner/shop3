@@ -18,6 +18,7 @@
 (defpackage shop3-pddl-helpers
   (:use #:common-lisp #:iterate #:pddl-utils #:shop3)
   (:nicknames #:shop3.pddl.helpers #:shop2-pddl-helpers)
+  (:shadowing-import-from #:pddl-utils #:problem)
   (:shadowing-import-from #:shop3
                           #:domain-name #:make-problem #:domain
                           #:*validator-progname*)
