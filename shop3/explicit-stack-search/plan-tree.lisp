@@ -254,6 +254,24 @@ Particularly useful for structures, but could be generally applicable."
     (format str "Unordered CHILDREN: ~A"
             (complex-tree-node-children d))))
 
+;;;---------------------------------------------------------------------------
+;;; s-expression representation for plan tree
+;;;---------------------------------------------------------------------------
+
+(defgeneric plan-tree->sexp (plan-tree)
+  (:documentation "Translate PLAN-TREE into an s-expression for export to other systems.")
+  (:method ((top top-node))
+    (mapcar #'plan-tree->sexp (complex-tree-node-children top)))
+  (:method  ((cn complex-tree-node))
+     `(,(tree-node-task cn) . ,(mapcar #'plan-tree->sexp (complex-tree-node-children cn))))
+  (:method ((on ordered-tree-node))
+    (mapcar #'plan-tree->sexp (complex-tree-node-children on)))
+  (:method ((un unordered-tree-node))
+    (mapcar #'plan-tree->sexp (complex-tree-node-children un)))
+  (:method  ((pn primitive-tree-node))
+    (or (primitive-tree-node-task pn) (primitive-tree-node-expanded-task pn))))
+
+
 (defun find-plan-step (task plan-tree &optional plan-tree-hash)
   (labels ((tree-search (plan-tree)
              (etypecase plan-tree

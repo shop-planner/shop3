@@ -338,6 +338,7 @@
            #:find-tree-node-if
 
            #:copy-plan-tree
+           #:plan-tree->sexp
            ))
 
 (defpackage prepare-return-values
