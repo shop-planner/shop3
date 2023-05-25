@@ -117,6 +117,7 @@
        ;; this is for the original SHOP3 plan trees.
        (:module tree
         :pathname "planning-tree/"
+        :serial t
         :components ((:file "tree-accessors")
                      (:file "tree-reductions")))
        ;; FIXME: depends on explicit-stack-search only, I believe, but
@@ -253,8 +254,9 @@ shop3."
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
+                 (plan-tree-tests . :plan-tree-tests)  ; 13
                  )
-    :num-checks 1004
+    :num-checks 1017
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -276,25 +278,27 @@ shop3."
                           :components ((:file "protection-test-package")
                                        (:file "protection-test")))
                  (:module "shop-internal-tests"
-                          :pathname "tests/"
-                          :components ((:file "warns-check")
-                                       (:file "at-package" :depends-on ("warns-check"))
-                                       (:file "shop-internal-test-suite")
-                                       (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
-                                       (:module "umt-domain"
-                                          :components
-                                          ((:file "umt2-domain")
-                                           (:file "pfile1")
-                                           (:static-file "axioms.lisp")
-                                           (:static-file "operators.lisp")))
-                                       (:file "io-tests" :depends-on ("at-package" "umt-domain"))
-                                       (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
-                                       (:file "state-tests" :depends-on ("at-package" "umt-domain"))
-                                       (:file "misc" :depends-on ("at-package" "umt-domain"))
-                                       (:file "analogical-replay")
-                                       (:file "minimal-subtree-tests")
-                                       (:file "sort-by-tests")) ; 7 checks
-                          )
+                  :depends-on ("shop-logistic" "shop-test-helper")
+                  :pathname "tests/"
+                  :components ((:file "warns-check")
+                               (:file "at-package" :depends-on ("warns-check"))
+                               (:file "shop-internal-test-suite")
+                               (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
+                               (:module "umt-domain"
+                                :components
+                                ((:file "umt2-domain")
+                                 (:file "pfile1")
+                                 (:static-file "axioms.lisp")
+                                 (:static-file "operators.lisp")))
+                               (:file "io-tests" :depends-on ("at-package" "umt-domain"))
+                               (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
+                               (:file "state-tests" :depends-on ("at-package" "umt-domain"))
+                               (:file "misc" :depends-on ("at-package" "umt-domain"))
+                               (:file "analogical-replay")
+                               (:file "minimal-subtree-tests")
+                               (:file "sort-by-tests") ; 7 checks
+                               (:file "plan-tree-tests"))
+                  )
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
                           :pathname "examples/UMT2/"
