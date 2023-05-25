@@ -77,8 +77,15 @@
 (defparameter *plans-found* nil)    ; list of plans found so far
 (defparameter *plan-tree* nil)      ; whether to return the tree
 (defparameter *collect-state* nil)  ; whether to return the final states
-(defparameter *subtask-parents* nil) ; record of the parents in the tree
-(defparameter *operator-tasks* nil) ; record of the task atom for operators
+;; record of the parents in the tree
+(defvar *subtask-parents*)
+(declaim (type (hash-table *subtask-parents*)))
+
+;; table recording a map from operators to the tasks they were
+;; done for. This is necessary because the tasks are not identical to
+;; the operators (I'm not exactly sure of the difference). [2023/05/25:rpg]
+(defvar *operator-tasks*) ; record of the task atom for operators
+(declaim (type hash-table *operator-tasks*))
 (defparameter *optimize-cost* nil)  ; whether to optimize with branch and bound
 (defparameter *optimal-plan* 'fail) ; optimal plan found so far
 (defparameter *optimal-cost* 0)     ; cost of *optimal-plan*

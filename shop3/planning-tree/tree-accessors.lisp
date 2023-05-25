@@ -89,31 +89,38 @@ children that are internal operators (primitive nodes) removed."
                                       (tree-node-task-name child))
                          collect child)))
 
-(defun make-primitive-node (task cost position)
-  (list cost task position))
+;;; Introduced an OPERATOR-NODE structure as a way of better
+;;; understanding the TREE extraction code. [2004/02/05:rpg]
+(defstruct (primitive-node (:type list))
+  cost
+  operator
+  position)
+
+;; (defun make-primitive-node (task cost position)
+;;   (list cost task position))
 
 (defun primitive-node-p (tree-node)
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (and (= (length tree-node) 3)
        (numberp (first tree-node))
-       (numberp (third tree-node))
+       (integerp (third tree-node))
        (listp (second tree-node))))
 
-(defun primitive-node-task (tree-node)
-  "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
-Returns the corresponding TASK s-expression."
-  (second tree-node))
+;; (defun primitive-node-task (tree-node)
+;;   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
+;; Returns the corresponding TASK s-expression."
+;;   (second tree-node))
 
-(defun primitive-node-cost (tree-node)
-  "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
-Returns the corresponding cost (number)."
-  (first tree-node))
+;; (defun primitive-node-cost (tree-node)
+;;   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
+;; Returns the corresponding cost (number)."
+;;   (first tree-node))
 
-(defun primitive-node-position (tree-node)
-  "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
-Returns the corresponding plan sequence position (integer)."
-  (third tree-node))
+;; (defun primitive-node-position (tree-node)
+;;   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
+;; Returns the corresponding plan sequence position (integer)."
+;;   (third tree-node))
 
 
 (defun tree-node-task (tree-node)
@@ -148,7 +155,7 @@ Won't work properly on a true tree."
 ;;             (format t "Complex node head: ~S~%" (first node))
                (if node-fun
                 (if (funcall fun node) node
-                    (list-iter (cdr node)))   
+                    (list-iter (cdr node)))
                 (if (funcall fun (first node)) node
                     (list-iter (cdr node)))))))
     ;; top level i
@@ -219,7 +226,7 @@ satisfies FUN."
 
 (defun copy-plan-tree (tree)
   "Return a functional copy of TREE. By \"functional\" we mean satisfies the
-key tree property -- the primitive tasks are EQ to the primitive tasks in the 
+key tree property -- the primitive tasks are EQ to the primitive tasks in the
 plan sequence -- but the nodes will not be EQ to the nodes in the original
 tree (although they will be EQUALP."
   (labels ((list-iter (lst)
