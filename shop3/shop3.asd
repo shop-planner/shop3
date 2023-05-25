@@ -279,6 +279,7 @@ shop3."
                           :components ((:file "protection-test-package")
                                        (:file "protection-test")))
                  (:module "shop-internal-tests"
+                  :depends-on ("shop-logistic" "shop-test-helper")
                   :pathname "tests/"
                   :components ((:file "warns-check")
                                (:file "at-package" :depends-on ("warns-check"))
