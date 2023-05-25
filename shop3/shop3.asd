@@ -279,7 +279,6 @@ shop3."
                           :components ((:file "protection-test-package")
                                        (:file "protection-test")))
                  (:module "shop-internal-tests"
-                  :depends-on ("shop-logistic" "shop-test-helper")
                   :pathname "tests/"
                   :components ((:file "warns-check")
                                (:file "at-package" :depends-on ("warns-check"))
@@ -298,7 +297,7 @@ shop3."
                                (:file "analogical-replay")
                                (:file "minimal-subtree-tests")
                                (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests"))
+                               (:file "plan-tree-tests"))  ; 13 checks
                   )
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt" 
