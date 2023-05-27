@@ -91,9 +91,10 @@ children that are internal operators (primitive nodes) removed."
 
 ;;; Introduced an OPERATOR-NODE structure as a way of better
 ;;; understanding the TREE extraction code. [2004/02/05:rpg]
-(defstruct (primitive-node (:type list))
+(defstruct (primitive-node (:type list)
+                           (:constructor make-primitive-node (cost task position)))
   cost
-  operator
+  task
   position)
 
 ;; (defun make-primitive-node (task cost position)
@@ -126,7 +127,7 @@ the SHOP2 tree format as described in SHOP2?"
 (defun tree-node-task (tree-node)
   (cond ((primitive-node-p tree-node) (primitive-node-task tree-node))
         ((complex-node-p tree-node)   (complex-node-task tree-node))
-        (t (error "Not a valid SHOP2 tree node."))))
+        (t (error "Not a valid SHOP tree node."))))
 
 (defun tree-node-task-name (tree-node)
   (task-name (tree-node-task tree-node)))
@@ -162,8 +163,11 @@ Won't work properly on a true tree."
     (assert (every #'(lambda (x) (or (primitive-node-p x) (complex-node-p x))) tree-list))
     (list-iter tree-list)))
 
+(defun all-primitive-nodes (tree)
+  (find-all-primitive-nodes-if #'identity tree))
+
 (defun find-primitive-node-if (fun tree)
-  "Return a primitive node whose TASK satisfies FUN.  When
+  "Return A primitive node whose TASK satisfies FUN.  When
 the node is found, returns two values: the node itself, and its
 parent."
   (labels ((list-iter (lst parent)
@@ -188,6 +192,38 @@ parent."
         (node-iter tree nil)
         (list-iter tree nil))))
 
+
+(defun find-all-primitive-nodes-if (fun tree)
+  "Return a list of all primitive nodes whose TASK satisfies FUN."
+  (labels ((list-iter (lst acc)
+             (if (null lst)
+                 acc
+                 (let ((all-found
+                         (node-iter (first lst))))
+                   (if all-found
+                       ;; probably this could be NREVERSE...
+                       (reverse (list-iter (rest lst)
+                                           (append all-found acc)))
+                       (list-iter (rest lst) acc)))))
+           (node-iter (node)
+             ;; MUST check for primitive node first, because a primitive node may
+             ;; satisfy complex-node-p, which is not a good check
+             ;; and can't be, because of the format.
+             (cond ((primitive-node-p node)
+                    (when (funcall fun (primitive-node-task node))
+                      (list node)))
+                   ((complex-node-p node)
+                    (list-iter (complex-node-children node) nil))
+                   (t
+                    (error 'type-error :expected-type 'tree-node :datum node)))))
+    ;; Ugh: SHOP plan trees are really forests. Most of the time.
+    (sort
+     (if (complex-node-p tree)
+         (node-iter tree)
+         (list-iter tree nil))
+     #'<
+     :key #'(lambda (x) (primitive-node-position x)))))
+
 (defun find-primitive-node-for-task (task tree)
   "Return a primitive node whose task matches TASK. When
 the node is found, returns two values: the node itself, and its
@@ -209,6 +245,53 @@ satisfies FUN."
                  (list-iter (cdr node) new)))))
     ;; top level i
     (list-iter tree nil)))
+
+(defun tree-compare (tree1 tree2)
+  "Strictly for debugging use -- this very inefficient function pinpoints differences
+between trees."
+  (labels ((list-iter (lst1 lst2)
+             (cond ((null lst1)
+                    (if (null lst2)
+                        t
+                        (format t "~&NIL does not match ~s~%" lst2)))
+                   ((null lst2)
+                    (format t "~&~s does not match nil~%" lst1))
+                   ((equalp lst1 lst2)
+                    t)
+                   (t
+                    (let ((n1 (first lst1))
+                          (n2 (first lst2)))
+                      (and (node-iter n1 n2)
+                           (list-iter (rest lst1) (rest lst2)))))))
+           (node-iter (n1 n2)
+             (cond ((primitive-node-p n1)
+                    (cond ((primitive-node-p n2)
+                           (assert (not (equalp n1 n2)))
+                           (format t "~&Primitive nodes do not match:~%~T~S~%~T~S~%" n1 n2))))
+                   ((primitive-node-p n2)
+                    (format t "~&Node:~%~T~S~%~TDoes not match primitive node:~%~T~S~%"  n1 n2))
+                   (t (assert (and (complex-node-p n1)
+                                   (complex-node-p n2)))
+                      (unless (equalp (complex-node-task n1)
+                                      (complex-node-task n2))
+                        (format t "Mismatching complex-node tasks:~%~T~S~%~T~S~%"
+                                (complex-node-task n1)
+                                (complex-node-task n2))
+                        (return-from node-iter nil))
+                      (if (equalp (complex-node-children n1)
+                                  (complex-node-children n2))
+                          t
+                          (list-iter (complex-node-children n1)
+                                     (complex-node-children n2)))))))
+    (cond ((complex-node-p tree1)
+           (if (complex-node-p tree2)
+               (node-iter tree1 tree2)
+               (format t "~&Tree1 is a single complex node, but tree2 is not.~%")))
+          ((complex-node-p tree2)
+           (format t "~&Tree1 is a single complex node, but tree1 is not.~%"))
+          (t
+           (list-iter tree1 tree2)))))
+
 
 (defun find-complex-node-for-task (task-name tree)
   "Find a complex-node in the TREE whose task name is TASK."

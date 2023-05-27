@@ -269,6 +269,8 @@
              #:task-name
              #:find-complex-node-if
              #:find-primitive-node-if
+             #:all-primitive-nodes
+             #:find-all-primitive-nodes-if
              #:find-primitive-node-for-task
              #:find-all-complex-node-if
              #:find-complex-node-for-task

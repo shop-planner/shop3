@@ -332,6 +332,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                            internal-time-units-per-second))))))))
 
 (defun extract-trees (plans-found unifiers-found)
+  (when *before-extract-trees-hook*
+    (funcall *before-extract-trees-hook*))
   (assert (= (length plans-found) (length unifiers-found)))
   (loop for plan in plans-found
         for unifier in unifiers-found

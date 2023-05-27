@@ -58,7 +58,7 @@
 ;;; markings.
 
 
-(in-package :shop2)
+(in-package :shop)
 
 ;;; ------------------------------------------------------------------------
 ;;; :plan-tree option functions
@@ -85,7 +85,6 @@
   (declare (ignore unifier))
   (setf (gethash operator *operator-tasks*) task1))
 
-
 ; This function is executed at the end of the planning process to produce
 ;  the final tree.
 (defun extract-tree (plan)
@@ -97,18 +96,19 @@
      (mapcar #'(lambda (root-node) (extract-subtree root-node all-nodes))
              root-tasks))))
 
+;;; FIXME: Rewrite to use tree-node accessors
 (defun strip-tree-tags (tree)
   (cond
-   ((atom tree) tree)
-   ((and (eq (first tree) :task)
-         (eq (second tree) :immediate))
-    (rest (rest tree)))
-   ((eq (first tree) :task)
-    (rest tree))
-   (t
-    (cons
-     (strip-tree-tags (first tree))
-     (strip-tree-tags (rest tree))))))
+    ((atom tree) tree)
+    ((and (eq (first tree) :task)
+          (eq (second tree) :immediate))
+     (rest (rest tree)))
+    ((eq (first tree) :task)
+     (rest tree))
+    (t
+     (cons
+      (strip-tree-tags (first tree))
+      (strip-tree-tags (rest tree))))))
 
 (defun extract-subtree (root-node nodes)
   "Recursively build the subtree below ROOT-NODE from the
@@ -157,37 +157,49 @@ ROOT-NODE is a PRIMITIVE-NODE."
         (plan-tree-nodes extended-base-nodes)
         base-nodes)))
 
-(defun extend-plan-tree-nodes (base-nodes)
-  ;; this returns a list of nodes which are either operator-nodes
-  (if (null base-nodes) nil
-      (let* ((node-task (tree-node-task (first base-nodes)))
-             (task (or node-task (first base-nodes)))
+;;; returns a list of elements which are either PRIMITIVE-NODEs
+;;; or non-primitive tasks (which later will be transformed
+;;; into COMPLEX-NODEs)
+(defun extend-plan-tree-nodes (base-nodes &optional acc)
+  (if (null base-nodes) acc
+      (let* ((node  (first base-nodes))
+             (task (or (when (primitive-node-p  node)
+                         (operator-task node))
+                       node))
              ;; parent will be a task expression here, and not a node.
-             (parent (second (gethash task *subtask-parents*)))
-             (rest-nodes (cons (first base-nodes)
-                               (extend-plan-tree-nodes (rest base-nodes)))))
+             (parent (gethash task *subtask-parents*)))
+        ;; (format t "~&Node is ~A.~%Task is ~A.~%Parent is ~A." node task parent)
+        ;; (unless parent (break "Couldn't find parent node"))
         (if parent
-            (cons parent rest-nodes)
-            rest-nodes))))
+            (extend-plan-tree-nodes (rest base-nodes) (cons parent (cons node acc)))
+            (extend-plan-tree-nodes (rest base-nodes) (cons node acc))))))
 
 ;;; this function is necessary because the operators are not EQ
 ;;; to their tasks, which must be looked up in *operator-tasks*
 (defun operator-task (operator-node)
   ;; (declare (type primitive-node operator-node))
-  (gethash (primitive-node-operator operator-node) *operator-tasks*))
+  (or (gethash (primitive-node-task operator-node) *operator-tasks*)
+      (error "Unable to find the task for primitive tree node ~a"
+             operator-node)))
 
 (defun plan-operator-nodes (plan &optional (n 0) acc)
   "This function translates operator expressions into operator nodes,
 assembling together the operator, its the position in the plan and cost."
   (declare (optimize space speed))
   (if (null plan) (nreverse acc)
-      (plan-operator-nodes (rest (rest plan)) (1+ n)
-                           (cons
-                            (make-primitive-node
-                             :cost (second plan)
-                             :operator (first plan)
-                             :position n)
-                            acc))))
+      (progn
+        ;; make sure we have a plan instead of a SHORTER-PLAN
+        (assert (numberp (first (rest plan))))
+        (plan-operator-nodes
+         ;; skip the costs
+         (rest (rest plan))
+         (1+ n)
+         (cons
+          (make-primitive-node
+           (second plan)
+           (first plan)
+           n)
+          acc)))))
 
 (declaim (ftype (function () (values hash-table &optional))
                 make-subtask-parents-table

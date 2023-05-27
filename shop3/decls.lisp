@@ -79,7 +79,7 @@
 (defparameter *collect-state* nil)  ; whether to return the final states
 ;; record of the parents in the tree
 (defvar *subtask-parents*)
-(declaim (type (hash-table *subtask-parents*)))
+(declaim (type hash-table *subtask-parents*))
 
 ;; table recording a map from operators to the tasks they were
 ;; done for. This is necessary because the tasks are not identical to
@@ -138,6 +138,14 @@ guidance in heuristic search while planning.
 \(and should *not* be set by users\).  If T, the system will raise an error
 if methods do not have unique names.  If :WARN, the system will issue a warning.
 If NIL, the system will accept non-unique names quietly.")
+
+(defvar *before-extract-trees-hook* nil
+  "This function exists solely for instrumenting for testing purposes.
+If this is bound to a function, that function will be called at the top
+of EXTRACT-PLAN-TREES.  Generally should be NIL.")
+
+(declaim (type (or null (function () (values &optional)))
+               *before-extract-trees-hook*))
 
 
 ;;;------------------------------------------------------------------------------------------------------
