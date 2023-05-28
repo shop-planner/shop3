@@ -112,7 +112,7 @@
        (:module "looping-tasks"
                 :serial t
                 :components ((:file "loop-extensions")))
-       
+
 
        ;; this is for the original SHOP3 plan trees.
        (:module tree
@@ -255,9 +255,9 @@ shop3."
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
-                 (plan-tree-tests . :plan-tree-tests)  ; 13
+                 (plan-tree-tests . :plan-tree-tests)  ; 34
                  )
-    :num-checks 1017
+    :num-checks 1038
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -266,7 +266,7 @@ shop3."
     :components ((:module "shop-test-helper"
                           :pathname "tests/"
                           :components ((:file "common")))
-                          
+
                  (:file "silent-shop-test")
                  (:file "theorem-prover-tests"
                         :pathname "tests/theorem-prover-tests")
@@ -301,7 +301,7 @@ shop3."
                                (:file "plan-tree-tests"))  ; 13 checks
                   )
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
-                 (:module "shop-umt" 
+                 (:module "shop-umt"
                           :pathname "examples/UMT2/"
                           :components ((:file "UMT2")
                                        (:file "pfile1")
