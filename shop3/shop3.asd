@@ -256,8 +256,9 @@ shop3."
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
                  (plan-tree-tests . :plan-tree-tests)  ; 40
+                 (search-tests . :search-tests) ; 9
                  )
-    :num-checks 1044
+    :num-checks 1053
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

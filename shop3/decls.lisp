@@ -150,6 +150,10 @@ of EXTRACT-PLAN-TREES.  Generally should be NIL.")
 (declaim (type (or null (function () (values &optional)))
                *before-extract-trees-hook*))
 
+(defvar *old-depth* 0
+  "For iterative-deepening search, what was the maximum depth of the last iteration,
+so we can avoid duplicate plans.")
+
 
 ;;;------------------------------------------------------------------------------------------------------
 ;;; Compiler Directives and Macros
