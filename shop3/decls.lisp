@@ -85,7 +85,8 @@
 ;; done for. This is necessary because the tasks are not identical to
 ;; the operators (I'm not exactly sure of the difference). [2023/05/25:rpg]
 (defvar *operator-tasks*) ; record of the task atom for operators
-(declaim (type hash-table *operator-tasks*))
+(declaim (type hash-table *operator-tasks* *task-operator*))
+(defvar *task-operator*) ; inverse of *operator-tasks*
 (defparameter *optimize-cost* nil)  ; whether to optimize with branch and bound
 (defparameter *optimal-plan* 'fail) ; optimal plan found so far
 (defparameter *optimal-cost* 0)     ; cost of *optimal-plan*

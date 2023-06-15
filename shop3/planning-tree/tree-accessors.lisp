@@ -108,6 +108,9 @@ the SHOP2 tree format as described in SHOP2?"
        (integerp (third tree-node))
        (listp (second tree-node))))
 
+(deftype primitive-node ()
+  '(satisfies primitive-node-p))
+
 ;; (defun primitive-node-task (tree-node)
 ;;   "TREE-NODE must be a PRIMITIVE-NODE (cf. PRIMITIVE-NODE-P).
 ;; Returns the corresponding TASK s-expression."

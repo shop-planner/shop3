@@ -1,6 +1,8 @@
 (defpackage :plan-tree-tests
   (:shadow #:fail)
   (:import-from #:shop-user #:log-ran-15-1)
+  (:import-from #:shop #:*node-children-table* #:create-node-children-table #:*task-operator*
+                #:primitive-node-p #:operator-task)
   (:use :common-lisp :fiveam :shop3))
 
 (in-package plan-tree-tests)
@@ -642,7 +644,23 @@
       (is (equalp (alexandria:iota (length (shorter-plan plan)))
                   (mapcar #'(lambda (x) (primitive-node-position x)) nodes)))
       (is (equalp (shorter-plan plan)
-                  (mapcar #'(lambda (x) (primitive-node-task x)) nodes))))))
+                  (mapcar #'(lambda (x) (primitive-node-task x)) nodes)))
+      (is (= (length nodes) (length (remove-duplicates nodes)))))))
+
+;;; Are we correctly recording the plan tree information we need for each
+;;; primitive task?
+(test task-recording ; 1 check
+  (let ((shop::*before-extract-trees-hook*
+          #'(lambda ()
+              (let ((plan (first shop::*plans-found*)))
+                ;; are there the expected table entries for all of the primitives?
+                (is-true (every #'(lambda (x)
+                                    (let ((task (operator-task x)))
+                                      (and task
+                                           (eq (gethash task shop::*task-operator*)
+                                               x))))
+                                (shop::remove-costs plan)))))))
+    (find-plans 'log-ran-15-1 :plan-tree t :verbose 0)))
 
 (test plan-tree-primitives              ; 3 checks
   (multiple-value-bind (plans ignore trees)
@@ -651,15 +669,22 @@
     ;; *operator-tasks* tables. Need to think about how to get those
     ;; saved. [2023/05/26:rpg]
     (declare (ignore ignore))
-    (let* ((tree (first trees))
-           (root (first tree)))
-      (is-true (complex-node-p root))
-      (let ((all-primitive-nodes (shop::all-primitive-nodes tree)))
-        (is (= (length (shorter-plan (first plans)))
-               (length all-primitive-nodes)))
-        (is (equalp (shorter-plan (first plans))
-                    (mapcar #'(lambda (x) (primitive-node-task x))
-                            all-primitive-nodes)))))))
+    (is-true (first trees))
+    ;; easier to debug if we skip the vacuous tests.
+    (when (first trees)
+      (let* ((tree (first trees)))
+        (is-true (every #'(lambda (x) (complex-node-p x)) tree))
+        (let ((all-primitive-nodes (shop::all-primitive-nodes tree)))
+          (is-true (every #'primitive-node-p all-primitive-nodes))
+          (is (= (length (shorter-plan (first plans)))
+                 (length all-primitive-nodes)))
+          (is (equalp (loop :for (task cost . ignore) :on (first plans) :by #'cddr
+                        :as i :from 0
+                        :collecting (shop::make-primitive-node cost task i))
+                      all-primitive-nodes))
+          (is (equalp (shorter-plan (first plans))
+                      (mapcar #'(lambda (x) (primitive-node-task x))
+                              all-primitive-nodes))))))))
 
 
 (test plan-tree                         ; 27 checks
@@ -671,15 +696,15 @@
     (declare (ignore ignore))
     (let* ((tree (first trees))
            (root (first tree)))
+      (is-true (every #'complex-node-p tree))
       ;; expected-plan-tree is really a forest,
       ;; as is TREE.
       (loop for atree in +expected-plan-tree+
             as other = (find (complex-node-task atree)
-                           tree
-                           :key #'complex-node-task
-                           :test 'equalp)
+                             tree
+                             :key #'complex-node-task
+                             :test 'equalp)
             do (is (equalp atree other)))
-      (is-true (complex-node-p root))
       (is (equalp
            '(SHOP3-USER::OBJ-AT SHOP3-USER::PACKAGE1 SHOP3-USER::LOC8-1)
            (complex-node-task (first tree))))

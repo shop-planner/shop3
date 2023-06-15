@@ -166,6 +166,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*collect-state* (or collect-state plan-tree))
          (*subtask-parents* (make-subtask-parents-table))
          (*operator-tasks* (make-operator-task-table))
+         (*task-operator* (make-hash-table :test 'eq))
          (*optimize-cost* optimize-cost)
          (*expansions* 0) (*inferences* 0)
          ;; make this controllable [2004/08/06:rpg]

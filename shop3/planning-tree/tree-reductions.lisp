@@ -82,21 +82,29 @@
 ; This function records the task atom that produced a given operator
 ; instance.
 (defun record-operator (task1 operator unifier)
-  (declare (ignore unifier))
-  (setf (gethash operator *operator-tasks*) task1))
+  (declare (ignore unifier))            ; TASK1 and OPERATOR should be ground.
+  (setf (gethash operator *operator-tasks*) task1
+        (gethash task1 *task-operator*) operator))
 
 ; This function is executed at the end of the planning process to produce
 ;  the final tree.
+
+(defvar *node-children-table*)
+(declaim (type hash-table *node-children-table*))
+
 (defun extract-tree (plan)
   (strip-tree-tags
    (let* ((operator-nodes (plan-operator-nodes plan))
           ;; all-nodes are either operator-nodes or complex tasks
           (all-nodes (plan-tree-nodes operator-nodes))
-          (root-tasks (node-children nil all-nodes)))
+          (*node-children-table* (create-node-children-table *subtask-parents* all-nodes operator-nodes))
+          (root-tasks (node-children nil *node-children-table*)))
      (mapcar #'(lambda (root-node) (extract-subtree root-node all-nodes))
              root-tasks))))
 
 ;;; FIXME: Rewrite to use tree-node accessors
+;;; Also rewrite to destructively modify -- this will
+;;; do a lot of copying.
 (defun strip-tree-tags (tree)
   (cond
     ((atom tree) tree)
@@ -115,7 +123,7 @@
 set of possible nodes in NODES.  At the top level, it returns
 a COMPLEX-NODE if ROOT-NODE is a complex task or ROOT-NODE if
 ROOT-NODE is a PRIMITIVE-NODE."
-  (let ((children (node-children root-node nodes)))
+  (let ((children (node-children root-node *node-children-table*)))
     (cond
       (children
        (make-complex-node root-node
@@ -126,33 +134,81 @@ ROOT-NODE is a PRIMITIVE-NODE."
       (t
        (make-complex-node root-node nil)))))
 
-;;; this is done bottom-up because the children of NODE will change
-;;; depending on which PLAN we are considering (i.e., which call to
-;;; EXTRACT-TREE we are in." [2023/05/25:rpg]
-(defun node-children (node nodes)
+(defun node-children (node &optional (children-table *node-children-table*))
   "Find all the nodes in NODES whose parent is NODE."
-  (remove-if-not
-   #'(lambda (other-node)
-       (eq (gethash
-            ;; other-node willj either be a primitive-node or a
-            ;; task (and not a node at all). [2023/05/25:rpg]
-            (if (primitive-node-p other-node)
-                (operator-task other-node)
-                other-node)
-            *subtask-parents*)
-           node))
-   nodes))
+  (if (primitive-node-p node) nil
+   (gethash node children-table)))
+
+(declaim (ftype (function (hash-table list list) (values hash-table &optional))))
+(defun create-node-children-table (subtask-parents-table all-nodes all-primitive-nodes)
+  "Build and return a hash-table of nodes' children using the SUBTASK-PARENTS-TABLE
+and the lists of ALL-NODES and ALL-PRIMITIVE-NODES. Elements of ALL-NODES
+are *either* PRIMITIVE-NODEs or TASKS (lists) for complex tasks."
+  (let ((new-table (make-hash-table :test 'eq
+                                    :size (hash-table-size subtask-parents-table))))
+    (iter (for (task parent) in-hashtable subtask-parents-table)
+      ;; FIXME remove this if it pans out
+      (assert (not (primitive-node-p task)))
+      ;; need to translate the task back to operator...
+      (as decoded-task = (decode-task task all-primitive-nodes))
+      (declare (type (or null primitive-node cons) decoded-task))
+      (when decoded-task
+        ;; preserve order...
+        (alexandria:nconcf
+         (gethash parent new-table)
+         (list decoded-task))))
+    (setf (gethash nil new-table)
+          (all-roots all-nodes subtask-parents-table))
+    new-table))
+
+(defun all-roots (all-nodes subtask-parents-table)
+  "Return the list of nodes in ALL-NODES that don't have parents.
+Parents are determined by the contents of the SUBTASK-PARENTS-TABLE.
+As in many other places, the elements of ALL-NODES are either PRIMITIVE-NODEs
+or tasks (s-expressions)."
+  (iter (for task in all-nodes)
+    ;; add all the root nodes
+    (unless (or (primitive-node-p task) (gethash task subtask-parents-table))
+      (collect task))))
+
+(defun decode-task (task all-primitive-nodes)
+  "Take a TASK s-expression and return either: (a) NIL if it corresponds to a
+no-op ('SHOP::!!INOP), (b) the corresponding primitive-node, if the task is a
+primitive one, or (c) TASK itself."
+  (cond ((eq (task-name task) 'shop::!!INOP) ; unpleasant special case
+         nil)
+        ((shop::primitivep (task-name task))
+         (let* ((entry (or (gethash task *task-operator*)
+                           (error "Could not find operator for ~A in *TASK-OPERATOR* table"
+                                  task)))
+                (prim-node
+                  (find entry all-primitive-nodes
+                        :key #'(lambda (x) (primitive-node-task x))
+                        :test 'eq)))
+           (declare (type (or null primitive-node) prim-node))
+           (or
+            prim-node)
+           (error "Unable to find primitive node for task ~A" task)))
+        (t
+         task)))
 
 ;;; the name of this function is misleading, because it does *not*
 ;;; return a list of nodes. Instead it returns a list that contains
 ;;; primitive-nodes and tasks (corresponding to complex-nodes).
+;;; If the base-nodes are ordered, then the result should be ordered.
 (defun plan-tree-nodes (base-nodes)
   (let* ((extended-base-nodes
            (remove-duplicates
             (extend-plan-tree-nodes base-nodes)
             :from-end t))
          (new-base-nodes
-           (set-difference extended-base-nodes base-nodes)))
+           (iter (for n in extended-base-nodes)
+             (unless (member n base-nodes)
+               (return t))
+             (finally (return nil)))
+           ;; wasteful way to get a boolean
+           ;;(set-difference extended-base-nodes base-nodes)
+           ))
     (if new-base-nodes
         (plan-tree-nodes extended-base-nodes)
         base-nodes)))
@@ -161,7 +217,7 @@ ROOT-NODE is a PRIMITIVE-NODE."
 ;;; or non-primitive tasks (which later will be transformed
 ;;; into COMPLEX-NODEs)
 (defun extend-plan-tree-nodes (base-nodes &optional acc)
-  (if (null base-nodes) acc
+  (if (null base-nodes) (nreverse acc)  ; preserve order
       (let* ((node  (first base-nodes))
              (task (or (when (primitive-node-p  node)
                          (operator-task node))
@@ -176,6 +232,7 @@ ROOT-NODE is a PRIMITIVE-NODE."
 
 ;;; this function is necessary because the operators are not EQ
 ;;; to their tasks, which must be looked up in *operator-tasks*
+(declaim (ftype (function (primitive-node) (values list &optional))))
 (defun operator-task (operator-node)
   ;; (declare (type primitive-node operator-node))
   (or (gethash (primitive-node-task operator-node) *operator-tasks*)
