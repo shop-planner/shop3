@@ -756,7 +756,7 @@ Otherwise it returns FAIL."
               (add-atom-to-state a state depth (first head))))
 
           (cond
-            ((protection-ok state protections1 head)
+            ((protection-ok domain state protections1 head)
              (setq protections protections1))
             (t
              (retract-state-changes state statetag)

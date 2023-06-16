@@ -81,9 +81,8 @@ Otherwise it returns FAIL."
          (preconditions (operator-preconditions standardized-operator))
          (deletions (operator-deletions standardized-operator))
          (additions (operator-additions standardized-operator))
-         operator-unifier pre protections1 tempdel tempadd statetag
-         head-subbed dels-subbed adds-subbed pu pd unifier
-         cost-value cost-number)
+         operator-unifier protections1 tempdel tempadd statetag
+         pu pd cost-number)
     ;; added rudimentary arity-checking...
     (when (and (well-formed-listp head)
                (well-formed-listp task-body))
@@ -101,131 +100,153 @@ Otherwise it returns FAIL."
 
     (setq operator-unifier (unify head (apply-substitution task-body in-unifier)))
 
-    (cond
-      ;; SEEK-PLANS-PRIMITIVE-1 throws away all except the first value when
-      ;; there's a failure
-      ((eql operator-unifier 'fail) 'fail)
-      (t
-       (setf operator-unifier
-             (compose-substitutions operator-unifier in-unifier))
-       ;; first check the preconditions, if any
-       (when preconditions
-         (setq pre (apply-substitution preconditions operator-unifier))
-         (multiple-value-setq (pu pd)   ;precond unifier, dependencies
-           (find-satisfiers pre state :just-one t :domain domain))
-         (unless pu
-           (trace-print :operators (first head) state
-                        "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
-                        depth
-                        (first head)
-                        (apply-substitution task-body unifier)
-                        pre
-                        )
-           (return-from apply-operator 'fail)))
-       (setq unifier (compose-substitutions operator-unifier (car pu)))
-       (setq dels-subbed (apply-substitution deletions unifier))
-       (setq adds-subbed (apply-substitution additions unifier))
-       (setq head-subbed (apply-substitution head unifier))
+    ;; non-local exit
+    (when (eq operator-unifier 'fail)
+      (return-from apply-operator 'fail))
 
-       ;; at this point UNIFIER is bound to the results of unifying
-       ;; TASK-BODY with the operator's head and then retrieving
-       ;; the first set of bindings that satisfy the preconditions.
-       ;; we will return this unifier later on, assuming that
-       ;; bindings from add and delete lists should not be plugged
-       ;; in. [2004/01/20:rpg]
-       (when *explanation*
-         (setq head-subbed `(,@(cons (first head-subbed)
-                                     (mapcar #'list
-                                             (rest (second operator))
-                                             (rest head-subbed)))
-                             :explanation
-                             ,(shopthpr:explain-satisfier
-                               (apply-substitution preconditions unifier)
-                               state))))
-       (trace-print :operators (first head) state
-                    "~2%Depth ~s, applying operator ~s~%      task ~s~%       del ~s~%       add ~s"
-                    depth
-                    (first head)
-                    (apply-substitution task-body unifier)
-                    dels-subbed
-                    adds-subbed)
-       (setq cost-value
-             (eval (apply-substitution
-                    (operator-cost-fun standardized-operator) unifier)))
-       (setq cost-number (if (numberp cost-value) cost-value 1))
-       ;; process DELETE list
-       (dolist (d dels-subbed)
-         (unless (eql 'fail d)
-           (if (eql (car d) 'forall)
-               (let ((bounds (third d)) (dels (fourth d)) mgu2 tempd)
-                 (setq mgu2 (shopthpr:find-satisfiers bounds state
-                                                      :domain domain))
-                 (dolist (m2 mgu2)
-                   (setq tempd (apply-substitution dels m2))
-                   (dolist (d1 tempd)
-                     (setq tempdel
-                           (shop-union (list d1) tempdel :test #'equal)))))
-               (setq tempdel (shop-union (list d) tempdel :test #'equal)))))
-       ;; process ADD list
-       (dolist (a adds-subbed)
-         (unless (eql 'fail a)
-           (if (eql (car a) 'forall)
-               (let ((bounds (third a)) (adds (fourth a)) mgu2 tempa)
-                 (setq mgu2 (shopthpr:find-satisfiers bounds state
-                                                      :domain domain))
-                 (dolist (m2 mgu2)
-                   (setq tempa (apply-substitution adds m2))
-                   (dolist (a1 tempa)
-                     (setq tempadd
-                           (shop-union (list a1) tempadd :test #'equal)))))
-               (setq tempadd (shop-union (list a) tempadd :test #'equal)))))
+    (setf operator-unifier
+          (compose-substitutions operator-unifier in-unifier))
+    ;; first check the preconditions, if any
+    (when preconditions
+      (let ((pre (apply-substitution preconditions operator-unifier)))
+        (multiple-value-setq (pu pd)   ;precond unifier, dependencies
+          (find-satisfiers pre state :just-one t :domain domain))
+        (unless pu
+          (trace-print :operators (first head) state
+                       "~2%Depth ~s, inapplicable operator ~s~%     task ~s.~%     Precondition failed: ~s.~%"
+                       depth
+                       (first head)
+                       (apply-substitution task-body operator-unifier)
+                       pre)
+          ;; non-local exit
+          (return-from apply-operator 'fail))))
+    (let* ((unifier (compose-substitutions operator-unifier (car pu)))
+           (dels-subbed (apply-substitution deletions unifier))
+           (adds-subbed (apply-substitution additions unifier))
+           (head-subbed (apply-substitution head unifier)))
 
-       (setq protections1 protections)
-       (setq statetag (tag-state state))
-       ;; process PROTECTIONS generated by this operator
-       (dolist (d tempdel)
-         (if (eql (car d) :protection)
-             (setq protections1
-                   (delete-protection
-                    protections1 (second d) depth (first head) state))
-             (delete-atom-from-state d state depth (first head))))
+      ;; at this point UNIFIER is bound to the results of unifying
+      ;; TASK-BODY with the operator's head and then retrieving
+      ;; the first set of bindings that satisfy the preconditions.
+      ;; we will return this unifier later on, assuming that
+      ;; bindings from add and delete lists should not be plugged
+      ;; in. [2004/01/20:rpg]
+      (when *explanation*
+        (setq head-subbed `(,@(cons (first head-subbed)
+                                    (mapcar #'list
+                                            (rest (second operator))
+                                            (rest head-subbed)))
+                            :explanation
+                            ,(shopthpr:explain-satisfier
+                              (apply-substitution preconditions unifier)
+                              state))))
+      (trace-print :operators (first head) state
+                   "~2%Depth ~s, applying operator ~s~%      task ~s~%       del ~s~%       add ~s"
+                   depth
+                   (first head)
+                   (apply-substitution task-body unifier)
+                   dels-subbed
+                   adds-subbed)
+      (let ((cost-value
+              (eval (apply-substitution
+                     (operator-cost-fun standardized-operator) unifier))))
+        (setq cost-number (if (numberp cost-value) cost-value 1)))
+      ;; process DELETE list
+      (setf tempdel (process-delete-list domain dels-subbed state))
 
-       (dolist (a tempadd)
-         (unless (eql (car a) :protection)
-           ;; added this error-checking.  I can't think of a case where
-           ;; it's ok to add a non-ground literal to the
-           ;; state. [2004/02/17:rpg]
-           ;; the above check should probably be moved to
-           ;; add-atom-to-state... [2008/02/07:rpg
-           (unless (groundp a)
-             (error "Attempting to add non-ground literal ~S to state."
-                    a))
-           (add-atom-to-state a state depth (first head))))
+      ;; process ADD list
+      (setf tempadd (process-add-list domain adds-subbed state))
 
-       (if (let ((*domain* domain))
-             (protection-ok state protections1 head))
-           (setq protections protections1)
-           (progn
-             (retract-state-changes state statetag)
-             (return-from apply-operator (values 'fail 'fail protections 0))))
+      (setq statetag (tag-state state))
 
-       (dolist (a tempadd)
-         (when (eql (first a) :protection)
-           (unless (let ((*record-dependencies-p* nil))(find-satisfiers (list (second a)) state :just-one t :domain domain))
-             (error "Adding a protection ~A that is violated in state." a))
-           (setq protections
-                 (add-protection protections (second a)
-                                 depth (first head) state))))
+      ;; process PROTECTIONS generated by this operator
+      ;; unlike the above two functions, which just compute what to add and what to delete,
+      ;; this actually removes the protections from the state.
+      (setf protections1 (delete-protections tempdel protections state depth head))
 
-       (trace-print :operators operator state "~&Operator successfully applied.")
+      (dolist (a tempadd)
+        (unless (eql (car a) :protection)
+          ;; added this error-checking.  I can't think of a case where
+          ;; it's ok to add a non-ground literal to the
+          ;; state. [2004/02/17:rpg]
+          ;; the above check should probably be moved to
+          ;; add-atom-to-state... [2008/02/07:rpg
+          (unless (groundp a)
+            (error "Attempting to add non-ground literal ~S to state."
+                   a))
+          (add-atom-to-state a state depth (first head))))
 
-       (values head-subbed statetag
-               protections cost-number
-               unifier
-               ;; FIXME: I don't recall why we return only the first
-               ;; of the precondition dependencies.  Figure out and
-               ;; comment
-               (first pd))))))
+      (if (protection-ok domain state protections1 head)
+          (setq protections protections1)
+          (progn
+            (retract-state-changes state statetag)
+            (return-from apply-operator 'fail)))
+
+      (dolist (a tempadd)
+        (when (eql (first a) :protection)
+          (unless (let ((*record-dependencies-p* nil))
+                    (find-satisfiers (list (second a)) state :just-one t :domain domain))
+            (error "Adding a protection ~A that is violated in state." a))
+          (setq protections
+                (add-protection protections (second a)
+                                depth (first head) state))))
+
+      (trace-print :operators operator state "~&Operator successfully applied.")
+
+      (values head-subbed statetag
+              protections cost-number
+              unifier
+              ;; FIXME: I don't recall why we return only the first
+              ;; of the precondition dependencies.  Figure out and
+              ;; comment
+              (first pd)))))
+
+
+;;; Based on DOMAIN, process the set of deleted atoms (DELS), and
+;;; return a list of atoms to be deleted.
+;;; The primary purpose of this function is to process conditional effects
+;;; in DELS.
+(defun process-delete-list (domain dels state)
+  (let (tempdel)
+    (dolist (d dels)
+      (unless (eql 'fail d)
+        (if (eql (car d) 'forall)
+            (let ((bounds (third d)) (dels (fourth d)) mgu2 tempd)
+              (setq mgu2 (shopthpr:find-satisfiers bounds state
+                                                   :domain domain))
+              (dolist (m2 mgu2)
+                (setq tempd (apply-substitution dels m2))
+                (dolist (d1 tempd)
+                  (setq tempdel
+                        (shop-union (list d1) tempdel :test #'equal)))))
+            (setq tempdel (shop-union (list d) tempdel :test #'equal)))))
+    tempdel))
+
+(defun process-add-list (domain adds state)
+  (let (tempadd)
+    (dolist (a adds)
+      (unless (eql 'fail a)
+        (if (eql (car a) 'forall)
+            (let ((bounds (third a)) (adds (fourth a)) mgu2 tempa)
+              (setq mgu2 (shopthpr:find-satisfiers bounds state
+                                                   :domain domain))
+              (dolist (m2 mgu2)
+                (setq tempa (apply-substitution adds m2))
+                (dolist (a1 tempa)
+                  (setq tempadd
+                        (shop-union (list a1) tempadd :test #'equal)))))
+            (setq tempadd (shop-union (list a) tempadd :test #'equal)))))
+    tempadd))
+
+(defun delete-protections (dels protections state depth operator)
+  (let ((protections1 protections))
+    (dolist (d dels)
+      (if (eql (car d) :protection)
+          (setq protections1
+                (delete-protection
+                 protections1 (second d) depth (first operator) state))
+          (delete-atom-from-state d state depth (first operator))))
+    protections1))
 
 (defun well-formed-listp (l)
   (null (cdr (last l))))
