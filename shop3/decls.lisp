@@ -440,6 +440,8 @@ structure could be removed, and a true struct could be used instead."
    "Return a list of all the SHOP methods for TASK-NAME in DOMAIN.")
   (:method ((domain domain) (task-name symbol))
     (gethash task-name (domain-methods domain)))
+  (:method ((domain symbol) (task-name t))
+    (methods (find-domain domain) task-name))
   (:method :around (domain task-name)
     (declare (ignorable domain task-name))
     (let ((methods (call-next-method)))
