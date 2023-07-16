@@ -65,12 +65,16 @@
 ;;; ------------------------------------------------------------------------
 
 ; This function records the parents of each subtask in a reduction.
-(defun record-reduction (task1 reduction unifier)
+(defun record-reduction (task1 reduction unifier &optional method-label)
   (declare (ignore unifier))
   (let ((all-subtasks (extract-subtasks reduction)))
     (iter (for subtask in all-subtasks)
       (setf (gethash subtask *subtask-parents*)
-            task1))))
+            task1)))
+    (when method-label
+      (alexandria:nconcf *reduction-labels*
+                         (mapcar #'(lambda (subtask) (cons subtask method-label))
+                                 all-subtasks))))
 
 (defun extract-subtasks (reduction)
   (cond
@@ -135,9 +139,12 @@ ROOT-NODE is a PRIMITIVE-NODE."
   (let ((children (node-children root-node *node-children-table*)))
     (cond
       (children
-       (make-complex-node root-node
-                          (mapcar #'(lambda (child) (extract-subtree child nodes))
-                                  children)))
+       (let ((label (alexandria:assoc-value *reduction-labels* (first children))))
+          (make-complex-node root-node
+                             (mapcar #'(lambda (child) (extract-subtree child nodes))
+                                     children)
+                             :reduction-label label))
+        root-node)
       ((primitive-node-p root-node)
        root-node)
       (t
@@ -243,6 +250,14 @@ expanded -- if it is part of a failed search branch then  or (c) TASK itself."
             (extend-plan-tree-nodes (rest base-nodes) (cons parent (cons node acc)))
             (extend-plan-tree-nodes (rest base-nodes) (cons node acc))))))
 
+;;; Introduced an OPERATOR-NODE structure as a way of better
+;;; understanding the TREE extraction code. [2004/02/05:rpg]
+(defstruct (operator-node (:type list))
+  cost
+  operator
+  position)
+
+;;; I think OPERATOR-TASK here actually applies to an operator NODE...
 ;;; this function is necessary because the operators are not EQ
 ;;; to their tasks, which must be looked up in *operator-tasks*
 (declaim (ftype (function (primitive-node) (values list &optional))

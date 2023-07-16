@@ -173,6 +173,17 @@ minimal affected subtree."
                (:file "tracer")
                (:file "unify")))
 
+;;;---------------------------------------------------------------------------
+;;; Extensions
+;;;---------------------------------------------------------------------------
+
+(defsystem "shop3/pddl-helpers"
+    :depends-on ("shop3" "pddl-utils")
+  :pathname "pddl/"
+  :serial t                             ; pddl-helpers contains defpackage
+  :components ((:file "pddl-helpers")
+               (:file "validate-repairs")))
+
 
 (defsystem :shop3/plan-grapher
   :depends-on ("shop3" "cl-dot")
@@ -183,12 +194,7 @@ minimal affected subtree."
                (:file "graph-plan-tree"))
   )
 
-(defsystem "shop3/pddl-helpers"
-    :depends-on ("shop3" "pddl-utils")
-  :pathname "pddl/"
-  :serial t                             ; pddl-helpers contains defpackage
-  :components ((:file "pddl-helpers")
-               (:file "validate-repairs")))
+
 
 
 ;;;---------------------------------------------------------------------------
