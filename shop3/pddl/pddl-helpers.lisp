@@ -21,6 +21,7 @@
   (:shadowing-import-from #:pddl-utils #:problem)
   (:shadowing-import-from #:shop3
                           #:domain-name #:make-problem #:domain
+                          #:problem
                           #:*validator-progname*)
   (:shadow #:problem-name)
   (:export #:typed-object-list->facts
