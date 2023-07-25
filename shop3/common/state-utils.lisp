@@ -629,12 +629,14 @@ using MAKE-INITIAL-STATE.")
     H2))
 
 (defun prop-sorter (p1 p2)
+  "Function that can be used inside CL:SORT to sort SHOP literals alphabetically
+for easier human inspection."
   (flet ((elem< (p1 p2)
            (cond ((numberp p1)
                   (if (numberp p2)
                       (< p1 p2)
                       t))
-                 ((numberp p2)            ;only p2 is a number
+                 ((numberp p2)          ;only p2 is a number
                   nil)
                  ((symbolp p1)
                   (if (symbolp p2)
