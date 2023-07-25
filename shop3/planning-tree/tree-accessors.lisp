@@ -54,28 +54,16 @@
 ;;; markings.
 (in-package :shop)
 
+(defstruct (complex-node (:type list)
+                         (:constructor make-complex-node (task children)))
+  task
+  children)
+
 (defun complex-node-p (tree-node)
   "Is TREE-NODE a representation of a complex node (i.e., not an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (and (listp (first tree-node))
        (symbolp (first (first tree-node)))))
-
-(defun complex-node-task (tree-node)
-  "TREE-NODE must be a COMPLEX-NODE (cf. COMPLEX-NODE-P).
-Returns the corresponding TASK s-expression."
-  (first tree-node))
-
-(defun complex-node-children (tree-node)
-  "TREE-NODE must be a COMPLEX-NODE (cf. COMPLEX-NODE-P).
-Returns its children."
-  (rest tree-node))
-
-(defun (setf complex-node-children) (value tree-node)
-  (assert (complex-node-p tree-node))
-  (setf (cdr tree-node) value))
-
-(defun make-complex-node (task children)
-  (cons task children))
 
 (defun remove-internal-operators (complex-node)
   "Returns a new complex-node like the original, but with any
@@ -131,6 +119,14 @@ the SHOP2 tree format as described in SHOP2?"
   (cond ((primitive-node-p tree-node) (primitive-node-task tree-node))
         ((complex-node-p tree-node)   (complex-node-task tree-node))
         (t (error "Not a valid SHOP tree node."))))
+
+(defsetf tree-node-task (tree-node) (value)
+  `(etypecase ,tree-node
+    (primitive-node
+     (setf (primitive-node-task ,tree-node) ,value))
+    (complex-node
+     (setf (complex-node-task ,tree-node) ,value))))
+
 
 (defun tree-node-task-name (tree-node)
   (task-name (tree-node-task tree-node)))

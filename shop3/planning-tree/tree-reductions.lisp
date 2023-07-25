@@ -79,10 +79,10 @@
    (t (append (extract-subtasks (first reduction))
               (extract-subtasks (rest reduction))))))
 
-; This function records the task atom that produced a given operator
-; instance.
-(defun record-operator (task1 operator unifier)
-  (declare (ignore unifier))            ; TASK1 and OPERATOR should be ground.
+;;; This function records the task atom that produced a given operator
+;;; instance.
+;;; note that TASK1 and OPERATOR should be ground.
+(defun record-operator (task1 operator)
   (setf (gethash operator *operator-tasks*) task1
         (gethash task1 *task-operator*) operator))
 
@@ -102,21 +102,30 @@
      (mapcar #'(lambda (root-node) (extract-subtree root-node all-nodes))
              root-tasks))))
 
-;;; FIXME: Rewrite to use tree-node accessors
-;;; Also rewrite to destructively modify -- this will
-;;; do a lot of copying.
 (defun strip-tree-tags (tree)
-  (cond
-    ((atom tree) tree)
-    ((and (eq (first tree) :task)
-          (eq (second tree) :immediate))
-     (rest (rest tree)))
-    ((eq (first tree) :task)
-     (rest tree))
-    (t
-     (cons
-      (strip-tree-tags (first tree))
-      (strip-tree-tags (rest tree))))))
+  "Return TREE -- which should be composed of TREE-NODEs
+with all the task keywords (:TASK and :IMMEDIATE) stripped out.
+   Note that because SHOP plan \"trees\" are sometimes forests,
+we check for that case at the top."
+  (labels ((strip-tags (sexp)
+           (cond ((and (eq (first sexp) :task)
+                       (eq (second sexp) :immediate))
+                  (rest (rest sexp)))
+                 ((eq (first sexp) :task)
+                  (rest sexp))
+                 (t sexp)))
+           (strip-one (tree)
+             (setf (tree-node-task tree) (strip-tags (tree-node-task tree)))
+             (etypecase tree
+               (primitive-node
+                t)
+               (complex-node
+                (mapc #'strip-one (complex-node-children tree))))
+             tree))
+    ;; there's a chance the tree could be a forest...
+    (if (typep tree 'tree-node)
+        (strip-one tree)
+        (mapcar #'strip-one tree))))
 
 (defun extract-subtree (root-node nodes)
   "Recursively build the subtree below ROOT-NODE from the
@@ -179,7 +188,7 @@ primitive one, or (c) TASK itself."
          nil)
         ((shop::primitivep (task-name task))
          (let* ((entry (or (gethash task *task-operator*)
-                           (error "Could not find operator for ~A in *TASK-OPERATOR* table"
+                           (error "Could not find operator for ~s in *TASK-OPERATOR* table"
                                   task)))
                 (prim-node
                   (find entry all-primitive-nodes
@@ -187,8 +196,8 @@ primitive one, or (c) TASK itself."
                         :test 'eq)))
            (declare (type (or null primitive-node) prim-node))
            (or
-            prim-node)
-           (error "Unable to find primitive node for task ~A" task)))
+            prim-node
+            (error "Unable to find primitive node for task ~s" task))))
         (t
          task)))
 
