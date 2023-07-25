@@ -562,7 +562,7 @@ could be :TASK, could be modified by :IMMEDIATE, etc."
     (unless (car L1)
      ;;;If top-task list is empty just return results of find-next-main-list
       (setq L1 (cdr L1)))
-    (return-from delete-task-top-list (values L1 tempML))))
+    (values L1 tempML)))
 
 ;;; copy-task-tree is like copy-tree except that anything starting with a :task
 ;;; is simply inserted rather than copied.  The motivation here is to allow
