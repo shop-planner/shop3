@@ -86,12 +86,12 @@
   (setf (gethash operator *operator-tasks*) task1
         (gethash task1 *task-operator*) operator))
 
-; This function is executed at the end of the planning process to produce
-;  the final tree.
 
 (defvar *node-children-table*)
 (declaim (type hash-table *node-children-table*))
 
+;;; This function is executed at the end of the planning process to produce
+;;;  the final tree.
 (defun extract-tree (plan)
   (strip-tree-tags
    (let* ((operator-nodes (plan-operator-nodes plan))
@@ -197,7 +197,7 @@ primitive one, or (c) TASK itself."
            (declare (type (or null primitive-node) prim-node))
            (or
             prim-node
-            (error "Unable to find primitive node for task ~s" task))))
+            (error "Unable to find primitive node for task ~S" task))))
         (t
          task)))
 
@@ -241,7 +241,8 @@ primitive one, or (c) TASK itself."
 
 ;;; this function is necessary because the operators are not EQ
 ;;; to their tasks, which must be looked up in *operator-tasks*
-(declaim (ftype (function (primitive-node) (values list &optional))))
+(declaim (ftype (function (primitive-node) (values list &optional))
+                operator-task))
 (defun operator-task (operator-node)
   ;; (declare (type primitive-node operator-node))
   (or (gethash (primitive-node-task operator-node) *operator-tasks*)

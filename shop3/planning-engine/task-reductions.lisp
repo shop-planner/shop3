@@ -58,7 +58,7 @@
 ;;; markings.
 
 
-(in-package :shop2)
+(in-package :shop)
 
 ;;; ------------------------------------------------------------------------
 ;;; Method and operator application

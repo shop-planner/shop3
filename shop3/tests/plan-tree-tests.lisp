@@ -1,8 +1,12 @@
 (defpackage :plan-tree-tests
   (:shadow #:fail)
   (:import-from #:shop-user #:log-ran-15-1)
-  (:import-from #:shop #:*node-children-table* #:create-node-children-table #:*task-operator*
-                #:primitive-node-p #:operator-task)
+  (:import-from #:shop
+                #:*node-children-table*
+                #:create-node-children-table
+                #:*task-operator*
+                #:primitive-node-p
+                #:operator-task)
   (:use :common-lisp :fiveam :shop3))
 
 (in-package plan-tree-tests)
@@ -634,7 +638,7 @@
 
 (def-suite* plan-tree-tests)
 
-(test operator-nodes                    ; 4 checks
+(test operator-nodes                    ; 5 checks
   (let* ((plans (find-plans 'log-ran-15-1 :verbose 0))
          (plan (progn (is-true plans)
                       (first plans))))
@@ -652,15 +656,20 @@
 (test task-recording ; 1 check
   (let ((shop::*before-extract-trees-hook*
           #'(lambda ()
-              (let ((plan (first shop::*plans-found*)))
+              (let* ((plan (first shop::*plans-found*))
+                     (prims (shop::plan-operator-nodes plan)))
                 ;; are there the expected table entries for all of the primitives?
                 (is-true (every #'(lambda (x)
                                     (let ((task (operator-task x)))
                                       (and task
-                                           (eq (gethash task shop::*task-operator*)
-                                               x))))
-                                (shop::remove-costs plan)))))))
-    (find-plans 'log-ran-15-1 :plan-tree t :verbose 0)))
+                                           (equalp (gethash task shop::*task-operator*)
+                                                   (primitive-node-task x)))))
+                                prims)))
+              ;; this test messes the tables up badly, so rather than trying to
+              ;; continue, we bail here.
+              (throw 'test-done nil))))
+    (catch 'test-done
+      (find-plans 'log-ran-15-1 :plan-tree t :verbose 0))))
 
 (test plan-tree-primitives              ; 3 checks
   (multiple-value-bind (plans ignore trees)
