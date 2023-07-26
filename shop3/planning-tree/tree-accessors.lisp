@@ -73,12 +73,13 @@ the SHOP2 tree format as described in SHOP2?"
 children that are internal operators (primitive nodes) removed."
   (assert (complex-node-p complex-node))
   (make-complex-node (tree-node-task complex-node)
-                     (loop for child in (complex-node-children complex-node)
-                         if (complex-node-p child)
-                         collect child
-                         else unless (internal-operator-p
-                                      (tree-node-task-name child))
-                         collect child)))
+                     (iter (for child in (complex-node-children complex-node))
+                       (etypecase child
+                         (complex-node (collecting child))
+                         (primitive-node (unless (internal-operator-p
+                                                  (task-name
+                                                   (primitive-node-task child)))
+                                           (collecting child)))))))
 
 ;;; Introduced an OPERATOR-NODE structure as a way of better
 ;;; understanding the TREE extraction code. [2004/02/05:rpg]
@@ -95,9 +96,9 @@ children that are internal operators (primitive nodes) removed."
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
   (and (= (length tree-node) 3)
-       (numberp (first tree-node))
-       (integerp (third tree-node))
-       (listp (second tree-node))))
+       (numberp (primitive-node-cost tree-node))
+       (integerp (primitive-node-position tree-node))
+       (listp (primitive-node-task tree-node))))
 
 (deftype primitive-node ()
   '(satisfies primitive-node-p))
@@ -161,9 +162,9 @@ Won't work properly on a true tree."
 ;;             (format t "Complex node head: ~S~%" (first node))
                (if node-fun
                 (if (funcall fun node) node
-                    (list-iter (cdr node)))
-                (if (funcall fun (first node)) node
-                    (list-iter (cdr node)))))))
+                    (list-iter (complex-node-children node)))
+                (if (funcall fun (complex-node-task node)) node
+                    (list-iter (complex-node-children node)))))))
     ;; top level i
     (assert (every #'(lambda (x) (or (primitive-node-p x) (complex-node-p x))) tree-list))
     (list-iter tree-list)))
@@ -236,8 +237,7 @@ parent."
   (find-primitive-node-if #'(lambda (node-task) (equalp node-task task)) tree))
 
 (defun find-all-complex-node-if (fun tree)
-  "Return a complex node whose TASK (first element)
-satisfies FUN."
+  "Return a complex node whose TASK satisfies FUN."
   (labels ((list-iter (lst acc)
              (if (null lst)
                  acc
@@ -246,8 +246,8 @@ satisfies FUN."
            (node-iter (node)
              (when (complex-node-p node)
 ;;             (format t "Complex node head: ~S~%" (first node))
-               (let ((new (when (funcall fun (first node)) (list node))))
-                 (list-iter (cdr node) new)))))
+               (let ((new (when (funcall fun (complex-node-task node)) (list node))))
+                 (list-iter (complex-node-children node) new)))))
     ;; top level i
     (list-iter tree nil)))
 
@@ -321,8 +321,8 @@ tree (although they will be EQUALP."
              (mapcar #'node-iter lst))
            (node-iter (node)
              (cond ((primitive-node-p node)
-                    (make-primitive-node (primitive-node-task node)
-                                         (primitive-node-cost node)
+                    (make-primitive-node (primitive-node-cost node)
+                                         (primitive-node-task node)
                                          (primitive-node-position node)))
                    ((complex-node-p node)
                     (make-complex-node (complex-node-task node)
@@ -341,3 +341,35 @@ tree (although they will be EQUALP."
   (flet ((match-if-child (n)
            (member node (complex-node-children n) :test 'eq)))
     (find-complex-node-if #'match-if-child tree :node-fun t)))
+
+(defun canonically-order (tree &optional (keep-empty nil))
+  (labels ((list-iter (lst)
+             (let ((elts
+                     (remove nil (mapcar #'node-iter lst))))
+               (sort elts #'<= :key #'min-start)))
+           (node-iter (node)
+             (etypecase node
+               (primitive-node node
+                (make-primitive-node (primitive-node-cost node)
+                                     (primitive-node-task node)
+                                     (primitive-node-position node)))
+              (complex-node
+               (unless (or keep-empty (complex-node-children node))
+                (make-complex-node (complex-node-task node)
+                                   (list-iter (complex-node-children node))))))))
+    ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
+    (if (or (primitive-node-p tree) (complex-node-p tree))
+        (node-iter tree)
+        (list-iter tree))))
+
+(declaim (ftype (function (tree-node) (values fixnum &optional))
+                min-start))
+(defun min-start (node)
+  (etypecase node
+   (primitive-node
+    (primitive-node-position node))
+   (complex-node
+    (or
+     (iter (for c in (complex-node-children node))
+       (minimizing (min-start c)))
+     most-positive-fixnum))))

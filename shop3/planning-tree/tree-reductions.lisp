@@ -250,27 +250,16 @@ expanded -- if it is part of a failed search branch then  or (c) TASK itself."
 (defun operator-task (operator-node)
   ;; (declare (type primitive-node operator-node))
   (or (gethash (primitive-node-task operator-node) *operator-tasks*)
-      (error "Unable to find the task for primitive tree node ~a"
+      (error "Unable to find the task for primitive tree node ~s"
              operator-node)))
 
-(defun plan-operator-nodes (plan &optional (n 0) acc)
+(defun plan-operator-nodes (plan &optional (origin 0))
   "This function translates operator expressions into operator nodes,
 assembling together the operator, its the position in the plan and cost."
   (declare (optimize space speed))
-  (if (null plan) (nreverse acc)
-      (progn
-        ;; make sure we have a plan instead of a SHORTER-PLAN
-        (assert (numberp (first (rest plan))))
-        (plan-operator-nodes
-         ;; skip the costs
-         (rest (rest plan))
-         (1+ n)
-         (cons
-          (make-primitive-node
-           (second plan)
-           (first plan)
-           n)
-          acc)))))
+  (iter (for (task cost . nil) on plan by 'cddr)
+    (as n from origin)
+    (collecting (make-primitive-node cost task n))))
 
 (declaim (ftype (function () (values hash-table &optional))
                 make-subtask-parents-table
