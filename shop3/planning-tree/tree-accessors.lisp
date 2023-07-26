@@ -65,6 +65,9 @@ the SHOP2 tree format as described in SHOP2?"
   (and (listp (first tree-node))
        (symbolp (first (first tree-node)))))
 
+(deftype complex-node ()
+  '(satisfies complex-node-p))
+
 (defun remove-internal-operators (complex-node)
   "Returns a new complex-node like the original, but with any
 children that are internal operators (primitive nodes) removed."
@@ -114,6 +117,9 @@ the SHOP2 tree format as described in SHOP2?"
 ;; Returns the corresponding plan sequence position (integer)."
 ;;   (third tree-node))
 
+
+(deftype tree-node ()
+  '(or complex-node primitive-node))
 
 (defun tree-node-task (tree-node)
   (cond ((primitive-node-p tree-node) (primitive-node-task tree-node))
