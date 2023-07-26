@@ -160,8 +160,8 @@ are *either* PRIMITIVE-NODEs or TASKS (lists) for complex tasks."
       (assert (not (primitive-node-p task)))
       ;; need to translate the task back to operator...
       (as decoded-task = (decode-task task all-primitive-nodes))
-      (declare (type (or null primitive-node cons) decoded-task))
-      (when decoded-task
+      ;; (declare (type (or null (member :fail) primitive-node cons) decoded-task))
+      (unless (or (null decoded-task) (eq decoded-task :fail))
         ;; preserve order...
         (alexandria:nconcf
          (gethash parent new-table)
@@ -180,24 +180,28 @@ or tasks (s-expressions)."
     (unless (or (primitive-node-p task) (gethash task subtask-parents-table))
       (collect task))))
 
+;;; FIXME: this could be simplified by returning NIL instead of :FAIL later.
 (defun decode-task (task all-primitive-nodes)
   "Take a TASK s-expression and return either: (a) NIL if it corresponds to a
 no-op ('SHOP::!!INOP), (b) the corresponding primitive-node, if the task is a
-primitive one, or (c) TASK itself."
+primitive one, (c) the symbol :FAIL if the primitive task was not successfully
+expanded -- if it is part of a failed search branch then  or (c) TASK itself."
   (cond ((eq (task-name task) 'shop::!!INOP) ; unpleasant special case
          nil)
         ((shop::primitivep (task-name task))
-         (let* ((entry (or (gethash task *task-operator*)
-                           (error "Could not find operator for ~s in *TASK-OPERATOR* table"
-                                  task)))
+         (let* ((entry (or (gethash task *task-operator*) nil))
                 (prim-node
-                  (find entry all-primitive-nodes
-                        :key #'(lambda (x) (primitive-node-task x))
-                        :test 'eq)))
+                  (when entry
+                   (find entry all-primitive-nodes
+                         :key #'(lambda (x) (primitive-node-task x))
+                         :test 'eq))))
            (declare (type (or null primitive-node) prim-node))
            (or
             prim-node
-            (error "Unable to find primitive node for task ~S" task))))
+            ;; If a primitive task name does not have a corresponding primitive in the
+            ;; plan, that means it was part of a failed plan.  In this case, return the
+            ;; keyword symbol :FAIL
+            :fail)))
         (t
          task)))
 
