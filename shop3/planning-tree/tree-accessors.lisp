@@ -68,18 +68,7 @@ the SHOP2 tree format as described in SHOP2?"
 (deftype complex-node ()
   '(satisfies complex-node-p))
 
-(defun remove-internal-operators (complex-node)
-  "Returns a new complex-node like the original, but with any
-children that are internal operators (primitive nodes) removed."
-  (assert (complex-node-p complex-node))
-  (make-complex-node (tree-node-task complex-node)
-                     (iter (for child in (complex-node-children complex-node))
-                       (etypecase child
-                         (complex-node (collecting child))
-                         (primitive-node (unless (internal-operator-p
-                                                  (task-name
-                                                   (primitive-node-task child)))
-                                           (collecting child)))))))
+
 
 ;;; Introduced an OPERATOR-NODE structure as a way of better
 ;;; understanding the TREE extraction code. [2004/02/05:rpg]
@@ -147,6 +136,19 @@ the SHOP2 tree format as described in SHOP2?"
 (defun task-args (task)
   (let ((task-pos (position (task-name task) task)))
     (rest (nthcdr task-pos task))))
+
+(defun remove-internal-operators (complex-node)
+  "Returns a new complex-node like the original, but with any
+children that are internal operators (primitive nodes) removed."
+  (assert (complex-node-p complex-node))
+  (make-complex-node (tree-node-task complex-node)
+                     (iter (for child in (complex-node-children complex-node))
+                       (etypecase child
+                         (complex-node (collecting child))
+                         (primitive-node (unless (internal-operator-p
+                                                  (task-name
+                                                   (primitive-node-task child)))
+                                           (collecting child)))))))
 
 (defun find-complex-node-if (fun tree-list &key (node-fun nil))
   "If `NODE-FUN` is nil return a complex node whose *task* (first element)
