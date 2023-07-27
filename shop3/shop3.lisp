@@ -164,7 +164,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*state-encoding* :obsolete-state-encoding-variable)
          (*plan-tree* plan-tree)
          (*collect-state* (or collect-state plan-tree))
-         (*subtask-parents* nil) (*operator-tasks* nil)
+         (*subtask-parents* (make-subtask-parents-table))
+         (*operator-tasks* (make-operator-task-table))
+         (*task-operator* (make-hash-table :test 'eq))
          (*optimize-cost* optimize-cost)
          (*expansions* 0) (*inferences* 0)
          ;; make this controllable [2004/08/06:rpg]
@@ -331,6 +333,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                            internal-time-units-per-second))))))))
 
 (defun extract-trees (plans-found unifiers-found)
+  (when *before-extract-trees-hook*
+    (funcall *before-extract-trees-hook*))
   (assert (= (length plans-found) (length unifiers-found)))
   (loop for plan in plans-found
         for unifier in unifiers-found

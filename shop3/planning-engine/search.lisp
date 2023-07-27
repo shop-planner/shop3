@@ -58,7 +58,7 @@
 ;;; markings.
 
 
-(in-package :shop2)
+(in-package :shop)
 
 (defmacro when-done (&body body)
   `(when (and *plans-found*
@@ -130,6 +130,8 @@
                               depth
                               task1)
                  (backtrack "Task ~S failed" task1))
+               ;; the following is some crude by-hand tail call optimization where
+               ;; there's no need to backtrack.
                (let ((remaining-tasks (sort-tasks domain top-tasks unifier which-plans)))
                  (if (rest remaining-tasks)
                      (dolist (task1 remaining-tasks)
@@ -257,7 +259,7 @@ of SHOP2."
         (return-from seek-plans-primitive-1 nil))
 
       (when *plan-tree*
-        (record-operator task1 planned-action operator-unifier))
+        (record-operator task1 planned-action))
 
       (multiple-value-bind (top-tasks1 tasks1)
           (delete-task-top-list top-tasks tasks task1)

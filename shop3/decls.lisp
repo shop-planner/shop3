@@ -75,10 +75,20 @@
 (defparameter *time-limit* nil)     ; maximum time (in seconds) for execution
 (defparameter *expansions* 0)       ; number of task expansions so far
 (defparameter *plans-found* nil)    ; list of plans found so far
-(defparameter *plan-tree* nil)      ; whether to return the tree
+(defparameter *plan-tree* nil)      ; whether to return the tree --
+                                        ; note that this should NEVER be true if
+                                        ; using FIND-PLANS-STACK instead of FIND-PLANS
 (defparameter *collect-state* nil)  ; whether to return the final states
-(defparameter *subtask-parents* nil) ; record of the parents in the tree
-(defparameter *operator-tasks* nil) ; record of the task atom for operators
+;; record of the parents in the tree
+(defvar *subtask-parents*)
+(declaim (type hash-table *subtask-parents*))
+
+;; table recording a map from operators to the tasks they were
+;; done for. This is necessary because the tasks are not identical to
+;; the operators (I'm not exactly sure of the difference). [2023/05/25:rpg]
+(defvar *operator-tasks*) ; record of the task atom for operators
+(declaim (type hash-table *operator-tasks* *task-operator*))
+(defvar *task-operator*) ; inverse of *operator-tasks*
 (defparameter *optimize-cost* nil)  ; whether to optimize with branch and bound
 (defparameter *optimal-plan* 'fail) ; optimal plan found so far
 (defparameter *optimal-cost* 0)     ; cost of *optimal-plan*
@@ -131,6 +141,14 @@ guidance in heuristic search while planning.
 \(and should *not* be set by users\).  If T, the system will raise an error
 if methods do not have unique names.  If :WARN, the system will issue a warning.
 If NIL, the system will accept non-unique names quietly.")
+
+(defvar *before-extract-trees-hook* nil
+  "This function exists solely for instrumenting for testing purposes.
+If this is bound to a function, that function will be called at the top
+of EXTRACT-PLAN-TREES.  Generally should be NIL.")
+
+(declaim (type (or null (function () (values &optional)))
+               *before-extract-trees-hook*))
 
 
 ;;;------------------------------------------------------------------------------------------------------

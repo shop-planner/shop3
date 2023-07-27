@@ -55,14 +55,14 @@
 
 ;;; Smart Information Flow Technologies Copyright 2008 Unpublished work
 
-(in-package :shop2)
+(in-package :shop)
 
 ;;; if the state has everything that the protections list has, then
 ;;; return true, else return nil
-(defun protection-ok (state protections head)
+(defun protection-ok (domain state protections head)
   (let ((*record-dependencies-p* nil))
     (dolist (p protections)
-      (unless (shopthpr:find-satisfiers (car p) state :just-one t)
+      (unless (shopthpr:find-satisfiers (car p) state :just-one t :domain domain)
         (trace-print
          :operators (first head) state
          "~%Backtracking because operator ~s~%  violated the protected condition ~s"
