@@ -349,10 +349,8 @@ tree (although they will be EQUALP."
   (labels ((list-iter (lst)
              (let ((elts
                      (remove nil (mapcar #'node-iter lst))))
-               (format t "~&LIST-ITER~%") (finish-output)
                (sort elts #'<= :key #'min-start)))
            (node-iter (node)
-             (format t "~&NODE-ITER~%")(finish-output)
              (etypecase node
                (primitive-node
                 (make-primitive-node (primitive-node-cost node)
@@ -364,9 +362,8 @@ tree (although they will be EQUALP."
                                      (list-iter (complex-node-children node))))))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
     (if (or (primitive-node-p tree) (complex-node-p tree))
-        (progn (format t "~&Top level node-iter~%") (node-iter tree))
-        (progn (format t "~&Top level list-iter~%")
-               (list-iter tree)))))
+        (node-iter tree)
+        (list-iter tree))))
 
 (declaim (ftype (function (tree-node) (values fixnum &optional))
                 min-start))
