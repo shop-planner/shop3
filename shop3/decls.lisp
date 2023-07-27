@@ -75,7 +75,9 @@
 (defparameter *time-limit* nil)     ; maximum time (in seconds) for execution
 (defparameter *expansions* 0)       ; number of task expansions so far
 (defparameter *plans-found* nil)    ; list of plans found so far
-(defparameter *plan-tree* nil)      ; whether to return the tree
+(defparameter *plan-tree* nil)      ; whether to return the tree --
+                                        ; note that this should NEVER be true if
+                                        ; using FIND-PLANS-STACK instead of FIND-PLANS
 (defparameter *collect-state* nil)  ; whether to return the final states
 ;; record of the parents in the tree
 (defvar *subtask-parents*)

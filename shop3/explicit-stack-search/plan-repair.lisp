@@ -52,7 +52,7 @@ Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP 
            (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
              #+nil(break "Inspect NEW-SEARCH-STATE.")
              (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-                 (let ((*plan-tree* t)
+                 (let ((*plan-tree* nil) ; plan tree should never be true when using Explicit Stack Search.
                        (*enhanced-plan-tree* t))
                    (replan-from-failure domain failed new-search-state :verbose verbose))
                (when new-plans
