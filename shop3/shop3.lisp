@@ -305,9 +305,9 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                            internal-time-units-per-second))))))))
 
 ;;; Helper funcdtion for iterative deepening search.
-(declaim (ftype (domain state cons cons symbol (or stream t) &key (:depth-increment integer))
-                (values (integer 0) (integer 0)
-                        (integer 0) (integer 0) &optional)
+(declaim (ftype (function (domain state cons cons symbol (or stream t) &key (:depth-increment integer))
+                          (values (integer 0) (integer 0)
+                                  (integer 0) (integer 0) &optional))
                 id-search))
 (defun id-search (domain state tasks top-tasks which out-stream
                   &key (depth-increment 1))
@@ -337,11 +337,12 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
            total-inferences (+ total-inferences *inferences*))
      (print-stats *depth-cutoff* *plans-found* *expansions*
                   *inferences* new-run-time new-real-time out-stream)
-     (and (equal *expansions* old-expansions)
-          (equal *inferences* old-inferences)
-          (progn (format t "~&Ending at depth ~D: no new expansions or inferences.~%"
-                         *depth-cutoff*)
-                 (return nil))) ; abort if nothing new happened on this iteration
+     (when (and (equal *expansions* old-expansions)
+           (equal *inferences* old-inferences))
+       (when (> *verbose* 0)
+        (format t "~&ID-SEARCH: Ending at depth ~D: no new expansions or inferences.~%"
+                *depth-cutoff*))
+       (finish)) ; abort if nothing new happened on this iteration
      (setf old-expansions *expansions*
            old-inferences *inferences*)
      (setf *expansions* 0
