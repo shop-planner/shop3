@@ -345,24 +345,28 @@ tree (although they will be EQUALP."
     (find-complex-node-if #'match-if-child tree :node-fun t)))
 
 (defun canonically-order (tree &optional (keep-empty nil))
+  (declare (optimize debug))
   (labels ((list-iter (lst)
              (let ((elts
                      (remove nil (mapcar #'node-iter lst))))
+               (format t "~&LIST-ITER~%") (finish-output)
                (sort elts #'<= :key #'min-start)))
            (node-iter (node)
+             (format t "~&NODE-ITER~%")(finish-output)
              (etypecase node
-               (primitive-node node
+               (primitive-node
                 (make-primitive-node (primitive-node-cost node)
                                      (primitive-node-task node)
                                      (primitive-node-position node)))
-              (complex-node
-               (unless (or keep-empty (complex-node-children node))
-                (make-complex-node (complex-node-task node)
-                                   (list-iter (complex-node-children node))))))))
+               (complex-node
+                (when (or keep-empty (complex-node-children node))
+                  (make-complex-node (complex-node-task node)
+                                     (list-iter (complex-node-children node))))))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
     (if (or (primitive-node-p tree) (complex-node-p tree))
-        (node-iter tree)
-        (list-iter tree))))
+        (progn (format t "~&Top level node-iter~%") (node-iter tree))
+        (progn (format t "~&Top level list-iter~%")
+               (list-iter tree)))))
 
 (declaim (ftype (function (tree-node) (values fixnum &optional))
                 min-start))
