@@ -256,8 +256,9 @@ shop3."
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
                  (plan-tree-tests . :plan-tree-tests)  ; 40
+                 (search-tests . :search-tests) ; 9
                  )
-    :num-checks 1044
+    :num-checks 1053
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -298,8 +299,9 @@ shop3."
                                (:file "analogical-replay")
                                (:file "minimal-subtree-tests")
                                (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests"))  ; 13 checks
-                  )
+                               (:file "plan-tree-tests")                  ; 40 checks
+                               (:file "search-tests") ; 9 checks
+                               ))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
                  (:module "shop-umt"
                           :pathname "examples/UMT2/"

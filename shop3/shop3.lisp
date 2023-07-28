@@ -220,9 +220,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
 (defun find-plans-1 (domain state tasks which problem &key (out-stream t) &allow-other-keys)
   (let ((total-expansions 0) (total-inferences 0)
-         (old-expansions 0) (old-inferences 0)
-         (total-run-time 0) (total-real-time 0)
-        new-run-time new-real-time top-tasks)
+        (total-run-time 0) (total-real-time 0)
+        top-tasks)
 
 
     ;; we need to be sure that the pieces of the input tasks are
@@ -246,38 +245,11 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
     (catch 'user-done
       (ecase which
         ((:id-first :id-all)
-         (print-stats-header "Depth" out-stream)
-         (do ((*depth-cutoff* 0 (1+ *depth-cutoff*)))
-             ((or (time-expired-p)      ;need to check here for expired time....
-                  (and *plans-found*
-                       ;; I think the second disjunct here is probably
-                       ;; unnecessary now [2005/01/10:rpg]
-                       (not (or (optimize-continue-p (if (eq which :id-first) :first :all))
-                                (eq which :id-all)))))
-              nil)
-           (setq new-run-time (get-internal-run-time)
-                 new-real-time (get-internal-real-time))
-           (catch-internal-time
-            (seek-plans domain state tasks top-tasks nil 0 0
-                        (if (eq which :id-first) :first :all)
-                        nil nil))
-           (setq new-run-time (- (get-internal-run-time) new-run-time)
-                 new-real-time (- (get-internal-real-time) new-real-time)
-                 total-run-time (+ total-run-time new-run-time)
-                 total-real-time (+ total-real-time new-real-time)
-                 total-expansions (+ total-expansions *expansions*)
-                 total-inferences (+ total-inferences *inferences*))
-           (print-stats *depth-cutoff* *plans-found* *expansions*
-                        *inferences* new-run-time new-real-time out-stream)
-           (and (equal *expansions* old-expansions)
-                (equal *inferences* old-inferences)
-                (progn (format t "~&Ending at depth ~D: no new expansions or inferences.~%"
-                               *depth-cutoff*)
-                       (return nil)))           ; abort if nothing new happened on this iteration
-           (setq old-expansions *expansions*
-                 old-inferences *inferences*)
-           (setq *expansions* 0
-                 *inferences* 0)))
+         (multiple-value-setq (total-run-time
+                               total-real-time
+                               total-expansions
+                               total-inferences)
+           (id-search domain state tasks top-tasks which out-stream)))
 
         ((:first :all :shallowest :all-shallowest :random)
          (catch-internal-time
@@ -332,6 +304,55 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                         (/ total-run-time
                            internal-time-units-per-second))))))))
 
+;;; Helper funcdtion for iterative deepening search.
+(declaim (ftype (function (domain state cons cons symbol (or stream t) &key (:depth-increment integer))
+                          (values (integer 0) (integer 0)
+                                  (integer 0) (integer 0) &optional))
+                id-search))
+(defun id-search (domain state tasks top-tasks which out-stream
+                  &key (depth-increment 1))
+  (print-stats-header "Depth" out-stream)
+  (let ((old-expansions 0) (old-inferences 0)
+        (total-run-time 0) (total-real-time 0)
+        (total-expansions 0) (total-inferences 0)
+        (*old-depth* -1))
+   (iter (for *depth-cutoff* from 0 by depth-increment)
+     (until (or (time-expired-p) ;need to check here for expired time....
+                (and *plans-found*
+                     ;; I think the second disjunct here is probably
+                     ;; unnecessary now [2005/01/10:rpg]
+                     (not (or (optimize-continue-p (if (eq which :id-first) :first :all))
+                              (eq which :id-all))))))
+     (for new-run-time = (get-internal-run-time))
+     (as new-real-time = (get-internal-real-time))
+     (catch-internal-time
+      (seek-plans domain state tasks top-tasks nil 0 0
+                  which
+                  nil nil))
+     (setq new-run-time (- (get-internal-run-time) new-run-time)
+           new-real-time (- (get-internal-real-time) new-real-time)
+           total-run-time (+ total-run-time new-run-time)
+           total-real-time (+ total-real-time new-real-time)
+           total-expansions (+ total-expansions *expansions*)
+           total-inferences (+ total-inferences *inferences*))
+     (print-stats *depth-cutoff* *plans-found* *expansions*
+                  *inferences* new-run-time new-real-time out-stream)
+     (when (and (equal *expansions* old-expansions)
+           (equal *inferences* old-inferences))
+       (when (> *verbose* 0)
+        (format t "~&ID-SEARCH: Ending at depth ~D: no new expansions or inferences.~%"
+                *depth-cutoff*))
+       (finish)) ; abort if nothing new happened on this iteration
+     (setf old-expansions *expansions*
+           old-inferences *inferences*)
+     (setf *expansions* 0
+           *inferences* 0
+           *old-depth* *depth-cutoff*)
+     (finally
+      (return
+       (values total-run-time total-real-time
+               total-expansions total-inferences))))))
+
 (defun extract-trees (plans-found unifiers-found)
   (when *before-extract-trees-hook*
     (funcall *before-extract-trees-hook*))
@@ -347,5 +368,3 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
 ;; (eval-when (:compile-toplevel)
 ;; (warn "Bogus warning."))
-
-

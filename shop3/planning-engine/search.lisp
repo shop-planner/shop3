@@ -318,6 +318,7 @@ of SHOP2."
   (let ((acceptable-cost (acceptable-cost-p partial-plan-cost))
         (final-plan (strip-NOPs (reverse partial-plan))))
 
+    ;; FIXME: Strip out the optimize variables when they are not relevant.
     (trace-print :plans nil state
                  "~2%Depth ~D, have found a plan with cost ~D~%*optimize-cost* = ~S, *optimal-cost* = ~A~%"
                  depth partial-plan-cost
@@ -371,6 +372,14 @@ of SHOP2."
              (when (not (equal *depth-cutoff* depth))
                (dump-previous-plans!)
                (setq *depth-cutoff* depth)))
+            ((eq which-plans :id-all)
+             ; we need to avoid redundant plans...
+             (trace-print :plans nil state "Checking for redundant plans: depth is ~d, depth cutoff is ~d and old-depth is ~d~%"
+                          depth *depth-cutoff* *old-depth*)
+             (when (<= depth *old-depth*)
+               (trace-print :plans nil state "Ignoring rederivation of plan found at depth ~d previously found below depth ~d~%" depth *old-depth*)
+               (return-from seek-plans-null nil))
+             (trace-print :plans nil state "Plan is not redundant by depth criterion.~%"))
             ((eq which-plans :shallowest)
              (setq *depth-cutoff* (1- depth))
              (dump-previous-plans!)))
