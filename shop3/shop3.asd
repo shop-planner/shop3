@@ -266,12 +266,14 @@ shop3."
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
                           :pathname "tests/"
-                          :components ((:file "common")))
+                          :components ((:file "common")
+                                       (:file "warns-check")))
 
                  (:file "silent-shop-test")
                  (:file "theorem-prover-tests"
                         :pathname "tests/theorem-prover-tests")
                  (:module "shop-pddl-tests"
+                          :depends-on ("shop-test-helper")
                           :pathname "tests/"
                           :components ((:file "pddl-tests")))
                  (:module "shop-protection-tests"
@@ -282,8 +284,7 @@ shop3."
                  (:module "shop-internal-tests"
                   :depends-on ("shop-logistic" "shop-test-helper")
                   :pathname "tests/"
-                  :components ((:file "warns-check")
-                               (:file "at-package" :depends-on ("warns-check"))
+                  :components ((:file "at-package")
                                (:file "shop-internal-test-suite")
                                (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
                                (:module "umt-domain"
