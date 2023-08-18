@@ -55,7 +55,7 @@ jobs:
         apt-get update
         apt-get install -y cmake make g++ flex bison
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Checkout submodules
       shell: bash
@@ -64,7 +64,7 @@ jobs:
 
     - name: cache validate
       id: cache-validate
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: jenkins/VAL
         key: ${{ runner.os }}
