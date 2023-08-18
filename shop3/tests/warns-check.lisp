@@ -1,5 +1,9 @@
 (in-package :fiveam)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+    (when (fboundp (uiop:intern* '#:warns :fiveam)) (pushnew :fiveam-warns *features*)))
+
+#+(not fiveam-warns)
 (defmacro warns (condition-spec
                  &body body)
   "Generates a pass if BODY signals a warning of type
