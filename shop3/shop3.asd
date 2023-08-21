@@ -51,6 +51,8 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+;;; Robert P. Goldman
+
 (defpackage :shop-asd
     (:use :common-lisp :asdf)
     (:nicknames :shop2-asd :shop3-asd)
@@ -258,7 +260,7 @@ shop3."
                  (plan-tree-tests . :plan-tree-tests)  ; 40
                  (search-tests . :search-tests) ; 9
                  )
-    :num-checks 1053
+    :num-checks 1057
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
