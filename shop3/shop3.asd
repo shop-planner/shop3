@@ -51,6 +51,8 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+;;; Robert P. Goldman
+
 (defpackage :shop-asd
     (:use :common-lisp :asdf)
     (:nicknames :shop2-asd :shop3-asd)
