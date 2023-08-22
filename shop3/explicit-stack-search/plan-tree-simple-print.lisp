@@ -12,43 +12,43 @@
   
 (defmethod print-node ((plan-tree-node complex-tree-node))
   (let ((dependencies (tree-node-dependencies plan-tree-node))
-	output-dependency-form
-	output-children-form)
+        output-dependency-form
+        output-children-form)
     (iter
      (for d in dependencies)
      (push
       `(:establisher
-	((:task
-	  ,(if (eq (establisher d) :init)
-	       :init
-	       (tree-node-task (establisher d))))
-	 (:type ,(type-keyw (type-of (establisher d)))))
-	:label ,(prop d))
+        ((:task
+          ,(if (eq (establisher d) :init)
+               :init
+               (tree-node-task (establisher d))))
+         (:type ,(type-keyw (type-of (establisher d)))))
+        :label ,(prop d))
       output-dependency-form))
 
-    (setf children (complex-tree-node-children plan-tree-node))
     (iter
+     (with children = (complex-tree-node-children plan-tree-node))
      (until (null children))
      (as node = (pop children))
      (format t "~% Child node: ~s" node)
      ;; What about :UNORDERED???
      (if (eql (type-of node) 'plan-tree::ordered-tree-node)
        (setf children (append
-		       (complex-tree-node-children node)
-		       children))
+                       (complex-tree-node-children node)
+                       children))
        ;; else
        (push
-	`(:task ,(tree-node-task node)
-	  :type ,(type-keyw (type-of node)))
-	output-children-form)
+        `(:task ,(tree-node-task node)
+          :type ,(type-keyw (type-of node)))
+        output-children-form)
        ))
      
     (when (tree-node-task plan-tree-node)
       (push
        `(:task ,(tree-node-task plan-tree-node)
-	 :type ,(type-keyw (type-of plan-tree-node))
-	 :children ,output-children-form
-	 :depends-on ,output-dependency-form)
+         :type ,(type-keyw (type-of plan-tree-node))
+         :children ,output-children-form
+         :depends-on ,output-dependency-form)
        *output-form*))
 
     (iter
@@ -58,17 +58,17 @@
 
 (defmethod print-node ((plan-tree-node primitive-tree-node))
   (let ((dependencies (tree-node-dependencies plan-tree-node))
-	output-dependency-form)
+        output-dependency-form)
     (iter
      (for d in dependencies)
      (push
       `(:establisher
-	((:task
-	  ,(if (eq (establisher d) :init)
-	       :init
-	       (tree-node-task (establisher d))))
-	 (:type ,(type-keyw (type-of (establisher d)))))
-	:label ,(prop d))
+        ((:task
+          ,(if (eq (establisher d) :init)
+               :init
+               (tree-node-task (establisher d))))
+         (:type ,(type-keyw (type-of (establisher d)))))
+        :label ,(prop d))
       output-dependency-form))
 
     ;; there is no children since this node is primitive.
@@ -76,8 +76,8 @@
     (when (tree-node-task plan-tree-node)
       (push
        `(:task ,(tree-node-task plan-tree-node)
-	 :type :primitive
-	 :depends-on ,output-dependency-form)
+         :type :primitive
+         :depends-on ,output-dependency-form)
        *output-form*))))
 
 (defmethod print-node ((plan-tree-node ordered-tree-node))
@@ -88,7 +88,7 @@
 
 (defmethod print-node ((plan-tree-node unordered-tree-node))
   (format t "~%Unordered CHILDREN: ~A"
-	  (complex-tree-node-children plan-tree-node)))
+          (complex-tree-node-children plan-tree-node)))
 
 (defun type-keyw (node-type)
   (ecase node-type
