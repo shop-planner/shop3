@@ -314,32 +314,15 @@ List of analogical-replay tables -- optional
          (choose-method
           (if (choose-method-state state domain)
               (setf (mode state) 'choose-method-bindings)
-              (progn
-                (let ((task1 (current-task state))
-                      (depth (depth state))
-                      (state (world-state state)))
-                  (trace-print :tasks (get-task-name task1) state
-                               "~2%Depth ~s, backtracking from task~%      task ~s"
-                               depth
-                               current-task)
-                  (stack-backtrack state)))))
-         (prepare-to-choose-method
-          (let* ((task-name (get-task-name (current-task state)))
-                 (methods (methods domain task-name)))
-            (setf (alternatives state) (sort-methods domain methods which))
-            (setf (mode state) 'choose-method)))
-         (choose-method
-          (if (choose-method-state state domain)
-              (setf (mode state) 'choose-method-bindings)
-              (progn
-                (let ((task1 (current-task state))
-                      (depth (depth state))
-                      (state (world-state state)))
-                  (trace-print :tasks (get-task-name task1) state
-                               "~2%Depth ~s, backtracking from task~%      task ~s"
-                               depth
-                               task1))
+              (let ((task1 (current-task state))
+                    (depth (depth state))
+                    (state (world-state state)))
+                (trace-print :tasks (get-task-name task1) state
+                             "~2%Depth ~s, backtracking from task~%      task ~s"
+                             depth
+                             (current-task state))
                 (stack-backtrack state))))
+
          ;; the alternatives here are triples of (expansions unifiers dependencies)
          (choose-method-bindings
           (if (choose-method-bindings-state state)
