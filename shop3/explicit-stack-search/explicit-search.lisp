@@ -108,6 +108,7 @@ objects."
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
+         (*include-rationale* rationale)
          (*make-analogy-table* (progn
                                  (or (and make-analogy-table (eq which :first))
                                      (not make-analogy-table)
@@ -161,7 +162,7 @@ objects."
     (when make-analogy-table
       (clear-replay-table domain *analogical-replay-table*))
 
-    (when plan-tree
+    (when tree
       (setf (slot-value search-state 'plan-tree) tree)
       (unless no-dependencies
         (prepare-state-tag-decoder)))
@@ -215,86 +216,163 @@ List of analogical-replay tables -- optional
   (setf (mode state) 'test-for-done)
   (handler-case
       (iter
-        (when *enhanced-plan-tree* (unless (plan-tree state)
-                                     (error "Search state object should have a PLAN-TREE.")))
-        ;; bumped the verbose for this to be printed, because it's really not useful
-        (when (>= *verbose* 2)
-          (format t "~&State is: ~a. Mode is: ~a.~%" state (mode state)))
-        (ecase (mode state)
-          (test-for-done
-           (if (empty-p state)
-               ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
-               (setf (mode state) 'extract-plan)
-               (setf (mode state) 'look-for-immediate-task)))
-          (look-for-immediate-task
-           (cond ((immediate-tasks state)
-                  (let ((state (prepare-choose-immediate-task-state state)))
-                    (setf (mode state) 'pop-immediate-task)))
-                 (t
-                  (setf (mode state) 'prepare-to-choose-toplevel-task))))
-          (pop-immediate-task
-           (if (choose-immediate-task-state state)
-               (setf (mode state) 'expand-task)
-               (stack-backtrack state)))
+       (when *enhanced-plan-tree* (unless (plan-tree state)
+                                    (error "Search state object should have a PLAN-TREE.")))
+       ;; bumped the verbose for this to be printed, because it's really not useful
+       (when (>= *verbose* 2)
+         (format t "~&State is: ~a. Mode is: ~a.~%" state (mode state)))
+       (ecase (mode state)
+         (test-for-done
+          (if (empty-p state)
+              ;; because we are doing HTN Planning, if there are no tasks, we have a plan.
+              (setf (mode state) 'extract-plan)
+              (setf (mode state) 'look-for-immediate-task)))
+         (look-for-immediate-task
+          (cond ((immediate-tasks state)
+                 (let ((state (prepare-choose-immediate-task-state state)))
+                   (setf (mode state) 'pop-immediate-task)))
+                (t
+                 (setf (mode state) 'prepare-to-choose-toplevel-task))))
+         (pop-immediate-task
+          (if (choose-immediate-task-state state)
+              (setf (mode state) 'expand-task)
+              (stack-backtrack state)))
 
-          (prepare-to-choose-toplevel-task
-           (let ((tasks (sort-tasks domain (top-tasks state) (unifier state) which)))
-             (unless tasks (error "Should never get to ~A with no top-tasks." (mode state)))
-             (setf (alternatives state) tasks
-                   (mode state) 'pop-toplevel-task)))
+         (prepare-to-choose-toplevel-task
+          (let ((tasks (sort-tasks domain (top-tasks state) (unifier state) which)))
+            (unless tasks (error "Should never get to ~A with no top-tasks." (mode state)))
+            (setf (alternatives state) tasks
+                  (mode state) 'pop-toplevel-task)))
 
-          (pop-toplevel-task
-           (if (choose-toplevel-task state)
-               (setf (mode state) 'expand-task)
-               (stack-backtrack state)))
+         (pop-toplevel-task
+          (if (choose-toplevel-task state)
+              (setf (mode state) 'expand-task)
+              (stack-backtrack state)))
 
-        (expand-task
-         (let ((task (current-task state)))
-           (trace-print :tasks (get-task-name task) (world-state state)
-                        "~2%Depth ~s, trying task ~s"
-                        (depth state)
-                        (apply-substitution task (unifier state)))
-           (incf *expansions*)
-           (when (>= *verbose* 2)
-             (format t "~%Task name: ~s" (get-task-name task)))
-           (cond
-             ((primitivep (get-task-name task))
-              (setf (mode state) 'expand-primitive-task))
-             ((eql (get-task-name task) :loop)
-              (setf (mode state) 'unfold-looping-task))
-	         ((member (get-task-name task) '(:if :when :unless))
-              (setf (mode state) 'expand-conditional-task))
-             (t ; original nonprimitive:
-              (setf (mode state) 'prepare-to-choose-method)))))
+         (expand-task
+          (let ((task (current-task state)))
+            (trace-print :tasks (get-task-name task) (world-state state)
+                         "~2%Depth ~s, trying task ~s"
+                         (depth state)
+                         (apply-substitution task (unifier state)))
+            (incf *expansions*)
+            (when (>= *verbose* 2)
+              (format t "~%Task name: ~s" (get-task-name task)))
+            (cond
+              ((primitivep (get-task-name task))
+               (setf (mode state) 'expand-primitive-task))
+              ((eql (get-task-name task) :loop)
+               (setf (mode state) 'unfold-looping-task))
+              ((member (get-task-name task) '(:if :when :unless))
+               (setf (mode state) 'expand-conditional-task))
+              (t ; original nonprimitive:
+               (setf (mode state) 'prepare-to-choose-method)))))
 
-        (unfold-looping-task
-         (when (> *verbose* 2) (format t "~%Starting to unfold the loop..."))
-         (if (unfold-loop-task domain state)
-             (progn
-               (setf (mode state) 'test-for-done)
-               (incf (depth state)))
-             ;; Else, 
-             (with-slots (current-task depth world-state) state
+         (unfold-looping-task
+          (when (> *verbose* 2) (format t "~%Starting to unfold the loop..."))
+          (if (unfold-loop-task domain state)
+              (progn
+                (setf (mode state) 'test-for-done)
+                (incf (depth state)))
+              ;; Else,
+              (with-slots (current-task depth world-state) state
                 (trace-print :tasks (get-task-name current-task) world-state
                              "~2%Could not unfold the loop successfully...~2T~%Depth ~s, backtracking from task~%      task ~s"
                              depth
                              current-task)
                 (stack-backtrack state))))
 
-	  (expand-conditional-task
-         (when (> *verbose* 2) (format t "~%Starting to expand the conditional block..."))
-         (if (expand-conditional-task domain state)
-             (progn
-               (setf (mode state) 'test-for-done)
-               (incf (depth state)))
-             ;; Else, 
-             (with-slots (current-task depth world-state) state
-	           (trace-print :tasks (get-task-name current-task) world-state
-			    "~2%Could not expand the conditional successfully...~%Depth ~s, backtracking from task~%      task ~s"
-			    depth
-			    current-task)
-	          (stack-backtrack state))))
+         (expand-conditional-task
+          (if (expand-conditional-task domain state)
+              (progn
+                (setf (mode state) 'test-for-done)
+                (incf (depth state)))
+              ;; Else,
+              (with-slots (current-task depth world-state) state
+                (trace-print :tasks (get-task-name current-task) world-state
+                             "~2%Could not expand the conditional successfully...~%Depth ~s, backtracking from task~%      task ~s"
+                             depth
+                             current-task)
+                (stack-backtrack state))))
 
+         (expand-primitive-task
+          (if (expand-primitive-state state domain)
+              (progn
+                (setf (mode state) 'test-for-done)
+                (incf (depth state)))
+              (with-slots (current-task depth world-state) state
+                (trace-print :tasks (get-task-name current-task) world-state
+                             "~2%Depth ~s, backtracking from task~%      task ~s"
+                             depth
+                             current-task)
+                (stack-backtrack state))))
+         (prepare-to-choose-method
+          (let* ((task-name (get-task-name (current-task state)))
+                 (methods (methods domain task-name)))
+            (setf (alternatives state) (sort-methods domain methods which))
+            (setf (mode state) 'choose-method)))
+         (choose-method
+          (if (choose-method-state state domain)
+              (setf (mode state) 'choose-method-bindings)
+              (progn
+                (let ((task1 (current-task state))
+                      (depth (depth state))
+                      (state (world-state state)))
+                  (trace-print :tasks (get-task-name task1) state
+                               "~2%Depth ~s, backtracking from task~%      task ~s"
+                               depth
+                               current-task)
+                  (stack-backtrack state)))))
+         (prepare-to-choose-method
+          (let* ((task-name (get-task-name (current-task state)))
+                 (methods (methods domain task-name)))
+            (setf (alternatives state) (sort-methods domain methods which))
+            (setf (mode state) 'choose-method)))
+         (choose-method
+          (if (choose-method-state state domain)
+              (setf (mode state) 'choose-method-bindings)
+              (progn
+                (let ((task1 (current-task state))
+                      (depth (depth state))
+                      (state (world-state state)))
+                  (trace-print :tasks (get-task-name task1) state
+                               "~2%Depth ~s, backtracking from task~%      task ~s"
+                               depth
+                               task1))
+                (stack-backtrack state))))
+         ;; the alternatives here are triples of (expansions unifiers dependencies)
+         (choose-method-bindings
+          (if (choose-method-bindings-state state)
+              (progn
+                (setf (mode state) 'test-for-done)
+                (incf (depth state)))
+              (stack-backtrack state)))
+         (extract-plan
+          (let (plan-return)
+            ;; did we find a new plan? If so, then store it
+            (multiple-value-bind (success plan)
+                (test-plan-found state :repairable repairable)
+              (when success
+                (setf plan-return
+                      (make-plan-return domain which
+                                        :plan plan
+                                        :state state
+                                        :repairable repairable
+                                        :replay-table *analogical-replay-table*))
+                (setf *plans-found* (cons plan-return *plans-found*))
+                (when (> *verbose* 0)
+                  (format t "~%~%Solution plan found successfully...:~%~a"
+                          plan))))
+            ;; handle *PLANS-FOUND* based on the value of WHICH
+            (ecase which
+              (:first
+               (if plan-return
+                   (return-from seek-plans-stack
+                     (plan-returns *plans-found* unpack-returns))
+                   (return-from seek-plans-stack nil)))
+              ;; if we want all the plans, just keep searching until we fail,
+              ;; and then return any plans we have found.
+              (:all (stack-backtrack state)))))))
         (expand-primitive-task
          (if (expand-primitive-state state domain)
              (progn
@@ -541,7 +619,7 @@ of PLAN-RETURN objects."
                     (make-add-dependencies :dependencies depends))))))
 
 
-	  
+
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
