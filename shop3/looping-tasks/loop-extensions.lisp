@@ -68,16 +68,12 @@
 (defmethod expand-loop ((engine (eql :ess))
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
-  (declare (ignore ess-search-state))   ; this variable is never read. [2023/08/22:rpg]
-
   (let* ((task-body (apply-substitution (get-task-body task1) in-unifier))
-         reduction)
-
-    (setf reduction                     ; Single ground reduction --
-          ;; what does it mean to have multiple reductions in a loop body? We are not going to backtrack
-          ;; into a loop body...
-          (expand-loop-body (first (second task-body)) task-body
-                            domain state in-unifier nil))
+         (reduction                     ; Single ground reduction --
+           ;; what does it mean to have multiple reductions in a loop body? We are not going to backtrack
+           ;; into a loop body...
+           (expand-loop-body (first (second task-body)) task-body
+                             domain state in-unifier nil)))
     (setf reduction (remove :ordered reduction))
     (unless reduction
       (return-from expand-loop (values nil nil nil nil)))
