@@ -1,4 +1,4 @@
-(in-package :shop2)
+(in-package :shop)
 
 (defparameter *loop-extension-debug*  t)
 (defparameter *loop-extension-stream* t)
@@ -54,27 +54,28 @@
     (dbg-lp "~%Backtrack stack: ~s" backtrack-stack)
     (dbg-lp "~%Start to expand now...")
     (multiple-value-bind (success tasks1 top-tasks1 unifier1)      ;one set of dependencies...
-	;; This should not call SEEK-PLANS anymore...
-	(expand-loop :ess domain current-task world-state tasks top-tasks
-		     unifier ess-search-state)
-      
+        ;; This should not call SEEK-PLANS anymore...
+        (expand-loop :ess domain current-task world-state tasks top-tasks
+                     unifier ess-search-state)
+
       (when success
-	(setf top-tasks top-tasks1
-	      tasks tasks1
-	      unifier unifier1)
-	t))))
+        (setf top-tasks top-tasks1
+              tasks tasks1
+              unifier unifier1)
+        t))))
 
 
 (defmethod expand-loop ((engine (eql :ess))
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
+  (declare (ignore ess-search-state))   ; this variable is never read. [2023/08/22:rpg]
 
   (let* ((task-body (apply-substitution (get-task-body task1) in-unifier))
-         reductions)
+         reduction)
 
-    (setf reduction ; Single ground reduction --
-	  ;; what does it mean to have multiple reductions in a loop body? We are not going to backtrack
-	  ;; into a loop body...	  
+    (setf reduction                     ; Single ground reduction --
+          ;; what does it mean to have multiple reductions in a loop body? We are not going to backtrack
+          ;; into a loop body...
           (expand-loop-body (first (second task-body)) task-body
                             domain state in-unifier nil))
     (setf reduction (remove :ordered reduction))
@@ -82,7 +83,7 @@
       (return-from expand-loop (values nil nil nil nil)))
 
     (dbg-lp "~%Loop reduction: ~s" reduction)
-    (setf ess-search-state (save-reduction ess-search-state reduction))
+    (save-reduction ess-search-state reduction)
     (setf reduction (push :ordered reduction))
 
     (multiple-value-bind (top-tasks1 tasks1)
@@ -94,13 +95,13 @@
       (values t tasks1 top-tasks1 in-unifier))))
 
 
-  
+
 #|
 (defmethod expand-loop ((engine (eql :ess))
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
 
-  
+
   (let* ((task-body (apply-substitution (shop2::get-task-body task1) in-unifier))
          reductions)
 
@@ -125,16 +126,16 @@
              (format t "~%Subtasks: ~s" subtasks)
              (setf reductions (generate-reductions domain reductions
                                                    subtasks))
-	     (setf ess-search-state (record-reductions ess-search-state reductions))
-	     ))
+             (setf ess-search-state (record-reductions ess-search-state reductions))
+             ))
           (format t "~%Loop task decomposed...~%")
           ))
-     
+
       (:for
        (cond
          ((assoc :from (rest (second task-body))) ; it's a FROM loop of  some
                                         ; sort, supporting FROM TO for
-                                        ; now. 
+                                        ; now.
           (let* ((start (second (assoc :from (rest (second task-body)))))
                  (end (second (assoc :to (rest (second task-body)))))
                  (index-var (second (assoc :var (rest (second task-body)))))
@@ -153,7 +154,7 @@
                 (element-list (apply-substitution
                                (second (assoc :in (rest (second task-body))))
                                in-unifier)))
-	    (format t "~%Element list in FOR: ~s" element-list)
+            (format t "~%Element list in FOR: ~s" element-list)
             (loop for el in element-list
                   do (let ((u `(,(make-binding loop-var el))))
                        (ecase (first (third task-body))
@@ -188,7 +189,7 @@
        ))
 
     (setf reductions (remove :ordered reductions))
-    (unless reductions 
+    (unless reductions
       (return-from expand-loop (values nil nil nil nil)))
     (setf reductions (push :ordered reductions))
     (multiple-value-bind (top-tasks1 tasks1)
@@ -204,7 +205,7 @@
 (defmethod expand-loop ((engine (eql :shop2))
                         domain task1 state tasks top-tasks
                         in-unifier &optional ess-search-state)
-  
+
   (declare (ignore ess-search-state))
   (let* ((task-body (apply-substitution (get-task-body task1) in-unifier))
          reductions)
@@ -213,7 +214,7 @@
           (expand-loop-body (first (second task-body)) task-body
                             domain state in-unifier nil))
     (setf reductions (remove :ordered reductions))
-    (unless reductions 
+    (unless reductions
       (return-from expand-loop (values nil nil nil nil)))
 
     (setf reductions (push :ordered reductions))
@@ -227,7 +228,7 @@
 
 (defun loop-item (key task-body)
   (second (member key task-body)))
-  
+
 (defun loop-body-item (key task-body)
   ;; Drop the item keyword (e.g., :COND)
   (rest (assoc key (rest task-body))))
@@ -267,7 +268,7 @@
   (let (unfolded-loop
         (loop-item (loop-body-item body-key task-body)))
     (cond
-      ;; it's a :FROM loop of some sort, supporting FROM TO for now.  
+      ;; it's a :FROM loop of some sort, supporting FROM TO for now.
       ((loop-body-item-inner :from loop-item)
        (let* ((start (loop-body-item-inner :from loop-item))
               (end (loop-body-item-inner :to loop-item))
@@ -277,10 +278,10 @@
           (for i from start to end)
           (let* ((u `(,(make-binding index-var i)))
                  (loop-body (apply-substitution (loop-body-item :ordered task-body)
-							 u)))
+                                                         u)))
             (setf unfolded-loop
-		  (generate-reduction domain unfolded-loop
-				      loop-body))))))
+                  (generate-reduction domain unfolded-loop
+                                      loop-body))))))
 
       ;; FOR over elements of a list
       ((loop-body-item-inner :in loop-item)
@@ -288,32 +289,32 @@
              (element-list (apply-substitution
                             (loop-body-item-inner :in loop-item)
                             in-unifier))
-	     (loop-body (loop-body-item :ordered task-body)))
+             (loop-body (loop-body-item :ordered task-body)))
 
          (iter
           (for el in element-list)
           (let* ((u0 `(,(make-binding loop-var el)))
                  (loop-body-instantiated
-		   (apply-substitution (copy-list loop-body) u0))
-		 (loop-condition (loop-body-item :cond task-body)))
+                   (apply-substitution (copy-list loop-body) u0))
+                 (loop-condition (loop-body-item :cond task-body)))
 
-	    ;; Modularize this into a function to share with EXPAND-LOOP-BODY(:COND)
-	    (when loop-condition
-	      (let* ((unifiers
-		       (find-satisfiers loop-condition state
-					:domain domain))
-		     ;; Hard-coded deterministic choice -- the current design does not allow
-		     ;; allow backtracking over loop bindings:
-		     (u (first unifiers))
-		     (u1 (compose-substitutions in-unifier u)))
-		;; This is the ordered task list?
-		(setf loop-body-instantiated
-		      (apply-substitution loop-body-instantiated
-					  u1))))
+            ;; Modularize this into a function to share with EXPAND-LOOP-BODY(:COND)
+            (when loop-condition
+              (let* ((unifiers
+                       (find-satisfiers loop-condition state
+                                        :domain domain))
+                     ;; Hard-coded deterministic choice -- the current design does not allow
+                     ;; allow backtracking over loop bindings:
+                     (u (first unifiers))
+                     (u1 (compose-substitutions in-unifier u)))
+                ;; This is the ordered task list?
+                (setf loop-body-instantiated
+                      (apply-substitution loop-body-instantiated
+                                          u1))))
 
-	    (setf unfolded-loop (generate-reduction domain unfolded-loop
-						    loop-body-instantiated))
-	    )))))
+            (setf unfolded-loop (generate-reduction domain unfolded-loop
+                                                    loop-body-instantiated))
+            )))))
     ;; RETURN
     unfolded-loop))
 
@@ -321,7 +322,7 @@
                             top-tasks partial-plan partial-plan-cost depth
                             which-plans protections
                             in-unifier)
-  
+
   (multiple-value-bind ( success tasks1 top-tasks1 in-unifier1)
       (expand-loop :shop2 domain task1 state tasks top-tasks in-unifier)
 
@@ -330,4 +331,3 @@
     (seek-plans domain state tasks1 top-tasks1 partial-plan
                 partial-plan-cost (1+ depth) which-plans
                 protections in-unifier1)))
-
