@@ -115,10 +115,10 @@ objects."
                                      (error "Make analogy table only supported for :which == :first"))
                                  make-analogy-table))
          (*analogical-replay* (progn
-                                 (or (and analogical-replay (eq which :first))
-                                     (not analogical-replay)
-                                     (error "Analogical replay only supported for :which == :first"))
-                                 analogical-replay))
+                                (or (and analogical-replay (eq which :first))
+                                    (not analogical-replay)
+                                    (error "Analogical replay only supported for :which == :first"))
+                                analogical-replay))
          (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
@@ -229,8 +229,8 @@ List of analogical-replay tables -- optional
               (setf (mode state) 'look-for-immediate-task)))
          (look-for-immediate-task
           (cond ((immediate-tasks state)
-                 (let ((state (prepare-choose-immediate-task-state state)))
-                   (setf (mode state) 'pop-immediate-task)))
+                 (prepare-choose-immediate-task-state state)
+                 (setf (mode state) 'pop-immediate-task))
                 (t
                  (setf (mode state) 'prepare-to-choose-toplevel-task))))
          (pop-immediate-task
