@@ -263,7 +263,7 @@ List of analogical-replay tables -- optional
                (setf (mode state) 'expand-primitive-task))
               ((eql (get-task-name task) :loop)
                (setf (mode state) 'unfold-looping-task))
-              ((member (get-task-name task) '(:if :when :unless))
+              ((conditional-p (get-task-name task))
                (setf (mode state) 'expand-conditional-task))
               (t ; original nonprimitive:
                (setf (mode state) 'prepare-to-choose-method)))))
