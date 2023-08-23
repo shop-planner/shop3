@@ -28,7 +28,7 @@
 
     (iter
      (with children = (complex-tree-node-children plan-tree-node))
-     (until (null children))
+     (while children)
      (as node = (pop children))
      (format t "~% Child node: ~s" node)
      ;; What about :UNORDERED???
