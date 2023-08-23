@@ -15,6 +15,9 @@
     ))
    )
 
+(declaim (ftype (function (&rest arglist &key :top-tasks :tasks :unifier)
+                          (values conditional-state-expand &optional)
+                          make-conditional-state-expand))
 (defun make-conditional-state-expand (&rest arglist
                                       &key top-tasks tasks unifier)
   (declare (ignorable top-tasks
