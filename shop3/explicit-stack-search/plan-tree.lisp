@@ -37,8 +37,8 @@ cross-links for VAL using information in TABLE."))
 
 
 (defstruct (dependency (:conc-name nil))
-  establisher ;; tree-node
-  consumer ;; tree-node
+  (establisher NIL :type (or null tree-node (member :init)))
+  (consumer NIL :type (or null tree-node))
   prop
   )
 
