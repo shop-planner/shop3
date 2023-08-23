@@ -583,15 +583,7 @@ of PLAN-RETURN objects."
               ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links
               ;; PARENT and CHILD.
               (push
-               (if *include-rationale*
-                   (make-add-child-to-tree :parent (apply-substitution
-                                                    (plan-tree::complex-tree-node-task parent) unifier)
-                                           :child (apply-substitution
-                                                   (plan-tree::complex-tree-node-children
-                                                    child)
-                                                   unifier))
-                   ;; else
-                   (make-add-child-to-tree :parent parent :child child))
+               (make-add-child-to-tree :parent parent :child child)
                backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
