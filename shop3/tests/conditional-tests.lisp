@@ -8,7 +8,7 @@
 (def-suite conditionals-suite)
 (in-suite conditionals-suite)
 
-(defdomain (when-static-nil :type looping-domain)
+(defdomain (when-static-nil :type looping-domain :redefine-ok t)
     ((:method (top)
        nil
        (:ordered
@@ -25,7 +25,7 @@
       :add nil
       :delete nil)))
 
-(defdomain (when-static-t :type looping-domain)
+(defdomain (when-static-t :type looping-domain :redefine-ok t)
     (
      (:method (top)
        nil
@@ -51,7 +51,7 @@
   nil
   (top))
 
-(defdomain (when-dynamic :type looping-domain)
+(defdomain (when-dynamic :type looping-domain :redefine-ok t)
     (
      (:method (top)
        (and (good-value ?value))
@@ -78,7 +78,7 @@
   (top))
 
 
-(defdomain (when-existential :type looping-domain)
+(defdomain (when-existential :type looping-domain :redefine-ok t)
     (
      (:method (top)
        nil
@@ -139,7 +139,7 @@
                                 :domain 'when-existential))))
 
 
-(defdomain (when-binding-inner :type looping-domain)
+(defdomain (when-binding-inner :type looping-domain :redefine-ok t)
     ((:method (top)
        nil
        (:ordered
@@ -164,7 +164,7 @@
                                 :domain 'when-binding-inner))))
 
 
-(defdomain (when-rebind-inner :type looping-domain)
+(defdomain (when-rebind-inner :type looping-domain :redefine-ok t)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -188,7 +188,7 @@
        (shop3::find-plans-stack 'when-rebind-inner
                                 :domain 'when-rebind-inner))))
 
-(defdomain (unless-rebind-inner :type looping-domain)
+(defdomain (unless-rebind-inner :type looping-domain :redefine-ok t)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -213,7 +213,7 @@
                                 :domain 'unless-rebind-inner))))
 
 
-(defdomain (if-rebind-inner :type looping-domain)
+(defdomain (if-rebind-inner :type looping-domain :redefine-ok t)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -240,7 +240,7 @@
        (shop3::find-plans-stack 'if-rebind-inner
                                 :domain 'if-rebind-inner))))
 
-(defdomain (if-bind-inner :type looping-domain)
+(defdomain (if-bind-inner :type looping-domain :redefine-ok t)
     ((:method (top)
        nil
        (:ordered
@@ -268,7 +268,7 @@
                                 :domain 'if-bind-inner))))
 
 
-(defdomain (loop-cond :type looping-domain)
+(defdomain (loop-cond :type looping-domain :redefine-ok t)
     ((:method (top)
        nil
        ((:loop
