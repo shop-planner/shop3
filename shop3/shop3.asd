@@ -105,7 +105,7 @@
                              (:file "plan-tree")
                              (:file "decls")
                              (:file "prepare-return-values")
-			                 (:file "plan-tree-simple-print")
+                             (:file "plan-tree-simple-print")
                              (:file "backtrack-stack")
                              (:file "analogical-replay")
                              (:file "explicit-search")))
