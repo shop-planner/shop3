@@ -33,7 +33,7 @@
 
 (defmethod unfold-loop-task ((domain looping-mixin)
                              ess-search-state)
-  (shop-trace "Unfolding now...~%")
+  (trace-print :loop domain ess-search-state "Unfolding now...~%")
   (with-slots (top-tasks tasks current-task
                          unifier backtrack-stack
                          world-state)
