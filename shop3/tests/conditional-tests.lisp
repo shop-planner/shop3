@@ -1,13 +1,14 @@
 (defpackage #:shop3-conditionals-tests
   (:use #:cl
-        #:fiveam))
+        #:fiveam)
+  (:import-from :shop #:defdomain #:defproblem #:looping-domain))
 
 (in-package #:shop3-conditionals-tests)
 
 (def-suite conditionals-suite)
 (in-suite conditionals-suite)
 
-(shop3::defdomain (when-static-nil :type shop3::looping-domain)
+(defdomain (when-static-nil :type looping-domain)
     ((:method (top)
        nil
        (:ordered
@@ -24,7 +25,7 @@
       :add nil
       :delete nil)))
 
-(shop3::defdomain (when-static-t :type shop3::looping-domain)
+(defdomain (when-static-t :type looping-domain)
     (
      (:method (top)
        nil
@@ -42,15 +43,15 @@
       :add nil
       :delete nil)))
 
-(shop3::defproblem when-static-nil when-static-nil
+(defproblem when-static-nil when-static-nil
   nil
   (top))
 
-(shop3::defproblem when-static-t when-static-t
+(defproblem when-static-t when-static-t
   nil
   (top))
 
-(shop3::defdomain (when-dynamic :type shop3::looping-domain)
+(defdomain (when-dynamic :type looping-domain)
     (
      (:method (top)
        (and (good-value ?value))
@@ -68,16 +69,16 @@
       :add nil
       :delete nil)))
 
-(shop3::defproblem when-dynamic-pass when-dynamic
+(defproblem when-dynamic-pass when-dynamic
   ((good-value some-value) (value-match some-value))
   (top))
 
-(shop3::defproblem when-dynamic-not-pass when-dynamic
+(defproblem when-dynamic-not-pass when-dynamic
   ((good-value some-value) (value-match some-other-value))
   (top))
 
 
-(shop3::defdomain (when-existential :type shop3::looping-domain)
+(defdomain (when-existential :type looping-domain)
     (
      (:method (top)
        nil
@@ -95,11 +96,11 @@
       :add nil
       :delete nil)))
 
-(shop3::defproblem when-existential-pass when-existential
+(defproblem when-existential-pass when-existential
   ((value-match some-value))
   (top))
 
-(shop3::defproblem when-existential-not-pass when-existential
+(defproblem when-existential-not-pass when-existential
   nil
   (top))
 
@@ -138,7 +139,7 @@
                                 :domain 'when-existential))))
 
 
-(shop3::defdomain (when-binding-inner :type shop3::looping-domain)
+(defdomain (when-binding-inner :type looping-domain)
     ((:method (top)
        nil
        (:ordered
@@ -152,7 +153,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem when-binding-inner when-binding-inner
+(defproblem when-binding-inner when-binding-inner
   ((bound-value testing))
   (top))
 
@@ -163,7 +164,7 @@
                                 :domain 'when-binding-inner))))
 
 
-(shop3::defdomain (when-rebind-inner :type shop3::looping-domain)
+(defdomain (when-rebind-inner :type looping-domain)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -177,7 +178,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem when-rebind-inner when-rebind-inner
+(defproblem when-rebind-inner when-rebind-inner
   ((some value) (bound-value testing))
   (top))
 
@@ -187,7 +188,7 @@
        (shop3::find-plans-stack 'when-rebind-inner
                                 :domain 'when-rebind-inner))))
 
-(shop3::defdomain (unless-rebind-inner :type shop3::looping-domain)
+(defdomain (unless-rebind-inner :type looping-domain)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -201,7 +202,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem unless-rebind-inner unless-rebind-inner
+(defproblem unless-rebind-inner unless-rebind-inner
   ((some value) (bound-value testing))
   (top))
 
@@ -212,7 +213,7 @@
                                 :domain 'unless-rebind-inner))))
 
 
-(shop3::defdomain (if-rebind-inner :type shop3::looping-domain)
+(defdomain (if-rebind-inner :type looping-domain)
     ((:method (top)
        (and (some ?value))
        (:ordered
@@ -229,7 +230,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem if-rebind-inner unless-rebind-inner
+(defproblem if-rebind-inner unless-rebind-inner
   ((some else) (bound-value testing))
   (top))
 
@@ -239,7 +240,7 @@
        (shop3::find-plans-stack 'if-rebind-inner
                                 :domain 'if-rebind-inner))))
 
-(shop3::defdomain (if-bind-inner :type shop3::looping-domain)
+(defdomain (if-bind-inner :type looping-domain)
     ((:method (top)
        nil
        (:ordered
@@ -256,7 +257,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem if-bind-inner unless-bind-inner
+(defproblem if-bind-inner unless-bind-inner
   ((some else) (bound-value testing))
   (top))
 
@@ -267,7 +268,7 @@
                                 :domain 'if-bind-inner))))
 
 
-(shop3::defdomain (loop-cond :type shop3::looping-domain)
+(defdomain (loop-cond :type looping-domain)
     ((:method (top)
        nil
        ((:loop
@@ -281,7 +282,7 @@
       :add nil
       :del nil)))
 
-(shop3::defproblem loop-cond loop-cond
+(defproblem loop-cond loop-cond
   ((something here) (something there))
   (top))
 
