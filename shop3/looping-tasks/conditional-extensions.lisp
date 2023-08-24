@@ -35,7 +35,7 @@
         (unifier state) (unifier entry))
   (decf (depth state)))
 
-(defmethod expand-conditional-task ((domain looping-domain)
+(defmethod expand-conditional-task ((domain looping-mixin)
                              ess-search-state)
   (trace-print :loop domain ess-search-state "~%Expanding the conditional now...")
   (with-slots (top-tasks tasks current-task
@@ -186,7 +186,7 @@
       (setf reduction `(:ordered (:task !!inop))))
     reduction))
 
-(defmethod seek-plans-conditional ((domain looping-domain) task1 state tasks
+(defmethod seek-plans-conditional ((domain looping-mixin) task1 state tasks
 				    top-tasks partial-plan partial-plan-cost depth
 				    which-plans protections
 				    in-unifier)

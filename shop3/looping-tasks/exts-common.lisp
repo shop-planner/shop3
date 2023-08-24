@@ -1,11 +1,14 @@
 (in-package :shop)
 
-(defclass looping-domain (domain)
-     ()
+(defclass looping-mixin ()
+  ()
   (:documentation "Mixin domain class for HTNs with LOOP tasks in them."))
 
+(defclass looping-domain (looping-mixin domain)
+  ())
 
-(defmethod seek-plans-task ((domain looping-domain) task1 state tasks
+
+(defmethod seek-plans-task ((domain looping-mixin) task1 state tasks
                             top-tasks
                             partial-plan
                             partial-plan-cost depth which-plans

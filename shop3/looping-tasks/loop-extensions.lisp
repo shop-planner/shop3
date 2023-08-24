@@ -31,7 +31,7 @@
         (unifier state) (unifier entry))
   (decf (depth state)))
 
-(defmethod unfold-loop-task ((domain looping-domain)
+(defmethod unfold-loop-task ((domain looping-mixin)
                              ess-search-state)
   (shop-trace "Unfolding now...~%")
   (with-slots (top-tasks tasks current-task
@@ -306,7 +306,7 @@
     ;; RETURN
     unfolded-loop))
 
-(defmethod seek-plans-loop ((domain looping-domain) task1 state tasks
+(defmethod seek-plans-loop ((domain looping-mixin) task1 state tasks
                             top-tasks partial-plan partial-plan-cost depth
                             which-plans protections
                             in-unifier)
