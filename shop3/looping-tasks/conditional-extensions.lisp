@@ -37,19 +37,19 @@
 
 (defmethod expand-conditional-task ((domain looping-domain)
                              ess-search-state)
-  (dbg-lp "~%Expanding the conditional now...")
+  (trace-print :loop domain ess-search-state "~%Expanding the conditional now...")
   (with-slots (top-tasks tasks current-task
                          unifier backtrack-stack
                          world-state)
               ess-search-state
-     
-     (dbg-lp "~%Saving backtrack state: ~s" tasks)
+
+     (trace-print :loop domain ess-search-state "~%Saving backtrack state: ~s" tasks)
      (push (make-conditional-state-expand :top-tasks top-tasks
                                    :tasks tasks
                                    :unifier unifier)
            backtrack-stack)
-     
-     (dbg-lp "~%Start to expand now...")
+
+     (trace-print :loop domain ess-search-state "~%Start to expand now...")
      (multiple-value-bind (success tasks1 top-tasks1 unifier1)      ;one set of dependencies...
          ;; This should not call SEEK-PLANS anymore...
          (expand-conditional :ess domain current-task world-state tasks top-tasks
@@ -72,7 +72,7 @@
           (expand-conditional-body (first task-body) task-body
 				   domain state in-unifier nil))
 
-    (dbg-lp "~%Expanded...: ~s" reductions)
+    (trace-print :loop reductions state "~%Expanded...: ~s" reductions)
     (setf reductions (remove :ordered reductions))
     (unless reductions 
       (return-from expand-conditional (values nil nil nil nil)))
@@ -86,7 +86,7 @@
         (apply-method-bindings task1 top-tasks tasks reductions
                                in-unifier)
 
-      (dbg-lp "~%Top-tasks1: ~s" top-tasks1)
+      (trace-print :loop reductions state "~%Top-tasks1: ~s" top-tasks1)
       ;; RETURN:
       (values t tasks1 top-tasks1 in-unifier))))
 
@@ -107,8 +107,6 @@
 				    in-unifier search-state)
   (declare (ignorable search-state))
   ;; TASK-BODY is the form (:IF (:COND ....) (:ORDERED ...) (:ELSE...))
-
-    (dbg-lp "~%Hello??")
 
   (let* ((if-condition (block-body-condition :cond task-body))
          (unifiers
@@ -133,7 +131,7 @@
 		 (apply-substitution
 		  (block-body-item1 :ordered else-body)
 		  in-unifier)))
-	  (dbg-lp "~%ELSE tasks: ~s" else-tasks)
+	  (trace-print :loop else-tasks search-state "~%ELSE tasks: ~s" else-tasks)
 	  (setf reduction (generate-reduction domain reduction
 						else-tasks))))
     reduction))
@@ -158,7 +156,7 @@
     
     (unless reduction
       (setf reduction `(:ordered (:task !!inop))))
-    (dbg-lp "~%WHEN Reduction: ~s" reduction)
+    (trace-print :loop reduction search-state "~%WHEN Reduction: ~s" reduction)
     reduction))
 
 (defmethod expand-conditional-body ((body-key (eql :unless))

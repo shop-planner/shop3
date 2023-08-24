@@ -1,13 +1,5 @@
 (in-package :shop)
 
-(defparameter *loop-extension-debug*  t)
-(defparameter *loop-extension-stream* t)
-
-(defun dbg-lp (str &rest format-arguments)
-  (when *loop-extension-debug*
-    (apply #'format *loop-extension-stream* str format-arguments)
-    (terpri *loop-extension-stream*)))
-
 ;; Extend ESS stack class:
 (defclass loop-state-expand (stack-entry)
   ((top-tasks
@@ -41,18 +33,18 @@
 
 (defmethod unfold-loop-task ((domain looping-domain)
                              ess-search-state)
-  (dbg-lp "Unfolding now...~%")
+  (shop-trace "Unfolding now...~%")
   (with-slots (top-tasks tasks current-task
                          unifier backtrack-stack
                          world-state)
               ess-search-state
-      (dbg-lp "Saving backtrack state...~%")
+      (trace-print :loop nil ess-search-state "Saving backtrack state...~%")
 ;     (push (make-loop-state-expand :top-tasks top-tasks
  ;                                  :tasks tasks
   ;                                 :unifier unifier)
    ;        backtrack-stack)
-    (dbg-lp "~%Backtrack stack: ~s" backtrack-stack)
-    (dbg-lp "~%Start to expand now...")
+    (trace-print :loop backtrack-stack ess-search-state "~%Backtrack stack: ~s" backtrack-stack)
+    (trace-print :loop nil ess-search-state "~%Start to expand now...")
     (multiple-value-bind (success tasks1 top-tasks1 unifier1)      ;one set of dependencies...
         ;; This should not call SEEK-PLANS anymore...
         (expand-loop :ess domain current-task world-state tasks top-tasks
@@ -78,7 +70,7 @@
     (unless reduction
       (return-from expand-loop (values nil nil nil nil)))
 
-    (dbg-lp "~%Loop reduction: ~s" reduction)
+    (trace-print :loop reduction ess-search-state "~%Loop reduction: ~s" reduction)
     (save-reduction ess-search-state reduction)
     (setf reduction (push :ordered reduction))
 
