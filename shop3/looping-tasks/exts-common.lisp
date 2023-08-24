@@ -58,7 +58,7 @@
   ess-search-state)
 
 (defun new-symbol (sym)
-  (intern (string (gensym (string sym)))))
+  (gentemp (symbol-name sym) :shop))
 
 (defun rename-sym (sym renaming-table)
   (cond
