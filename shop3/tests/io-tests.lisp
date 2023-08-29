@@ -99,7 +99,7 @@
      (multiple-value-bind (meth-def meth-id)
          (shop2::process-method *domain* meth)
        (is
-        (equal 
+        (equal
          ;; replace all the gensyms
          '(:method (find-movable)
            placeholder
@@ -117,7 +117,7 @@
 (test test-method-recording
   (with-fixture complex-method-def (t)
     (let* ((temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
-           (domain (progn 
+           (domain (progn
                      (eval `(defdomain ,temp-domain-desig
                                 (,meth)))
                      (find-domain temp-domain-desig)))
@@ -125,7 +125,7 @@
                          #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
                          (with-fixture empty-domain ()
                            (shop::process-method *domain* meth)))))
-      
+
       (fiveam:is-true (typep domain 'domain))
       (is (equalp translated
                   (subst-if 'placeholder
@@ -144,7 +144,7 @@
                                         ; Decomposition
                   ((!assert ((put-on-table ?x))) (find-movable))))
          (temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
-         (domain (progn 
+         (domain (progn
                    (eval `(defdomain ,temp-domain-desig
                               (,meth)))
                    (find-domain temp-domain-desig)))
@@ -152,7 +152,7 @@
                          (subst-if 'placeholder
                                    #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
                                    (shop::process-method domain meth)))))
-    
+
     (fiveam:is-true (typep domain 'domain))
     (is (equalp translated
                 (subst-if 'placeholder
@@ -169,7 +169,7 @@
                    ()
                    ((!assert ((put-on-table ?x))) (find-movable))))
           (temp-domain-desig (gentemp (symbol-name '#:domain) :arity-test))
-          (domain (progn 
+          (domain (progn
                     (eval `(defdomain ,temp-domain-desig
                                (,meth)))
                     (find-domain temp-domain-desig)))
@@ -177,7 +177,7 @@
                                 #'(lambda (x) (and x (symbolp x) (null (symbol-package x))))
                                 (shop::with-method-name-table
                                     (shop::process-method domain meth)))))
-    
+
      (fiveam:is-true (typep domain 'domain))
      (is (= 1 (length (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))
      (let ((lookup-key (first (alexandria:hash-table-keys (shop::domain-name-to-method-table domain)))))
@@ -237,7 +237,7 @@
                                          ;; timelines for fuel update
                                          (write-time (fuel ?p) ?t-write-fuel)
                                          (read-time (fuel ?p) ?t-read-fuel)
-                                        
+
                                          (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
                                          (assign ?end (+ ?start ?duration))
                                          )
@@ -253,7 +253,7 @@
                                          (write-time (fuel ?p) ?t-write-fuel)
                                          (read-time (fuel ?p) ?t-read-fuel)
                                          )
-                                       
+
                                         ;; adds
                                         (
                                          ;; update fuel and position
@@ -285,7 +285,7 @@
                 ;; timelines for fuel update
                 (write-time (fuel ?p) ?t-write-fuel)
                 (read-time (fuel ?p) ?t-read-fuel)
-               
+
                 (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
                 (assign ?end (+ ?start ?duration))
                 )))
@@ -316,7 +316,7 @@
    (is (= (shop::operator-cost-fun op) 0))))
 
 (test implicit-conjunction-warning
-      (let ((op (with-fixture op-def-domain ()
+  (with-fixture op-def-domain ()
                   (warns shop::implicit-conjunction-warning
                          (shop::parse-domain-item domain :op
                                                   '(:op (!takeoff ?p ?flight-alt ?earliest-start ?start ?end)
@@ -336,7 +336,7 @@
                                                      ;; timelines for fuel update
                                                      (write-time (fuel ?p) ?t-write-fuel)
                                                      (read-time (fuel ?p) ?t-read-fuel)
-                                                     
+
                                                      (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
                                                      (assign ?end (+ ?start ?duration))
                                                      )
@@ -352,7 +352,7 @@
                                                      (write-time (fuel ?p) ?t-write-fuel)
                                                      (read-time (fuel ?p) ?t-read-fuel)
                                                      )
-                                                    
+
                                                     :add
                                                     (
                                                      ;; update fuel and position
@@ -366,53 +366,54 @@
                                                      (read-time (fuel ?p) ?end)
                                                      )
                                                     :cost
-                                                    0))))))
-
-        (is (equal (shop::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
-        (is (equal (shop::operator-preconditions op)
-                   '(and
-                     (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
-                     (= 0 ?alt)
-                     (fuel ?p ?fuel)
-                     (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
-                     (assign ?fuel-remaining (- ?fuel ?fuel-cost))
-                     (call >= ?fuel-remaining 0)
-                     ;; uninformed hack FIXME
-                     (assign ?duration 10)
-                     ;; timelines for at update
-                     (write-time (at ?p) ?t-write-at)
-                     (read-time (at ?p) ?t-read-at)
-                     ;; timelines for fuel update
-                     (write-time (fuel ?p) ?t-write-fuel)
-                     (read-time (fuel ?p) ?t-read-fuel)
-                     (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
-                     (assign ?end (+ ?start ?duration))
-                     )))
-        (is (equal (shop::operator-additions op)
-                   '(
-                     ;; update fuel and position
-                     (at ?p (pos ?north ?east ?flight-alt))
-                     (fuel ?p ?fuel-remaining)
-                     ;; timelines for at update
-                     (write-time (at ?p) ?end)
-                     (read-time (at ?p) ?end)
-                     ;; timelines for fuel update
-                     (write-time (fuel ?p) ?end)
-                     (read-time (fuel ?p) ?end)
-                     )))
-        (is (equal (shop::operator-deletions op)
-                   '(
-                     ;; update fuel and position
-                     (at ?p (pos ?north ?east ?alt))
-                     (fuel ?p ?fuel)
-                     ;; timelines for at update
-                     (write-time (at ?p) ?t-write-at)
-                     (read-time (at ?p) ?t-read-at)
-                     ;; timelines for fuel update
-                     (write-time (fuel ?p) ?t-write-fuel)
-                     (read-time (fuel ?p) ?t-read-fuel)
-                     )))
-        (is (= (shop::operator-cost-fun op) 0))))
+                                                    0)))
+    (let ((op (shop::operator domain '!takeoff)))
+      (is (equal (shop::operator-head op) '(!takeoff ?p ?flight-alt ?earliest-start ?start ?end)))
+      (is (equal (shop::operator-preconditions op)
+                 '(and
+                   (at ?p (pos ?north ?east ?alt)) ; a/c starts at alt == 0
+                   (= 0 ?alt)
+                   (fuel ?p ?fuel)
+                   (assign ?fuel-cost (takeoff-fuel-cost ?flight-alt))
+                   (assign ?fuel-remaining (- ?fuel ?fuel-cost))
+                   (call >= ?fuel-remaining 0)
+                   ;; uninformed hack FIXME
+                   (assign ?duration 10)
+                   ;; timelines for at update
+                   (write-time (at ?p) ?t-write-at)
+                   (read-time (at ?p) ?t-read-at)
+                   ;; timelines for fuel update
+                   (write-time (fuel ?p) ?t-write-fuel)
+                   (read-time (fuel ?p) ?t-read-fuel)
+                   (assign ?start (max ?earliest-start ?t-write-at ?t-read-at ?t-write-fuel ?t-read-fuel))
+                   (assign ?end (+ ?start ?duration))
+                   )))
+      (is (equal (shop::operator-additions op)
+                 '(
+                   ;; update fuel and position
+                   (at ?p (pos ?north ?east ?flight-alt))
+                   (fuel ?p ?fuel-remaining)
+                   ;; timelines for at update
+                   (write-time (at ?p) ?end)
+                   (read-time (at ?p) ?end)
+                   ;; timelines for fuel update
+                   (write-time (fuel ?p) ?end)
+                   (read-time (fuel ?p) ?end)
+                   )))
+      (is (equal (shop::operator-deletions op)
+                 '(
+                   ;; update fuel and position
+                   (at ?p (pos ?north ?east ?alt))
+                   (fuel ?p ?fuel)
+                   ;; timelines for at update
+                   (write-time (at ?p) ?t-write-at)
+                   (read-time (at ?p) ?t-read-at)
+                   ;; timelines for fuel update
+                   (write-time (fuel ?p) ?t-write-fuel)
+                   (read-time (fuel ?p) ?t-read-fuel)
+                   )))
+      (is (= (shop::operator-cost-fun op) 0))
+      )))
 
 ;;; domain definition fixture to test checks for repeated method names
 (def-fixture method-name-domain-fix (unique-method-names)
@@ -536,7 +537,7 @@
     (!DELIVER PACKAGE1 LOCATION4) (!CLEAN-DOMAIN)))
 
 (in-package :arity-test)
-  
+
 ;;; FIXME: probably should undefine the problem and domain here.
 (test test-include-directive
   (shop-user::define-partitioned-umt-domain)
