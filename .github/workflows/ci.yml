@@ -1,5 +1,5 @@
 
-name: CI
+name: test
 
 # Controls when the action will run.
 on:
@@ -56,11 +56,8 @@ jobs:
         apt-get install -y cmake make g++ flex bison
 
     - uses: actions/checkout@v3
-
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        git submodule update --init --recursive
+      with:
+        submodules: true
 
     - name: cache validate
       id: cache-validate
