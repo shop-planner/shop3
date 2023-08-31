@@ -62,18 +62,21 @@
     (:nicknames :shopthpr :shop.theorem-prover)
     (:use :common-lisp :shop3.common :shop3.unifier :iterate)
     (:import-from #:shop3.common #:add-atom-to-state #:state-atoms #:domain-core)
+    (:shadow #:random)
     ;; make these symbols available for import
     (:intern  #:+numerical-comparisons+
               #:fluent-value
               #:f-exp-value
-                  #:fluents-mixin
-                  #:fluent-function-p
-                  #:fluent-expr-p
-                  #:fluent-comparison-p)
+              #:fluents-mixin
+              #:fluent-function-p
+              #:fluent-expr-p
+              #:fluent-comparison-p)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
              #:*state*
              #:*domain*
+
+             #:*random-generator*
 
              #:def-logical-keyword
 

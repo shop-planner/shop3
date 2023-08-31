@@ -51,6 +51,8 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+;;; Robert P. Goldman
+
 (defpackage :shop-asd
     (:use :common-lisp :asdf)
     (:nicknames :shop2-asd :shop3-asd)
@@ -156,7 +158,7 @@ minimal affected subtree."
 (defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop3/common" "shop3/unifier")
+    :depends-on ("shop3/common" "shop3/unifier" (:version "random-state" "1.0.1"))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")
@@ -251,14 +253,14 @@ shop3."
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
                  (enhanced-plan-tree . :shop3-user) ; 2
-                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
+                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 8
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
                  (plan-tree-tests . :plan-tree-tests)  ; 40
                  (search-tests . :search-tests) ; 9
                  )
-    :num-checks 1053
+    :num-checks 1057
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
