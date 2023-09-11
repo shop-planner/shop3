@@ -63,7 +63,8 @@
 (defmacro when-done (&body body)
   `(when (and *plans-found*
               (case which-plans
-                ((:first :random :mcts) t)
+                ((:mcts) t)
+                ((:first :random) (>= (list-length *plans-found*) *plan-num-limit*))
                 (otherwise nil))
               (not (optimize-continue-p which-plans)))
      ,@body))

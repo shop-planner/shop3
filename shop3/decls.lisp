@@ -95,6 +95,7 @@
 (defparameter *depth-cutoff* nil)   ; maximum allowable depth for SEEK-PLANS
 (defparameter *verbose* 1)          ; default value for VERBOSE in FIND-PLANS
 (defparameter *which* :first)       ; default value for WHICH in FIND-PLANS
+(defparameter *plan-num-limit* 1)    ; default value for PLAN-NUM-LIMIT in FIND-PLANS
 (defparameter *gc* t)        ; whether to call GC each time we call SEEK-PLANS
 (defparameter *pp* t)               ; what value to use for *PRINT-PRETTY*
 (defparameter *tasklist* nil)       ; initial task list set to nil
