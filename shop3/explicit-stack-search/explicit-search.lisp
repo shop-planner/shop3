@@ -40,6 +40,7 @@
                                    (state-type :mixed state-type-supplied-p)
                                    (out-stream t)
                                    (which :first)
+                                   (plan-num-limit 1)
                                    analogical-replay
                                    (unpack-returns t)
                                    make-analogy-table)
@@ -63,6 +64,8 @@ Keyword arguments:
 * out-stream : where should output be printed.  Default: `t` (standard output).
 * which : What/how many plans should be returned?  Supports only `:first` (the
         default) and `:all`.
+* plan-num-limit: an int greater than or equal to 1 (its default value)
+             specifying a limit on the number of plans to generate.
 * analogical-replay : Do search informed by the contents of the
         `*analogical-replay-table*`. Default: `nil`.
 * make-analogy-table : Populate `*analogical-replay-table*` while planning.
@@ -168,6 +171,7 @@ objects."
         (seek-plans-stack search-state domain
                           :unpack-returns unpack-returns
                           :which which
+                          :plan-num-limit plan-num-limit
                           :repairable repairable)
       (setq total-run-time (- (get-internal-run-time) start-run-time)
             total-real-time (- (get-internal-real-time)
@@ -192,7 +196,8 @@ objects."
 
 
 (defun seek-plans-stack (state domain &key (which :first) repairable
-                                        (unpack-returns t))
+                                        (unpack-returns t)
+                                        plan-num-limit)
   "Workhorse function for FIND-PLANS-STACK.  Executes the SHOP3 search
 virtual machine, cycling through different virtual instructions depending
 on the value of the MODE slot of STATE.
@@ -327,18 +332,25 @@ List of analogical-replay tables -- optional
              ;; handle *PLANS-FOUND* based on the value of WHICH
              (ecase which
                (:first
-                (if plan-return
-                    (return-from seek-plans-stack
-                      (plan-returns *plans-found* unpack-returns))
-                    (return-from seek-plans-stack nil)))
+                (cond ((and plan-return (>= (length *plans-found*) plan-num-limit))
+                       (return-from seek-plans-stack
+                         (plan-returns (reverse *plans-found*) unpack-returns)))
+                      ;; we've found one plan, but there are possibly more plans to find...
+                      (plan-return (stack-backtrack state))
+                      (t
+                       (return-from seek-plans-stack nil))))
                ;; if we want all the plans, just keep searching until we fail,
                ;; and then return any plans we have found.
                (:all (stack-backtrack state)))))))
     (search-failed ()
       (case which
+        (:first
+         ;; no plans this time -- are there other plans to return?
+         (when *plans-found*
+             (plan-returns (reverse *plans-found*) unpack-returns)))
         (:all
          (when *plans-found*
-           (plan-returns *plans-found* unpack-returns)))
+           (plan-returns (reverse *plans-found*) unpack-returns)))
         (otherwise nil)))))
 
 
@@ -508,7 +520,7 @@ of PLAN-RETURN objects."
       t)))
 
 (defun CHOOSE-METHOD-STATE (state domain)
-  "Try to apply the first of the methods in the current set of 
+  "Try to apply the first of the methods in the current set of
 alternatives to the search-state STATE, using DOMAIN.  Return is
 boolean, true if the expansion is successful, otherwise NIL to
 trigger backtracking."
@@ -531,7 +543,7 @@ trigger backtracking."
             (when *enhanced-plan-tree*
               (let ((task-node (plan-tree:find-task-in-tree
                                 current-task plan-tree-lookup)))
-                
+
                 (push (record-node-expansion task-node task-expansion plan-tree-lookup
                                              :chosen-method (method-name domain method))
                       backtrack-stack)))

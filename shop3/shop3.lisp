@@ -5,7 +5,7 @@
 ;;(defparameter *version* "SHOP2 version 2.0 alpha")
 
 (defconstant +shopyright+
-"Copyright (C) 2004-2021 SIFT, LLC.
+"Copyright (C) 2004-2023 SIFT, LLC.
 
 Original SHOP2 code Copyright (C) 2002  University of Maryland.
 
@@ -123,7 +123,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :ID-ALL     - iterative deepening search for all shallowest plans.
         :RANDOM     - Randomized search.  Returns plan(s) found by random
                       selection (subject to *plan-num-limit*).
-                      Used by Monroe. Not for normal SHOP3 domains, since 
+                      Used by Monroe. Not for normal SHOP3 domains, since
                       normal SHOP3 domains have order-dependent semantics.
 
      :VERBOSE says how much information to print about the plans SHOP3
