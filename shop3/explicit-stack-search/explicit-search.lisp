@@ -335,7 +335,8 @@ List of analogical-replay tables -- optional
                (:first
                 (cond ((and plan-return (>= (length *plans-found*) plan-num-limit))
                        (return-from seek-plans-stack
-                         (plan-returns (reverse *plans-found*) unpack-returns)))
+                         (plan-returns (reverse *plans-found*)
+                                       unpack-returns)))
                       ;; we've found one plan, but there are possibly more plans to find...
                       (plan-return (stack-backtrack state))
                       (t
