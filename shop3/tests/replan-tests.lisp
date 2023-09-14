@@ -47,7 +47,7 @@
             (unwind-protect
                  (shop3:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
               (shop-untrace))
-          
+
           ;;(list executed plan)
           (values
            (validate-replan repaired :shop-domain domain :package package
@@ -84,7 +84,7 @@
   (flet ((put-in-package (sexp)
            (let ((pddl-utils:*pddl-package* (find-package 'shop3-openstacks)))
              (pddl-utils:pddlify-tree sexp))))
-  (is-true (test-replan))
+    (is-true (test-replan))
     (is-true (test-replan
               :failed-action (put-in-package '(!START-ORDER O3 N4 N3))
               :divergence (put-in-package
