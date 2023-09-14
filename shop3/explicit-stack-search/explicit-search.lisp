@@ -28,7 +28,7 @@
                                  (:state-type symbol)
                                  (:out-stream (or t stream))
                                  (:which (member :first :all))
-                                 (:plan-num-limit (and (integer 0) fixnum))
+                                 (:plan-num-limit (and (integer 1) fixnum))
                                  (:analogical-replay t)
                                  (:unpack-returns t)
                                  (:make-analogy-table t))
