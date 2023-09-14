@@ -45,7 +45,8 @@
                     (equalp (second (reverse executed)) failed-action)))
         (multiple-value-bind (repaired new-plan-tree)
             (unwind-protect
-                 (shop3:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash)
+                 (shop3:repair-plan domain plan plan-tree executed divergence search-state :plan-tree-hash plan-tree-hash
+                                    :verbose 0)
               (shop-untrace))
 
           ;;(list executed plan)
