@@ -5,7 +5,7 @@
 ;;(defparameter *version* "SHOP2 version 2.0 alpha")
 
 (defconstant +shopyright+
-"Copyright (C) 2004-2021 SIFT, LLC.
+"Copyright (C) 2004-2023 SIFT, LLC.
 
 Original SHOP2 code Copyright (C) 2002  University of Maryland.
 
@@ -104,6 +104,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
                         (state-type nil state-type-supplied-p)
                         hand-steer leashed
                         (out-stream t)
+                        (plan-num-limit 1)
                      &allow-other-keys)
   "FIND-PLANS looks for solutions to the planning PROBLEM.
    PROBLEM should be a problem-designator (a PROBLEM or a symbol naming one).
@@ -111,7 +112,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
 
      :WHICH tells what kind of search to do.  Its possible values are:
 
-        :FIRST      - depth-first search, returning the first plan found.
+        :FIRST      - depth-first search, returning the first plan(s) found
+                      (up to *plan-num-limit*).
         :ALL        - depth-first search for *all* plans.
         :SHALLOWEST - depth-first search for the shallowest plan in the
                       search space (this usually is also the shortest plan).
@@ -119,9 +121,10 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
         :ALL-SHALLOWEST - depth-first search for all shallowest plans.
         :ID-FIRST   - iterative deepening search, returning the first plan.
         :ID-ALL     - iterative deepening search for all shallowest plans.
-        :RANDOM     - Randomized search.  Used by Monroe. Not for normal
-                      SHOP3 domains, since normal SHOP3 domains have order-
-                      dependent semantics.
+        :RANDOM     - Randomized search.  Returns plan(s) found by random
+                      selection (subject to *plan-num-limit*).
+                      Used by Monroe. Not for normal SHOP3 domains, since
+                      normal SHOP3 domains have order-dependent semantics.
 
      :VERBOSE says how much information to print about the plans SHOP3
               finds.  Its values can be any of the following:
@@ -136,6 +139,8 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
      :COLLECT-STATE indicates whether or not to return final state(s).  For backward-
              compatibility, states are also returned whenever :PLAN-TREE is true.
              This should probably eventually change.
+     :PLAN-NUM-LIMIT is an int greater than or equal to 1 (its default value)
+             specifying a limit on the number of plans to generate.
   RETURN VALUES:
      PLANS FOUND --- a list of plans.  Each plan is a list that alternates a
                      between instantiated operators and costs
@@ -210,6 +215,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          (*hand-steer* hand-steer)
          (*leashed* leashed)
          (*domain* domain)
+         (*plan-num-limit* plan-num-limit)
          )
     (apply 'find-plans-1 domain state tasks which problem :out-stream out-stream
            (alexandria:remove-from-plist options
@@ -222,7 +228,6 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
   (let ((total-expansions 0) (total-inferences 0)
         (total-run-time 0) (total-real-time 0)
         top-tasks)
-
 
     ;; we need to be sure that the pieces of the input tasks are
     ;; properly recognized as being/not being variables, etc. This

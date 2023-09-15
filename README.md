@@ -119,7 +119,7 @@ you may clone with the `--recurse-submodules` option), and then:
 3. Tell ASDF where to find SHOP3:
    ```
    (asdf:initialize-source-registry
-            '(:source-registry (:tree SHOP3-DIRECTORY) :inherit-configuration)
+            '(:source-registry (:tree SHOP3-DIRECTORY) :inherit-configuration))
    ```
    Fill in the name of the directory of your cloned repository for `SHOP3-DIRECTORY`.
 4. Enter `(asdf:load-system "shop3")` into the CL REPL.

@@ -123,9 +123,10 @@ BEFORE the insertion of FAILED into the plan tree.")
        (error "Unable to find a stack entry for failed node ~A" failed)))))
 
 
-(defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0))
+(defun replan-from-failure (domain failed-tree-node search-state &key (verbose 0) (plan-num-limit 1))
   (let ((*verbose* verbose)
-        (*domain* domain))
+        (*domain* domain)
+        *plans-found*)
     (when (>= *verbose* 2)
       (format t "~&World state before backjump is:~%")
       (pprint (state-atoms (world-state search-state))))
@@ -144,7 +145,7 @@ BEFORE the insertion of FAILED into the plan tree.")
       ;; for solving this task, not find a different task.
       (setf (mode search-state) 'expand-task)
       ;; must be "repairable" so that we don't strip NOPs.
-      (seek-plans-stack search-state domain :repairable t))))
+      (seek-plans-stack search-state domain :plan-num-limit plan-num-limit :repairable t))))
 
 ;;; This is a very messy function: it's supposed to grab fresh copies
 ;;; of actions (i.e., the actions in the PLAN, which is a replan) in
@@ -225,7 +226,7 @@ Modified search state object."
     #+ignore(break "Inside FREEZE-STATE, before adding divergences, world state is: ~S" new-state-obj)
     ;; now put the divergences into effect, taking sleazy advantage of the fact that the
     ;; world state tag increments by two.
-    (let ((new-tag 
+    (let ((new-tag
             (shop2.common:tag-state new-state-obj 1)))
       (iter (for (op fact) in divergence)
         (ecase op
