@@ -1,4 +1,4 @@
-(in-package :shop2)
+(in-package :shop)
 
 (defclass search-state ()
   (
