@@ -27,27 +27,6 @@ jobs:
           - { container: "containers.common-lisp.net/cl-docker-images/sbcl:latest", lisp: sbcl }
           - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
 
-        # test:
-        #   - ARITY-TEST::ALL-SHOP3-INTERNAL-TESTS
-        #   - PROTECTION-TEST::PROTECTION-TEST
-        #   - SHOP-REPLAN-TESTS::TEST-PLAN-REPAIR
-        #   - SHOP-THEOREM-PROVER-TESTS::THEOREM-PROVER-TESTS
-        #   - SHOP3-OPENSTACKS::PLAN-OPENSTACKS
-        #   - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL
-        #   - SHOP3-OPENSTACKS::TEST-OPENSTACKS-ADL-explicit-stack-search
-        #   - SHOP3-USER::BLOCKS-TESTS
-        #   - SHOP3-USER::ENHANCED-PLAN-TREE
-        #   - SHOP3-USER::LOGISTICS-TESTS
-        #   - SHOP3-USER::LOGISTICS-TESTS-DH
-        #   - SHOP3-USER::MINIMAL-SUBTREE-TESTS
-        #   - SHOP3-USER::MISC-TESTS
-        #   - SHOP3-USER::SINGLETON-TESTS
-        #   - SHOP3-USER::UMT-DOMAIN-TESTS
-        #   - SHOP3::ROVERS-TESTS
-        #   - SHOP3::SHORT-PDDL-TESTS
-        #   - SHOP3-USER::DEPOT-TESTS
-        #   - TEST-STATES::TEST-SHOP-STATES
-
     steps:
     - name: Get validate deps
       shell: bash
@@ -81,26 +60,24 @@ jobs:
       run: |
         cd jenkins
         ./run-tests.sh ${{ matrix.cfg.lisp }}
-    # - name: tests
-    #   shell: bash
-    #   run: |
-    #     ros --no-quicklisp -e "(cl:in-package :cl-user)
-    #        (require :asdf)
-    #        (prin1 (lisp-implementation-type)) (terpri) (prin1 (lisp-implementation-version)) (terpri)
-    #        (princ (uiop:run-program \"date\" :output :string))
-    #        (prin1 \"${{ matrix.test }}\") (terpri)
-    #        (asdf:initialize-source-registry  '(:source-registry (:directory \"$PWD/shop3/\") (:tree \"$PWD/jenkins/ext/\") :inherit-configuration))
-    #        (declaim (optimize (speed 3)))
-    #        (asdf:load-system :shop3/test)
-    #        (defun test-fail-p (test-result)
-    #          (typecase test-result
-    #            (fiveam::test-passed nil)
-    #            (fiveam::test-failure t)
-    #            (null t)
-    #            (list (find-if (function (lambda (x) (test-fail-p x))) test-result))
-    #            (t nil)))
-    #        (let ((test-results (fiveam:run! (quote ${{ matrix.test }}))))
-    #            (format t \"Test results are:~%\")
-    #            (princ test-results) (terpri)
-    #            (princ (uiop:run-program \"date\" :output :string))
-    #            (uiop:quit (if (test-fail-p test-results) 1 0)))"
+
+    - name: install quicklisp
+      shell: bash
+      run: /usr/local/bin/install-quicklisp
+
+    - name: install buildapp
+      shell: bash
+      run: |
+        sbcl --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
+        cp ${HOME}/quicklisp/buildapp*/
+        cd shop3/buildapp ; make LISP=${lisp} install
+
+    - name: build and install shop app
+      shell: bash
+      run: |
+        cd shop3/buildapp ; make clean ; make LISP=${lisp} install
+
+    - name: test shop apps
+      shell: bash
+      run: |
+        cd shop3/buildapp ; ./test.sh
