@@ -4,20 +4,14 @@ ASDF_DIR=${ASDF_DIR:-${HOME}/lisp/asdf/build}
 THIS_DIR=$(realpath $(dirname ${BASH_SOURCE}))
 QUICKLISP_DIR=${QUICKLISP_DIR:-~/quicklisp}
 
-# sbcl --no-userinit --no-sysinit --non-interactive \
-#      --load "${ASDF_DIR}/asdf.lisp" \
-#      --load  ${QUICKLISP_DIR}/setup.lisp \
-#      --eval '(ql:quickload "cl-json")' \
-#      --eval '(ql:quickload "iterate")' \
-#      --eval '(ql:quickload "fiveam-asdf")' \
-#      --eval '(ql:quickload "alexandria")' \
-#      --eval '(ql:write-asdf-manifest-file "/tmp/quicklisp-manifest.txt")'
-
-
 # --dispatched-entry "shop/shop-app::main" \
 # --dispatched-entry "ess-shop/shop-app::ess-main" \
-buildapp --output shop-app \
-         --entry "shop-app::main" \
+#          --entry "shop-app::main" \
+buildapp --logfile "/tmp/buildapp-shop-app.log" \
+         --output shop-app \
+         --dispatched-entry "/shop-app::main" \
+         --dispatched-entry "shop/shop-app::main" \
+         --dispatched-entry "ess-shop/shop-app::ess-main" \
          --load "${ASDF_DIR}/asdf.lisp" \
          --asdf-path "${THIS_DIR}/../" \
          --asdf-tree "${THIS_DIR}/../../jenkins/ext/" \
@@ -25,15 +19,13 @@ buildapp --output shop-app \
          --load-system "shop3" \
          --load "${THIS_DIR}/shop-app-entrypoints.lisp"
 
+
 retVal=$?
 if [ $retVal -ne 0 ]; then
     echo "Build process failed with exit code $retVal"
     exit $retVal
 fi
 exit $retVal
-
-ln -sf ${THIS_DIR}/shop-app ${HOME}/bin/shop
-ln -sf ${THIS_DIR}/shop-app ${HOME}/bin/ess-shop
 
 # Local Variables:
 # mode: sh
