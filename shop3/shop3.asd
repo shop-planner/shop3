@@ -111,11 +111,11 @@
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
-	:serial t
-	:components ((:file "exts-common")
-		         (:file "loop-extensions")
-		         (:file "conditional-extensions")))
-       
+        :serial t
+        :components ((:file "exts-common")
+                     (:file "loop-extensions")
+                     (:file "conditional-extensions")))
+
 
 
        ;; this is for the original SHOP3 plan trees.

@@ -33,13 +33,13 @@
                       partial-plan partial-plan-cost depth
                       which-plans protections
                       unifier))
-    
+
     (t
      (seek-plans-nonprimitive domain task1 state tasks top-tasks
-                                     partial-plan partial-plan-cost depth
-                                     which-plans protections
-                                     unifier
-                                     ))))
+                              partial-plan partial-plan-cost depth
+                              which-plans protections
+                              unifier
+                              ))))
 
 (defun save-reduction (ess-search-state reduction)
   (when *enhanced-plan-tree*
@@ -47,14 +47,14 @@
       (iter
        (for task in reduction)
        (let* ((parent (plan-tree:find-task-in-tree (current-task ess-search-state)
-						   (plan-tree-lookup ess-search-state)))
-	      (child (make-plan-tree-for-task-net task
-						  parent plan-tree-lookup)))
-	 
-	 ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
-	 (push (make-add-child-to-tree :parent parent
-				       :child child)
-	       backtrack-stack)))))
+                                                   (plan-tree-lookup ess-search-state)))
+              (child (make-plan-tree-for-task-net task
+                                                  parent plan-tree-lookup)))
+
+         ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links PARENT and CHILD.
+         (push (make-add-child-to-tree :parent parent
+                                       :child child)
+               backtrack-stack)))))
   ess-search-state)
 
 (defun new-symbol (sym)
@@ -67,7 +67,7 @@
        (setf (gethash sym renaming-table)
              (new-symbol sym)))
      (gethash sym renaming-table))
-    
+
     ((listp sym)
      (iter
       (for sym1 in sym)
@@ -75,7 +75,7 @@
       (finally (return new-symlist))))
 
     (t sym)))
-  
+
 (defun resymbol-task (tsk renaming-table)
   (iter
    (for sym in tsk)
@@ -85,8 +85,8 @@
 (defun generate-reduction (domain reduction subtasks)
   (let ((renaming-table (make-hash-table :test #'equal)))
     (loop for tsk in subtasks
-          as new-tsk = (resymbol-task tsk renaming-table)
-                                
-          do (shop2::set-variable-property domain new-tsk)
-	     (setf reduction (append reduction (list new-tsk))))
+       as new-tsk = (resymbol-task tsk renaming-table)
+
+       do (shop2::set-variable-property domain new-tsk)
+         (setf reduction (append reduction (list new-tsk))))
     reduction))
