@@ -198,8 +198,8 @@ minimal affected subtree."
     :depends-on ("shop3" (:version "hddl-utils" "3"))
   :pathname "hddl/"
   :serial t
-  :components ((:file "package")
-               (:file "hddl-plan" :depends-on ("package"))
+  :components (;;(:file "package")
+               (:file "hddl-plan")
                ;; (:file "hddl-problem" :depends-on ("package"))
                ))
 
