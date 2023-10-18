@@ -195,12 +195,13 @@ minimal affected subtree."
   )
 
 (defsystem "shop3/hddl"
-    :depends-on ("shop3" "hddl-utils")
+    :depends-on ("shop3" (:version "hddl-utils" "3"))
   :pathname "hddl/"
   :serial t
   :components ((:file "package")
                (:file "hddl-plan" :depends-on ("package"))
-               (:file "hddl-problem" :depends-on ("package"))))
+               ;; (:file "hddl-problem" :depends-on ("package"))
+               ))
 
 
 ;;;---------------------------------------------------------------------------
