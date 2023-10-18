@@ -89,6 +89,7 @@
 (defvar *operator-tasks*) ; record of the task atom for operators
 (declaim (type hash-table *operator-tasks* *task-operator*))
 (defvar *task-operator*) ; inverse of *operator-tasks*
+(defvar *reduction-labels*)             ; support recording method labels in plan tree
 (defparameter *optimize-cost* nil)  ; whether to optimize with branch and bound
 (defparameter *optimal-plan* 'fail) ; optimal plan found so far
 (defparameter *optimal-cost* 0)     ; cost of *optimal-plan*

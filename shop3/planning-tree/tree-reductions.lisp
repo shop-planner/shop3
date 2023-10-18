@@ -70,11 +70,11 @@
   (let ((all-subtasks (extract-subtasks reduction)))
     (iter (for subtask in all-subtasks)
       (setf (gethash subtask *subtask-parents*)
-            task1)))
+            task1))
     (when method-label
       (alexandria:nconcf *reduction-labels*
                          (mapcar #'(lambda (subtask) (cons subtask method-label))
-                                 all-subtasks))))
+                                 all-subtasks)))))
 
 (defun extract-subtasks (reduction)
   (cond
@@ -99,7 +99,8 @@
 (defun extract-tree (plan)
   (strip-tree-tags
    (let* ((operator-nodes (plan-operator-nodes plan))
-          ;; all-nodes are either operator-nodes or complex tasks
+          ;; all-nodes are either primitive-nodes or complex tasks
+          ;; this is kind of gross...
           (all-nodes (plan-tree-nodes operator-nodes))
           (*node-children-table* (create-node-children-table *subtask-parents* all-nodes operator-nodes))
           (root-tasks (node-children nil *node-children-table*)))
@@ -143,8 +144,7 @@ ROOT-NODE is a PRIMITIVE-NODE."
           (make-complex-node root-node
                              (mapcar #'(lambda (child) (extract-subtree child nodes))
                                      children)
-                             :reduction-label label))
-        root-node)
+                             :reduction-label label)))
       ((primitive-node-p root-node)
        root-node)
       (t
@@ -251,11 +251,6 @@ expanded -- if it is part of a failed search branch then  or (c) TASK itself."
             (extend-plan-tree-nodes (rest base-nodes) (cons node acc))))))
 
 ;;; Introduced an OPERATOR-NODE structure as a way of better
-;;; understanding the TREE extraction code. [2004/02/05:rpg]
-(defstruct (operator-node (:type list))
-  cost
-  operator
-  position)
 
 ;;; I think OPERATOR-TASK here actually applies to an operator NODE...
 ;;; this function is necessary because the operators are not EQ
