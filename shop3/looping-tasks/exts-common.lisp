@@ -57,8 +57,8 @@
                backtrack-stack)))))
   ess-search-state)
 
-(defun new-symbol (sym)
-  (gentemp (symbol-name sym) :shop))
+(defun new-symbol (sym &optional (pkg-desig :shop))
+  (gentemp (symbol-name sym) pkg-desig))
 
 (defun rename-sym (sym renaming-table)
   (cond
