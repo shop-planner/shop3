@@ -19,27 +19,14 @@
                depth
                (apply-substitution task1 unifier))
   ;;    (y-or-n-p "continue?")
-  (cond
-    ((primitivep (get-task-name task1))
-     (seek-plans-primitive domain task1 state tasks top-tasks
-                           partial-plan partial-plan-cost depth which-plans
-                           protections
-                           unifier))
-
+  (if (looping-p (get-task-name task1))
     ;; I can directly design this in the NONPRIMITIVE but just not to
     ;; complicate that function and possibly break it.
-    ((looping-p (get-task-name task1))
-     (seek-plans-loop domain task1 state tasks top-tasks
-                      partial-plan partial-plan-cost depth
-                      which-plans protections
-                      unifier))
-
-    (t
-     (seek-plans-nonprimitive domain task1 state tasks top-tasks
-                              partial-plan partial-plan-cost depth
-                              which-plans protections
-                              unifier
-                              ))))
+      (seek-plans-loop domain task1 state tasks top-tasks
+                       partial-plan partial-plan-cost depth
+                       which-plans protections
+                       unifier)
+      (call-next-method)))
 
 (defun save-reduction (ess-search-state reduction)
   (when *enhanced-plan-tree*
