@@ -140,7 +140,9 @@ minimal affected subtree."
                                             (find-package :shop3))
                                     (asdf:component-version (asdf:find-system "shop3")))))
        (:file "plan-printer" :depends-on ("package"
-                                           "decls"))))
+                                           "decls"))
+       (:file "hddl-plan" :pathname "hddl/hddl-plan"
+              :depends-on ("explicit-stack-search" "tree"))))
 
 (defsystem :shop3/common
     :serial t
@@ -193,16 +195,6 @@ minimal affected subtree."
                (:file "decls")
                (:file "graph-plan-tree"))
   )
-
-(defsystem "shop3/hddl"
-    :depends-on ("shop3" (:version "hddl-utils" "3"))
-  :pathname "hddl/"
-  :serial t
-  :components (;;(:file "package")
-               (:file "hddl-plan")
-               ;; (:file "hddl-problem" :depends-on ("package"))
-               ))
-
 
 ;;;---------------------------------------------------------------------------
 ;;; Testing
@@ -386,7 +378,8 @@ shop3."
                                                                    "Log_ran_problems_50"
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
-                 (:file "replan-tests" :pathname "tests/replan-tests")))
+                 (:file "replan-tests" :pathname "tests/replan-tests")
+                 (:file "hddl-tests" :pathname "tests/hddl-tests")))
 
 
 (defsystem shop3/test-satellite
