@@ -243,7 +243,7 @@
              #:adl-mixin
              #:adl-domain
              #:fluents-mixin
-             
+
 
              ;; MIXIN
              #:pure-logic-domain-mixin
@@ -259,10 +259,13 @@
              #:complex-node-p
              #:complex-node-task
              #:complex-node-children
+             #:complex-node-reduction-label
+             #:complex-node
              #:primitive-node-p
              #:primitive-node-task
              #:primitive-node-cost
              #:primitive-node-position
+             #:primitive-node
              #:remove-internal-operators
              #:tree-node-task
              #:tree-node-task-name
@@ -284,7 +287,7 @@
              #:singleton-variable
              #:incorrect-arity-error
              #:incomplete-dependency-error
-             
+
              ;; things you might want to use in your domain definitions
              #:variablep
 
