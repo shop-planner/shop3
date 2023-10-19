@@ -54,7 +54,7 @@
 ;;; markings.
 (in-package :shop)
 
-(defstruct (complex-node (:type list) 
+(defstruct (complex-node (:type list)
                          (:constructor make-complex-node (task children &key reduction-label)))
   task
   (reduction-label nil :type symbol)
@@ -328,7 +328,9 @@ tree (although they will be EQUALP."
                                          (primitive-node-task node)
                                          (primitive-node-position node)))
                    ((complex-node-p node)
-                    (copy-complex-node node))
+                    (make-complex-node (complex-node-task node)
+                                       (list-iter (complex-node-children node))
+                                       :reduction-label (complex-node-reduction-label node)))
                    (t
                     (error 'type-error :expected-type 'tree-node :datum node)))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.

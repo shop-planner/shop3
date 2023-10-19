@@ -103,13 +103,3 @@ and prints it to STREAM in the IPC format."
 
 (defun forest-roots (plan-tree)
   (mapcar #'shop:tree-node-task plan-tree))
-
-(declaim (ftype (function (list hash-table) (only-value list))
-                tree-decompositions))
-(defun tree-decompositions (plan-forest task-indices &optional (stream t))
-  (iter (with open = plan-forest)
-    (while open)
-    (as node = (pop open))
-    (if (shop:complex-node-p node)
-        ))
-  )
