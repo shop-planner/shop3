@@ -69,7 +69,7 @@ jobs:
       shell: bash
       run: |
         sbcl --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
-        cd ${HOME}/quicklisp/buildapp*
+        cd ${HOME}/quicklisp/dists/quicklisp/software/buildapp*
         make LISP=${lisp} install
 
     - name: build and install shop app
