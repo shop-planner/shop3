@@ -68,14 +68,19 @@ jobs:
     - name: install buildapp
       shell: bash
       run: |
-        sbcl --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
+        ${{ matrix.cfg.lisp }} --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
+
+    - name: build buildapp binary
+      shell: bash
+      run: |
         cd ${HOME}/quicklisp/dists/quicklisp/software/buildapp*
-        make LISP=${lisp} install
+        echo "Building buildapp with lisp = ${{ matrix.cfg.lisp }}"
+        make LISP=${{ matrix.cfg.lisp }} install
 
     - name: build and install shop app
       shell: bash
       run: |
-        cd shop3/buildapp ; make clean ; make LISP=${lisp} install
+        cd shop3/buildapp ; make clean ; make LISP=${{ matrix.cfg.lisp }} install
 
     - name: test shop apps
       shell: bash
