@@ -323,6 +323,7 @@
            #:consumer
            #:prop
            #:tree-node
+           #:tree-node-p
            #:tree-node-task
            #:tree-node-expanded-task
            #:tree-node-dependencies
