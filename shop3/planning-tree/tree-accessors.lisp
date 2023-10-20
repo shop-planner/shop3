@@ -63,7 +63,8 @@
 (defun complex-node-p (tree-node)
   "Is TREE-NODE a representation of a complex node (i.e., not an operator) in
 the SHOP2 tree format as described in SHOP2?"
-  (and (listp (first tree-node))
+  (and (listp tree-node)
+       (listp (first tree-node))
        (symbolp (first (first tree-node)))))
 
 (deftype complex-node ()
@@ -85,7 +86,8 @@ the SHOP2 tree format as described in SHOP2?"
 (defun primitive-node-p (tree-node)
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
-  (and (= (length tree-node) 3)
+  (and (listp tree-node)
+       (= (length tree-node) 3)
        (numberp (primitive-node-cost tree-node))
        (integerp (primitive-node-position tree-node))
        (listp (primitive-node-task tree-node))))
@@ -286,6 +288,12 @@ between trees."
                                 (complex-node-task n1)
                                 (complex-node-task n2))
                         (return-from node-iter nil))
+                      (unless (eq (complex-node-reduction-label n1)
+                                  (complex-node-reduction-label n2))
+                        (format t "Mismatching complex-node method labels:~%~T~S~%~T~S~%"
+                                (complex-node-reduction-label n1)
+                                (complex-node-reduction-label n2))
+                        (return-from node-iter nil))
                       (if (equalp (complex-node-children n1)
                                   (complex-node-children n2))
                           t
@@ -360,7 +368,9 @@ tree (although they will be EQUALP."
                (complex-node
                 (when (or keep-empty (complex-node-children node))
                   (make-complex-node (complex-node-task node)
-                                     (list-iter (complex-node-children node))))))))
+                                     (list-iter (complex-node-children node))
+                                     :reduction-label
+                                     (complex-node-reduction-label node)))))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
     (if (or (primitive-node-p tree) (complex-node-p tree))
         (node-iter tree)
