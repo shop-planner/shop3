@@ -9,6 +9,6 @@ install:	shop-app
 	install -c -m 555 shop-app ${DESTDIR}/bin/ess-shop
 
 clean:
-	rm shop-app
+	rm -f shop-app
 
 .PHONY:	clean
