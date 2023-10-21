@@ -1,5 +1,5 @@
 
-name: test
+name: buildapp
 
 # Controls when the action will run.
 on:
@@ -14,7 +14,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  test:
+  buildapp:
     # The type of runner that the job will run on
     runs-on: ${{matrix.os}}
     container:
@@ -28,35 +28,32 @@ jobs:
           - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
 
     steps:
-    - name: Get validate deps
-      shell: bash
-      run: |
-        apt-get update
-        apt-get install -y cmake make g++ flex bison
-
     - uses: actions/checkout@v3
       with:
         submodules: true
 
-    - name: cache validate
-      id: cache-validate
-      uses: actions/cache@v3
-      with:
-        path: jenkins/VAL
-        key: ${{ runner.os }}
+    - name: install quicklisp
+      shell: bash
+      run: /usr/local/bin/install-quicklisp
 
-    - name: compile validate
-      if: steps.cache-validate.outputs.cache-hit != 'true'
+    - name: install buildapp
       shell: bash
       run: |
-        cd jenkins/VAL
-        make
+        ${{ matrix.cfg.lisp }} --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
 
-    - name: add validate to path
-      run: echo "${GITHUB_WORKSPACE}/jenkins/VAL" >> $GITHUB_PATH
-
-    - name: tests
+    - name: build buildapp binary
       shell: bash
       run: |
-        cd jenkins
-        ./run-tests.sh ${{ matrix.cfg.lisp }}
+        cd ${HOME}/quicklisp/dists/quicklisp/software/buildapp*
+        echo "Building buildapp with lisp = ${{ matrix.cfg.lisp }}"
+        make LISP=${{ matrix.cfg.lisp }} install
+
+    - name: build and install shop app
+      shell: bash
+      run: |
+        cd shop3/buildapp ; make clean ; make LISP=${{ matrix.cfg.lisp }} install
+
+    - name: test shop apps
+      shell: bash
+      run: |
+        cd shop3/buildapp ; ./test.sh
