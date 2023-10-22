@@ -33,16 +33,14 @@ jobs:
         submodules: true
 
     - name: install up-to-date ASDF
-      uses: actions/checkout@v4
-      with:
-        repository: https://gitlab.common-lisp.net/asdf/asdf.git
-        ref: release
-        path: lisp
-
-    - name: build ASDF
       shell: bash
       run: |
-        cd ${{ github.workspace }}/lisp
+        cd ${{ github.workspace }}
+        mkdir lisp
+        cd lisp
+        git clone https://gitlab.common-lisp.net/asdf/asdf.git
+        cd asdf
+        git checkout release
         make
 
     - name: install quicklisp
