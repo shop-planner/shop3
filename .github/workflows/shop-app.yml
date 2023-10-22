@@ -35,7 +35,7 @@ jobs:
     - name: install up-to-date ASDF
       shell: bash
       run: |
-        cd ${{ github.workspace }}
+        cd ${HOME}
         mkdir lisp
         cd lisp
         git clone https://gitlab.common-lisp.net/asdf/asdf.git
