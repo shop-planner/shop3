@@ -28,13 +28,13 @@ jobs:
           - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: install up-to-date ASDF
+      uses: actions/checkout@v4
       with:
-        uses: actions/checkout@v3
         repository: https://gitlab.common-lisp.net/asdf/asdf.git
         ref: release
         path: lisp
@@ -47,7 +47,8 @@ jobs:
 
     - name: install quicklisp
       shell: bash
-      run: /usr/local/bin/install-quicklisp
+      run: |
+        /usr/local/bin/install-quicklisp
 
     - name: install buildapp
       shell: bash
