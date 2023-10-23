@@ -1,12 +1,12 @@
 #!/bin/bash
 
-if type ghead > /dev/null ; then
+if type ghead &> /dev/null ; then
    HEAD=ghead ;
 else
     HEAD=head
 fi
 
-if type grealpath > /dev/null ; then
+if type grealpath &> /dev/null ; then
    REALPATH=grealpath ;
 else
     REALPATH=realpath
@@ -177,7 +177,7 @@ elif [ "$RES" != "$EXPECTED" ]; then
 fi
 
 echo "Test SHOP with 1 argument"
-INPUT=$(mktemp -t "input")
+INPUT=$(mktemp -t "inputXXXXXX")
 cat logistic.lisp > ${INPUT}
 cat Log_ran_problems_15.lisp >> ${INPUT}
 RES=$(shop ${INPUT} | shop_plan_only)
