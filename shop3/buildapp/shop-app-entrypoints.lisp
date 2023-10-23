@@ -33,33 +33,37 @@
 (defun print-separator (&optional (stream t))
   (format stream "~&======================================================================~%"))
 
-(defun print-plan (plan)
+(defun print-plan (plan &optional (stream t))
   (let ((*print-length* nil)
         (*print-right-margin* 10000)
         ;; best guess at package for output
         (*package* (symbol-package (shop::problem-name shop::*problem*))))
-    (print-separator)
+    (when (eq stream t)
+     (print-separator stream))
     (iter (for (step cost . nil) on plan by 'cddr)
       (as i from 1)
-      (format t "~3d:~t~a:~t~,2f~%"
+      (format stream "~3d:~t~a:~t~,2f~%"
               i step cost))
-    (print-separator)))
+    (when (eq stream t)
+      (print-separator stream))))
 
-(defun print-ess-tree (tree)
+(defun print-ess-tree (tree &optional (stream t))
   (let ((*print-length* nil)
         ;; (*print-right-margin* 10000)
         ;; best guess at package for output
         (*package* (symbol-package (shop::problem-name shop::*problem*))))
-    (pprint (plan-tree:plan-tree->sexp tree))
-    (print-separator)))
+    (pprint (plan-tree:plan-tree->sexp tree) stream)
+    (when (eq stream t)
+      (print-separator stream))))
 
-(defun print-classic-tree (tree)
+(defun print-classic-tree (tree &optional (stream t))
   (let ((*print-length* nil)
         ;; (*print-right-margin* 10000)
         ;; best guess at package for output
         (*package* (symbol-package (shop::problem-name shop::*problem*))))
-    (pprint tree)
-    (print-separator)))
+    (pprint tree stream)
+    (when (eq stream t)
+      (print-separator stream))))
 
 (defun common/options ()
   (list
@@ -67,7 +71,19 @@
     :flag
     :description "Print plan tree as well as plan."
     :key :plan-tree
-    :long-name "tree")))
+    :long-name "tree")
+   (clingon:make-option
+    :string
+    :description "Print plan to file."
+    :key :plan-file
+    :required nil
+    :long-name "plan-file")
+   (clingon:make-option
+    :string
+    :description "Print plan tree to file."
+    :key :tree-file
+    :required nil
+    :long-name "tree-file")))
 
 (defun ess/options ()
   (common/options))
@@ -77,7 +93,8 @@
 
 (defun ess/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
-        (plan-tree (clingon:getopt cmd :plan-tree)))
+        (plan-tree (or (clingon:getopt cmd :plan-tree)
+                       (clingon:getopt cmd :tree-file))))
     (handler-bind ((error
                      (lambda (x)
                        (unless *interactive*
@@ -92,12 +109,24 @@
         (unless retvals
           (error "Unable to find a plan for problem ~a"
                  (shop::problem-name shop::*problem*)))
-        (print-plan (shop:plan (first retvals)))
-        (print-ess-tree (tree (first retvals)))))))
+        (let ((plan-stream (alexandria:if-let ((plan-path (clingon:getopt cmd :plan-file)))
+                             (open plan-path :direction :output :if-exists :supersede)
+                             t)))
+          (unwind-protect
+           (print-plan (shop:plan (first retvals)) plan-stream)
+            (unless (eq plan-stream t) (close plan-stream))))
+        (when plan-tree
+          (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :tree-file)))
+                             (open plan-path :direction :output :if-exists :supersede)
+                             t)))
+          (unwind-protect
+               (print-ess-tree (tree (first retvals)) stream)
+            (unless (eq stream t) (close stream)))))))))
 
 (defun classic/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
-        (plan-tree (clingon:getopt cmd :plan-tree)))
+        (plan-tree (or (clingon:getopt cmd :plan-tree)
+                       (clingon:getopt cmd :tree-file))))
     (handler-bind ((error
                      (lambda (x)
                        (unless *interactive*
@@ -112,8 +141,19 @@
         (unless plans
           (error "Unable to find a plan for problem ~a"
                  (shop::problem-name shop::*problem*)))
-        (print-plan (first plans))
-        (print-classic-tree (first trees))))))
+        (let ((plan-stream (alexandria:if-let ((plan-path (clingon:getopt cmd :plan-file)))
+                             (open plan-path :direction :output :if-exists :supersede)
+                             t)))
+          (unwind-protect
+               (print-plan (first plans) plan-stream)
+            (unless (eq plan-stream t) (close plan-stream))))
+        (when plan-tree
+          (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :tree-file)))
+                          (open plan-path :direction :output :if-exists :supersede)
+                          t)))
+            (unwind-protect
+                 (print-classic-tree (first trees) stream)
+              (unless (eq stream t) (close stream)))))))))
 
 (defun ess/command ()
   (clingon:make-command
