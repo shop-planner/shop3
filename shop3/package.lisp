@@ -243,7 +243,7 @@
              #:adl-mixin
              #:adl-domain
              #:fluents-mixin
-             
+
 
              ;; MIXIN
              #:pure-logic-domain-mixin
@@ -278,13 +278,17 @@
              #:make-complex-node
              #:node-parent
 
+             ;; plan return accessors (for ESS)
+             #:plan
+             #:tree
+
              ;; conditions
              #:no-method-for-task
              #:task-arity-mismatch
              #:singleton-variable
              #:incorrect-arity-error
              #:incomplete-dependency-error
-             
+
              ;; things you might want to use in your domain definitions
              #:variablep
 

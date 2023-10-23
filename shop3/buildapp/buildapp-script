@@ -10,12 +10,14 @@ QUICKLISP_DIR=${QUICKLISP_DIR:-~/quicklisp}
 buildapp --logfile "/tmp/buildapp-shop-app.log" \
          --output shop-app \
          --dispatched-entry "/shop-app::main" \
-         --dispatched-entry "shop/shop-app::main" \
+         --dispatched-entry "shop/shop-app::classic-main" \
          --dispatched-entry "ess-shop/shop-app::ess-main" \
          --load "${ASDF_DIR}/asdf.lisp" \
          --asdf-path "${THIS_DIR}/../" \
          --asdf-tree "${THIS_DIR}/../../jenkins/ext/" \
          --eval '(declaim (optimize speed space safety))' \
+         --load "${QUICKLISP_DIR}/setup.lisp" \
+         --eval '(ql:quickload "clingon")' \
          --load-system "shop3" \
          --load "${THIS_DIR}/shop-app-entrypoints.lisp"
 
