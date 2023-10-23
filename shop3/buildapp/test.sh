@@ -203,7 +203,7 @@ elif [ "$RES" != "$EXPECTED" ]; then
 fi
 
 echo "Test ESS-SHOP with 1 argument"
-INPUT=$(mktemp -t "input")
+INPUT=$(mktemp -t "input.XXXXXXXXXXX")
 cat logistic.lisp > ${INPUT}
 cat Log_ran_problems_15.lisp >> ${INPUT}
 RES=$(ess-shop ${INPUT} | shop_plan_only)
