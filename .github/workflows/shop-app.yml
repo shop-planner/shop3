@@ -1,0 +1,71 @@
+
+name: buildapp
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master, new-random ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  buildapp:
+    # The type of runner that the job will run on
+    runs-on: ${{matrix.os}}
+    container:
+      image: ${{matrix.cfg.container}}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        cfg:
+          - { container: "containers.common-lisp.net/cl-docker-images/sbcl:latest", lisp: sbcl }
+          - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: install up-to-date ASDF
+      shell: bash
+      run: |
+        cd ${HOME}
+        mkdir lisp
+        cd lisp
+        git clone https://gitlab.common-lisp.net/asdf/asdf.git
+        cd asdf
+        git checkout release
+        make
+
+    - name: install quicklisp
+      shell: bash
+      run: |
+        /usr/local/bin/install-quicklisp
+
+    - name: install buildapp
+      shell: bash
+      run: |
+        ${{ matrix.cfg.lisp }} --load ${HOME}/quicklisp/setup.lisp --eval '(ql:quickload "buildapp")' --eval '(uiop:quit 0)'
+
+    - name: build buildapp binary
+      shell: bash
+      run: |
+        cd ${HOME}/quicklisp/dists/quicklisp/software/buildapp*
+        echo "Building buildapp with lisp = ${{ matrix.cfg.lisp }}"
+        make LISP=${{ matrix.cfg.lisp }} install
+
+    - name: build and install shop app
+      shell: bash
+      run: |
+        cd shop3/buildapp ; make clean ; make LISP=${{ matrix.cfg.lisp }} install
+
+    - name: test shop apps
+      shell: bash
+      run: |
+        cd shop3/buildapp ; ./test.sh

@@ -114,10 +114,10 @@
             (truck ?truck-goal ?city-goal)
             (airport ?airport-now) (in-city ?airport-now ?city-now)
             (airport ?airport-goal) (in-city ?airport-goal ?city-goal))
-           (:ordered (:task in-city-delivery ?truck-now ?obj 
+           (:ordered (:task in-city-delivery ?truck-now ?obj
                             ?loc-now ?airport-now)
                (:task air-deliver-obj ?obj ?airport-now ?airport-goal)
-               (:task in-city-delivery ?truck-goal ?obj 
+               (:task in-city-delivery ?truck-goal ?obj
                       ?airport-goal ?loc-goal)))
 
     ;;;-------------------------------------------------
@@ -156,7 +156,7 @@
         (:method (air-deliver-obj ?obj ?airport-from ?airport-to)
            airplane-at-the-current-airport
            ((airplane-at ?airplane ?airport-from))
-           (:ordered (:task :immediate !add-protection (airplane-at 
+           (:ordered (:task :immediate !add-protection (airplane-at
                                                         ?airplane ?airport-from))
                (:task !load-airplane ?obj ?airplane ?airport-from)
                (:task fly-airplane ?airplane ?airport-to)
@@ -165,7 +165,7 @@
            ;; no airplane at the current airport
            fly-airplane-from-any-other-airport
            ((airplane-at ?airplane ?any-airport))
-           (:ordered (:task :immediate !fly-airplane ?airplane 
+           (:ordered (:task :immediate !fly-airplane ?airplane
                             ?any-airport ?airport-from)
                (:task !load-airplane ?obj ?airplane ?airport-from)
                (:task fly-airplane ?airplane ?airport-to)
@@ -174,12 +174,12 @@
         (:method (fly-airplane ?airplane ?airport-to)
            airplane-already-there
            ((airplane-at ?airplane ?airport-to))
-           ((:task :immediate !add-protection (airplane-at ?airplane 
+           ((:task :immediate !add-protection (airplane-at ?airplane
                                                            ?airport-to)))
 
            fly-airplane-in
            ((airplane-at ?airplane ?airport-from))
-           ((:task :immediate !fly-airplane ?airplane ?airport-from 
+           ((:task :immediate !fly-airplane ?airplane ?airport-from
                    ?airport-to)))
 
 
@@ -193,20 +193,9 @@
 
         ))))
 
-(eval-when (:load-toplevel)
+(eval-when (:load-toplevel :execute)
   (logistics-domain))
 
 
 
 ;;;--------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-

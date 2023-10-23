@@ -359,6 +359,10 @@ IF-THEN-ELSE semantics in methods."))
 ;;; PROBLEMS
 ;;;---------------------------------------------------------------------------
 
+(defgeneric problem-name (problem)
+  (:method ((name symbol))
+    (problem-name (find-problem name t))))
+
 (defclass problem ()
      ((state-atoms
        :initarg :state-atoms
@@ -674,7 +678,6 @@ a simple list of atoms."))
   (:documentation "Function that does the work of populating a problem.  Allows the programmer
 of SHOP extensions to extend or override the normal problem-building.")
   )
-
 
 (defgeneric get-state (problem)
   (:method ((problem problem))
