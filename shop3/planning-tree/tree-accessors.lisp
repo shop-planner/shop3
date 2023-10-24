@@ -345,7 +345,6 @@ tree (although they will be EQUALP."
     (find-complex-node-if #'match-if-child tree :node-fun t)))
 
 (defun canonically-order (tree &optional (keep-empty nil))
-  (declare (optimize debug))
   (labels ((list-iter (lst)
              (let ((elts
                      (remove nil (mapcar #'node-iter lst))))
