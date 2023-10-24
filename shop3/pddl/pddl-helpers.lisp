@@ -18,12 +18,12 @@
 (defpackage shop3-pddl-helpers
   (:use #:common-lisp #:iterate #:pddl-utils #:shop3)
   (:nicknames #:shop3.pddl.helpers #:shop2-pddl-helpers)
-  (:shadowing-import-from #:pddl-utils #:problem)
+  ;;(:shadowing-import-from #:pddl-utils #:problem)
   (:shadowing-import-from #:shop3
                           #:domain-name #:make-problem #:domain
-                          #:problem
+                          ;; #:problem
                           #:*validator-progname*)
-  (:shadow #:problem-name)
+  (:shadow #:problem-name #:problem)
   (:export #:typed-object-list->facts
            #:translate-openstacks-problem
            #:check-repair
@@ -51,7 +51,7 @@
                (every #'(lambda (x) (or (eq (first x) :add)
                                         (eq (first x) :delete)))
                       (rest divergence))))
-  (let* ((effects 
+  (let* ((effects
            (iter (for (op literal) in (rest divergence))
              (collecting
               (ecase op
