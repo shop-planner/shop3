@@ -162,6 +162,8 @@ cat <<'END_HEREDOC'
 END_HEREDOC
 )
 
+EXPECTED_TREE=`cat ${THISDIR}/test-data/tree.lisp`
+
 pushd ${THISDIR}/../examples/logistic
 
 echo "Test SHOP with 2 arguments"
@@ -205,6 +207,12 @@ else
         echo "Plan result did not equal the expected."
         exit 1
     fi
+
+    RES=`cat ${PLAN_TREE}`
+    if [ "$RES" != "$EXPECTED_TREE" ]; then
+        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
+        exit 1
+    fi
 fi
 
 echo "Test SHOP with 1 argument and plan tree"
@@ -222,6 +230,11 @@ else
     RES=`cat ${PLAN}`
     if [ "$RES" != "$EXPECTED" ]; then
         echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    RES=`cat ${PLAN_TREE}`
+    if [ "$RES" != "$EXPECTED_TREE" ]; then
+        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
         exit 1
     fi
 fi
@@ -266,6 +279,11 @@ else
     RES=`cat ${PLAN}`
     if [ "$RES" != "$EXPECTED" ]; then
         echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    RES=`cat ${PLAN_TREE}`
+    if [ "$RES" != "$EXPECTED_TREE" ]; then
+        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
         exit 1
     fi
 fi
