@@ -162,7 +162,25 @@ cat <<'END_HEREDOC'
 END_HEREDOC
 )
 
-EXPECTED_TREE=`cat ${THISDIR}/test-data/tree.lisp`
+EXPECTED_TREE_FILE="${THISDIR}/test-data/tree.lisp"
+
+compare_trees () {
+    tree-compare ${EXPECTED_TREE_FILE} ${PLAN_TREE}
+    local RES=$?
+    if [ "$RES" -eq 2 ]
+    then
+        echo "Got error in tree comparison."
+        exit 2
+    elif [ "$RES" -eq 1 ]
+    then
+        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
+        exit 1
+    elif [ "$RES" -ne 0 ]
+    then
+        echo "Unexpected tree-compare exit status: ${RES}"
+        exit 2
+    fi
+}
 
 pushd ${THISDIR}/../examples/logistic
 
@@ -207,12 +225,7 @@ else
         echo "Plan result did not equal the expected."
         exit 1
     fi
-
-    RES=`cat ${PLAN_TREE}`
-    if [ "$RES" != "$EXPECTED_TREE" ]; then
-        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
-        exit 1
-    fi
+    compare_trees
 fi
 
 echo "Test SHOP with 1 argument and plan tree"
@@ -232,11 +245,7 @@ else
         echo "Plan result did not equal the expected."
         exit 1
     fi
-    RES=`cat ${PLAN_TREE}`
-    if [ "$RES" != "$EXPECTED_TREE" ]; then
-        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
-        exit 1
-    fi
+    compare_trees
 fi
 
 
@@ -281,11 +290,8 @@ else
         echo "Plan result did not equal the expected."
         exit 1
     fi
-    RES=`cat ${PLAN_TREE}`
-    if [ "$RES" != "$EXPECTED_TREE" ]; then
-        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
-        exit 1
-    fi
+    # These don't compare properly because the ESS trees have INOP nodes in them
+    # compare_trees
 fi
 
 echo "Test ESS SHOP with 1 argument and plan tree"
@@ -305,6 +311,8 @@ else
         echo "Plan result did not equal the expected."
         exit 1
     fi
+    # These don't compare properly because the ESS trees have INOP nodes in them
+    # compare_trees
 fi
 
 

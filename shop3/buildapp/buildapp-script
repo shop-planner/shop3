@@ -12,6 +12,7 @@ buildapp --logfile "/tmp/buildapp-shop-app.log" \
          --dispatched-entry "/shop-app::main" \
          --dispatched-entry "shop/shop-app::classic-main" \
          --dispatched-entry "ess-shop/shop-app::ess-main" \
+	 --dispatched-entry "tree-compare/shop-app::tree-compare-main" \
          --load "${ASDF_DIR}/asdf.lisp" \
          --asdf-path "${THIS_DIR}/../" \
          --asdf-tree "${THIS_DIR}/../../jenkins/ext/" \
