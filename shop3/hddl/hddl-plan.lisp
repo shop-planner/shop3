@@ -150,7 +150,7 @@ action name only with any leading exclamation marks removed.
 Takes symbol as argument and returns symbol in same package."
   (let* ((name (symbol-name shop-action-name))
          (new-name (string-left-trim '(#\!) name)))
-    (intern new-name (symbol-package shop-action-name))))
+    (nth-value 0 (intern new-name (symbol-package shop-action-name)))))
 
 
 (defun print-hddl-plan (hddl-plan &optional (stream t))
