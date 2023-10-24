@@ -1,6 +1,6 @@
 ;;;---------------------------------------------------------------------------
 ;;; Copyright Smart Information Flow Technologies, d/b/a SIFT, LLC
-;;; 
+;;;
 ;;;
 ;;;---------------------------------------------------------------------------
 ;;; File Description:
@@ -19,7 +19,7 @@
                                         (on-failure nil))
   (let* ((shop-domain (etypecase shop-domain
                         (symbol (shop2:find-domain shop-domain))
-                        (shop2::domain shop-domain)))
+                        (shop::domain shop-domain)))
          (pddl-domain (coerce-pddl-argument pddl-domain))
          (pddl-problem (coerce-pddl-argument pddl-problem))
          (pddl-plan-sexp (pddl-plan-for-replan repaired-plan :shop-domain shop-domain :package package))
@@ -116,7 +116,7 @@ the divergence pseudo-action injected so that validate can process the result."
     (let ((new-plan (copy-list repaired-plan)))
       (setf (nth pos new-plan)
             (list (intern (string :divergence) package)))
-      (pddl-utils:pddlify-tree (shop2::pddl-plan shop-domain  new-plan)))))
+      (pddl-utils:pddlify-tree (shop::pddl-plan shop-domain  new-plan)))))
 
 (defun find-divergence (shop-plan)
   (find-if #'(lambda (x) (when (listp x) ; ignore costs, if present
