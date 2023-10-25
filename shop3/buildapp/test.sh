@@ -162,6 +162,26 @@ cat <<'END_HEREDOC'
 END_HEREDOC
 )
 
+EXPECTED_TREE_FILE="${THISDIR}/test-data/tree.lisp"
+
+compare_trees () {
+    tree-compare ${EXPECTED_TREE_FILE} ${PLAN_TREE}
+    local RES=$?
+    if [ "$RES" -eq 2 ]
+    then
+        echo "Got error in tree comparison."
+        exit 2
+    elif [ "$RES" -eq 1 ]
+    then
+        echo "Plan tree result (in ${PLAN_TREE}) did not equal the expected."
+        exit 1
+    elif [ "$RES" -ne 0 ]
+    then
+        echo "Unexpected tree-compare exit status: ${RES}"
+        exit 2
+    fi
+}
+
 pushd ${THISDIR}/../examples/logistic
 
 echo "Test SHOP with 2 arguments"
@@ -190,6 +210,45 @@ elif [ "$RES" != "$EXPECTED" ]; then
     exit 1
 fi
 
+echo "Test SHOP with 2 arguments and plan-tree"
+
+PLAN=$(mktemp -t "planXXXXXX")
+PLAN_TREE=$(mktemp -t "treeXXXXXX")
+shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} logistic.lisp Log_ran_problems_15.lisp
+EC=$?
+if [ "$EC" -ne 0 ]; then
+    echo "Failed to run planner successfully";
+    exit $EC
+else
+    RES=`cat ${PLAN}`
+    if [ "$RES" != "$EXPECTED" ]; then
+        echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    compare_trees
+fi
+
+echo "Test SHOP with 1 argument and plan tree"
+INPUT=$(mktemp -t "inputXXXXXX")
+cat logistic.lisp > ${INPUT}
+cat Log_ran_problems_15.lisp >> ${INPUT}
+PLAN=$(mktemp -t "planXXXXXX")
+PLAN_TREE=$(mktemp -t "treeXXXXXX")
+shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
+EC=$?
+if [ "$EC" -ne 0 ]; then
+    echo "Failed to run planner successfully";
+    exit $EC
+else
+    RES=`cat ${PLAN}`
+    if [ "$RES" != "$EXPECTED" ]; then
+        echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    compare_trees
+fi
+
+
 echo "Test ESS-SHOP with 2 arguments"
 
 RES=$(ess-shop logistic.lisp Log_ran_problems_15.lisp | shop_plan_only)
@@ -214,6 +273,46 @@ if [ "$EC" -ne 0 ]; then
 elif [ "$RES" != "$EXPECTED" ]; then
     echo "Plan result did not equal the expected."
     exit 1
+fi
+
+echo "Test ESS SHOP with 2 arguments and plan-tree"
+
+PLAN=$(mktemp -t "planXXXXXX")
+PLAN_TREE=$(mktemp -t "treeXXXXXX")
+ess-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} logistic.lisp Log_ran_problems_15.lisp
+EC=$?
+if [ "$EC" -ne 0 ]; then
+    echo "Failed to run planner successfully";
+    exit $EC
+else
+    RES=`cat ${PLAN}`
+    if [ "$RES" != "$EXPECTED" ]; then
+        echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    # These don't compare properly because the ESS trees have INOP nodes in them
+    # compare_trees
+fi
+
+echo "Test ESS SHOP with 1 argument and plan tree"
+INPUT=$(mktemp -t "inputXXXXXX")
+cat logistic.lisp > ${INPUT}
+cat Log_ran_problems_15.lisp >> ${INPUT}
+PLAN=$(mktemp -t "planXXXXXX")
+PLAN_TREE=$(mktemp -t "treeXXXXXX")
+ess-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
+EC=$?
+if [ "$EC" -ne 0 ]; then
+    echo "Failed to run planner successfully";
+    exit $EC
+else
+    RES=`cat ${PLAN}`
+    if [ "$RES" != "$EXPECTED" ]; then
+        echo "Plan result did not equal the expected."
+        exit 1
+    fi
+    # These don't compare properly because the ESS trees have INOP nodes in them
+    # compare_trees
 fi
 
 
