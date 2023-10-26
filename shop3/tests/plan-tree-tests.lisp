@@ -1213,14 +1213,12 @@
 
 
 (test plan-tree                         ; 27 checks
-  (multiple-value-bind (plans ignore trees)
-      (find-plans 'log-ran-15-1 :plan-tree t :verbose 0)
+  (let ((trees
+          (nth-value 2 (find-plans 'log-ran-15-1 :plan-tree t :verbose 0))))
     ;; a good test would involve grabbing the *subtask-parents* and the
     ;; *operator-tasks* tables. Need to think about how to get those
     ;; saved. [2023/05/26:rpg]
-    (declare (ignore ignore))
-    (let* ((tree (canonically-order (first trees)))
-           (root (first tree)))
+    (let ((tree (canonically-order (first trees))))
       (is-true (every #'complex-node-p tree))
       ;; expected-plan-tree is really a forest,
       ;; as is TREE.
