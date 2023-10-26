@@ -28,6 +28,7 @@
   (:nicknames #:shop3.pddl-fluents)
   (:use common-lisp)
   (:import-from #:shop.theorem-prover
+                #:fluent-functions
                 #:fluents-mixin
                 #:+numerical-comparisons+
                 #:+binary-numerical-operators+

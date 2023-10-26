@@ -63,15 +63,17 @@
     (:use :common-lisp :shop3.common :shop3.unifier :iterate)
     (:import-from #:shop3.common #:add-atom-to-state #:state-atoms #:domain-core)
     ;; make these symbols available for import
+    ;; to pddl/fluents.lisp (package shop.pddl-fluents)
     (:intern
-                #:fluents-mixin
-                #:+numerical-comparisons+
-                #:+binary-numerical-operators+
-                #:fluent-value
-                #:fluent-function-p
-                #:fluent-expr-p
-                #:fluent-comparison-p
-                #:f-exp-value)
+     #:fluents-mixin
+     #:fluent-functions
+     #:+numerical-comparisons+
+     #:+binary-numerical-operators+
+     #:fluent-value
+     #:fluent-function-p
+     #:fluent-expr-p
+     #:fluent-comparison-p
+     #:f-exp-value)
     (:export #:trace-print
              #:*shop-trace* #:*shop-trace-stream* #:*trace-query*
              #:*state*
