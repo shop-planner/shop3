@@ -264,7 +264,7 @@ shop3."
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                  )
-    :num-checks 1086
+    :num-checks 1071 ; 1086
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
