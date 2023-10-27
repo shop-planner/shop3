@@ -3,11 +3,12 @@
 ASDF_DIR=${ASDF_DIR:-${HOME}/lisp/asdf/build}
 THIS_DIR=$(realpath $(dirname ${BASH_SOURCE}))
 QUICKLISP_DIR=${QUICKLISP_DIR:-~/quicklisp}
+BUILDAPP=${BUILDAPP:-buildapp}
 
-# --dispatched-entry "shop/shop-app::main" \
-# --dispatched-entry "ess-shop/shop-app::ess-main" \
-#          --entry "shop-app::main" \
-buildapp --logfile "/tmp/buildapp-shop-app.log" \
+# --DISPATCHED-ENTRY "SHOP/SHOP-APP::MAIN" \
+# --DISPATCHED-ENTRY "ESS-SHOP/SHOP-APP::ESS-MAIN" \
+#          --ENTRY "SHOP-APP::MAIN" \
+${BUILDAPP} --logfile "/tmp/buildapp-shop-app.log" \
          --output shop-app \
          --dispatched-entry "/shop-app::main" \
          --dispatched-entry "shop/shop-app::classic-main" \
