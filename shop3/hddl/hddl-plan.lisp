@@ -109,7 +109,7 @@
                           )
                 resolve-extended-plan-tree-children))
 
-(defvar *node-rewrite-fun*)
+;;(defvar *node-rewrite-fun*)
 
 
 (defun resolve-extended-plan-tree-children (children)
@@ -139,7 +139,6 @@ return its children instead.  Needed for ESS plan trees.
                               :datum node))))
 
 (defvar *task-indices*)
-(defvar *node-indices*)
 (defvar *next-index*)
 
 (declaim (ftype (function (list) #-allegro (only-values fixnum boolean)
@@ -159,25 +158,20 @@ return its children instead.  Needed for ESS plan trees.
 (defun node-index (node)
   (task-index (tree-node-task node)))
 
-(defun hddl-plan (plan tree &key domain)
+(defun hddl-plan (plan tree)
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
 HDDL plan encoded as an s-expression."
-  (let ((*node-rewrite-fun*
-             (alexandria:when-let
-                 ((domain-name
-                   (when domain
-                     (if (typep domain 'shop:domain)
-                         (shop:domain-name domain)
-                         domain))))
-               (get domain-name :ess-to-hddl-tree-rewrite-fun)))
-        (*next-index* 1))
+  (let ((*next-index* 1))
    (multiple-value-bind (indexed-plan *task-indices*)
        (index-shop-plan (shop:shorter-plan plan))
      (let ((*next-index* (1+ (caar (last indexed-plan))))
            (root-tasks (forest-roots tree))
            roots decompositions)
+       ;; (format t "~&*next-index* = ~d~%Root tasks are: ~S~%" *next-index* root-tasks)
        (setf roots
              (iter (for root in root-tasks)
+               (as i = (task-index root))
+               ;; (format t "~&Root = ~S index = ~d~%" i root)
                (collecting (task-index root))))
        (setf decompositions (plan-tree->decompositions tree))
        `(:hddl-plan
@@ -187,46 +181,85 @@ HDDL plan encoded as an s-expression."
          )))))
 
 (defun plan-tree->decompositions (tree)
-  (let ((open (etypecase tree
+  (let* ((open (etypecase tree
                 (list tree)
                 (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
-        retval
-        ;; FIXME: isn't the visited check unnecessary, since this is a tree?
-        (visited (make-hash-table :test 'eql)))
+         (top-nodes (copy-list open)))
+    ;; (format t "~&Starting to compute decompositions:~%")
+    ;; (iter (for x in top-nodes)
+    ;;   (format t "~&~T~S = ~d~%"
+    ;;           x (node-index x)))
+    ;; first pass for indexing
     (iter
       (while open)
       (as node = (pop open))
-      (as id = (task-index (tree-node-task node)))
-      (unless (gethash id visited)
+      (with found)
+      ;; Don't index internal operators
+      (unless (shop::internal-operator-p
+               (shop:task-name (tree-node-task node)))
+        (setf found (nth-value 1 (task-index (tree-node-task node))))
+        (cond ((primitive-node-p node)
+               (unless found
+                 (error "Found new primitive node: all primitive nodes should be indexed already.")))
+              ((typep node 'plan-tree:pseudo-node)
+               (error "Tried to index a pseudo-node."))
+              ((complex-node-p node)
+               (when (and found (not (find node top-nodes :test 'eq)))
+                 (error "Found a previously indexed complex node ~A in indexing pass." node))
+               (let* ((children (complex-node-children node))
+                      (cc (remove-if #'primitive-node-p children)))
+                 (appendf open cc)))))))
+
+  (let ((open (etypecase tree
+                (list tree)
+                (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
+        ;; note that visited is 0-indexed and the indices have 1 as their origin.
+        (visited (make-array (1- *next-index*) :element-type 'boolean :initial-element nil))
+        retval)
+    (flet ((set-visited (i)
+             (setf (aref visited (1- i)) t))
+           (arr-index->index (i)
+             (1+ i)))
+      (iter
+        (while open)
+        (as node = (pop open))
+        (with id) (with found)
+        (multiple-value-setq (id found) (task-index (tree-node-task node)))
+        (unless found
+          (error "All nodes should have been indexed before the pass to construct the decomposition records."))
+        (set-visited id)   ; convert 1-based to 0
         (when (complex-node-p node)
-          (setf (gethash id visited) t)
           ;; children here have been resolved so that pseudo-nodes
-          ;; have been skipped and rewritten nodes have been replaced
+          ;; have been skipped
           (let ((children (complex-node-children node)))
             (iter (for child in children)
-              (with index) (with found)
+              (with cindex) (with found)
               (unless (shop::internal-operator-p
                        (shop:task-name (tree-node-task child)))
-                (multiple-value-setq (index found)
+                (multiple-value-setq (cindex found)
                   (node-index child))
-                (when (and (primitive-node-p child) (not found))
-                  (error "Unable to find an index for primitive node ~a child of ~a"
+                (unless found
+                  (error "Unable to find an index for node ~a child of ~a"
                          child node))
-                (when (complex-node-p child)
-                  (push child open))
-                (collecting index into child-indices))
+                (if (complex-node-p child)
+                    (push child open)
+                    ;; must mark primitive nodes here
+                    (set-visited cindex))
+                (collecting cindex into child-indices))
               (finally
-               ;; (when (and (eq (shop:task-name (tree-node-task node)) 'shop3-rovers::move-to)
-               ;;            (eq (complex-node-reduction-label node) 'shop3-rovers::go-there)
-               ;;            (< (length child-indices) 2))
-               ;;   (break "Unexpected substructure here!"))
                (push (make-decomposition-record :node-id id
                                                 :task (tree-node-task node)
                                                 :method-name (complex-node-reduction-label node)
                                                 :children child-indices)
-                     retval)
-                       (setf open (append children open))))))))
-    (sort retval #'< :key #'(lambda (dr) (decomposition-record-node-id dr)))))
+                     retval))))))
+      (unless (every #'identity visited)
+        (let ((unvisited (iter (for x in-vector visited with-index i)
+                           (unless x (collecting (arr-index->index i)))))) ; correct zero-based to 1-based
+          (error "Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
+                 (length unvisited)
+                 (> (length unvisited) 1)
+                 unvisited)))
+      (sort retval #'< :key #'(lambda (dr) (decomposition-record-node-id dr))))))
 
 #-allegro
 (declaim (ftype (function (symbol) (only-value symbol))
