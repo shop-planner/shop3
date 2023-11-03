@@ -227,6 +227,7 @@ else
     fi
     compare_trees
 fi
+echo "... ok"
 
 echo "Test SHOP with 1 argument and plan tree"
 INPUT=$(mktemp -t "inputXXXXXX")
@@ -247,6 +248,7 @@ else
     fi
     compare_trees
 fi
+echo "... ok"
 
 
 echo "Test ESS-SHOP with 2 arguments"
@@ -260,6 +262,7 @@ elif [ "$RES" != "$EXPECTED" ]; then
     echo "Plan result did not equal the expected."
     exit 1
 fi
+echo "... ok"
 
 echo "Test ESS-SHOP with 1 argument"
 INPUT=$(mktemp -t "input.XXXXXXXXXXX")
@@ -274,6 +277,7 @@ elif [ "$RES" != "$EXPECTED" ]; then
     echo "Plan result did not equal the expected."
     exit 1
 fi
+echo "... ok"
 
 echo "Test ESS SHOP with 2 arguments and plan-tree"
 
@@ -293,11 +297,11 @@ else
     # These don't compare properly because the ESS trees have INOP nodes in them
     # compare_trees
 fi
+echo "... ok"
 
 echo "Test ESS SHOP with 1 argument and plan tree"
 INPUT=$(mktemp -t "inputXXXXXX")
-cat logistic.lisp > ${INPUT}
-cat Log_ran_problems_15.lisp >> ${INPUT}
+cat logistic.lisp Log_ran_problems_15.lisp > ${INPUT}
 PLAN=$(mktemp -t "planXXXXXX")
 PLAN_TREE=$(mktemp -t "treeXXXXXX")
 ess-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
@@ -314,6 +318,6 @@ else
     # These don't compare properly because the ESS trees have INOP nodes in them
     # compare_trees
 fi
-
+echo "... ok"
 
 exit 0

@@ -88,15 +88,19 @@ cross-links for VAL using information in TABLE."))
 (defun make-cross-links (&optional (table *table-for-load-form*))
   (iter (for (val var) in-hashtable table)
     (unless (listp val)
-     (appending 
+     (appending
       (cross-links-for var val table)))))
 
 (defmethod make-instantiator ((obj primitive-tree-node))
   `(make-primitive-tree-node ,@ (slot-fillers obj)))
 
 (defstruct (complex-tree-node (:include tree-node))
-  children
+  (children nil :type list)
+  ;; FIXME: Move this slot to a structure that is guaranteed to have a method name?
+  ;; the pseudo-tree children won't...
   (method-name nil :type (or null symbol)))
+
+
 
 (defmethod make-instantiator ((obj complex-tree-node))
   `(make-complex-tree-node ,@ (slot-fillers obj)))
@@ -104,7 +108,7 @@ cross-links for VAL using information in TABLE."))
 (defmethod cross-links-for ((var-name symbol) (obj complex-tree-node) (table hash-table))
   (append (call-next-method)
           `((setf (complex-tree-node-children ,var-name)
-                  (list 
+                  (list
                    ,@(mapcar #'(lambda (x) (slot-value-translator x table))
                            (complex-tree-node-children obj)))))))
 
@@ -138,7 +142,7 @@ and building a toplogically sorted list of nodes."))
 
 (defun obj-bindings (hash-table)
   "Return an ordered list of variable-name instantiator pairs for use in a LET form."
-  (append 
+  (append
    (iter (for (item var-name) in-hashtable hash-table)
      ;; proposition or task
      (when (listp item)
@@ -190,6 +194,7 @@ and building a toplogically sorted list of nodes."))
   (call-next-method)
   (mapc #'make-table-entries (complex-tree-node-children obj)))
 
+;; FIXME: likely this should be a pseudo-node
 (defstruct (pseudo-node (:include complex-tree-node)))
 
 ;;; maybe should revise this and have complex-tree-node as mixin, since
@@ -210,6 +215,31 @@ Particularly useful for structures, but could be generally applicable."
        (call-next-method)
        (print-unreadable-object ,args
          ,@body)))
+
+(defmethod print-object ((node complex-tree-node) stream)
+  (print-unreadably (node stream)
+    (print-unreadable-object (node stream :type t :identity nil)
+      (format stream "~A --~A-> ~a"
+              (tree-node-task node)
+              (alexandria:if-let ((method-name (complex-tree-node-method-name node)))
+                method-name "")
+              (let* ((children (complex-tree-node-children node))
+                     (n (length children)))
+                (ecase n
+                  (0 "no children")
+                  (1
+                   (let ((child (first children)))
+                     (etypecase child
+                       ((or ordered-tree-node unordered-tree-node)
+                        (let ((n (length (complex-tree-node-children child))))
+                          (format nil "~d ~a child~:[~;ren~]"
+                                  n
+                                  (if (typep child 'ordered-tree-node)
+                                      "ordered"
+                                      "unordered")
+                                  (> n 1))))
+                       (primitive-tree-node "1 primitive child")
+                       (complex-tree-node "1 complex child"))))))))))
 
 
 (defmethod print-object ((d dependency) str)
@@ -234,14 +264,14 @@ Particularly useful for structures, but could be generally applicable."
             (complex-tree-node-children d))))
 
 
-(defmethod print-object ((d complex-tree-node) str)
-  (print-unreadably (d str)
-    (format str "Complex: ~S :CHILDREN ~A"
-            (or (tree-node-expanded-task d)
-                (tree-node-task d))
-            (complex-tree-node-children d))
-    #+ignore(when (tree-node-dependencies d)
-      (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
+;; (defmethod print-object ((d complex-tree-node) str)
+;;   (print-unreadably (d str)
+;;     (format str "Complex: ~S :CHILDREN ~A"
+;;             (or (tree-node-expanded-task d)
+;;                 (tree-node-task d))
+;;             (complex-tree-node-children d))
+;;     #+ignore(when (tree-node-dependencies d)
+;;       (format str " :DEPENDENCIES ~S "(tree-node-dependencies d)))))
 
 
 (defmethod print-object ((d ordered-tree-node) str)
@@ -263,7 +293,7 @@ Particularly useful for structures, but could be generally applicable."
   (:method ((top top-node))
     (mapcar #'plan-tree->sexp (complex-tree-node-children top)))
   (:method  ((cn complex-tree-node))
-     `(,(tree-node-task cn) . ,(mapcar #'plan-tree->sexp (complex-tree-node-children cn))))
+     `(,(or (tree-node-expanded-task cn) (tree-node-task cn)) . ,(mapcar #'plan-tree->sexp (complex-tree-node-children cn))))
   (:method ((on ordered-tree-node))
     (mapcar #'plan-tree->sexp (complex-tree-node-children on)))
   (:method ((un unordered-tree-node))
@@ -326,6 +356,16 @@ Particularly useful for structures, but could be generally applicable."
                       (as result = (tree-search tree-node))
                       (when result (return-from find-tree-node-if result))))))))
     (tree-search plan-tree)))
+
+(defun all-primitive-nodes (plan-tree)
+  (let (retval)
+    (labels ((tree-search (plan-tree)
+               (etypecase plan-tree
+                 (primitive-tree-node (push plan-tree retval))
+                 (complex-tree-node
+                  (mapc #'tree-search (complex-tree-node-children plan-tree))))))
+      (tree-search plan-tree)
+      retval)))
 
 (defgeneric copy-plan-tree-node (node)
   (:method ((node primitive-tree-node))
