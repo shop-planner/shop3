@@ -44,6 +44,10 @@
              (,treevar (shop::tree (first , returns))))
          ,@body))))
 
+(defmacro with-hddl-plan ((hddl-planvar ess-plan ess-tree) &body body)
+  `(let ((,hddl-planvar (hddl-plan ,ess-plan ,ess-tree)))
+     ,@body))
+
 #+ignore
 (test plan-test
   (load-log-problem)
@@ -57,6 +61,8 @@
       (is (equalp expected-plan plan))
     ;; (is (equalp expected-tree tree))
     ))
+
+
 
 #+ignore
 (test translate-tree
@@ -77,9 +83,21 @@
 (test translate-tree-ess
   (load-log-problem)
   (with-plan-and-tree (plan tree :ess t)
-    (let ((hddl-plan-sexp
-            (hddl-plan plan tree)))
+    (with-hddl-plan (hddl-plan-sexp plan tree)
       (is-true hddl-plan-sexp)
+      (is (equalp (iter (for i from 1)
+                    (as step in (shop:shorter-plan plan))
+                    (collecting (cons i step)))
+                  (getf (rest hddl-plan-sexp) :actions)))
+      (let ((decomps (getf (rest hddl-plan-sexp) :decompositions))
+            (roots (getf (rest hddl-plan-sexp) :roots)))
+        (flet ((find-decomp (n)
+                 (or (find n decomps :key (lambda (x) (hddl-translator::decomposition-record-node-id x)))
+                     (error "No decomposition with node-id ~d" n))))
+          (is (equalp (mapcar #'shop::strip-task-sexp (rest (shop::problem-tasks (shop:find-problem 'shop-user::log-ran-15-1 nil))))
+                      (iter (for root-no in roots)
+                        (as node = (find-decomp root-no))
+                        (collecting (hddl-translator::decomposition-record-task node)))))))
       (let ((max-act 124)
             (act-alist (getf (rest hddl-plan-sexp) :actions))
             (root-list (getf (rest hddl-plan-sexp) :roots)))
@@ -87,6 +105,16 @@
         (is (= 15 (length root-list)))
         (is (equalp (alexandria:iota 15 :start (1+ max-act))
                     root-list))))))
+
+(test hddl-test-ess
+  (load-log-problem)
+  (with-plan-and-tree (plan tree :ess t)
+    (with-hddl-plan (hddl-plan plan tree)
+      hddl-plan
+      )
+    ;;(is (equalp expected-plan plan))
+    ;; (is (equalp expected-tree tree))
+    ))
 
 
 (in-package :shop-user)
