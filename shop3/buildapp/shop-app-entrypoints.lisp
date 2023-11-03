@@ -155,7 +155,7 @@
     (handler-bind ((error
                      (lambda (x)
                        (unless *interactive*
-                         (format *error-output* "~&~a~%" x)
+                         (format *error-output* "~&ESS-SHOP ERROR:~a~%" x)
                          #+sbcl(sb-debug:print-backtrace :stream *error-output*)
                          (uiop:quit 1)))))
       (iter (for x in args)
@@ -234,7 +234,7 @@
     (handler-bind ((error
                      (lambda (x)
                        (unless *interactive*
-                         (format *error-output* "~a" x)
+                         (format *error-output* "TREE-COMPARE ERROR: ~a" x)
                          (uiop:quit 2)))))
       (flet ((load-file (filename)
                (uiop:with-input-file (str filename :if-does-not-exist :error)

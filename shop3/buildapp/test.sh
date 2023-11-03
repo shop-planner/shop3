@@ -296,8 +296,7 @@ fi
 
 echo "Test ESS SHOP with 1 argument and plan tree"
 INPUT=$(mktemp -t "inputXXXXXX")
-cat logistic.lisp > ${INPUT}
-cat Log_ran_problems_15.lisp >> ${INPUT}
+cat logistic.lisp Log_ran_problems_15.lisp >> ${INPUT}
 PLAN=$(mktemp -t "planXXXXXX")
 PLAN_TREE=$(mktemp -t "treeXXXXXX")
 ess-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
