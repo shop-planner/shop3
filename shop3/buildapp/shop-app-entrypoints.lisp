@@ -15,7 +15,8 @@
 ;;;
 ;;;---------------------------------------------------------------------------
 (defpackage :shop-app
-  (:use :shop3 :iterate :common-lisp))
+  (:use :shop3 :iterate :common-lisp)
+  (:import-from #:shop-hddl #:hddl-plan))
 (in-package :shop-app)
 
 (defvar *interactive* t
@@ -44,28 +45,46 @@
       (as i from 1)
       (format stream "~3d:~t~a:~t~,2f~%"
               i step cost))
+    (finish-output stream)
     (when (eq stream t)
       (print-separator stream))))
 
-(defun print-ess-tree (tree &optional (stream t))
+(defun print-ess-tree (tree &optional (stream-arg t))
   (let ((*print-length* nil)
         ;; (*print-right-margin* 10000)
         ;; best guess at package for output
-        (*package* (symbol-package (shop::problem-name shop::*problem*))))
+        (*package* (symbol-package (shop::problem-name shop::*problem*)))
+        (stream (if (eq stream-arg t) *standard-output* stream-arg)))
+    ;; print functions
     (pprint (plan-tree:plan-tree->sexp tree) stream)
-    (when (eq stream t)
+    (terpri stream)
+    (finish-output stream)
+    (when (eq stream-arg t)
       (print-separator stream))))
 
-(defun print-classic-tree (tree &optional (stream t))
+(defun print-classic-tree (tree &optional (stream-arg t))
   (let ((*print-length* nil)
         ;; (*print-right-margin* 10000)
         ;; best guess at package for output
-        (*package* (symbol-package (shop::problem-name shop::*problem*))))
+        (*package* (symbol-package (shop::problem-name shop::*problem*)))
+        (stream (if (eq stream-arg t) *standard-output* stream-arg)))
     (pprint tree stream)
     (terpri stream)
-    (force-output stream)
-    (when (eq stream t)
+    (finish-output stream)
+    (when (eq stream-arg t)
       (print-separator stream))))
+
+(defun print-hddl-plan (plan tree &optional (stream-arg t))
+  (let ((hddl-plan (hddl-plan plan tree)))
+    ;; (terpri *error-output*)
+    ;; (pprint hddl-plan *error-output*)
+    ;; (terpri *error-output*)
+    (let ((*print-length* nil)
+          ;; (*print-right-margin* 10000)
+          ;; best guess at package for output
+          (*package* (symbol-package (shop::problem-name shop::*problem*))))
+      (shop-hddl:print-hddl-plan hddl-plan (if (eq stream-arg t) *standard-output* stream-arg)))))
+
 
 (defun common/options ()
   (list
@@ -116,6 +135,14 @@
 (defun tree-compare/options ()
   nil)
 
+(defun load-shop-file (filename)
+  (let ((*package* (find-package :shop-user)))
+    (unless (load filename :if-does-not-exist t)
+      (error "File ~a failed to load." filename))))
+
+;; (eval-when (:load-toplevel :execute)
+;;   (trace shop-hddl::plan-tree->decompositions)
+;;   (trace shop-hddl::forest-roots))
 
 (defun ess/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
@@ -123,43 +150,52 @@
                        (clingon:getopt cmd :tree-file)))
         (hddl (or (clingon:getopt cmd :hddl)
                   (clingon:getopt cmd :hddl-file)))
+        (verbosity  (clingon:getopt cmd :verbose))
         (shop::*define-silently* (zerop (clingon:getopt cmd :verbose))))
     (handler-bind ((error
                      (lambda (x)
                        (unless *interactive*
-                         (format *error-output* "~a" x)
+                         (format *error-output* "~&~a~%" x)
+                         #+sbcl(sb-debug:print-backtrace :stream *error-output*)
                          (uiop:quit 1)))))
       (iter (for x in args)
-        (unless (load x :if-does-not-exist t)
-          (error "File ~a failed to load." x)))
+        (load-shop-file x))
 
       (let ((retvals
-              (find-plans-stack shop::*problem* :plan-tree plan-tree :unpack-returns nil :verbose (clingon:getopt cmd :verbose))))
+              (find-plans-stack shop::*problem* :plan-tree (or plan-tree hddl) :unpack-returns nil :verbose verbosity)))
         (unless retvals
           (error "Unable to find a plan for problem ~a"
                  (shop::problem-name shop::*problem*)))
-        (let ((plan-stream (alexandria:if-let ((plan-path (clingon:getopt cmd :plan-file)))
-                             (open plan-path :direction :output :if-exists :supersede)
-                             t)))
-          (unwind-protect
-           (print-plan (shop:plan (first retvals)) plan-stream)
-            (unless (eq plan-stream t) (close plan-stream))))
-        (when plan-tree
-          (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :tree-file)))
-                             (open plan-path :direction :output :if-exists :supersede)
-                             t)))
-          (unwind-protect
-               (print-ess-tree (tree (first retvals)) stream)
-            (unless (eq stream t) (close stream)))))
+
+        ;; print the plan sequence
+        (unless hddl
+         (if (clingon:getopt cmd :plan-file)
+             (let ((plan-stream (open (clingon:getopt cmd :plan-file) :direction :output :if-exists :supersede)))
+               (unwind-protect
+                    (print-plan (shop:plan (first retvals)) plan-stream)
+                 (unless (eq plan-stream t) (close plan-stream))))
+             (print-plan (shop:plan (first retvals)) t))
+
+         ;; print the plan-tree (if appropriate)
+         (when plan-tree
+           (if (clingon:getopt cmd :tree-file)
+               (let ((stream (open (clingon:getopt cmd :tree-file) :direction :output :if-exists :supersede)))
+                 (unwind-protect
+                      (print-ess-tree (tree (first retvals)) stream)
+                   (close stream)))
+               (print-ess-tree (tree (first retvals)) t))))
+
+        ;; print the HDDL, if appropriate
         (when hddl
-          (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :hddl-file)))
-                             (open plan-path :direction :output :if-exists :supersede)
-                             t)))
-            ;;; FIXME: update this...
-            (unwind-protect
-                 (print-ess-tree (tree (first retvals)) stream)
-              (unless (eq stream t) (close stream)))))
-        ))))
+          (let ((plan (plan (first retvals)))
+                (tree (tree (first retvals))))
+           (if (clingon:getopt cmd :hddl-file)
+               (let ((stream
+                       (open (clingon:getopt cmd :hddl-file) :direction :output :if-exists :supersede)))
+                 (unwind-protect
+                      (print-hddl-plan plan tree stream)
+                   (unless (eq stream t) (close stream))))
+               (print-hddl-plan plan tree t))))))))
 
 (defun classic/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
@@ -172,8 +208,7 @@
                          (format *error-output* "~a" x)
                          (uiop:quit 1)))))
       (iter (for x in args)
-        (unless (load x :if-does-not-exist t)
-          (error "File ~a failed to load." x)))
+        (load-shop-file x))
       (multiple-value-bind (plans time trees)
           (find-plans shop::*problem* :plan-tree plan-tree :verbose (clingon:getopt cmd :verbose))
         (declare (ignore time))     ; at least for now...
