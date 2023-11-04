@@ -160,7 +160,9 @@ return its children instead.  Needed for ESS plan trees.
 
 (defun hddl-plan (plan tree)
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
-HDDL plan encoded as an s-expression."
+HDDL plan encoded as an s-expression.  Note that currently only the extended
+plan trees produced by `find-plans-stack` can be used with this function.
+Classic SHOP plans do not contain all the required information."
   (let ((*next-index* 1))
    (multiple-value-bind (indexed-plan *task-indices*)
        (index-shop-plan (shop:shorter-plan plan))
@@ -172,7 +174,7 @@ HDDL plan encoded as an s-expression."
              (iter (for root in root-tasks)
                (as i = (task-index root))
                ;; (format t "~&Root = ~S index = ~d~%" i root)
-               (collecting (task-index root))))
+               (collecting i)))
        (setf decompositions (plan-tree->decompositions tree))
        `(:hddl-plan
          :actions ,indexed-plan
