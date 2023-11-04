@@ -88,11 +88,7 @@
 
 (defun common/options ()
   (list
-   (clingon:make-option
-    :flag
-    :description "Print plan tree as well as plan."
-    :key :plan-tree
-    :long-name "tree")
+
    (clingon:make-option
     :counter
     :description "Verbose output."
@@ -105,22 +101,27 @@
     :description "Print plan to file."
     :key :plan-file
     :required nil
-    :long-name "plan-file")
-   (clingon:make-option
-    :string
-    :description "Print plan tree to file."
-    :key :tree-file
-    :required nil
-    :long-name "tree-file")))
+    :long-name "plan-file")))
 
 (defun ess/options ()
   (append
    (list
     (clingon:make-option
     :flag
-    :description "Print HDDL output (plan and tree)."
-    :key :hddl
-    :long-name "hddl")
+    :description "Print plan tree as well as plan."
+    :key :plan-tree
+    :long-name "tree")
+   (clingon:make-option
+    :string
+    :description "Print plan tree to file."
+    :key :tree-file
+    :required nil
+    :long-name "tree-file")
+    (clingon:make-option
+     :flag
+     :description "Print HDDL output (plan and tree)."
+     :key :hddl
+     :long-name "hddl")
     (clingon:make-option
     :string
     :description "Print HDDL output to file."
@@ -199,8 +200,8 @@
 
 (defun classic/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
-        (plan-tree (or (clingon:getopt cmd :plan-tree)
-                       (clingon:getopt cmd :tree-file)))
+        ;; (plan-tree (or (clingon:getopt cmd :plan-tree)
+        ;;                (clingon:getopt cmd :tree-file)))
         (shop::*define-silently* (zerop (clingon:getopt cmd :verbose))))
     (handler-bind ((error
                      (lambda (x)
@@ -209,9 +210,11 @@
                          (uiop:quit 1)))))
       (iter (for x in args)
         (load-shop-file x))
-      (multiple-value-bind (plans time trees)
-          (find-plans shop::*problem* :plan-tree plan-tree :verbose (clingon:getopt cmd :verbose))
-        (declare (ignore time))     ; at least for now...
+      (multiple-value-bind (plans ;; time trees
+                            )
+          (find-plans shop::*problem* :plan-tree nil ;plan-tree
+                                      :verbose (clingon:getopt cmd :verbose))
+        ;;(declare (ignore time))     ; at least for now...
         (unless plans
           (error "Unable to find a plan for problem ~a"
                  (shop::problem-name shop::*problem*)))
@@ -221,13 +224,14 @@
           (unwind-protect
                (print-plan (first plans) plan-stream)
             (unless (eq plan-stream t) (close plan-stream))))
-        (when plan-tree
-          (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :tree-file)))
-                          (open plan-path :direction :output :if-exists :supersede)
-                          t)))
-            (unwind-protect
-                 (print-classic-tree (first trees) stream)
-              (unless (eq stream t) (close stream)))))))))
+        ;; (when plan-tree
+        ;;   (let ((stream (alexandria:if-let ((plan-path (clingon:getopt cmd :tree-file)))
+        ;;                   (open plan-path :direction :output :if-exists :supersede)
+        ;;                   t)))
+        ;;     (unwind-protect
+        ;;          (print-classic-tree (first trees) stream)
+        ;;       (unless (eq stream t) (close stream)))))
+        ))))
 
 (defun tree-compare/handler (cmd)
   (let ((args (clingon:command-arguments cmd)))
