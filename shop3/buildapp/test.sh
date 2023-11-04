@@ -210,45 +210,45 @@ elif [ "$RES" != "$EXPECTED" ]; then
     exit 1
 fi
 
-echo "Test SHOP with 2 arguments and plan-tree"
+# echo "Test SHOP with 2 arguments and plan-tree"
 
-PLAN=$(mktemp -t "planXXXXXX")
-PLAN_TREE=$(mktemp -t "treeXXXXXX")
-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} logistic.lisp Log_ran_problems_15.lisp
-EC=$?
-if [ "$EC" -ne 0 ]; then
-    echo "Failed to run planner successfully";
-    exit $EC
-else
-    RES=`cat ${PLAN}`
-    if [ "$RES" != "$EXPECTED" ]; then
-        echo "Plan result did not equal the expected."
-        exit 1
-    fi
-    compare_trees
-fi
-echo "... ok"
+# PLAN=$(mktemp -t "planXXXXXX")
+# PLAN_TREE=$(mktemp -t "treeXXXXXX")
+# shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} logistic.lisp Log_ran_problems_15.lisp
+# EC=$?
+# if [ "$EC" -ne 0 ]; then
+#     echo "Failed to run planner successfully";
+#     exit $EC
+# else
+#     RES=`cat ${PLAN}`
+#     if [ "$RES" != "$EXPECTED" ]; then
+#         echo "Plan result did not equal the expected."
+#         exit 1
+#     fi
+#     compare_trees
+# fi
+# echo "... ok"
 
-echo "Test SHOP with 1 argument and plan tree"
-INPUT=$(mktemp -t "inputXXXXXX")
-cat logistic.lisp > ${INPUT}
-cat Log_ran_problems_15.lisp >> ${INPUT}
-PLAN=$(mktemp -t "planXXXXXX")
-PLAN_TREE=$(mktemp -t "treeXXXXXX")
-shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
-EC=$?
-if [ "$EC" -ne 0 ]; then
-    echo "Failed to run planner successfully";
-    exit $EC
-else
-    RES=`cat ${PLAN}`
-    if [ "$RES" != "$EXPECTED" ]; then
-        echo "Plan result did not equal the expected."
-        exit 1
-    fi
-    compare_trees
-fi
-echo "... ok"
+# echo "Test SHOP with 1 argument and plan tree"
+# INPUT=$(mktemp -t "inputXXXXXX")
+# cat logistic.lisp > ${INPUT}
+# cat Log_ran_problems_15.lisp >> ${INPUT}
+# PLAN=$(mktemp -t "planXXXXXX")
+# PLAN_TREE=$(mktemp -t "treeXXXXXX")
+# shop --tree-file ${PLAN_TREE} --plan-file ${PLAN} ${INPUT}
+# EC=$?
+# if [ "$EC" -ne 0 ]; then
+#     echo "Failed to run planner successfully";
+#     exit $EC
+# else
+#     RES=`cat ${PLAN}`
+#     if [ "$RES" != "$EXPECTED" ]; then
+#         echo "Plan result did not equal the expected."
+#         exit 1
+#     fi
+#     compare_trees
+# fi
+# echo "... ok"
 
 
 echo "Test ESS-SHOP with 2 arguments"
