@@ -264,7 +264,7 @@ shop3."
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                  )
-    :num-checks 1071 ; 1086
+    :num-checks 1089
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -306,7 +306,7 @@ shop3."
                                (:file "analogical-replay")
                                (:file "minimal-subtree-tests")
                                (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests")                  ; 40 checks
+                               (:file "plan-tree-tests")                  ; 43 checks
                                (:file "search-tests") ; 9 checks
                                (:file "plan-num-limit-tests") ; 21 checks
                                ))

@@ -72,9 +72,9 @@
       (setf (gethash subtask *subtask-parents*)
             task1))
     (when method-label
-      (alexandria:nconcf *reduction-labels*
-                         (mapcar #'(lambda (subtask) (cons subtask method-label))
-                                 all-subtasks)))))
+      (mapc #'(lambda (subtask)
+                (setf (gethash subtask *reduction-labels*) method-label))
+              all-subtasks))))
 
 (defun extract-subtasks (reduction)
   (cond
@@ -132,6 +132,13 @@ we check for that case at the top."
         (strip-one tree)
         (mapcar #'strip-one tree))))
 
+(defun lookup-reduction-label (obj)
+  (let ((task
+          (etypecase obj
+            (primitive-node (operator-task obj))
+            (list obj))))
+    (gethash task *reduction-labels*)))
+
 (defun extract-subtree (root-node nodes)
   "Recursively build the subtree below ROOT-NODE from the
 set of possible nodes in NODES.  At the top level, it returns
@@ -140,11 +147,15 @@ ROOT-NODE is a PRIMITIVE-NODE."
   (let ((children (node-children root-node *node-children-table*)))
     (cond
       (children
-       (let ((label (alexandria:assoc-value *reduction-labels* (first children))))
-          (make-complex-node root-node
-                             (mapcar #'(lambda (child) (extract-subtree child nodes))
-                                     children)
-                             :reduction-label label)))
+       ;; again, this is ugly because primitive nodes will be nodes, complex nodes are
+       ;; still only "naked" tasks.
+       (let ((label (lookup-reduction-label (first children))))
+         (unless label (break "Didn't record a reduction label for ~s child of ~s"
+                              (first children) root-node))
+         (make-complex-node root-node
+                            (mapcar #'(lambda (child) (extract-subtree child nodes))
+                                    children)
+                            :reduction-label label)))
       ((primitive-node-p root-node)
        root-node)
       (t
@@ -250,9 +261,7 @@ expanded -- if it is part of a failed search branch then  or (c) TASK itself."
             (extend-plan-tree-nodes (rest base-nodes) (cons parent (cons node acc)))
             (extend-plan-tree-nodes (rest base-nodes) (cons node acc))))))
 
-;;; Introduced an OPERATOR-NODE structure as a way of better
-
-;;; I think OPERATOR-TASK here actually applies to an operator NODE...
+;;; OPERATOR-TASK here actually applies to an operator NODE...
 ;;; this function is necessary because the operators are not EQ
 ;;; to their tasks, which must be looked up in *operator-tasks*
 (declaim (ftype (function (primitive-node) (values list &optional))

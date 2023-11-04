@@ -168,7 +168,7 @@ MPL/GPL/LGPL triple license.  For details, see the software source file.")
          ;; [mpelican:20090226.1825CST] obsolete, please use state-type arg or default-state-type slot in domain class
          (*state-encoding* :obsolete-state-encoding-variable)
          (*plan-tree* plan-tree)
-         (*reduction-labels* nil)
+         (*reduction-labels* (make-hash-table :test 'eq))
          (*collect-state* (or collect-state plan-tree))
          (*subtask-parents* (make-subtask-parents-table))
          (*operator-tasks* (make-operator-task-table))
