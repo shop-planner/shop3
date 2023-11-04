@@ -284,7 +284,7 @@ minimal affected subtree."
                                (:file "analogical-replay")
                                (:file "minimal-subtree-tests")
                                (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests")                  ; 40 checks
+                               (:file "plan-tree-tests")                  ; 43 checks
                                (:file "search-tests") ; 9 checks
                                (:file "plan-num-limit-tests") ; 21 checks
                                ))

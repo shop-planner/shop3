@@ -261,6 +261,8 @@ parent."
 between trees."
   (labels ((list-iter (lst1 lst2)
              (cond ((null lst1)
+                    ;; note in the following we take advantage of the fact that FORMAT
+                    ;; returns NIL
                     (if (null lst2)
                         t
                         (format t "~&NIL does not match ~s~%" lst2)))
@@ -276,8 +278,8 @@ between trees."
            (node-iter (n1 n2)
              (cond ((primitive-node-p n1)
                     (cond ((primitive-node-p n2)
-                           (assert (not (equalp n1 n2)))
-                           (format t "~&Primitive nodes do not match:~%~T~S~%~T~S~%" n1 n2))))
+                           (if (equalp n1 n2) t
+                             (format t "~&Primitive nodes do not match:~%~T~S~%~T~S~%" n1 n2)))))
                    ((primitive-node-p n2)
                     (format t "~&Node:~%~T~S~%~TDoes not match primitive node:~%~T~S~%"  n1 n2))
                    (t (assert (and (complex-node-p n1)
@@ -354,11 +356,11 @@ tree (although they will be EQUALP."
            (member node (complex-node-children n) :test 'eq)))
     (find-complex-node-if #'match-if-child tree :node-fun t)))
 
-(defun canonically-order (tree &optional (keep-empty nil))
+(defun canonically-order-plan-tree (tree &optional (keep-empty nil))
   (labels ((list-iter (lst)
              (let ((elts
                      (remove nil (mapcar #'node-iter lst))))
-               (sort elts #'<= :key #'min-start)))
+               (sort (copy-list elts) #'<= :key #'min-start)))
            (node-iter (node)
              (etypecase node
                (primitive-node
