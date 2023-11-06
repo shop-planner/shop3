@@ -151,9 +151,10 @@ return its children instead.  Needed for ESS plan trees.
 (defun task-index (task)
   (if-let ((value (gethash task *task-indices*)))
     (values value t)
-    (progn
-        (setf (gethash task *task-indices*) *next-index*)
-      (values (the fixnum (incf *next-index*)) nil))))
+    (let ((index
+            (setf (gethash task *task-indices*) *next-index*)))
+      (incf *next-index*)
+      (values index nil))))
 
 (defun node-index (node)
   (task-index (tree-node-task node)))
@@ -163,24 +164,23 @@ return its children instead.  Needed for ESS plan trees.
 HDDL plan encoded as an s-expression.  Note that currently only the extended
 plan trees produced by `find-plans-stack` can be used with this function.
 Classic SHOP plans do not contain all the required information."
-  (let ((*next-index* 1))
-   (multiple-value-bind (indexed-plan *task-indices*)
-       (index-shop-plan (shop:shorter-plan plan))
-     (let ((*next-index* (1+ (caar (last indexed-plan))))
-           (root-tasks (forest-roots tree))
-           roots decompositions)
-       ;; (format t "~&*next-index* = ~d~%Root tasks are: ~S~%" *next-index* root-tasks)
-       (setf roots
-             (iter (for root in root-tasks)
-               (as i = (task-index root))
-               ;; (format t "~&Root = ~S index = ~d~%" i root)
-               (collecting i)))
-       (setf decompositions (plan-tree->decompositions tree))
-       `(:hddl-plan
-         :actions ,indexed-plan
-         :roots ,roots
-         :decompositions ,decompositions
-         )))))
+  ;; set up tables for indexing
+  (let ((*next-index* 1)
+        (*task-indices* (make-hash-table :test 'eq)))
+    (let ((indexed-plan (index-shop-plan (shop:shorter-plan plan)))
+          (root-tasks (forest-roots tree))
+          roots decompositions)
+      ;; (format t "~&*next-index* = ~d~%Root tasks are: ~S~%" *next-index* root-tasks)
+      (setf roots
+            (iter (for root in root-tasks)
+              (as i = (task-index root))
+              (collecting i)))
+      (setf decompositions (plan-tree->decompositions tree))
+      `(:hddl-plan
+        :actions ,indexed-plan
+        :roots ,roots
+        :decompositions ,decompositions
+        ))))
 
 (defun plan-tree->decompositions (tree)
   (let* ((open (etypecase tree
@@ -302,17 +302,15 @@ and prints it to STREAM in the IPC format."
     (finish-output stream)))
 
 #-allegro
-(declaim (ftype (function (list) (values list hash-table &optional))
+(declaim (ftype (function (list) (only-value list))
                 index-shop-plan))
 (defun index-shop-plan (action-list)
-  (let ((hash-table (make-hash-table :test 'eq))
-        (assoc-table
-          (iter (for a in action-list)
-            (as i from 1)
-            (collecting (cons i a)))))
-    (iter (for (i . act) in assoc-table)
-      (setf (gethash act hash-table) i))
-    (values assoc-table hash-table)))
+  (iter (for a in action-list)
+    (multiple-value-bind (i found)
+        (task-index a)
+      (when found (error "Found a duplicate task ~S (previously indexed) in plan-list"
+                         a))
+      (collecting (cons i a)))))
 
 (defun forest-roots (plan-tree)
   (mapcar #'tree-node-task
