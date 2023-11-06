@@ -79,6 +79,7 @@ College Park, MD 20742, USA
 * SHOP3 Command-line Applications::
 * The SHOP3 Formalism::
 * PDDL Support::
+* HDDL Support::
 * The SHOP Theorem Prover::
 * The SHOP Unifier::
 * Plan Grapher::
@@ -2298,7 +2299,7 @@ we've covered so far about @sysname.
 
 
 
-@node PDDL Support, The SHOP Theorem Prover, The SHOP3 Formalism, Top
+@node PDDL Support, HDDL Support, The SHOP3 Formalism, Top
 @chapter PDDL Support
 @anchor{#pddl-compatibility}
 The current release of @sysname{} provides a preliminary capability to
@@ -2574,7 +2575,28 @@ existential preconditions, since they are typically used together.
 
 @end itemize
 
-@node The SHOP Theorem Prover, The SHOP Unifier, PDDL Support, Top
+@node HDDL Support, The SHOP Theorem Prover, PDDL Support, Top
+@chapter HDDL Support
+@cindex HDDL
+@cindex @code{HDDL-translator} package
+@cindex @code{shop-hddl} nickname for @code{HDDL-translator} package
+
+@sysname version 3.11 introduces support for generating HDDL-format
+plans from ESS-@sysname{} -- @code{find-plans-stack} and @emph{not}
+classic @sysname -- @code{find-plans}.  The HDDL plan format is
+documented
+@url{https://ipc2020.hierarchical-task.net/benchmarks/output-format,
+here}.
+
+HDDL plans are @emph{not} created by some keyword argument to
+@code{find-plans-stack}, instead they are created by two functions in
+the @code{HDDL-translator} package (whose nicknames include @code{shop-hddl}:
+
+@include include/fun-shop-hddl-hddl-plan.texinfo
+
+@include include/fun-shop-hddl-print-hddl-plan.texinfo
+
+@node The SHOP Theorem Prover, The SHOP Unifier, HDDL Support, Top
 @chapter The SHOP Theorem Prover
 @anchor{#using-the-shop-theorem-prover}
 One of the main extensions that SIFT has made to @sysname{} is to make its
