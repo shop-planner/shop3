@@ -85,6 +85,9 @@
           (*package* (symbol-package (shop::problem-name shop::*problem*))))
       (shop-hddl:print-hddl-plan hddl-plan (if (eq stream-arg t) *standard-output* stream-arg)))))
 
+(defun print-pddl-plan (plan domain &optional (stream-arg t))
+  (shop:write-pddl-plan plan :domain domain :stream stream-arg))
+
 
 (defun common/options ()
   (list
@@ -107,10 +110,22 @@
   (append
    (list
     (clingon:make-option
-    :flag
-    :description "Print plan tree as well as plan."
-    :key :plan-tree
-    :long-name "tree")
+     :flag
+     :description "Print plan in PDDL format."
+     :key :pddl
+     :long-name "pddl"
+     )
+    (clingon:make-option
+    :string
+    :description "Print PDDL output to file."
+    :key :pddl-file
+    :required nil
+    :long-name "pddl-file")
+    (clingon:make-option
+     :flag
+     :description "Print plan tree as well as plan."
+     :key :plan-tree
+     :long-name "tree")
    (clingon:make-option
     :string
     :description "Print plan tree to file."
@@ -145,10 +160,14 @@
 ;;   (trace shop-hddl::plan-tree->decompositions)
 ;;   (trace shop-hddl::forest-roots))
 
+(trace write-pddl-plan)
+
 (defun ess/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
         (plan-tree (or (clingon:getopt cmd :plan-tree)
                        (clingon:getopt cmd :tree-file)))
+        (pddl (or (clingon:getopt cmd :pddl)
+                  (clingon:getopt cmd :pddl-file)))
         (hddl (or (clingon:getopt cmd :hddl)
                   (clingon:getopt cmd :hddl-file)))
         (verbosity  (clingon:getopt cmd :verbose))
@@ -168,35 +187,42 @@
           (error "Unable to find a plan for problem ~a"
                  (shop::problem-name shop::*problem*)))
 
-        ;; print the plan sequence
-        (unless hddl
-         (if (clingon:getopt cmd :plan-file)
-             (let ((plan-stream (open (clingon:getopt cmd :plan-file) :direction :output :if-exists :supersede)))
-               (unwind-protect
-                    (print-plan (shop:plan (first retvals)) plan-stream)
-                 (unless (eq plan-stream t) (close plan-stream))))
-             (print-plan (shop:plan (first retvals)) t))
+        (when pddl
+          (let ((domain (find-domain (domain-name shop::*problem*))))
+            (if (clingon:getopt cmd :pddl-file)
+                (write-pddl-plan (plan (first retvals)) :domain domain
+                                                        :filename (clingon:getopt cmd :pddl-file))
+                (write-pddl-plan (plan (first retvals)) :domain domain))))
 
-         ;; print the plan-tree (if appropriate)
-         (when plan-tree
-           (if (clingon:getopt cmd :tree-file)
-               (let ((stream (open (clingon:getopt cmd :tree-file) :direction :output :if-exists :supersede)))
-                 (unwind-protect
-                      (print-ess-tree (tree (first retvals)) stream)
-                   (close stream)))
-               (print-ess-tree (tree (first retvals)) t))))
+        ;; print the plan sequence
+        (unless (or hddl pddl)
+          (if (clingon:getopt cmd :plan-file)
+              (let ((plan-stream (open (clingon:getopt cmd :plan-file) :direction :output :if-exists :supersede)))
+                (unwind-protect
+                     (print-plan (shop:plan (first retvals)) plan-stream)
+                  (unless (eq plan-stream t) (close plan-stream))))
+              (print-plan (shop:plan (first retvals)) t))
+
+          ;; print the plan-tree (if appropriate)
+          (when plan-tree
+            (if (clingon:getopt cmd :tree-file)
+                (let ((stream (open (clingon:getopt cmd :tree-file) :direction :output :if-exists :supersede)))
+                  (unwind-protect
+                       (print-ess-tree (tree (first retvals)) stream)
+                    (close stream)))
+                (print-ess-tree (tree (first retvals)) t))))
 
         ;; print the HDDL, if appropriate
         (when hddl
           (let ((plan (plan (first retvals)))
                 (tree (tree (first retvals))))
-           (if (clingon:getopt cmd :hddl-file)
-               (let ((stream
-                       (open (clingon:getopt cmd :hddl-file) :direction :output :if-exists :supersede)))
-                 (unwind-protect
-                      (print-hddl-plan plan tree stream)
-                   (unless (eq stream t) (close stream))))
-               (print-hddl-plan plan tree t))))))))
+            (if (clingon:getopt cmd :hddl-file)
+                (let ((stream
+                        (open (clingon:getopt cmd :hddl-file) :direction :output :if-exists :supersede)))
+                  (unwind-protect
+                       (print-hddl-plan plan tree stream)
+                    (unless (eq stream t) (close stream))))
+                (print-hddl-plan plan tree t))))))))
 
 (defun classic/handler (cmd)
   (let ((args (clingon:command-arguments cmd))
