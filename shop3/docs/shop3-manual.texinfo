@@ -76,6 +76,7 @@ College Park, MD 20742, USA
 * Introduction::
 * Execution Environment::
 * Running SHOP3::
+* SHOP3 Command-line Applications::
 * The SHOP3 Formalism::
 * PDDL Support::
 * The SHOP Theorem Prover::
@@ -293,7 +294,7 @@ To enable it you may have to
 @c @emph{C@sub{2}} [@emph{name@sub{3}}] @emph{C@sub{3}} @dots{}
 @c [@emph{name@sub{n}}] @emph{C@sub{n}})”
 
-@node Running SHOP3, The SHOP3 Formalism, Execution Environment, Top
+@node Running SHOP3, SHOP3 Command-line Applications, Execution Environment, Top
 @chapter Running @sysname{}
 @findex find-plans
 @findex find-plans-stack
@@ -395,7 +396,7 @@ full state trajectories for the plans.
 
 @include include/fun-shop-find-plans.texinfo
 
-@node find-plans-stack, do-problems, find-plans, Executing the Planner
+@node find-plans-stack, Planning Example, find-plans, Executing the Planner
 @subsection @code{find-plans-stack}
 
 @include include/fun-shop-find-plans-stack.texinfo
@@ -500,7 +501,7 @@ For example,
 @end example
 
 
-@node do-problems, Common Keyword Arguments, find-plans-stack, Executing the Planner
+@node do-problems, Common Keyword Arguments, Planning Example, Executing the Planner
 @subsection @code{do-problems}
 
 The @code{do-problems} function has one mandatory argument, which can either be
@@ -982,9 +983,50 @@ defined, @sysname{} invokes that routine with the argument @code{'(and (on ?b1 ?
 @end lisp
 @end itemize
 
+@node SHOP3 Command-line Applications, The SHOP3 Formalism, Running SHOP3, Top
+@chapter @sysname{} Command-line Applications
+@cindex Command-line applications
 
 
-@node The SHOP3 Formalism, PDDL Support, Running SHOP3, Top
+Version 3.11 of @sysname{} introduces the first, @emph{experimental}
+@sysname{} command-line applications.  These applications are built
+using Zack Beane's @url{https://www.xach.com/lisp/buildapp/, Buildapp},
+and we do not yet supply pre-built executables.  Ideally, those will be
+supplied in Docker containers.
+
+The command-line applications can be built by going to the
+@t{shop3/buildapp/} directory in the source repository and running the
+enclosed @t{Makefile}.  The Makefile supports the standard @t{DESTDIR}
+variable, so that, for example, one can make the applications and
+install them in your user directory with a command line like this:
+
+@example
+make clean ; make DESTDIR=~/.local install
+@end example
+
+@t{make} dependencies do @strong{not} propagate from the lisp files that
+make up @sysname{}, so for now, at least, it is safest to always run @code{make
+clean} before building.
+
+The three applications that will be installed are:
+@enumerate
+@item @t{shop}
+@item @t{ess-shop} and
+@item @t{tree-compare}
+@end enumerate
+
+The former two will read in one or two files, expected to contain a
+domain and a problem definition.  They will generate plans for @emph{the
+most recently defined} problem and the domain it references or, if that
+problem does not specify a domain, the most recently defined domain.
+They are intended to parallel the way other planners are used.
+
+@t{tree-compare} as its name suggests, will compare two different
+@sysname{} plan trees.  It is even more experimental than the other two
+applications, and there are still issues with ``classic'' @sysname plan
+trees.
+
+@node The SHOP3 Formalism, PDDL Support, SHOP3 Command-line Applications, Top
 @chapter The @sysname{} Formalism
 The inputs to @sysname{} are a @emph{planning domain} and either a single
 @emph{planning problem} or a @emph{planning problem set}. Planning
@@ -1763,7 +1805,6 @@ to be presented in any special order-- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
-* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
