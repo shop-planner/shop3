@@ -306,7 +306,8 @@ Particularly useful for structures, but could be generally applicable."
   (labels ((tree-search (plan-tree)
              (etypecase plan-tree
                (primitive-tree-node
-                (when (eq task (tree-node-task plan-tree))
+                (when (or (eq task (tree-node-task plan-tree))
+                          (eq task (tree-node-expanded-task plan-tree)))
                   plan-tree))
                (complex-tree-node
                 (iter (for tree-node in (complex-tree-node-children plan-tree))
