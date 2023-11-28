@@ -43,7 +43,7 @@
 ;;; ----------------------------------------------------------------------
 
 (defpackage shop-theorem-prover-tests
-  (:shadowing-import-from #:shop3.theorem-prover #:fail)
+  (:shadowing-import-from #:shop3.theorem-prover #:fail #:random)
   (:import-from #:shop3.theorem-prover #:seek-satisfiers #:*domain*)
   (:use common-lisp shop3.theorem-prover fiveam))
 
@@ -207,4 +207,26 @@
       (is (eq (second                      ; the value
                (first (second expansion))) ;the binding form
               '*domain*)))))
+(def-suite* test-new-random :in theorem-prover-tests)
 
+(test random-repeatable
+  (fiveam:is (eq 'random 'shopthpr::random))
+  (fiveam:is-false (eq 'random 'cl:random))
+  (let ((new-generator (random-state:make-generator :squirrel (random-state:hopefully-sufficiently-random-seed)))
+        sequence1 sequence2)
+    (let ((shopthpr:*random-generator* (random-state:copy new-generator)))
+      (fiveam:is (equalp shopthpr:*random-generator* new-generator))
+      (setf sequence1 (let (sequence)
+                        (dotimes (x 10)
+                          (push
+                           (random 10)
+                           sequence))
+                        sequence)))
+    (let ((shopthpr:*random-generator* (random-state:copy new-generator)))
+      (setf sequence2 (let (sequence)
+                        (dotimes (x 10)
+                          (push
+                           (random 10)
+                           sequence))
+                        sequence)))
+    (fiveam:is (equalp sequence1 sequence2))))

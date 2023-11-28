@@ -51,6 +51,8 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+;;; Robert P. Goldman
+
 (defpackage :shop-asd
     (:use :common-lisp :asdf)
     (:nicknames :shop2-asd :shop3-asd)
@@ -158,7 +160,7 @@ minimal affected subtree."
 (defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop3/common" "shop3/unifier")
+    :depends-on ("shop3/common" "shop3/unifier" (:version "random-state" "1.0.1"))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")

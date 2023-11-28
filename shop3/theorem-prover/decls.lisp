@@ -80,6 +80,22 @@ the first match.")
 state inside FIND-SATISFIERS, qv., giving axioms access to the
 state data structure."))
 
+(defparameter *random-generator*
+  ;;; by default use non-repeatable randomness
+  (random-state:make-generator :squirrel)
+  "For cross-implementation repeatability, use the RANDOM-STATE library
+for random generation.")
+
+(defun shop-random (limit &optional (random-state *random-generator*))
+  "SHOP-specific random number generator, based on RANDOM-STATE library.
+API as for CL:RANDOM-STATE."
+  (random limit random-state))
+
+(defun random (limit &optional (random-state *random-generator*))
+    "SHOP-specific random number generator, based on RANDOM-STATE library.
+Synonym for SHOP-RANDOM. API as for CL:RANDOM-STATE."
+  (random-state:random limit random-state))
+
 (defgeneric axioms (thpr-domain predicate)
   (:documentation "Return a list of all the SHOP
 axioms for PREDICATE in THPR-DOMAIN.")
