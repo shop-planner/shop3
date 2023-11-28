@@ -1,1 +1,2 @@
-"3.10.0" ; 3.10 introduces :plan-num-limit
+"3.12.0" ; 3.11 introduces command-line applications and HDDL plan output
+; 3.12 introduces the use of random-state for repeatability
