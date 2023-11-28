@@ -111,6 +111,7 @@
 
 (defvar *unifiers-found* nil)   ;associated with *PLANS-FOUND*
 (defvar *states-found* nil)             ;associated with *PLANS-FOUND* [2004/09/14:rpg]
+(declaim (special *random-generator*))  ; imported from shop.theorem-prover package
 
 (defvar *hand-steer* nil
   "This variable will be DYNAMICALLY bound and used to indicate whether the user
