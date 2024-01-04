@@ -82,7 +82,7 @@ non-NIL."
   (let ((d (gensym)))
     ;; FIXME: the resolution of d here does not need to be deferred:
     ;; it can be resolved at macroexpansion time.
-    `(let ((,d (if ,domain-supp-p ,domain *domain*)))
+    `(let ((,d ,(if domain-supp-p domain '*domain*)))
        (if (null ,goals)
            ;; return value is list-ified because the SEEK-SATISFIERS query is
            ;; made from a single context, but returns multiple answers.
