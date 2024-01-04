@@ -75,7 +75,7 @@
 
 (defconstant +shop-trace-items+
   (list :methods :axioms :operators :tasks :goals :effects :protections
-       :states :plans :item)
+       :states :plans :item :loop)
   "Acceptable arguments for SHOP-TRACE (and SHOP-UNTRACE).")
 
 (defmacro shop-trace (&rest items)

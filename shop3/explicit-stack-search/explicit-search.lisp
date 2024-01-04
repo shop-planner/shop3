@@ -105,20 +105,20 @@ objects."
          (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
-         (*include-rationale* rationale)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
+         (*include-rationale* rationale)
          (*make-analogy-table* (progn
                                  (or (and make-analogy-table (eq which :first))
                                      (not make-analogy-table)
                                      (error "Make analogy table only supported for :which == :first"))
                                  make-analogy-table))
          (*analogical-replay* (progn
-                                 (or (and analogical-replay (eq which :first))
-                                     (not analogical-replay)
-                                     (error "Analogical replay only supported for :which == :first"))
-                                 analogical-replay))
+                                (or (and analogical-replay (eq which :first))
+                                    (not analogical-replay)
+                                    (error "Analogical replay only supported for :which == :first"))
+                                analogical-replay))
          (problem (find-problem problem t))
          (domain (cond (domain
                         (etypecase domain
@@ -162,7 +162,7 @@ objects."
     (when make-analogy-table
       (clear-replay-table domain *analogical-replay-table*))
 
-    (when plan-tree
+    (when tree
       (setf (slot-value search-state 'plan-tree) tree)
       (unless no-dependencies
         (prepare-state-tag-decoder)))
@@ -229,8 +229,8 @@ List of analogical-replay tables -- optional
                (setf (mode state) 'look-for-immediate-task)))
           (look-for-immediate-task
            (cond ((immediate-tasks state)
-                  (let ((state (prepare-choose-immediate-task-state state)))
-                    (setf (mode state) 'pop-immediate-task)))
+                  (prepare-choose-immediate-task-state state)
+                  (setf (mode state) 'pop-immediate-task))
                  (t
                   (setf (mode state) 'prepare-to-choose-toplevel-task))))
           (pop-immediate-task
@@ -256,11 +256,15 @@ List of analogical-replay tables -- optional
                           (depth state)
                           (apply-substitution task (unifier state)))
              (incf *expansions*)
+             (when (>= *verbose* 2)
+               (format t "~%Task name: ~s" (get-task-name task)))
              (cond
                ((primitivep (get-task-name task))
                 (setf (mode state) 'expand-primitive-task))
                ((eql (get-task-name task) :loop)
                 (setf (mode state) 'unfold-looping-task))
+               ((conditional-p (get-task-name task))
+                (setf (mode state) 'expand-conditional-task))
                (t ; original nonprimitive:
                 (setf (mode state) 'prepare-to-choose-method)))))
 
@@ -272,84 +276,92 @@ List of analogical-replay tables -- optional
                  (incf (depth state)))
                ;; Else,
                (with-slots (current-task depth world-state) state
-                 (when (> *verbose* 0) (format t "~%Could not unfold the loop successfully..."))
                  (trace-print :tasks (get-task-name current-task) world-state
-                              "~2%Depth ~s, backtracking from task~%      task ~s"
+                              "~2%Could not unfold the loop successfully...~2T~%Depth ~s, backtracking from task~%      task ~s"
                               depth
                               current-task)
                  (stack-backtrack state))))
 
-          (expand-primitive-task
-           (if (expand-primitive-state state domain)
+          (expand-conditional-task
+           (if (expand-conditional-task domain state)
                (progn
                  (setf (mode state) 'test-for-done)
                  (incf (depth state)))
+               ;; Else,
                (with-slots (current-task depth world-state) state
                  (trace-print :tasks (get-task-name current-task) world-state
-                              "~2%Depth ~s, backtracking from task~%      task ~s"
+                              "~2%Could not expand the conditional successfully...~%Depth ~s, backtracking from task~%      task ~s"
                               depth
                               current-task)
                  (stack-backtrack state))))
-          (prepare-to-choose-method
-           (let* ((task-name (get-task-name (current-task state)))
-                  (methods (methods domain task-name)))
-             (setf (alternatives state) (sort-methods domain methods which))
-             (setf (mode state) 'choose-method)))
-          (choose-method
-           (if (choose-method-state state domain)
-               (setf (mode state) 'choose-method-bindings)
-               (progn
-                 (let ((task1 (current-task state))
-                       (depth (depth state))
-                       (state (world-state state)))
-                   (trace-print :tasks (get-task-name task1) state
-                                "~2%Depth ~s, backtracking from task~%      task ~s"
-                                depth
-                                task1))
-                 (stack-backtrack state))))
-          ;; the alternatives here are triples of (expansions unifiers dependencies)
-          (choose-method-bindings
-           (if (choose-method-bindings-state state)
-               (progn
-                 (setf (mode state) 'test-for-done)
-                 (incf (depth state)))
-               (stack-backtrack state)))
-          (extract-plan
-           (let (plan-return)
-             ;; did we find a new plan? If so, then store it
-             (multiple-value-bind (success plan)
-                 (test-plan-found state :repairable repairable)
-               (when success
-                 (setf plan-return
-                       (make-plan-return domain which
-                                         :plan plan
-                                         :state state
-                                         :repairable repairable
-                                         :replay-table *analogical-replay-table*))
-                 (setf *plans-found* (cons plan-return *plans-found*))
-                 (when (> *verbose* 0)
-                   (format t "~%~%Solution plan found successfully...:~%~a"
-                           plan))))
-             ;; handle *PLANS-FOUND* based on the value of WHICH
-             (ecase which
-               (:first
-                (cond ((and plan-return (>= (length *plans-found*) plan-num-limit))
-                       (return-from seek-plans-stack
-                         (plan-returns (reverse *plans-found*)
-                                       unpack-returns)))
-                      ;; we've found one plan, but there are possibly more plans to find...
-                      (plan-return (stack-backtrack state))
-                      (t
-                       (return-from seek-plans-stack nil))))
-               ;; if we want all the plans, just keep searching until we fail,
-               ;; and then return any plans we have found.
-               (:all (stack-backtrack state)))))))
+        (expand-primitive-task
+         (if (expand-primitive-state state domain)
+             (with-slots (mode depth) state
+               (setf mode 'test-for-done)
+               (incf depth))
+             (with-slots (current-task depth world-state) state
+               (trace-print :tasks (get-task-name current-task) world-state
+                            "~2%Depth ~s, backtracking from task~%      task ~s"
+                            depth
+                            current-task)
+               (stack-backtrack state))))
+        (prepare-to-choose-method
+         (let* ((task-name (get-task-name (current-task state)))
+                (methods (methods domain task-name)))
+           (setf (alternatives state) (sort-methods domain methods which))
+           (setf (mode state) 'choose-method)))
+        (choose-method
+         (if (choose-method-state state domain)
+             (setf (mode state) 'choose-method-bindings)
+             (with-slots (current-task depth world-state) state
+               (trace-print :tasks (get-task-name current-task) world-state
+                            "~2%Depth ~s, backtracking from task~%      task ~s"
+                            depth
+                            current-task)
+               (stack-backtrack state))))
+        ;; the alternatives here are triples of (expansions unifiers dependencies)
+        (choose-method-bindings
+         (if (choose-method-bindings-state state)
+             (progn
+               (setf (mode state) 'test-for-done)
+               (incf (depth state)))
+             (stack-backtrack state)))
+        (extract-plan
+         (let (plan-return)
+           ;; did we find a new plan? If so, then store it
+           (multiple-value-bind (success plan)
+               (test-plan-found state :repairable repairable)
+             (when success
+               (setf plan-return
+                     (make-plan-return domain which
+                                       :plan plan
+                                       :state state
+                                       :repairable repairable
+                                       :replay-table *analogical-replay-table*))
+               (setf *plans-found* (cons plan-return *plans-found*))
+               (when (> *verbose* 0)
+                 (format t "~%~%Solution plan found successfully...:~%~a"
+                         plan))))
+           ;; handle *PLANS-FOUND* based on the value of WHICH
+           (ecase which
+             (:first
+              (cond ((and plan-return (>= (length *plans-found*) plan-num-limit))
+                     (return-from seek-plans-stack
+                       (plan-returns (reverse *plans-found*)
+                                     unpack-returns)))
+                    ;; we've found one plan, but there are possibly more plans to find...
+                    (plan-return (stack-backtrack state))
+                    (t
+                     (return-from seek-plans-stack nil))))
+             ;; if we want all the plans, just keep searching until we fail,
+             ;; and then return any plans we have found.
+             (:all (stack-backtrack state)))))))
     (search-failed ()
       (case which
         (:first
          ;; no plans this time -- are there other plans to return?
          (when *plans-found*
-             (plan-returns (reverse *plans-found*) unpack-returns)))
+           (plan-returns (reverse *plans-found*) unpack-returns)))
         (:all
          (when *plans-found*
            (plan-returns (reverse *plans-found*) unpack-returns)))
@@ -488,30 +500,19 @@ of PLAN-RETURN objects."
                    (child (make-plan-tree-for-task-net reduction parent (plan-tree-lookup state))))
               ;; MAKE-PLAN-TREE-FOR-TASK-NET as a side-effect, links
               ;; PARENT and CHILD.
-#|            (format t "~%Subtree1: ~s"  (make-add-child-to-tree :parent (apply-substitution
-                                                (plan-tree::complex-tree-node-task parent) unifier)
-                                       :child (apply-substitution
-                                                (plan-tree::complex-tree-node-children
-                                                 child)
-                                                unifier)))
-              (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
-              |#
               (push
-               (if *include-rationale*
-                   (make-add-child-to-tree :parent (apply-substitution
-                                                    (plan-tree::complex-tree-node-task parent) unifier)
-                                           :child (apply-substitution
-                                                   (plan-tree::complex-tree-node-children
-                                                    child)
-                                                   unifier))
-                   ;; else
-                   (make-add-child-to-tree :parent parent :child child))
+               (make-add-child-to-tree :parent parent :child child)
                backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
+                  (when (>= *verbose* 2)
+                    (format t "~%Depends: ~s" depends))
                   (when depends
                     (setf (plan-tree:tree-node-dependencies parent) depends)
                     (make-add-dependencies :dependencies depends))))))
+
+
+
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
                                    reduction unifier))
@@ -579,6 +580,9 @@ trigger backtracking."
                                   :unifier unifier
                                   :partial-plan-cost cost)
           backtrack-stack)
+
+    (when (>= *verbose* 2)
+      (format t "~%In primitive state?"))
     (multiple-value-bind (success top-tasks1 tasks1 protections1 planned-action unifier1 tag prim-cost
                           depends)      ;one set of dependencies...
         (seek-plans-primitive-1 domain current-task world-state tasks top-tasks depth protections unifier)

@@ -105,13 +105,17 @@
                              (:file "plan-tree")
                              (:file "decls")
                              (:file "prepare-return-values")
+                             (:file "plan-tree-simple-print")
                              (:file "backtrack-stack")
                              (:file "analogical-replay")
                              (:file "explicit-search")))
 
        (:module "looping-tasks"
-                :serial t
-                :components ((:file "loop-extensions")))
+        :serial t
+        :components ((:file "exts-common")
+                     (:file "loop-extensions")
+                     (:file "conditional-extensions")))
+
 
 
        ;; this is for the original SHOP3 plan trees.
@@ -240,6 +244,7 @@ shop3."
                  (test-sort-by . :arity-test) ; 7
                  (arity-test . :arity-test) ; 6
                  (io-tests . :arity-test) ; 40
+                 (conditionals-suite . :shop3-conditionals-tests) ;; 12
                  ;; end of internal tests
                  (umt-domain-tests . :shop3-user) ; 8
                  (blocks-tests . :shop3-user) ; 8
@@ -259,7 +264,7 @@ shop3."
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                  )
-    :num-checks 1086
+    :num-checks 1098
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -295,6 +300,7 @@ shop3."
                                  (:static-file "axioms.lisp")
                                  (:static-file "operators.lisp")))
                                (:file "io-tests" :depends-on ("at-package" "umt-domain"))
+                               (:file "conditional-tests") ; 12 checks
                                (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
                                (:file "state-tests" :depends-on ("at-package" "umt-domain"))
                                (:file "misc" :depends-on ("at-package" "umt-domain"))
