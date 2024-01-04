@@ -259,10 +259,13 @@
              #:complex-node-p
              #:complex-node-task
              #:complex-node-children
+             #:complex-node-reduction-label
+             #:complex-node
              #:primitive-node-p
              #:primitive-node-task
              #:primitive-node-cost
              #:primitive-node-position
+             #:primitive-node
              #:remove-internal-operators
              #:tree-node-task
              #:tree-node-task-name
@@ -320,6 +323,7 @@
            #:consumer
            #:prop
            #:tree-node
+           #:tree-node-p
            #:tree-node-task
            #:tree-node-expanded-task
            #:tree-node-dependencies

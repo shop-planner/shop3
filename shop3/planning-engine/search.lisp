@@ -285,26 +285,26 @@ of SHOP2."
                        do (trace-print :methods label state
                                        "~2%Depth ~s, applying method ~s~%      task ~s~%   precond ~s~% reduction ~s"
                                        depth label task1 (fourth method) reduction)
-                            (trace-print :tasks task-name state
-                                         "~2%Depth ~s, reduced task ~s~% reduction ~s"
-                                         depth task1 reduction)
-                            (multiple-value-bind (top-tasks1 tasks1)
-                                (apply-method-bindings task1 top-tasks tasks reduction u1)
-                              (cond ((or results methods) ; is there more work to do?
-                                     (let ((*more-tasks-p* t)) ; yes, there is
+                          (trace-print :tasks task-name state
+                                       "~2%Depth ~s, reduced task ~s~% reduction ~s"
+                                       depth task1 reduction)
+                          (multiple-value-bind (top-tasks1 tasks1)
+                              (apply-method-bindings task1 top-tasks tasks reduction u1 label)
+                            (cond ((or results methods) ; is there more work to do?
+                                   (let ((*more-tasks-p* t)) ; yes, there is
+                                     (seek-plans domain state tasks1 top-tasks1 partial-plan
+                                                 partial-plan-cost (1+ depth) which-plans
+                                                 protections u1))
+                                   (when-done
+                                     (return-from seek-plans-nonprimitive nil)))
+                                  (t (return-from seek-plans-nonprimitive ; no, tail call ok
                                        (seek-plans domain state tasks1 top-tasks1 partial-plan
                                                    partial-plan-cost (1+ depth) which-plans
-                                                   protections u1))
-                                     (when-done
-                                       (return-from seek-plans-nonprimitive nil)))
-                                    (t (return-from seek-plans-nonprimitive ; no, tail call ok
-                                         (seek-plans domain state tasks1 top-tasks1 partial-plan
-                                                     partial-plan-cost (1+ depth) which-plans
-                                                     protections u1)))))))))))
+                                                   protections u1)))))))))))
 
-(defun apply-method-bindings (task top-tasks tasks reduction unifier)
+(defun apply-method-bindings (task top-tasks tasks reduction unifier &optional method-label)
   (when *plan-tree*
-    (record-reduction task reduction unifier))
+    (record-reduction task reduction unifier method-label))
   (let ((top-tasks1 (replace-task-top-list top-tasks task reduction))
         (new-task-net (replace-task-main-list tasks task reduction)))
     (values top-tasks1 new-task-net)))
