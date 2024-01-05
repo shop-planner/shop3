@@ -70,13 +70,15 @@
                   #:fluents-mixin
                   #:fluent-function-p
                   #:fluent-expr-p
-                  #:fluent-comparison-p)
+                  #:fluent-comparison-p
+                  #:*random-generator*)
     ;; so can be imported into prepare-return-values
     (:intern #:make-plan-copy)
     (:import-from #:shop3.unifier #:+primitive-property-name+ #:primitive-symbol-p)
+    (:shadowing-import-from #:shop3.theorem-prover #:random #:shop-random)
+
     #+sbcl
     (:shadow #:defconstant)
-    (:shadow #:domain)
     (:export #:shop-fail
 
              #:domain-axioms #:domain-name
@@ -85,6 +87,9 @@
 
              #:*domain* #:*current-state* #:*inferences* #:*external-access*
              #:*attribution-list* #:*state-encoding*
+
+             #:*random-generator*
+             #:shop-random
 
              ;; quash some default definition messages
              #:*define-silently*
@@ -259,10 +264,13 @@
              #:complex-node-p
              #:complex-node-task
              #:complex-node-children
+             #:complex-node-reduction-label
+             #:complex-node
              #:primitive-node-p
              #:primitive-node-task
              #:primitive-node-cost
              #:primitive-node-position
+             #:primitive-node
              #:remove-internal-operators
              #:tree-node-task
              #:tree-node-task-name
@@ -307,7 +315,9 @@
              #:write-pddl-plan
 
              ;; exporting so that it can be overridden
-             plan-value))
+             #:plan-value
+
+             #:shop-random))
 
 (defpackage plan-tree
   (:nicknames shop-extended-plan-tree)
@@ -320,6 +330,7 @@
            #:consumer
            #:prop
            #:tree-node
+           #:tree-node-p
            #:tree-node-task
            #:tree-node-expanded-task
            #:tree-node-dependencies

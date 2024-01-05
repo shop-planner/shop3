@@ -90,7 +90,7 @@ This is an easier to use interface to the validator-export function, qv."
     (when (and filename stream-supplied-p)
       (error "Cannot supply both a filename and stream destination for write-pddl-plan."))
     (when filename
-      (setf stream (open filename :direction :output)))
+      (setf stream (open filename :direction :output :if-exists :supersede)))
     (unwind-protect
          (validator-export shop3-domain shop-plan stream)
       (when filename (close stream)))))

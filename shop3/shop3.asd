@@ -51,6 +51,8 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
+;;; Robert P. Goldman
+
 (defpackage :shop-asd
     (:use :common-lisp :asdf)
     (:nicknames :shop2-asd :shop3-asd)
@@ -140,7 +142,9 @@ minimal affected subtree."
                                             (find-package :shop3))
                                     (asdf:component-version (asdf:find-system "shop3")))))
        (:file "plan-printer" :depends-on ("package"
-                                           "decls"))))
+                                           "decls"))
+       (:file "hddl-plan" :pathname "hddl/hddl-plan"
+              :depends-on ("explicit-stack-search" "tree"))))
 
 (defsystem :shop3/common
     :serial t
@@ -156,7 +160,7 @@ minimal affected subtree."
 (defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop3/common" "shop3/unifier")
+    :depends-on ("shop3/common" "shop3/unifier" (:version "random-state" "1.0.1"))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")
@@ -173,6 +177,17 @@ minimal affected subtree."
                (:file "tracer")
                (:file "unify")))
 
+;;;---------------------------------------------------------------------------
+;;; Extensions
+;;;---------------------------------------------------------------------------
+
+(defsystem "shop3/pddl-helpers"
+    :depends-on ("shop3" "pddl-utils")
+  :pathname "pddl/"
+  :serial t                             ; pddl-helpers contains defpackage
+  :components ((:file "pddl-helpers")
+               (:file "validate-repairs")))
+
 
 (defsystem :shop3/plan-grapher
   :depends-on ("shop3" "cl-dot")
@@ -182,14 +197,6 @@ minimal affected subtree."
                (:file "decls")
                (:file "graph-plan-tree"))
   )
-
-(defsystem "shop3/pddl-helpers"
-    :depends-on ("shop3" "pddl-utils")
-  :pathname "pddl/"
-  :serial t                             ; pddl-helpers contains defpackage
-  :components ((:file "pddl-helpers")
-               (:file "validate-repairs")))
-
 
 ;;;---------------------------------------------------------------------------
 ;;; Testing
@@ -251,7 +258,7 @@ shop3."
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
                  (enhanced-plan-tree . :shop3-user) ; 2
-                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
+                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 8
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
@@ -259,7 +266,7 @@ shop3."
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                  )
-    :num-checks 1086
+    :num-checks 1093
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
@@ -301,7 +308,7 @@ shop3."
                                (:file "analogical-replay")
                                (:file "minimal-subtree-tests")
                                (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests")                  ; 40 checks
+                               (:file "plan-tree-tests")                  ; 43 checks
                                (:file "search-tests") ; 9 checks
                                (:file "plan-num-limit-tests") ; 21 checks
                                ))
@@ -373,7 +380,8 @@ shop3."
                                                                    "Log_ran_problems_50"
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
-                 (:file "replan-tests" :pathname "tests/replan-tests")))
+                 (:file "replan-tests" :pathname "tests/replan-tests")
+                 (:file "hddl-tests" :pathname "tests/hddl-tests")))
 
 
 (defsystem shop3/test-satellite

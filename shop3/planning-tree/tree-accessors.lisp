@@ -55,14 +55,16 @@
 (in-package :shop)
 
 (defstruct (complex-node (:type list)
-                         (:constructor make-complex-node (task children)))
+                         (:constructor make-complex-node (task children &key reduction-label)))
   task
+  (reduction-label nil :type symbol)
   children)
 
 (defun complex-node-p (tree-node)
   "Is TREE-NODE a representation of a complex node (i.e., not an operator) in
 the SHOP2 tree format as described in SHOP2?"
-  (and (listp (first tree-node))
+  (and (listp tree-node)
+       (listp (first tree-node))
        (symbolp (first (first tree-node)))))
 
 (deftype complex-node ()
@@ -84,7 +86,8 @@ the SHOP2 tree format as described in SHOP2?"
 (defun primitive-node-p (tree-node)
     "Is TREE-NODE a representation of a primitive node (i.e., an operator) in
 the SHOP2 tree format as described in SHOP2?"
-  (and (= (length tree-node) 3)
+  (and (listp tree-node)
+       (= (length tree-node) 3)
        (numberp (primitive-node-cost tree-node))
        (integerp (primitive-node-position tree-node))
        (listp (primitive-node-task tree-node))))
@@ -243,7 +246,7 @@ parent."
   (labels ((list-iter (lst acc)
              (if (null lst)
                  acc
-                 (let ((new (node-iter (first lst))))
+                 (let ((new (node-iter (complex-node-task lst))))
                    (reverse (list-iter (cdr lst) (append new acc))))))
            (node-iter (node)
              (when (complex-node-p node)
@@ -258,6 +261,8 @@ parent."
 between trees."
   (labels ((list-iter (lst1 lst2)
              (cond ((null lst1)
+                    ;; note in the following we take advantage of the fact that FORMAT
+                    ;; returns NIL
                     (if (null lst2)
                         t
                         (format t "~&NIL does not match ~s~%" lst2)))
@@ -273,8 +278,8 @@ between trees."
            (node-iter (n1 n2)
              (cond ((primitive-node-p n1)
                     (cond ((primitive-node-p n2)
-                           (assert (not (equalp n1 n2)))
-                           (format t "~&Primitive nodes do not match:~%~T~S~%~T~S~%" n1 n2))))
+                           (if (equalp n1 n2) t
+                             (format t "~&Primitive nodes do not match:~%~T~S~%~T~S~%" n1 n2)))))
                    ((primitive-node-p n2)
                     (format t "~&Node:~%~T~S~%~TDoes not match primitive node:~%~T~S~%"  n1 n2))
                    (t (assert (and (complex-node-p n1)
@@ -284,6 +289,12 @@ between trees."
                         (format t "Mismatching complex-node tasks:~%~T~S~%~T~S~%"
                                 (complex-node-task n1)
                                 (complex-node-task n2))
+                        (return-from node-iter nil))
+                      (unless (eq (complex-node-reduction-label n1)
+                                  (complex-node-reduction-label n2))
+                        (format t "Mismatching complex-node method labels:~%~T~S~%~T~S~%"
+                                (complex-node-reduction-label n1)
+                                (complex-node-reduction-label n2))
                         (return-from node-iter nil))
                       (if (equalp (complex-node-children n1)
                                   (complex-node-children n2))
@@ -328,7 +339,8 @@ tree (although they will be EQUALP."
                                          (primitive-node-position node)))
                    ((complex-node-p node)
                     (make-complex-node (complex-node-task node)
-                                       (list-iter (complex-node-children node))))
+                                       (list-iter (complex-node-children node))
+                                       :reduction-label (complex-node-reduction-label node)))
                    (t
                     (error 'type-error :expected-type 'tree-node :datum node)))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
@@ -344,11 +356,11 @@ tree (although they will be EQUALP."
            (member node (complex-node-children n) :test 'eq)))
     (find-complex-node-if #'match-if-child tree :node-fun t)))
 
-(defun canonically-order (tree &optional (keep-empty nil))
+(defun canonically-order-plan-tree (tree &optional (keep-empty nil))
   (labels ((list-iter (lst)
              (let ((elts
                      (remove nil (mapcar #'node-iter lst))))
-               (sort elts #'<= :key #'min-start)))
+               (sort (copy-list elts) #'<= :key #'min-start)))
            (node-iter (node)
              (etypecase node
                (primitive-node
@@ -358,7 +370,9 @@ tree (although they will be EQUALP."
                (complex-node
                 (when (or keep-empty (complex-node-children node))
                   (make-complex-node (complex-node-task node)
-                                     (list-iter (complex-node-children node))))))))
+                                     (list-iter (complex-node-children node))
+                                     :reduction-label
+                                     (complex-node-reduction-label node)))))))
     ;; Ugh: SHOP plan "trees" are really forests. Most of the time.
     (if (or (primitive-node-p tree) (complex-node-p tree))
         (node-iter tree)
