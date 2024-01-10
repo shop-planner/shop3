@@ -251,7 +251,7 @@ shop3."
                  (misc-tests . :shop3-user) ; 10
                  (minimal-subtree-tests . :shop3-user) ; 12
                  (enhanced-plan-tree . :shop3-user) ; 2
-                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 4
+                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 26
                  (test-plan-repair . :shop-replan-tests) ; 3
                  (test-shop-states . :test-states) ; 110
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
@@ -259,7 +259,7 @@ shop3."
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                  )
-    :num-checks 1086
+    :num-checks 1094
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
