@@ -1,18 +1,18 @@
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -21,8 +21,8 @@
 ;;; Portions created by Drs. Goldman and Kuter are Copyright (C)
 ;;; 2017 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -44,6 +44,7 @@
 
 (defpackage shop-theorem-prover-tests
   (:shadowing-import-from #:shop3.theorem-prover #:fail)
+  (:import-from #:shop3.theorem-prover #:seek-satisfiers #:*domain*)
   (:use common-lisp shop3.theorem-prover fiveam))
 
 (in-package #:shop-theorem-prover-tests)
@@ -180,4 +181,30 @@
       (is-true (alexandria:set-equal '((a a) (b a))
                                 (first (sorted-bindings '?bs bindings))
                                 :test 'equalp)))))
+
+(test check-seek-satisfiers-expansion
+  ;; make sure that we don't have vacuous IF form in
+  ;; expansion...
+  (multiple-value-bind (expansion expanded-p)
+      (macroexpand-1
+       '(seek-satisfiers ((foo)) state nil 1 nil :domain domain))
+    (is-true expanded-p)
+    (when expanded-p
+      (is (eq (first expansion) 'let))
+      ;; binding list
+      (is (eql (length (second expansion)) 1))
+      (is (eq (second                      ; the value
+               (first (second expansion))) ;the binding form
+              'domain))))
+  (multiple-value-bind (expansion expanded-p)
+      (macroexpand-1
+       '(seek-satisfiers ((foo)) state nil 1 nil))
+    (is-true expanded-p)
+    (when expanded-p
+      (is (eq (first expansion) 'let))
+      ;; binding list
+      (is (eql (length (second expansion)) 1))
+      (is (eq (second                      ; the value
+               (first (second expansion))) ;the binding form
+              '*domain*)))))
 
