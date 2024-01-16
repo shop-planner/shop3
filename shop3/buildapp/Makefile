@@ -6,8 +6,7 @@ shop-app:	buildapp-script shop-app-entrypoints.lisp
 
 install:	shop-app
 	install -c -m 555 shop-app ${DESTDIR}/bin/shop
-	install -c -m 555 shop-app ${DESTDIR}/bin/ess-shop
-	install -c -m 555 shop-app ${DESTDIR}/bin/tree-compare
+	cd ${DESTDIR}/bin && ln -s shop ess-shop && ln -s shop tree-compare
 
 clean:
 	rm -f shop-app
