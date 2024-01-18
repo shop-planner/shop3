@@ -26,7 +26,8 @@ in this search MODE."
     :initarg :world-state
     :accessor state
     :accessor world-state
-    :documentation "SHOP2 world state object."
+    :type tagged-state
+    :documentation "SHOP world state object."
     )
    (protections
     :initarg :protections
