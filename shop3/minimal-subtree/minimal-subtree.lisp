@@ -16,7 +16,7 @@
 
 ;;; Note: the current version of this file assumes that the primitive
 ;;; task s-expressions in PLAN and PLAN-TREE are EQ -- i.e., pointers
-;;; to the same lists.  If you pull the plans out of SHOP2, that will
+;;; to the same lists.  If you pull the plans out of SHOP, that will
 ;;; be the case, but if you save and reload plans, it might not be.
 ;;; Caveat lisper!
 (defmethod find-failed-task ((domain domain) plan
@@ -98,4 +98,3 @@ checking (i.e., top-down)."
   (find-if #'(lambda (x) (and (eq (first x) :delete)
                               (equalp (second x) prop)))
            divergence-list))
-    
