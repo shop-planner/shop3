@@ -72,9 +72,9 @@ cross-links for VAL using information in TABLE."))
   )
 
 (defun slot-value-translator (val &optional (table *table-for-load-form*))
-  (cond ((null val) NIL)
+  (cond ((null val) nil)
         ((and (symbolp val)
-              (or (eq val :INIT) (equalp (symbol-name val) (symbol-name '#:top))))
+              (or (eq val :init) (equalp (symbol-name val) (symbol-name '#:top))))
          val)
         (t (or (gethash val table)
                (error "No table entry for value ~s" val)))))
@@ -88,7 +88,7 @@ cross-links for VAL using information in TABLE."))
 (defun make-cross-links (&optional (table *table-for-load-form*))
   (iter (for (val var) in-hashtable table)
     (unless (listp val)
-     (appending 
+     (appending
       (cross-links-for var val table)))))
 
 (defmethod make-instantiator ((obj primitive-tree-node))
@@ -104,7 +104,7 @@ cross-links for VAL using information in TABLE."))
 (defmethod cross-links-for ((var-name symbol) (obj complex-tree-node) (table hash-table))
   (append (call-next-method)
           `((setf (complex-tree-node-children ,var-name)
-                  (list 
+                  (list
                    ,@(mapcar #'(lambda (x) (slot-value-translator x table))
                            (complex-tree-node-children obj)))))))
 
@@ -138,7 +138,7 @@ and building a toplogically sorted list of nodes."))
 
 (defun obj-bindings (hash-table)
   "Return an ordered list of variable-name instantiator pairs for use in a LET form."
-  (append 
+  (append
    (iter (for (item var-name) in-hashtable hash-table)
      ;; proposition or task
      (when (listp item)

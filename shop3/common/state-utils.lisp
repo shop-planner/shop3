@@ -1,18 +1,18 @@
 ;;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
-;;; 
+;;;
 ;;; The contents of this file are subject to the Mozilla Public License
 ;;; Version 1.1 (the "License"); you may not use this file except in
 ;;; compliance with the License. You may obtain a copy of the License at
 ;;; http://www.mozilla.org/MPL/
-;;; 
+;;;
 ;;; Software distributed under the License is distributed on an "AS IS"
 ;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
 ;;; License for the specific language governing rights and limitations under
 ;;; the License.
-;;; 
-;;; The Original Code is SHOP2.  
-;;; 
+;;;
+;;; The Original Code is SHOP2.
+;;;
 ;;; The Initial Developer of the Original Code is the University of
 ;;; Maryland. Portions created by the Initial Developer are Copyright (C)
 ;;; 2002,2003 the Initial Developer. All Rights Reserved.
@@ -21,8 +21,8 @@
 ;;; Portions created by Drs. Goldman and Maraist are Copyright (C)
 ;;; 2004-2007 SIFT, LLC.  These additions and modifications are also
 ;;; available under the MPL/GPL/LGPL licensing terms.
-;;; 
-;;; 
+;;;
+;;;
 ;;; Alternatively, the contents of this file may be used under the terms of
 ;;; either of the GNU General Public License Version 2 or later (the "GPL"),
 ;;; or the GNU Lesser General Public License Version 2.1 or later (the
@@ -38,16 +38,16 @@
 ;;; ----------------------------------------------------------------------
 
 ;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
-;;; 
+;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
-;;; 
-;;; Contract No.         FA8650-06-C-7606, 
+;;;
+;;; Contract No.         FA8650-06-C-7606,
 ;;; Contractor Name      Smart Information Flow Technologies, LLC
 ;;;                      d/b/a SIFT, LLC
 ;;; Contractor Address   211 N 1st Street, Suite 300
 ;;;                      Minneapolis, MN 55401
 ;;; Expiration Date      5/2/2011
-;;; 
+;;;
 ;;; The Government's rights to use, modify, reproduce, release,
 ;;; perform, display, or disclose this software are restricted by
 ;;; paragraph (b)(2) of the Rights in Noncommercial Computer Software
@@ -116,7 +116,7 @@ using MAKE-INITIAL-STATE.")
   (rest (assoc pred (state-body st))))
 
 (defmethod state-candidate-atoms-for-goal ((st list-state) goal)
-  
+
   (state-all-atoms-for-predicate st (first goal)))
 
 (defmethod copy-state ((st list-state))
@@ -136,7 +136,7 @@ using MAKE-INITIAL-STATE.")
 ;;; I think this code is going to be pretty inefficient, since it's not properly tail-recursive.  I don't think it would be terribly difficult to replace this with a properly tail-recursive program.  Alternatively, a simple destructive update using (setf (getf statebody (car atom)) ....) might work, but I don't know whether a destructive version of this operation would be acceptable. [2008-02-06: rpg
 (defun LIST-insert-atom-into-statebody (atom statebody)
   ;; the statebody here is evidently implemented as an associative structure, indexed on the predicate, of cells whose cdr is a LIST of atoms
-  (cond 
+  (cond
    ((null statebody)
     (list (list (car atom) atom)))
    ((string< (car atom) (caar statebody))
@@ -255,7 +255,7 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-atoms ((st mixed-state))
   (let ((statebody (state-body st)))
-    (let ((acc nil)) 
+    (let ((acc nil))
       (maphash #'(lambda (pred lis)
                    (setf acc
                          (append (mapcar #'(lambda (entry) (cons pred entry)) lis)
@@ -300,8 +300,8 @@ using MAKE-INITIAL-STATE.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The "doubly-hashed-state" class
-(defconstant +VARIABLE-TERM+ (uiop:find-symbol* '#:%variable% (find-package (symbol-name '%shop3-common-private%))))
-(defconstant +SINGLETON-TERM+ (uiop:find-symbol* '#:%singleton% (find-package (symbol-name '%shop3-common-private%))))
+(defconstant +variable-term+ (uiop:find-symbol* '#:%variable% (find-package (symbol-name '%shop3-common-private%))))
+(defconstant +singleton-term+ (uiop:find-symbol* '#:%singleton% (find-package (symbol-name '%shop3-common-private%))))
 (defmethod make-initial-state (domain (state-encoding (eql :doubly-hashed)) atoms &key)
   (declare (ignore domain))
    (make-doubly-hashed-state atoms))
@@ -329,7 +329,7 @@ using MAKE-INITIAL-STATE.")
   (let* ((statebody (state-body st))
          (subtable (gethash (first atom) statebody)) ; hash-table
          (sub-key (if (> (length atom) 1)
-                      (second atom) 
+                      (second atom)
                       +SINGLETON-TERM+))
          (subtable-entry (when subtable
                            (gethash sub-key subtable)))) ; list
@@ -345,7 +345,7 @@ using MAKE-INITIAL-STATE.")
 
 (defmethod state-atoms ((st doubly-hashed-state))
   (let ((statebody (state-body st))     ; this is a hash-table of hash-tables
-        (acc nil)) 
+        (acc nil))
     (maphash #'(lambda (pred subtable)
                  (maphash #'(lambda (first-arg lis)
                               (if (eq first-arg +SINGLETON-TERM+)
@@ -478,7 +478,7 @@ using MAKE-INITIAL-STATE.")
                        acc)))
              (first (state-body st)))
     (remove-duplicates (append
-                        acc 
+                        acc
                         (mapcan #'(lambda (entry) (copy-list (cdr entry)))
                                 (fourth (state-body st)))))))
 
@@ -608,7 +608,7 @@ using MAKE-INITIAL-STATE.")
       nil))
    (t
     (incf (second (first position)))
-    (cond 
+    (cond
      ((< (second (first position)) (first pred-type-counts))
       position)
      ((null (rest position))
@@ -640,7 +640,7 @@ for easier human inspection."
                   nil)
                  ((symbolp p1)
                   (if (symbolp p2)
-                      (cond 
+                      (cond
                         ((string-lessp p1 p2) t)
                         ((string-lessp p2 p1) (values nil t))
                         (t (values nil nil)))

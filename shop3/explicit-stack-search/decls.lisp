@@ -31,7 +31,7 @@ in this search MODE."
    (protections
     :initarg :protections
     :accessor protections
-    :initform NIL
+    :initform nil
     :documentation "Set of protections in the current
 state."
     )

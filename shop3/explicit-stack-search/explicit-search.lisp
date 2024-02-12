@@ -5,7 +5,7 @@
   nil
   "Do we build a dependency-enhanced plan tree?")
 (defvar *no-dependencies*
-  NIL
+  nil
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
 (defvar *include-rationale* nil)
@@ -703,7 +703,7 @@ trigger backtracking."
 ;;; are no top-tasks.  I just copied this over from mainstream SHOP2.
 (defun EMPTY-P (state)
   (with-slots (top-tasks) state
-    (or (null top-tasks) (equal top-tasks '(NIL)))))
+    (or (null top-tasks) (equal top-tasks '(nil)))))
 
 (defun test-plan-found (state &key repairable)
   "If there is a plan in STATE (a SEARCH-STATE), then
