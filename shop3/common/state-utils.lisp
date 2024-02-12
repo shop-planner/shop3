@@ -322,7 +322,7 @@ using MAKE-INITIAL-STATE.")
       (setf subtable (make-hash-table :test #'equal))
       (setf (gethash (first atom) (state-body st)) subtable))
     (if (= (length atom) 1)
-        (pushnew t (gethash +SINGLETON-TERM+ subtable))
+        (pushnew t (gethash +singleton-term+ subtable))
         (pushnew (rest atom) (gethash (second atom) subtable) :test 'equal))))
 
 (defmethod remove-atom (atom (st doubly-hashed-state))
@@ -330,12 +330,12 @@ using MAKE-INITIAL-STATE.")
          (subtable (gethash (first atom) statebody)) ; hash-table
          (sub-key (if (> (length atom) 1)
                       (second atom)
-                      +SINGLETON-TERM+))
+                      +singleton-term+))
          (subtable-entry (when subtable
                            (gethash sub-key subtable)))) ; list
     (cond ((null subtable) (values)) ;no-op
           ((null subtable-entry) (values))
-          ((eq sub-key +SINGLETON-TERM+) (remhash sub-key subtable))
+          ((eq sub-key +singleton-term+) (remhash sub-key subtable))
           (t
            (setf (gethash sub-key subtable)
                  (delete
@@ -348,7 +348,7 @@ using MAKE-INITIAL-STATE.")
         (acc nil))
     (maphash #'(lambda (pred subtable)
                  (maphash #'(lambda (first-arg lis)
-                              (if (eq first-arg +SINGLETON-TERM+)
+                              (if (eq first-arg +singleton-term+)
                                   (push `(,pred) acc)
                                   (setf acc
                                         (append (mapcar #'(lambda (entry) (cons pred entry)) lis)
