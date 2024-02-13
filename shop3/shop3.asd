@@ -195,27 +195,6 @@ minimal affected subtree."
 ;;; Testing
 ;;;---------------------------------------------------------------------------
 
-(asdf:load-system "fiveam-asdf")
-
-(defclass tester-cl-source-file ( cl-file )
-  ()
-  (:documentation "Special class that will have to recompile no matter
-what..."))
-
-(defmethod operation-done-p
-           ((o compile-op)
-            (c tester-cl-source-file))
-  "We are crushing the normal operation-done-p for compile-op, so that
-the tester files get recompiled, to take into account any changes to
-shop3."
-  (values nil))
-
-(defclass shop-tester-mixin ()
-     ()
-  (:documentation "Mixin that adds silent functioning of SHOP3."))
-
-
-(defclass shop-fiveam-tester (shop-tester-mixin fiveam-tester-system) ())
 
 (defsystem shop3/openstacks
     :depends-on (:shop3)
@@ -232,8 +211,8 @@ shop3."
 
 
 (defsystem shop3/test
-    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
-    :class shop-fiveam-tester
+    :defsystem-depends-on ("shop-silent-test")
+    :class "silent-shop-test:shop-fiveam-tester"
     :test-names ((pddl-tests . :shop3)  ; 144
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
@@ -377,8 +356,8 @@ shop3."
 
 
 (defsystem shop3/test-satellite
-    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
-    :class shop-fiveam-tester
+    :defsystem-depends-on ("shop-silent-test")
+    :class "silent-shop-test:shop-fiveam-tester"
     :test-names (("SATELLITE-ADL-TESTS" . "TEST-SATELLITE"))
     :num-checks 80
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
@@ -389,8 +368,8 @@ shop3."
     :components ((:file "test-satellite")))
 
 (defsystem shop3/test-unifier
-    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
-    :class shop-fiveam-tester
+    :defsystem-depends-on ("shop-silent-test")
+    :class "silent-shop-test:shop-fiveam-tester"
     :test-names (("TEST-SHOP-UNIFIER" . "SHOP-UNIFIER-TESTS"))
     :num-checks 36
     :depends-on ("shop3/unifier" "alexandria")
