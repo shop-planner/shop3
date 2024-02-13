@@ -211,8 +211,8 @@ minimal affected subtree."
 
 
 (defsystem shop3/test
-    :defsystem-depends-on ("shop-silent-test")
-    :class "silent-shop-test:shop-fiveam-tester"
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
+    :class "fiveam-asdf:fiveam-tester-system"
     :test-names ((pddl-tests . :shop3)  ; 144
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
@@ -356,8 +356,8 @@ minimal affected subtree."
 
 
 (defsystem shop3/test-satellite
-    :defsystem-depends-on ("shop-silent-test")
-    :class "silent-shop-test:shop-fiveam-tester"
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
+    :class "fiveam-asdf:fiveam-tester-system"
     :test-names (("SATELLITE-ADL-TESTS" . "TEST-SATELLITE"))
     :num-checks 80
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
@@ -368,8 +368,8 @@ minimal affected subtree."
     :components ((:file "test-satellite")))
 
 (defsystem shop3/test-unifier
-    :defsystem-depends-on ("shop-silent-test")
-    :class "silent-shop-test:shop-fiveam-tester"
+    :defsystem-depends-on ((:version "fiveam-asdf" "2"))
+    :class "fiveam-asdf:fiveam-tester-system"
     :test-names (("TEST-SHOP-UNIFIER" . "SHOP-UNIFIER-TESTS"))
     :num-checks 36
     :depends-on ("shop3/unifier" "alexandria")
