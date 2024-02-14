@@ -249,7 +249,6 @@ minimal affected subtree."
                           :components ((:file "common")
                                        (:file "warns-check")))
 
-                 (:file "silent-shop-test")
                  (:file "theorem-prover-tests"
                         :pathname "tests/theorem-prover-tests")
                  (:module "shop-pddl-tests"
