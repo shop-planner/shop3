@@ -8,14 +8,20 @@ set -x
 # - quit with exit status >0 if an unhandled error occurs
 
 usage () {
-    echo "$0 [lisp invocation]"
+    echo "$0 [lisp implementation] [test-name]*"
     echo " - run lisp tests"
     echo " - quit with exit status 0 on getting eof"
     echo " - quit with exit status >0 if an unhandled error occurs"
-    echo " you need to supply the .script in the second argument"
-    echo " lisps include abcl, allegro, allegromodern, ccl (clozure),"
+    echo " lisp implementations include abcl, allegro, allegromodern, ccl (clozure),"
     echo "  clisp, cmucl, ecl, ecl-bytecodes, lispworks, "
     echo "  mkcl, and sbcl."
+    echo " Of these, only ccl, sbcl, and allegro are known to work, at present."
+    echo " The precise command to be used to invoke the lisp (if, e.g., it is not on"
+    echo "    your PATH), may be set by setting shell environment variables, which"
+    echo "    generally (but not always!) are simply the implementation name in all caps."
+    echo " test-names could be test-shop-unifier.lisp, test-shop3.lisp, or "
+    echo "   test-shop3-satellite.lisp.  If this argument is not supplied, all tests"
+    echo "   will be run. If supplied, the lisp implementation MUST BE supplied."
     echo "OPTIONS:"
     echo "    -d -- debug mode"
     echo "    -b -- build only; do not run tests."
@@ -24,6 +30,11 @@ usage () {
 
 unset DEBUG_ASDF_TEST
 unset BUILD_ONLY
+
+# Allegro has some troubles with stack size sometimes
+if [ `ulimit -s` -lt 32768 ]; then
+    ulimit -s 32768
+fi
 
 while getopts "duhb" OPTION
 do
@@ -52,7 +63,11 @@ if [ x"$1" = "xhelp" ]; then
 fi
 lisp=${1:-sbcl} ; shift
 
-scripts="test-shop3.lisp test-shop3-satellite.lisp test-shop-unifier.lisp"
+if [ $# -gt 0 ] ; then
+    scripts=$*
+else
+    scripts="test-shop3.lisp test-shop3-satellite.lisp test-shop-unifier.lisp"
+fi
 
 sok=1
 
@@ -129,13 +144,15 @@ case "$lisp" in
     eval="--eval" ;;
   allegro)
     command="${ALLEGRO:-alisp}"
-    flags="-q"
+    # flags="-q -e (sys:resize-areas :new 10000000000 :old 10000000000 :old-code 5000000000)"
+    flags="-q -ee %28sys%3aresize%2dareas%20%3anew%2010000000000%20%3aold%2010000000000%20%3aold%2dcode%205000000000%29"
     nodebug="-batch"
     eval="-e" ;;
     # allegromodern won't work... [2012/10/09:rpg]
   allegromodern)
     command="${ALLEGROMODERN:-mlisp}"
-    flags="-q"
+    # flags="-q -e (sys:resize-areas :new 10000000000 :old 10000000000 :old-code 5000000000)"
+    flags="-q -ee %28sys%3aresize%2dareas%20%3anew%2010000000000%20%3aold%2010000000000%20%3aold%2dcode%205000000000%29"
     nodebug="-batch"
     eval="-e" ;;
   ccl)
@@ -209,7 +226,7 @@ PATH=${THISDIR}/VAL:$PATH
 type -P validate 2>/dev/null
 if [[ $? != 0 ]];
 then
-    echo "validate is found in path.  Probably you haven't built it"  >&2
+    echo "validate is not found in path.  Probably you haven't built it"  >&2
     exit 44
 fi
 #     echo "validate is not found in path.  Trying to build it."  >&2
