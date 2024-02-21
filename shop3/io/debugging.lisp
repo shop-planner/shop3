@@ -62,14 +62,13 @@
 (defvar *start-run-time*)
 (defvar *start-real-time*)
 
-;; (defvar *traced-operators* nil)      ; break when attempting to
+(defvar *traced-operators* nil)      ; break when attempting to
                                         ; apply one of these.
 (defvar *traced-methods* nil)           ; break when attempting to
                                         ; apply one of these.
 (defvar *traced-tasks* nil)             ; break when attempting to
                                         ; expand one of these.
-(defvar *traced-axioms*
-  nil)
+(defvar *traced-axioms* nil)
 (defvar *traced-goals* nil)
 
 
@@ -122,6 +121,7 @@ currently being traced.
                (case (car item)
                  (:task (trace-item *traced-tasks*))
                  (:method (trace-item *traced-methods*))
+		 (:operator (trace-item *traced-operators*))
                  (:goal (trace-item *traced-goals*))
                  (:axiom (trace-item *traced-axioms*))
                  (otherwise
@@ -153,6 +153,9 @@ currently being traced.
    (mapcar #'(lambda (methname)
                `(:method ,methname))
            *traced-methods*)
+   (mapcar #'(lambda (opname)
+               `(:operator ,opname))
+           *traced-operators*)
    (mapcar #'(lambda (goalname)
                `(:goal ,goalname))
            *traced-goals*)
@@ -170,7 +173,7 @@ currently being traced.
 (defun shop-untrace-all ()
   (setf *shop-trace* nil
        *traced-tasks* nil
-       ;;*traced-operators* nil
+       *traced-operators* nil
        *traced-methods* nil
        *traced-goals* nil
        *traced-axioms* nil))
