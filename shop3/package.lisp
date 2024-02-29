@@ -314,6 +314,9 @@
              #:validator-export
              #:write-pddl-plan
 
+             ;; Class that encapsulates SHOP's many return values
+             #:plan-return
+
              ;; exporting so that it can be overridden
              #:plan-value
 
