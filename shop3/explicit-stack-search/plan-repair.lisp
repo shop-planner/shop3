@@ -30,61 +30,65 @@ DIVERGENCE: Divergence between the expected state after EXECUTED, specified as (
 SEARCH-STATE: Search state object
 PLAN-TREE-HASH: Hash table indexing and optimizing access to PLAN-TREE.  This is optional -- we can
   manage access anyway, but it will be slower.
-Returns: (1) new plan (2) new plan tree (enhanced plan tree, not old-style SHOP plan tree)
-\(3\) plan tree lookup table (4) search-state object."
+Returns:
+  1. new plan WITHOUT COSTS or INTERNAL ACTIONS
+  2. new plan tree (enhanced plan tree, not old-style SHOP plan tree)
+  3. plan tree lookup table
+  4. search-state object."
   (check-type divergence divergence-list)
   (let ((*verbose* verbose))
-   (handler-bind
-       ((no-failed-task #'(lambda (nft)
-                            (format *error-output* "Got no failed task error: ~a~%" nft)
-                            (force-output *error-output*)
-                            (case no-failed-task
-                              (:error (cerror "Just continue and return unmodified plan"
-                                              "Divergence should cause some task failure."))
-                              (:retry (return-from repair-plan :no-failed-task))))))
-     (multiple-value-bind (failed ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.  It's the *parent* of the node that has actually failed.
-                           failed-action) ; The failed action is EITHER the first action whose dependencies are broken OR the leftmost leaf child of the leftmost broken complex task
-         ;; we find the failed tree node by looking UP from the actions in the plan.
-         (subtree:find-failed-task domain plan plan-tree executed
-                                   divergence :plan-tree-hash plan-tree-hash)
-       (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
-       (if failed
-           (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
-             #+nil(break "Inspect NEW-SEARCH-STATE.")
-             (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
-                 (let ((*plan-tree* nil) ; plan tree should never be true when using Explicit Stack Search.
-                       (*enhanced-plan-tree* t))
-                   (replan-from-failure domain failed new-search-state :verbose verbose))
-               (when new-plans
-                 (let ((new-plan (first new-plans))
-                       (new-plan-tree (first new-plan-trees))
-                       (new-lookup-table (first lookup-tables))
-                       (plan-has-costs (numberp (second (first new-plans)))))
-                   (multiple-value-bind (prefix suffix)
-                       (extract-suffix new-plan executed)
-                     (values
-                      ;; new plan sequence
-                      (append prefix
-                              (if plan-has-costs
-                                  (list (cons :divergence divergence) 0.0)
-                                  (list (cons :divergence divergence)))
-                              suffix)
-                      new-plan-tree
-                      new-lookup-table
-                      final-search-state))))))
-           ;; the old plan is good
-           (multiple-value-bind (prefix suffix)
-               (extract-suffix plan executed)
-             (signal 'no-failed-task)
-             (values
-              (append prefix
-                      (if (numberp (second plan)) ;plan with costs?
-                          (list (cons :divergence divergence) 0.0)
-                          (list (cons :divergence divergence)))
-                      suffix)
-              plan-tree
-              plan-tree-hash
-              search-state)))))))
+    (verbose-format "Divergence after step ~d (from 1) is:~%~s~%" (length executed) divergence)
+    (handler-bind
+        ((no-failed-task #'(lambda (nft)
+                             (format *error-output* "Got no failed task error: ~a~%" nft)
+                             (force-output *error-output*)
+                             (case no-failed-task
+                               (:error (cerror "Just continue and return unmodified plan"
+                                               "Divergence should cause some task failure."))
+                               (:retry (return-from repair-plan :no-failed-task))))))
+      (multiple-value-bind (failed ; tree node -- this is the node that must be *replanned*, not the node whose preconditions are violated.
+                                        ; It's the *parent* of the node that has actually failed.
+                            failed-action ; The failed action is EITHER the first action whose dependencies are broken
+                                        ; OR the leftmost leaf child of the leftmost broken complex task
+                            )
+          ;; we find the failed tree node by looking UP from the actions in the plan.
+          (subtree:find-failed-task domain plan plan-tree executed
+                                    divergence :plan-tree-hash plan-tree-hash)
+        (verbose-format "~&Failing task is:~%~T~A~%Failing action is:~%~T~A~%" failed failed-action)
+        (if failed
+            (let ((new-search-state (freeze-state executed failed-action divergence search-state)))
+              #+nil(break "Inspect NEW-SEARCH-STATE.")
+              (multiple-value-bind (new-plans new-plan-trees lookup-tables final-search-state)
+                  (let ((*plan-tree* nil) ; plan tree should never be true when using Explicit Stack Search.
+                        (*enhanced-plan-tree* t))
+                    (replan-from-failure domain failed new-search-state :verbose verbose))
+                (when new-plans
+                  (let ((new-plan (first new-plans))
+                        (new-plan-tree (first new-plan-trees))
+                        (new-lookup-table (first lookup-tables)))
+                    (multiple-value-bind (prefix suffix)
+                        (extract-suffix new-plan executed)
+                      (values
+                       ;; new plan sequence
+                       (append (shorter-plan prefix)
+                               (list (cons :divergence divergence))
+                               (shorter-plan suffix))
+                       new-plan-tree
+                       new-lookup-table
+                       final-search-state))))))
+            ;; the old plan is good
+            (multiple-value-bind (prefix suffix)
+                (extract-suffix plan executed)
+              (signal 'no-failed-task)
+              (values
+               (append prefix
+                       (if (numberp (second plan)) ;plan with costs?
+                           (list (cons :divergence divergence) 0.0)
+                           (list (cons :divergence divergence)))
+                       suffix)
+               plan-tree
+               plan-tree-hash
+               search-state)))))))
 
 (defgeneric find-failed-stack-entry (failed obj)
   (:documentation "Find and return the stack entry that corresponds
@@ -193,6 +197,20 @@ BEFORE the insertion of FAILED into the plan tree.")
        (return
          (values new-prefix plan-copy))))))
 
+;;; SHOP assigns integers as world state tags according to a
+;;; magic formula.  This tells us what will be the world state
+;;; tag after the actions in EXECUTED are executed.
+(defun find-world-state-tag (executed)
+  ;; we have to find the index of the last executed action. The
+  ;; NUMBERP check is to make sure that we can handle plans
+  ;; with and without the cost numbers.
+  (* (if (some #'numberp executed) ; if there are costs in the plan
+         (/ (length executed) 2)
+         (length executed))
+     ;; magic constant for the tag increment per
+     ;; operator.
+     2))
+
 (defun freeze-state (executed failed-action divergence search-state)
   "Arguments:
 PLAN: sequence of primitive actions.
@@ -210,28 +228,24 @@ Modified search state object."
          ;; we have to find the index of the last executed action. The
          ;; NUMBERP check is to make sure that we can handle plans
          ;; with and without the cost numbers.
-         (world-state-tag (* (if (some #'numberp executed) ; if there are costs in the plan
-                                 (/ (length executed) 2)
-                                 (length executed))
-                             ;; magic constant for the tag increment per
-                             ;; operator.
-                             2))
+         (world-state-tag (find-world-state-tag executed))
          ;; can't correctly apply state updates beyond here
-         (failed-action-tag (tag-for-action failed-action))
+         (failed-action-tag
+           (tag-for-action failed-action))
          (new-state-obj (shop2.common::copy-state world-state)))
     (assert (integerp world-state-tag))
     #+nil(break "Inside FREEZE-STATE")
-    ;; this gives us the state right after the execution of the "failed" action.
-    (shop2.common:retract-state-changes new-state-obj (1+ world-state-tag))
-    #+ignore(break "Inside FREEZE-STATE, before adding divergences, world state is: ~S" new-state-obj)
+    ;; this gives us the state right after the execution of the action immediately
+    ;; before the divergence (i.e., after EXECUTED).
+    (shop.common:retract-state-changes new-state-obj (1+ world-state-tag))
     ;; now put the divergences into effect, taking sleazy advantage of the fact that the
     ;; world state tag increments by two.
     (let ((new-tag
-            (shop2.common:tag-state new-state-obj 1)))
+            (shop.common:tag-state new-state-obj 1)))
       (iter (for (op fact) in divergence)
         (ecase op
-          (:add (shop2.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
-          (:delete (shop2.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
+          (:add (shop.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
+          (:delete (shop.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
       ;; now make it impossible to backtrack before this point...
       (setf (shop2.common::tagged-state-block-at new-state-obj) new-tag))
       #+ignore(break "After freezing, before rolling forward, state is: ~s" new-state-obj)
@@ -250,10 +264,10 @@ Modified search state object."
 
       ;; now put the new world state in place...
       (setf (world-state search-state) new-state-obj)
-      (format t "~&At start of plan repair, state is: ~%")
-      (print-current-state :state new-state-obj
-                           :sorted t)
-      #+nil (break "Check it out..." )
+      (when (> *verbose* 1)
+        (format t "~&At start of plan repair, state is: ~%")
+        (print-current-state :state new-state-obj
+                             :sorted t))
 
       search-state)))
 
