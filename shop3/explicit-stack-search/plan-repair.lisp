@@ -231,35 +231,23 @@ Modified search state object."
          (world-state-tag (find-world-state-tag executed))
          ;; can't correctly apply state updates beyond here
          (failed-action-tag
-           (progn (break "Examine world-state-tag ~d in state ~s"
-                         world-state-tag world-state)
-                  (tag-for-action failed-action)))
+           (tag-for-action failed-action))
          (new-state-obj (shop2.common::copy-state world-state)))
     (assert (integerp world-state-tag))
     #+nil(break "Inside FREEZE-STATE")
     ;; this gives us the state right after the execution of the action immediately
     ;; before the divergence (i.e., after EXECUTED).
     (shop.common:retract-state-changes new-state-obj (1+ world-state-tag))
-    (let ((orig-state-atoms (state-atoms new-state-obj)))
-      (format t "Inside FREEZE-STATE, before adding divergences, world state is: ~S~%"
-              orig-state-atoms)
-      ;; now put the divergences into effect, taking sleazy advantage of the fact that the
-      ;; world state tag increments by two.
-      (let ((new-tag
-              (shop.common:tag-state new-state-obj 1)))
-        (iter (for (op fact) in divergence)
-          (ecase op
-            (:add (shop.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
-            (:delete (shop.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
-        (let ((new-state-atoms (state-atoms new-state-obj)))
-         (format t "Inside FREEZE-STATE, after adding divergences, world state is: ~S~%"
-                 new-state-atoms)
-         (format t "Inside FREEZE-STATE, change is~%~Tdeleted: ~S~%~Tadded: ~S~%"
-                 (set-difference orig-state-atoms new-state-atoms :test 'equalp)
-                 (set-difference new-state-atoms orig-state-atoms :test 'equalp)))
-        (break "Pause to inspect...")
-        ;; now make it impossible to backtrack before this point...
-        (setf (shop2.common::tagged-state-block-at new-state-obj) new-tag)))
+    ;; now put the divergences into effect, taking sleazy advantage of the fact that the
+    ;; world state tag increments by two.
+    (let ((new-tag
+            (shop.common:tag-state new-state-obj 1)))
+      (iter (for (op fact) in divergence)
+        (ecase op
+          (:add (shop.common:add-atom-to-state fact new-state-obj 0 :execution-divergence))
+          (:delete (shop.common:delete-atom-from-state fact new-state-obj 0 :execution-divergence))))
+      ;; now make it impossible to backtrack before this point...
+      (setf (shop2.common::tagged-state-block-at new-state-obj) new-tag))
       #+ignore(break "After freezing, before rolling forward, state is: ~s" new-state-obj)
     ;; now roll forward again.  Note that the world state changes are a *stack*, so we need to
     ;; push them back on....  So this is *semantically* a "suffix" but syntactically a prefix.
@@ -276,10 +264,10 @@ Modified search state object."
 
       ;; now put the new world state in place...
       (setf (world-state search-state) new-state-obj)
-      (format t "~&At start of plan repair, state is: ~%")
-      (print-current-state :state new-state-obj
-                           :sorted t)
-      #+nil (break "Check it out..." )
+      (when (> *verbose* 1)
+        (format t "~&At start of plan repair, state is: ~%")
+        (print-current-state :state new-state-obj
+                             :sorted t))
 
       search-state)))
 
