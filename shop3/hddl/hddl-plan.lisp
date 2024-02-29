@@ -159,7 +159,7 @@ return its children instead.  Needed for ESS plan trees.
 (defun node-index (node)
   (task-index (tree-node-task node)))
 
-(defun hddl-plan (plan tree)
+(defun hddl-plan (plan tree &key orphans-ok (verbose 0))
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
 HDDL plan encoded as an s-expression.  Note that currently only the extended
 plan trees produced by `find-plans-stack` can be used with this function.
@@ -175,17 +175,18 @@ Classic SHOP plans do not contain all the required information."
             (iter (for root in root-tasks)
               (as i = (task-index root))
               (collecting i)))
-      (setf decompositions (plan-tree->decompositions tree))
+      (setf decompositions (plan-tree->decompositions tree :orphans-ok orphans-ok :verbose verbose))
       `(:hddl-plan
         :actions ,indexed-plan
         :roots ,roots
         :decompositions ,decompositions
         ))))
 
-(defun plan-tree->decompositions (tree)
+(defun plan-tree->decompositions (tree &key orphans-ok (verbose 0))
+  (declare (optimize debug))
   (let* ((open (etypecase tree
-                (list tree)
-                (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
+                 (list tree)
+                 (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
          (top-nodes (copy-list open)))
     ;; (format t "~&Starting to compute decompositions:~%")
     ;; (iter (for x in top-nodes)
@@ -255,12 +256,18 @@ Classic SHOP plans do not contain all the required information."
                                                 :children child-indices)
                      retval))))))
       (unless (every #'identity visited)
-        (let ((unvisited (iter (for x in-vector visited with-index i)
-                           (unless x (collecting (arr-index->index i)))))) ; correct zero-based to 1-based
-          (error "Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
-                 (length unvisited)
-                 (> (length unvisited) 1)
-                 unvisited)))
+        (unless (and orphans-ok (< verbose 1))
+          (let ((unvisited (iter (for x in-vector visited with-index i)
+                             (unless x (collecting (arr-index->index i)))))) ; correct zero-based to 1-based
+            (if orphans-ok
+                (format t ";;; PLAN-TREE->DECOMPOSITIONS: Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
+                   (length unvisited)
+                   (> (length unvisited) 1)
+                   unvisited)
+                (error "Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
+                       (length unvisited)
+                       (> (length unvisited) 1)
+                       unvisited)))))
       (sort retval #'< :key #'(lambda (dr) (decomposition-record-node-id dr))))))
 
 #-allegro
