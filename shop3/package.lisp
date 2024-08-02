@@ -63,6 +63,8 @@
     (:documentation "The SHOP3 package is the package that exposes SHOP3's API.")
     (:use :common-lisp :shop3.unifier :shop3.common :shop3.theorem-prover
           :iterate)
+    ;; override this...
+    (:shadow #:check-type)
     (:import-from #:shop3.common #:domain-core)
     (:import-from #:shop3.theorem-prover #:+numerical-comparisons+
                   #:fluent-value
