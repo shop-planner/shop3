@@ -514,7 +514,7 @@ of PLAN-RETURN objects."
                     (make-add-dependencies :dependencies depends))))))
           (multiple-value-setq (top-tasks tasks)
             (apply-method-bindings current-task top-tasks tasks
-                                   reduction unifier))
+                                   reduction unifier label))
           (trace-print :methods label (world-state state)
                        "~2%Depth ~s, applying method ~s~%      task ~s~% reduction ~s"
                        depth label current-task reduction)
