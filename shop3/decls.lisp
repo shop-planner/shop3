@@ -913,3 +913,12 @@ task keyword of TASK and LIBRARY-TASK are the same.")
            (member thing '(&optional &rest) :test #'eq)))
     (if (find-if #'rest-or-optional-p types) `(values ,@types)
         `(values ,@types &optional))))
+
+;;;---------------------------------------------------------------------------
+;;; CL:CHECK-TYPE messes up SBCL's type checking, because on continuation
+;;; it allows the user to supply an object of a new type.  Change it to just
+;;; raise a type error. [2024/08/02:rpg]
+;;;---------------------------------------------------------------------------
+(defmacro check-type (place type)
+  `(unless (typep ,place ',type)
+     (error 'type-error :datum ,place :expected-type ',type)))
