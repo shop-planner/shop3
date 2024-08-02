@@ -8,8 +8,6 @@
   NIL
   "When building an ENHANCED-PLAN-TREE, do not record  causal links.  Defaults to NIL.")
 
-(defvar *include-rationale* nil)
-
 (defgeneric unfold-loop-task (domain state)
   (:documentation "Driver for the looping tasks."))
 
@@ -24,7 +22,6 @@
                                  (:gc t)
                                  (:no-dependencies t)
                                  (:repairable t)
-                                 (:rationale t)
                                  (:state-type symbol)
                                  (:out-stream (or t stream))
                                  (:which (member :first :all))
@@ -37,7 +34,6 @@
 (defun find-plans-stack (problem &key domain (verbose 0) plan-tree (gc *gc*)
                                    (no-dependencies nil)
                                    repairable
-                                   rationale
                                    (state-type :mixed state-type-supplied-p)
                                    (out-stream t)
                                    (which :first)
@@ -59,7 +55,6 @@ Keyword arguments:
 * no-dependencies : if building a plan tree, build it *without* causal
         dependencies.  Default: `nil`.
 * repairable : return plans that can be repaired.  Default: `nil`.
-* rationale : build a plan tree with rationale information.  Default: `nil`.
 * state-type : what state type should be used for representing world states?
         (Note: world-state/SHOP state, *not* search-state). Default: `:mixed`.
 * out-stream : where should output be printed.  Default: `t` (standard output).
@@ -105,7 +100,6 @@ objects."
          (*plans-found* nil)
          (*enhanced-plan-tree* plan-tree)
          (*no-dependencies* no-dependencies)
-         (*include-rationale* rationale)
          (*record-dependencies-p* (and *enhanced-plan-tree* (not *no-dependencies*)))
          (*verbose* verbose)
          (*which* which)
@@ -497,15 +491,7 @@ of PLAN-RETURN objects."
               (format t "~%Subtree2: ~s"  (make-add-child-to-tree :parent parent :child child))
               |#
               (push
-               (if *include-rationale*
-                   (make-add-child-to-tree :parent (apply-substitution
-                                                    (plan-tree::complex-tree-node-task parent) unifier)
-                                           :child (apply-substitution
-                                                   (plan-tree::complex-tree-node-children
-                                                    child)
-                                                   unifier))
-                   ;; else
-                   (make-add-child-to-tree :parent parent :child child))
+               (make-add-child-to-tree :parent parent :child child)
                backtrack-stack)
               (when *record-dependencies-p*
                 (let ((depends (make-dependencies parent depends (plan-tree-lookup state))))
