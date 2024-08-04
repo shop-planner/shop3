@@ -731,7 +731,7 @@ breaks usage of *load-truename* by moving the FASLs.")
                 (parse-domain-items domain items))
               (when warnings
                 (let ((*print-pprint-dispatch* *shop-pprint-table*))
-                  (format T "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
+                  (format t "Warnings:~{~&~a~%~%~}" (nreverse warnings)))))
             (install-domain domain redefine-ok)
             (unless noset
               (setf *domain* domain))
