@@ -347,6 +347,7 @@ Particularly useful for structures, but could be generally applicable."
           (t (error "Must pass either hash-table or plan-tree to FIND-TASK-IN-TREE.")))))
 
 (defun find-tree-node-if (function plan-tree)
+  "Find the first node in PLAN-TREE that satisfies FUNCTION, or NIL."
   (labels ((tree-search (plan-tree)
              (if (funcall function plan-tree)
                  plan-tree
@@ -357,6 +358,20 @@ Particularly useful for structures, but could be generally applicable."
                       (as result = (tree-search tree-node))
                       (when result (return-from find-tree-node-if result))))))))
     (tree-search plan-tree)))
+
+(defun find-all-tree-nodes-if (function plan-tree)
+  "Find and return a list of nodes in PLAN-TREE that satisfy FUNCTION."
+  (let (results)
+    (labels ((tree-search (plan-tree)
+               (when (funcall function plan-tree)
+                 (push plan-tree results))
+               (etypecase plan-tree
+                 (primitive-tree-node nil)
+                 (complex-tree-node
+                  (iter (for tree-node in (complex-tree-node-children plan-tree))
+                    (tree-search tree-node))))))
+      (tree-search plan-tree)
+      results)))
 
 (defun all-primitive-nodes (plan-tree)
   (let (retval)

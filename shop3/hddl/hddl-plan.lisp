@@ -49,7 +49,7 @@
 ;;; hard to support HDDL output from classic SHOP.
 ;;;---------------------------------------------------------------------------
 
-(defun tree-node-task (node)
+(defun tree-node-task (node &key (if-not-ground :error))
   (cond ((typep node 'shop:primitive-node)
          (shop:primitive-node-task node))
         ((typep node 'shop:complex-node)
@@ -61,7 +61,9 @@
                   expanded-task)
                  ((shop:groundp task)
                   task)
-                 (t (error "Task for tree node ~a is not ground." node)))))
+                 (t (unless (eq if-not-ground :ignore)
+                      (funcall (if (eq if-not-ground :error) #'error #'warn)
+                               "Task for tree node ~a is not ground." node))))))
         (t (error 'type-error :expected-type '(or shop:primitive-node shop:complex-node plan-tree:tree-node)
                               :datum node))))
 
@@ -159,7 +161,7 @@ return its children instead.  Needed for ESS plan trees.
 (defun node-index (node)
   (task-index (tree-node-task node)))
 
-(defun hddl-plan (plan tree &key orphans-ok (verbose 0))
+(defun hddl-plan (plan tree &key orphans-ok (if-not-ground :error) (verbose 0))
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
 HDDL plan encoded as an s-expression.  Note that currently only the extended
 plan trees produced by `find-plans-stack` can be used with this function.
@@ -175,14 +177,15 @@ Classic SHOP plans do not contain all the required information."
             (iter (for root in root-tasks)
               (as i = (task-index root))
               (collecting i)))
-      (setf decompositions (plan-tree->decompositions tree :orphans-ok orphans-ok :verbose verbose))
+      (setf decompositions (plan-tree->decompositions tree :orphans-ok orphans-ok :verbose verbose
+                                                      :if-not-ground if-not-ground))
       `(:hddl-plan
         :actions ,indexed-plan
         :roots ,roots
         :decompositions ,decompositions
         ))))
 
-(defun plan-tree->decompositions (tree &key orphans-ok (verbose 0))
+(defun plan-tree->decompositions (tree &key (if-not-ground :error) orphans-ok (verbose 0))
   (declare (optimize debug))
   (let* ((open (etypecase tree
                  (list tree)
@@ -196,11 +199,12 @@ Classic SHOP plans do not contain all the required information."
     (iter
       (while open)
       (as node = (pop open))
+      (as task = (tree-node-task node :if-not-ground if-not-ground))
       (with found)
       ;; Don't index internal operators
       (unless (shop::internal-operator-p
-               (shop:task-name (tree-node-task node)))
-        (setf found (nth-value 1 (task-index (tree-node-task node))))
+               (shop:task-name task))
+        (setf found (nth-value 1 (task-index task)))
         (cond ((primitive-node-p node)
                (unless found
                  (error "Found new primitive node: all primitive nodes should be indexed already.")))
@@ -227,7 +231,8 @@ Classic SHOP plans do not contain all the required information."
         (while open)
         (as node = (pop open))
         (with id) (with found)
-        (multiple-value-setq (id found) (task-index (tree-node-task node)))
+        (as task = (tree-node-task node :if-not-ground if-not-ground))
+        (multiple-value-setq (id found) (task-index task))
         (unless found
           (error "All nodes should have been indexed before the pass to construct the decomposition records."))
         (set-visited id)   ; convert 1-based to 0
@@ -238,7 +243,7 @@ Classic SHOP plans do not contain all the required information."
             (iter (for child in children)
               (with cindex) (with found)
               (unless (shop::internal-operator-p
-                       (shop:task-name (tree-node-task child)))
+                       (shop:task-name (tree-node-task child :if-not-ground :ignore)))
                 (multiple-value-setq (cindex found)
                   (node-index child))
                 (unless found
@@ -251,7 +256,7 @@ Classic SHOP plans do not contain all the required information."
                 (collecting cindex into child-indices))
               (finally
                (push (make-decomposition-record :node-id id
-                                                :task (tree-node-task node)
+                                                :task task
                                                 :method-name (complex-node-reduction-label node)
                                                 :children child-indices)
                      retval))))))
