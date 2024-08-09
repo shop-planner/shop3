@@ -213,9 +213,43 @@ minimal affected subtree."
 (defsystem shop3/rovers
     :depends-on (:shop3)
   :serial t
+  :perform (load-op :after (o c)
+                    (declare (ignorable o c))
+                    (values)
+                    (uiop:symbol-call :shop3 '#:make-problem-set
+                                      (uiop:intern* '#:rovers-problems '#:shop3-rovers)
+                                      (mapcar #'(lambda (x)
+                                                  (uiop:intern* x '#:shop3-rovers))
+                                              '(#:roverprob01 #:roverprob02 #:roverprob03
+                                                #:roverprob04 #:roverprob05 #:roverprob06
+                                                #:roverprob07 #:roverprob08 #:roverprob09
+                                                #:roverprob10 #:roverprob11 #:roverprob12
+                                                #:roverprob13 #:roverprob14 #:roverprob15
+                                                #:roverprob16 #:roverprob17 #:roverprob19
+                                                #:roverprob20))))
   :pathname "examples/rovers/strips/"
-  :components ((:file "domain")))
-
+  :components ((:file "domain")
+               (:file "p01")
+               (:file "p02")
+               (:file "p03")
+               (:file "p04")
+               (:file "p05")
+               (:file "p06")
+               (:file "p07")
+               (:file "p08")
+               (:file "p09")
+               (:file "p10")
+               (:file "p11")
+               (:file "p12")
+               (:file "p13")
+               (:file "p14")
+               (:file "p15")
+               (:file "p16")
+               (:file "p17")
+               (:file "p18")
+               (:file "p19")
+               (:file "p20")
+               ))
 
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
