@@ -1,5 +1,38 @@
 (in-package :plan-tree)
 
+(defpackage plan-tree-vars)
+
+(defstruct tree-and-plan
+  tree
+  plan)
+
+(defmethod make-load-form ((obj tree-and-plan) &optional environment)
+  (declare (ignorable environment))
+  (let* ((*table-for-load-form* (make-hash-table :test #'eq))
+         (*node-list* nil)
+         (orig-plan (tree-and-plan-plan obj))
+         (orig-tree (tree-and-plan-tree obj))
+         (has-costs-p (numberp (second orig-plan))))
+    (declare (special *table-for-load-form* *node-list*))
+    (make-table-entries orig-tree)
+    `(let* ,(obj-bindings *table-for-load-form*)
+       ,@(make-cross-links *table-for-load-form*)
+       (make-tree-and-plan
+        :tree
+        ,(gethash orig-tree *table-for-load-form*)
+        :plan
+        ,(if has-costs-p
+             `(list
+               ,@(loop :for (task cost . nil) :on orig-plan :by #'cddr
+                       :collect (gethash task *table-for-load-form*)
+                       :collect cost))
+             `(list
+               ,@(loop :for task :in orig-plan
+                       :collect (gethash task *table-for-load-form*))))))))
+
+
+
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Helpers for MAKE-LOAD-FORM for the plan tree.
@@ -7,6 +40,14 @@
 
 (defvar *table-for-load-form*)
 (defvar *node-list*)
+(setf (documentation '*table-for-load-form* 'variable)
+      "Table of temporary variables and values used to reconstitute
+a plan tree.")
+
+(defun file-prefix ()
+  "Returns an s-expression that goes in the head of a
+file before the load form for a plan tree or a "
+  )
 
 (defgeneric make-instantiator (obj)
   (:documentation "Return an s-expression instantiating a copy of OBJ.
@@ -31,7 +72,7 @@ cross-links for VAL using information in TABLE."))
   (:method (obj)
     (error "No method for computing slot fillers for object ~s" obj)))
 
-;;;---------------------------------------------------------------------------
+;;;-------------------------------------`<--------------------------------------
 ;;; DEPENDENCY structures
 ;;;---------------------------------------------------------------------------
 
@@ -66,7 +107,9 @@ cross-links for VAL using information in TABLE."))
   `((setf (tree-node-dependencies ,var-name)
           (list
            ,@(mapcar #'(lambda (x) (slot-value-translator x table))
-                     (tree-node-dependencies obj))))))
+                     (tree-node-dependencies obj)))
+          (tree-node-parent ,var-name)
+          ,(slot-value-translator (tree-node-parent obj)))))
 
 (defstruct (primitive-tree-node (:include tree-node))
   )
@@ -103,14 +146,16 @@ cross-links for VAL using information in TABLE."))
 
 
 (defmethod make-instantiator ((obj complex-tree-node))
-  `(make-complex-tree-node ,@ (slot-fillers obj)))
+  `(make-complex-tree-node ,@(slot-fillers obj)))
 
 (defmethod cross-links-for ((var-name symbol) (obj complex-tree-node) (table hash-table))
   (append (call-next-method)
           `((setf (complex-tree-node-children ,var-name)
                   (list
                    ,@(mapcar #'(lambda (x) (slot-value-translator x table))
-                           (complex-tree-node-children obj)))))))
+                           (complex-tree-node-children obj)))
+                  (complex-tree-node-method-name ,var-name)
+                  ',(complex-tree-node-method-name obj)))))
 
 
 (defstruct (top-node (:include complex-tree-node))
@@ -159,12 +204,12 @@ and building a toplogically sorted list of nodes."))
     (unless (gethash obj table nil)
       (setf (gethash obj table)
             (cond ((typep obj 'tree-node)
-                   (gensym "NODE"))
+                   (gentemp "NODE" :plan-tree-vars))
                   ((typep obj 'dependency)
-                   (gensym "DEP"))
+                   (gentemp "DEP" :plan-tree-vars))
                   ((listp obj)
-                   (gensym "PROP"))
-                  (t (gensym "OTHER")))))))
+                   (gentemp "PROP" :plan-tree-vars))
+                  (t (gentemp "OTHER" :plan-tree-vars)))))))
 
 (defmethod make-table-entries ((obj tree-node))
   (push obj *node-list*)
@@ -194,15 +239,25 @@ and building a toplogically sorted list of nodes."))
   (call-next-method)
   (mapc #'make-table-entries (complex-tree-node-children obj)))
 
-;; FIXME: likely this should be a pseudo-node
 (defstruct (pseudo-node (:include complex-tree-node)))
+
+(defmethod make-instantiator ((obj pseudo-node))
+  (error "This PSEUDO-NODE doesn't have a MAKE-INSTANTIATOR defined."))
+
 
 ;;; maybe should revise this and have complex-tree-node as mixin, since
 ;;; ordered-tree-node and unordered-tree-node have neither TASK nor
 ;;; DEPENDENCIES.
 (defstruct (ordered-tree-node (:include pseudo-node)))
 
+(defmethod make-instantiator ((obj ordered-tree-node))
+  `(make-ordered-tree-node ,@(slot-fillers obj)))
+
 (defstruct (unordered-tree-node (:include pseudo-node)))
+
+(defmethod make-instantiator ((obj unordered-tree-node))
+  `(make-unordered-tree-node ,@(slot-fillers obj)))
+
 
 ;;; FIXME: this could probably be expanded to also emit the
 ;;; PRINT-OBJECT method header, instead of just the code that goes in
@@ -346,18 +401,35 @@ Particularly useful for structures, but could be generally applicable."
               (error "No plan tree node for task ~S" task))))
           (t (error "Must pass either hash-table or plan-tree to FIND-TASK-IN-TREE.")))))
 
+(defun map-tree (function plan-tree)
+  "Apply FUNCTION to each node in PLAN-TREE. Returns nothing; must be done for side-effects."
+  (labels ((tree-search (plan-tree)
+             (funcall function plan-tree)
+             (etypecase plan-tree
+               (primitive-tree-node nil)
+               (complex-tree-node
+                (mapc #'tree-search (complex-tree-node-children plan-tree))))))
+    (tree-search plan-tree)
+    (values)))
+
+#-allegro
+(declaim (ftype (function ((function (tree-node) t) tree-node)
+                          (only-value (or tree-node null)))
+                find-tree-node-if))
 (defun find-tree-node-if (function plan-tree)
   "Find the first node in PLAN-TREE that satisfies FUNCTION, or NIL."
-  (labels ((tree-search (plan-tree)
-             (if (funcall function plan-tree)
-                 plan-tree
-                 (etypecase plan-tree
-                   (primitive-tree-node nil)
-                   (complex-tree-node
-                    (iter (for tree-node in (complex-tree-node-children plan-tree))
-                      (as result = (tree-search tree-node))
-                      (when result (return-from find-tree-node-if result))))))))
-    (tree-search plan-tree)))
+  (catch 'find-tree-node-if
+   (labels ((tree-search (plan-tree)
+              (if (funcall function plan-tree)
+                  plan-tree
+                  (etypecase plan-tree
+                    (primitive-tree-node nil)
+                    (complex-tree-node
+                     (iter (for tree-node in (complex-tree-node-children plan-tree))
+                       (as result = (tree-search tree-node))
+                       (when result (throw 'find-tree-node-if result))))))))
+     (tree-search plan-tree)
+     nil)))
 
 (defun find-all-tree-nodes-if (function plan-tree)
   "Find and return a list of nodes in PLAN-TREE that satisfy FUNCTION."
@@ -457,3 +529,71 @@ tasks."
         (assert new-root)
         (setf (top-node-lookup-table new-root) new-lookup-table)
         (values new-root new-lookup-table)))))
+
+
+;;;---------------------------------------------------------------------------
+;;; Comparison functions for debugging
+;;;---------------------------------------------------------------------------
+(defun compare-dependencies (n1 n2)
+  (if (tree-node-dependencies n1)
+      (and (tree-node-dependencies n2)
+           (= (length (tree-node-dependencies n1))
+              (length (tree-node-dependencies n2)))
+           (alexandria:set-equal
+            (mapcar #'prop
+                    (tree-node-dependencies n1))
+            (mapcar #'prop
+                    (tree-node-dependencies n2))
+            :test #'equalp)
+           (iter (for d1 in (tree-node-dependencies n1))
+             (as prop = (prop d1))
+             (as d2 = (find prop (tree-node-dependencies n2)
+                            :key #'prop :test #'equalp))
+             (unless
+                 (and d2
+                      (cond ((eq (establisher d1) :init)
+                             (eq (establisher d2) :init))
+                            (t (equalp (tree-node-task
+                                        (establisher d1))
+                                       (tree-node-task
+                                        (establisher d2))))))
+               (return nil))
+             (finally (return t))))
+      (not (tree-node-dependencies n2))))
+
+(defun compare-trees (t1 t2)
+  (let ((open (list (cons t1 t2))))
+    (labels ((compare-node (n1 n2)
+               (and (eq (type-of n1) (type-of n2))
+                    (equalp (tree-node-task n1)
+                            (tree-node-task n2))
+                    (if (tree-node-parent n1)
+                        (and (tree-node-parent n2)
+                             (equalp (tree-node-task
+                                      (tree-node-parent n1))
+                                     (tree-node-task (tree-node-parent n2))))
+                        (not (tree-node-parent n2)))
+                    (compare-dependencies n1 n2)
+                    (if (complex-tree-node-p n1)
+                        (and
+                         (= (length (complex-tree-node-children n1))
+                            (length (complex-tree-node-children n1)))
+                         (if (complex-tree-node-method-name n1)
+                             (and (complex-tree-node-method-name n2)
+                                  (eq
+                                   (complex-tree-node-method-name n1)
+                                   (complex-tree-node-method-name n2)))
+                             (not (complex-tree-node-method-name n2)))
+                         (progn (mapc #'(lambda (x y) (push (cons x y)
+                                                            open))
+                                      (complex-tree-node-children n1)
+                                      (complex-tree-node-children n2))
+                                t))
+                        t))))
+      (iter (while open)
+        (destructuring-bind (n1 . n2)
+            (pop open)
+          (or (compare-node n1 n2)
+              (return-from compare-trees
+                (values nil (list n1 n2))))))
+      t)))
