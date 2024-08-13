@@ -36,6 +36,11 @@
 (deftype only-value (value-spec)
   `(values ,value-spec &optional))
 
+;;;---------------------------------------------------------------------------
+;;; Type declarations
+;;;---------------------------------------------------------------------------
+
+
 (deftype complex-node ()
   `(or shop::complex-node plan-tree:complex-tree-node))
 
@@ -68,8 +73,9 @@
 ;;; node's task and expanded-task (preferring the latter).
 ;;; Handle the case where no grounded task is found according to IF-NOT-GROUND
 #-allegro
-(declaim (ftype (function (plan-tree:tree-node (member :error :warn :ignore)))
-                (only-value grounded-tree-node-task)))
+(declaim (ftype (function (plan-tree:tree-node (member :error :warn :ignore))
+                          (only-value list))
+                grounded-tree-node-task))
 (defun grounded-tree-node-task (node if-not-ground)
   (let ((task (plan-tree:tree-node-task node))
         (expanded-task (plan-tree:tree-node-expanded-task node)))

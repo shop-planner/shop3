@@ -2,6 +2,19 @@
 
 (defpackage plan-tree-vars)
 
+;;;---------------------------------------------------------------------------
+;;; Type declarations for specifying function return values that make
+;;; SBCL happy.
+;;;---------------------------------------------------------------------------
+
+(deftype only-values (&rest value-spec)
+  `(values ,@value-spec &optional))
+
+(deftype only-value (value-spec)
+  `(values ,value-spec &optional))
+
+;;; End of DEFTYPEs
+
 (defstruct tree-and-plan
   "Structure that pairs a plan tree and a plan sequence,
 required to be together for duplication because they share
