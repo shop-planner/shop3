@@ -286,7 +286,7 @@ Classic SHOP plans do not contain all the required information."
         (as node = (pop open))
         (as task = (tree-node-task node :if-not-ground if-not-ground))
         (multiple-value-bind (id found)
-            (node-index task)
+            (node-index node)
           (unless found
             (error "All nodes should have been indexed before the pass to construct the decomposition records."))
           (set-visited id)                ; convert 1-based to 0
