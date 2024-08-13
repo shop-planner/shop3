@@ -57,16 +57,19 @@
          (shop:primitive-node-task node))
         ((typep node 'shop:complex-node)
          (shop:complex-node-task node))
+        ;; from the new plan tree, we want a grounded task, and we prefer
+        ;; the TREE-NODE-EXPANDED-TASK.
         ((plan-tree:tree-node-p node)
          (grounded-tree-node-task node if-not-ground))
         (t (error 'type-error :expected-type '(or shop:primitive-node shop:complex-node plan-tree:tree-node)
                               :datum node))))
 
 ;;; Return the grounded task from NODE, if available, consulting both the
-;;; node's task and expanded-task.  Handle the case where no grounded task
-;;; is found according to IF-NOT-GROUND
+;;; node's task and expanded-task (preferring the latter).
+;;; Handle the case where no grounded task is found according to IF-NOT-GROUND
+#-allegro
 (declaim (ftype (function (plan-tree:tree-node (member :error :warn :ignore)))
-                grounded-tree-node-task))
+                (only-value grounded-tree-node-task)))
 (defun grounded-tree-node-task (node if-not-ground)
   (let ((task (plan-tree:tree-node-task node))
         (expanded-task (plan-tree:tree-node-expanded-task node)))
@@ -164,8 +167,7 @@ return its children instead.  Needed for ESS plan trees.
 (declaim (ftype (function (list) #-allegro (only-values fixnum boolean)
                                  #+allegro (values fixnum boolean))
                 task-index)
-         ;; FIXME: could give better type for parameter below
-         (ftype (function (t) #-allegro (only-values fixnum boolean)
+         (ftype (function (plan-tree:tree-node) #-allegro (only-values fixnum boolean)
                               #+allegro (values fixnum boolean))
                 node-index))
 (defun task-index (task)
@@ -177,7 +179,7 @@ return its children instead.  Needed for ESS plan trees.
       (values index nil))))
 
 (defun node-index (node)
-  (task-index (tree-node-task node)))
+  (task-index (plan-tree:tree-node-expanded-task node)))
 
 (defun hddl-plan (plan tree &key orphans-ok (if-not-ground :error) (verbose 0))
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
@@ -253,6 +255,9 @@ Classic SHOP plans do not contain all the required information."
                    (error "Found a previously indexed complex node ~A in indexing pass." node))
                  (let* ((children (complex-node-children node))
                         (cc (remove-if #'primitive-node-p children)))
+                   (when *trace-indexer*
+                     (format t "~&INDEXER: Adding ~d children:~%~{~T~a~%~}"
+                             (length cc) cc))
                    (appendf open cc)))))))))
 
 ;;; Helper function for PLAN-TREE->DECOMPOSITIONS.
@@ -275,7 +280,7 @@ Classic SHOP plans do not contain all the required information."
         (as node = (pop open))
         (as task = (tree-node-task node :if-not-ground if-not-ground))
         (multiple-value-bind (id found)
-            (task-index task)
+            (node-index task)
           (unless found
             (error "All nodes should have been indexed before the pass to construct the decomposition records."))
           (set-visited id)                ; convert 1-based to 0
