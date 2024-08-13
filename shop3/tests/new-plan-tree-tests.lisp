@@ -72,14 +72,7 @@
                 (mapcar #'cdr indexed-plan)))
     (is (= (length shorter)
            (length
-            (remove-if #'internal-task-p (remove-if-not #'primitive-task-p all-tasks))))
-        ;; "Number of primitive tasks in tree (~d) not equal to number of actions in plan (~d).~%Plan:~%~{~t~s~%~}~%Tree tasks:~%~{~t~s~%~}"
-        ;; (length
-        ;;     (remove-if-not #'primitive-task-p all-tasks))
-        ;; (length shorter)
-        ;; (sort (copy-list shorter) #'shop3cmn::prop-sorter)
-        ;; (sort (remove-if-not #'primitive-task-p all-tasks) #'shop3cmn::prop-sorter)
-        )
+            (remove-if #'internal-task-p (remove-if-not #'primitive-task-p all-tasks)))))
     (is (equalp '((shop-rovers::achieve-goals))
                 root-tasks))
     (let ((root-indices (mapcar #'hddl-translator::task-index root-tasks)))
@@ -91,22 +84,9 @@
                                                       (and
                                                        (primitive-task-p x)
                                                        (not (internal-task-p x))))
-                                                  unindexed)))
-        ;; (format t "~&UN-indexed tasks:~%")
-        ;; (pprint unindexed)
-        ;; (format t "~&~d unindexed primitive tasks.~%"
-        ;;         (length unindexed-primitives))
-        ;; (format t "Not in plan:~%~{~t~s~%~}"
-        ;;         (remove-if #'(lambda (x) (member x shorter))
-        ;;                    unindexed-primitives))
-        ;; (format t "Not in plan by equality:~%~{~t~s~%~}"
-        ;;         (remove-if #'(lambda (x) (member x shorter :test #'equalp))
-        ;;                    unindexed-primitives))
-        )
+                                                  unindexed))))
       (is-true (every #'is-indexed
-                      (all-tree-tasks tree))))
-    ;; (hddl-translator::generate-decompositions tree :error nil 0)
-    ))
+                      (all-tree-tasks tree))))))
 
 
 
@@ -175,15 +155,6 @@
     (is (equalp (all-tree-tasks (shop:tree pr)) (all-tree-tasks (tree-and-plan-tree pt))))
     (is (equalp (all-tree-tasks (tree-and-plan-tree pt))
                 (all-tree-tasks (tree-and-plan-tree pt2))))
-    ;; (let ((*trace-output* *standard-output*)
-    ;;       (hddl-translator::*trace-indexer* t))
-    ;;   (declare (special hddl-translator::*trace-indexer*))
-    ;;   (trace hddl-translator::task-index)
-    ;;   (format t "~&Good tasks:~%")
-    ;;   (pprint (setf *good-tasks* (all-tree-tasks (tree-and-plan-tree pt))))
-    ;;   (format t "~&Bad tasks:~%")
-    ;;   (pprint (setf *bad-tasks* (all-tree-tasks (tree-and-plan-tree pt2)))))
-    ;; (untrace hddl-translator::task-index)
     (let ((tree3 (shop-hddl:hddl-plan (tree-and-plan-plan pt2) (tree-and-plan-tree pt2)
                                       :if-not-ground :ignore)))
       (is (equalp tree1 tree3)))))

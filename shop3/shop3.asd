@@ -278,11 +278,13 @@ minimal affected subtree."
                  (plan-tree-tests . :plan-tree-tests)  ; 40
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
+                 (new-plan-tree-tests . :new-plan-tree-tests) ; 21
                  )
-    :num-checks 1101
+    :num-checks 1122
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
+                 "shop3/rovers"         ; for new plan tree tests
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
@@ -392,8 +394,10 @@ minimal affected subtree."
                                                                    "Log_ran_problems_50"
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
-                 (:file "replan-tests" :pathname "tests/replan-tests")
-                 (:file "hddl-tests" :pathname "tests/hddl-tests")))
+                 (:file "replan-tests" :pathname "tests/replan-tests/")
+                 (:file "hddl-tests" :pathname "tests/hddl-tests/")
+                 (:file "new-plan-tree-tests" :pathname "tests/") ; 21 checks
+                 ))
 
 
 (defsystem shop3/test-satellite
