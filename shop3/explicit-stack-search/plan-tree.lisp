@@ -3,6 +3,9 @@
 (defpackage plan-tree-vars)
 
 (defstruct tree-and-plan
+  "Structure that pairs a plan tree and a plan sequence,
+required to be together for duplication because they share
+structure."
   tree
   plan)
 
@@ -97,8 +100,7 @@ cross-links for VAL using information in TABLE."))
 ;;; only subclasses should be instantiated.
 (defstruct tree-node
   task
-  expanded-task                         ; the substituted method head.
-                                        ; should always be NIL for primitive tasks.
+  expanded-task                         ; the substituted task (method head for complex tasks).
   dependencies ;; what does this tree node depend on -- dependencies IN
   parent
   )
@@ -126,7 +128,7 @@ cross-links for VAL using information in TABLE."))
   `(:task
     ,(slot-value-translator (tree-node-task obj))
     :expanded-task
-    ,(slot-value-translator (tree-node-task obj))))
+    ,(slot-value-translator (tree-node-expanded-task obj))))
 
 (defun make-cross-links (&optional (table *table-for-load-form*))
   (iter (for (val var) in-hashtable table)
@@ -135,7 +137,7 @@ cross-links for VAL using information in TABLE."))
       (cross-links-for var val table)))))
 
 (defmethod make-instantiator ((obj primitive-tree-node))
-  `(make-primitive-tree-node ,@ (slot-fillers obj)))
+  `(make-primitive-tree-node ,@(slot-fillers obj)))
 
 (defstruct (complex-tree-node (:include tree-node))
   (children nil :type list)
@@ -468,12 +470,14 @@ Particularly useful for structures, but could be generally applicable."
     (copy-complex-tree-node node)))
 
 
+#|
 (declaim
  (ftype
   (function (top-node hash-table hash-table)
             (values top-node hash-table &optional))
   copy-plan-tree))
 
+;;; this appears to be incomplete!
 (defun copy-plan-tree (plan-tree lookup-table translation-table)
   "Make a new copy of PLAN-TREE (indexed by LOOKUP-TABLE), and using the
 input TRANSLATION-TABLE, which translates old primitive tasks to new primitive
@@ -529,6 +533,7 @@ tasks."
         (assert new-root)
         (setf (top-node-lookup-table new-root) new-lookup-table)
         (values new-root new-lookup-table)))))
+|#
 
 
 ;;;---------------------------------------------------------------------------
