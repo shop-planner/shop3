@@ -85,7 +85,8 @@
            task)
           (t (unless (eq if-not-ground :ignore)
                (funcall (if (eq if-not-ground :error) #'error #'warn)
-                        "Task for tree node ~a is not ground." node))))))
+                        "Task for tree node ~a is not ground." node))
+             expanded-task))))
 
 #-allegro
 (declaim (ftype (function (complex-node)
