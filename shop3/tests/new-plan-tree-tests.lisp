@@ -84,9 +84,10 @@
                                                       (and
                                                        (primitive-task-p x)
                                                        (not (internal-task-p x))))
-                                                  unindexed))))
-      (is-true (every #'is-indexed
-                      (all-tree-tasks tree))))))
+                                                  unindexed)))
+        (is-true (every #'is-indexed
+                        (all-tree-tasks tree)))
+        (is-false unindexed-primitives)))))
 
 
 

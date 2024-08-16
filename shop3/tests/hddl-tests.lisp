@@ -58,7 +58,8 @@
 (test plan-test-ess
   (load-log-problem)
   (with-plan-and-tree (plan tree :ess t)
-      (is (equalp expected-plan plan))
+    (declare (ignorable tree))
+    (is (equalp expected-plan plan))
     ;; (is (equalp expected-tree tree))
     ))
 
