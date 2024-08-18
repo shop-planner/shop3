@@ -1,3 +1,24 @@
+# Version 3.13 (official release)
+
+* Enhancements for plan repair experiments
+
+# Version 3.12
+
+* Use `random-state` library for repeatable experiments.
+
+# Version 3.11
+
+* Command-line applications based on `buildapp`
+* HDDL plan output
+
+# Version 3.10
+
+* Add parameter allowing caller to specify number of plans retrieved (not just "one" or "all"), `plan-num-limit`.
+
+# Version 3.9.1
+
+* Add `plan-tree->sexp` for enhanced plan trees (from `find-plans-stack`).
+
 # Version 3.8.1 - [2023/01/24:rpg]
 
 * A large number of minor bug fixes.
