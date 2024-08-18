@@ -358,6 +358,7 @@
            #:find-plan-step
            #:find-task-in-tree
            #:find-tree-node-if
+           #:find-all-tree-nodes-if
 
            #:copy-plan-tree
            #:plan-tree->sexp

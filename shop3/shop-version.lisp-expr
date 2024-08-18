@@ -1,2 +1,4 @@
-"3.12.0" ; 3.11 introduces command-line applications and HDDL plan output
+"3.13.0"
+; 3.11 introduces command-line applications and HDDL plan output
 ; 3.12 introduces the use of random-state for repeatability
+; 3.13 introduces enhancements needed for the plan repair experiments

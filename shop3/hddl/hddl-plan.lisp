@@ -36,6 +36,14 @@
 (deftype only-value (value-spec)
   `(values ,value-spec &optional))
 
+;;;---------------------------------------------------------------------------
+;;; Type declarations
+;;;---------------------------------------------------------------------------
+
+
+(deftype complex-node ()
+  `(or shop::complex-node plan-tree:complex-tree-node))
+
 (defstruct decomposition-record
   (node-id -1 :type fixnum)
   task
@@ -49,22 +57,41 @@
 ;;; hard to support HDDL output from classic SHOP.
 ;;;---------------------------------------------------------------------------
 
-(defun tree-node-task (node)
+(defun tree-node-task (node &key (if-not-ground :error))
   (cond ((typep node 'shop:primitive-node)
          (shop:primitive-node-task node))
         ((typep node 'shop:complex-node)
          (shop:complex-node-task node))
+        ;; from the new plan tree, we want a grounded task, and we prefer
+        ;; the TREE-NODE-EXPANDED-TASK.
         ((plan-tree:tree-node-p node)
-         (let ((task (plan-tree:tree-node-task node))
-               (expanded-task (plan-tree:tree-node-expanded-task node)))
-           (cond ((shop:groundp expanded-task)
-                  expanded-task)
-                 ((shop:groundp task)
-                  task)
-                 (t (error "Task for tree node ~a is not ground." node)))))
+         (grounded-tree-node-task node if-not-ground))
         (t (error 'type-error :expected-type '(or shop:primitive-node shop:complex-node plan-tree:tree-node)
                               :datum node))))
 
+;;; Return the grounded task from NODE, if available, consulting both the
+;;; node's task and expanded-task (preferring the latter).
+;;; Handle the case where no grounded task is found according to IF-NOT-GROUND
+#-allegro
+(declaim (ftype (function (plan-tree:tree-node (member :error :warn :ignore))
+                          (only-value list))
+                grounded-tree-node-task))
+(defun grounded-tree-node-task (node if-not-ground)
+  (let ((task (plan-tree:tree-node-task node))
+        (expanded-task (plan-tree:tree-node-expanded-task node)))
+    (cond ((shop:groundp expanded-task)
+           expanded-task)
+          ((shop:groundp task)
+           task)
+          (t (unless (eq if-not-ground :ignore)
+               (funcall (if (eq if-not-ground :error) #'error #'warn)
+                        "Task for tree node ~a is not ground." node))
+             expanded-task))))
+
+#-allegro
+(declaim (ftype (function (complex-node)
+                          (only-values (or symbol list)))
+                complex-node-task))
 (defun complex-node-task (node)
   (cond ((or (shop:complex-node-p node)
              (typep node 'plan-tree:complex-tree-node))
@@ -113,6 +140,9 @@
 
 
 (defun resolve-extended-plan-tree-children (children)
+  "Return a list of \"true\" children from CHILDREN, where true children
+are a list of tree nodes with unordered-tree-nodes and ordered-tree-nodes
+\"resolved\" to their \"true\" children (complex and primitive tree nodes)."
   (alexandria:mappend #'resolve-extended-plan-tree-child children))
 
 
@@ -144,8 +174,7 @@ return its children instead.  Needed for ESS plan trees.
 (declaim (ftype (function (list) #-allegro (only-values fixnum boolean)
                                  #+allegro (values fixnum boolean))
                 task-index)
-         ;; FIXME: could give better type for parameter below
-         (ftype (function (t) #-allegro (only-values fixnum boolean)
+         (ftype (function (plan-tree:tree-node) #-allegro (only-values fixnum boolean)
                               #+allegro (values fixnum boolean))
                 node-index))
 (defun task-index (task)
@@ -157,9 +186,9 @@ return its children instead.  Needed for ESS plan trees.
       (values index nil))))
 
 (defun node-index (node)
-  (task-index (tree-node-task node)))
+  (task-index (plan-tree:tree-node-expanded-task node)))
 
-(defun hddl-plan (plan tree &key orphans-ok (verbose 0))
+(defun hddl-plan (plan tree &key orphans-ok (if-not-ground :error) (verbose 0))
   "Take a SHOP PLAN and TREE (really a forest) as input and produce an
 HDDL plan encoded as an s-expression.  Note that currently only the extended
 plan trees produced by `find-plans-stack` can be used with this function.
@@ -167,25 +196,38 @@ Classic SHOP plans do not contain all the required information."
   ;; set up tables for indexing
   (let ((*next-index* 1)
         (*task-indices* (make-hash-table :test 'eq)))
-    (let ((indexed-plan (index-shop-plan (shop:shorter-plan plan)))
-          (root-tasks (forest-roots tree))
-          roots decompositions)
-      ;; (format t "~&*next-index* = ~d~%Root tasks are: ~S~%" *next-index* root-tasks)
-      (setf roots
-            (iter (for root in root-tasks)
-              (as i = (task-index root))
-              (collecting i)))
-      (setf decompositions (plan-tree->decompositions tree :orphans-ok orphans-ok :verbose verbose))
+    (let* ((indexed-plan (index-shop-plan (shop:shorter-plan plan)))
+           (root-tasks (forest-roots tree))
+           (roots
+             (iter (for root in root-tasks)
+               (as i = (task-index root))
+               (collecting i)))
+           (decompositions (plan-tree->decompositions tree :orphans-ok orphans-ok :verbose verbose
+                                                           :if-not-ground if-not-ground)))
       `(:hddl-plan
         :actions ,indexed-plan
         :roots ,roots
-        :decompositions ,decompositions
-        ))))
+        :decompositions ,decompositions))))
 
-(defun plan-tree->decompositions (tree &key orphans-ok (verbose 0))
+(defun plan-tree->decompositions (tree &key (if-not-ground :error) orphans-ok (verbose 0))
+  "Traverses TREE and returns a sorted (by integer id) list of DECOMPOSITION-RECORDs."
   (declare (optimize debug))
+  (index-plan-tree tree if-not-ground)
+  (generate-decompositions tree if-not-ground orphans-ok verbose))
+
+(defvar *trace-indexer* nil)
+
+;;; Helper function for PLAN-TREE->DECOMPOSITIONS.
+;;; Traverses the plan tree and populates the *TASK-INDICES* using
+;;; TASK-INDEX. Returns nothing.
+(defun index-plan-tree (tree if-not-ground)
+  (declare (optimize debug))
+  (format t "~&INDEXER: *trace-indexer* is ~a~%"
+          *trace-indexer*)
   (let* ((open (etypecase tree
-                 (list tree)
+                 (list
+                  ;; tree
+                  (error "HDDL plan tree construction only works on enhanced plan trees."))
                  (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
          (top-nodes (copy-list open)))
     ;; (format t "~&Starting to compute decompositions:~%")
@@ -196,29 +238,46 @@ Classic SHOP plans do not contain all the required information."
     (iter
       (while open)
       (as node = (pop open))
-      (with found)
+      (as task = (tree-node-task node :if-not-ground if-not-ground))
+      ;; so there aren't duplicates here -- must be that we are calling TASK-INDEX
+      ;; twice on the same node.
+      ;; FIXME: delete this check once the duplicate indexing has been found.
+      (assert (equalp (length (remove-duplicates open)) (length open)))
       ;; Don't index internal operators
       (unless (shop::internal-operator-p
-               (shop:task-name (tree-node-task node)))
-        (setf found (nth-value 1 (task-index (tree-node-task node))))
-        (cond ((primitive-node-p node)
-               (unless found
-                 (error "Found new primitive node: all primitive nodes should be indexed already.")))
-              ((typep node 'plan-tree:pseudo-node)
-               (error "Tried to index a pseudo-node."))
-              ((complex-node-p node)
-               (when (and found (not (find node top-nodes :test 'eq)))
-                 (error "Found a previously indexed complex node ~A in indexing pass." node))
-               (let* ((children (complex-node-children node))
-                      (cc (remove-if #'primitive-node-p children)))
-                 (appendf open cc)))))))
+               (shop:task-name task))
+        ;; index the task when it's popped off the open list
+        (let ((found (nth-value 1 (task-index task))))
+          (when *trace-indexer*
+            (format t "~&INDEXER: node is ~a ~:[NOT FOUND~;FOUND~]~%"
+                    node found)
+            (force-output t))
+          (cond ((primitive-node-p node)
+                 (unless found
+                   (error "Found new primitive node: all primitive nodes should be indexed already.")))
+                ((typep node 'plan-tree:pseudo-node)
+                 (error "Tried to index a pseudo-node."))
+                ((complex-node-p node)
+                 (when (and found (not (find node top-nodes :test 'eq)))
+                   (error "Found a previously indexed complex node ~A in indexing pass." node))
+                 (let* ((children (complex-node-children node))
+                        (cc (remove-if #'primitive-node-p children)))
+                   (when *trace-indexer*
+                     (format t "~&INDEXER: Adding ~d children:~%~{~T~a~%~}"
+                             (length cc) cc))
+                   (appendf open cc)))))))))
 
+;;; Helper function for PLAN-TREE->DECOMPOSITIONS.
+;;; Traverses the TREE and returns a sorted list of decomposition records.
+(defun generate-decompositions (tree if-not-ground orphans-ok verbose)
+  (declare (optimize debug))
   (let ((open (etypecase tree
                 (list tree)
                 (plan-tree:top-node (resolve-extended-plan-tree-child tree))))
         ;; note that visited is 0-indexed and the indices have 1 as their origin.
         (visited (make-array (1- *next-index*) :element-type 'boolean :initial-element nil))
         retval)
+
     (flet ((set-visited (i)
              (setf (aref visited (1- i)) t))
            (arr-index->index (i)
@@ -226,32 +285,31 @@ Classic SHOP plans do not contain all the required information."
       (iter
         (while open)
         (as node = (pop open))
-        (with id) (with found)
-        (multiple-value-setq (id found) (task-index (tree-node-task node)))
-        (unless found
-          (error "All nodes should have been indexed before the pass to construct the decomposition records."))
-        (set-visited id)   ; convert 1-based to 0
-        (when (complex-node-p node)
-          ;; children here have been resolved so that pseudo-nodes
-          ;; have been skipped
-          (let ((children (complex-node-children node)))
-            (iter (for child in children)
-              (with cindex) (with found)
+        (as task = (tree-node-task node :if-not-ground if-not-ground))
+        (multiple-value-bind (id found)
+            (node-index node)
+          (unless found
+            (error "All nodes should have been indexed before the pass to construct the decomposition records."))
+          (set-visited id)                ; convert 1-based to 0
+          (when (complex-node-p node)
+            ;; children here have been resolved so that pseudo-nodes
+            ;; have been skipped
+            (iter (for child in (complex-node-children node))
               (unless (shop::internal-operator-p
-                       (shop:task-name (tree-node-task child)))
-                (multiple-value-setq (cindex found)
-                  (node-index child))
-                (unless found
-                  (error "Unable to find an index for node ~a child of ~a"
-                         child node))
-                (if (complex-node-p child)
-                    (push child open)
-                    ;; must mark primitive nodes here
-                    (set-visited cindex))
-                (collecting cindex into child-indices))
+                       (shop:task-name (tree-node-task child :if-not-ground :ignore)))
+                (multiple-value-bind (cindex found)
+                    (node-index child)
+                  (unless found
+                    (error "Unable to find an index for node ~a child of ~a"
+                           child node))
+                  (if (complex-node-p child)
+                      (push child open)
+                      ;; must mark primitive nodes here
+                      (set-visited cindex))
+                  (collecting cindex into child-indices)))
               (finally
                (push (make-decomposition-record :node-id id
-                                                :task (tree-node-task node)
+                                                :task task
                                                 :method-name (complex-node-reduction-label node)
                                                 :children child-indices)
                      retval))))))
@@ -261,9 +319,9 @@ Classic SHOP plans do not contain all the required information."
                              (unless x (collecting (arr-index->index i)))))) ; correct zero-based to 1-based
             (if orphans-ok
                 (format t ";;; PLAN-TREE->DECOMPOSITIONS: Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
-                   (length unvisited)
-                   (> (length unvisited) 1)
-                   unvisited)
+                        (length unvisited)
+                        (> (length unvisited) 1)
+                        unvisited)
                 (error "Some tree node~p ~:[was~;were~] not visited when building the decomposition records: ~{~d~^,~}"
                        (length unvisited)
                        (> (length unvisited) 1)

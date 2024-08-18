@@ -213,9 +213,43 @@ minimal affected subtree."
 (defsystem shop3/rovers
     :depends-on (:shop3)
   :serial t
+  :perform (load-op :after (o c)
+                    (declare (ignorable o c))
+                    (values)
+                    (uiop:symbol-call :shop3 '#:make-problem-set
+                                      (uiop:intern* '#:rovers-problems '#:shop3-rovers)
+                                      (mapcar #'(lambda (x)
+                                                  (uiop:intern* x '#:shop3-rovers))
+                                              '(#:roverprob01 #:roverprob02 #:roverprob03
+                                                #:roverprob04 #:roverprob05 #:roverprob06
+                                                #:roverprob07 #:roverprob08 #:roverprob09
+                                                #:roverprob10 #:roverprob11 #:roverprob12
+                                                #:roverprob13 #:roverprob14 #:roverprob15
+                                                #:roverprob16 #:roverprob17 #:roverprob19
+                                                #:roverprob20))))
   :pathname "examples/rovers/strips/"
-  :components ((:file "domain")))
-
+  :components ((:file "domain")
+               (:file "p01")
+               (:file "p02")
+               (:file "p03")
+               (:file "p04")
+               (:file "p05")
+               (:file "p06")
+               (:file "p07")
+               (:file "p08")
+               (:file "p09")
+               (:file "p10")
+               (:file "p11")
+               (:file "p12")
+               (:file "p13")
+               (:file "p14")
+               (:file "p15")
+               (:file "p16")
+               (:file "p17")
+               (:file "p18")
+               (:file "p19")
+               (:file "p20")
+               ))
 
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
@@ -244,11 +278,14 @@ minimal affected subtree."
                  (plan-tree-tests . :plan-tree-tests)  ; 40
                  (search-tests . :search-tests) ; 9
                  (plan-num-limit-tests . :plan-num-limit-tests) ; 25
+                 (hddl-plan-tests . :shop-hddl-tests) ; 7
+                 (new-plan-tree-tests . :new-plan-tree-tests) ; 22
                  )
-    :num-checks 1101
+    :num-checks 1131
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
+                 "shop3/rovers"         ; for new plan tree tests
                  "pddl-utils")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
@@ -359,7 +396,9 @@ minimal affected subtree."
                                                                    "Log_ran_problems_55"
                                                                    "Log_ran_problems_60"))))
                  (:file "replan-tests" :pathname "tests/replan-tests")
-                 (:file "hddl-tests" :pathname "tests/hddl-tests")))
+                 (:file "hddl-tests" :pathname "tests/hddl-tests")
+                 (:file "new-plan-tree-tests" :pathname "tests/new-plan-tree-tests")
+                 ))
 
 
 (defsystem shop3/test-satellite
