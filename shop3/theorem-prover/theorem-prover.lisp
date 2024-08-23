@@ -90,6 +90,22 @@ non-NIL."
            (real-seek-satisfiers ,d ,goals ,state
                                  ,var-val-list ,level ,just1 ,dependencies)))))
 
+(define-compiler-macro seek-satisfiers (&whole form
+                                        goals state var-val-list level just1
+                                        &key (domain nil domain-supp-p)
+                                          dependencies
+                                          &environment env)
+  (declare (ignore form))
+  (cond ((and (constantp goals env) (null goals))
+         ;;(format t "~&Compiling away null goals in ~S~%" form)
+         `(values (list ,var-val-list) (list ,dependencies)))
+        ((not domain-supp-p)
+         ;;(format t "~&Supplying default domain argument in ~S~%" form)
+         `(real-seek-satisfiers *domain* ,goals ,state ,var-val-list ,level ,just1 ,dependencies))
+        (t ; domain *is* supplied
+         ;; (format t "~&Compiling away check for default domain argument in ~S~%" form)
+         `(real-seek-satisfiers ,domain ,goals ,state ,var-val-list ,level ,just1 ,dependencies))))
+
 (defgeneric query (goals state &key just-one domain return-dependencies record-dependencies)
   (:documentation
    "Find and return a list of binding lists that represents the answer to goals.
@@ -590,7 +606,7 @@ in the goal, so we ignore the extra reference."
     (cond
       ((variablep var)
        ;; FIXME: according to SBCL, the following is unreachable code,
-       ;; /specifically/ the calls to `apply-substitution, which is
+       ;; /specifically/ the invocation of `other-goals` and `bindings`, which is
        ;; disturbing [2022/11/23:rpg]
        (seek-satisfiers
         (apply-substitution other-goals (list (make-binding var ans)))
