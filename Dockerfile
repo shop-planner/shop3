@@ -1,4 +1,4 @@
-FROM clfoundation/sbcl:latest
+FROM rpgoldman/sbcl:latest
 
 COPY . /shop
 
