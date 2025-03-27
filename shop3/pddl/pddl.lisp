@@ -70,7 +70,7 @@
   '(assign increase decrease scale-up scale-down))
 
 (defvar *validator-progname*
-  (let ((local-validator (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate")))
+  (let ((local-validator (asdf:system-relative-pathname "shop3" "../jenkins/ext/VAL/validate")))
     (if (probe-file local-validator)
         (truename local-validator)
         "validate")))
