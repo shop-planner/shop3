@@ -23,9 +23,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        cfg:
-          - { container: "containers.common-lisp.net/cl-docker-images/sbcl:latest", lisp: sbcl }
-          - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
+        cfg: # cl.net clfoundation docker images are bit-rotted. [2025/03/28:rpg]
+          - { container: "rpgoldman/sbcl:latest", lisp: sbcl }
+          - { container: "rpgoldman/ccl:latest", lisp: ccl }
 
     steps:
     - uses: actions/checkout@v4
