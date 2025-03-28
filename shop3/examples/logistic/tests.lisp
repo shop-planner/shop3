@@ -77,8 +77,7 @@
                        log-plan
                        (asdf:system-relative-pathname "shop3" "examples/logistic/domain_strips.pddl")
                        (asdf:system-relative-pathname "shop3" "examples/logistic/log_ran_20_1.pddl")
-                       :shop3-domain (shop3::make-domain '(faux-logistics :type shop3::simple-pddl-domain))
-                       :validator-progname (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate"))))
+                       :shop3-domain (shop3::make-domain '(faux-logistics :type shop3::simple-pddl-domain)))))
     (let ((log-plan
             (let ((plan-list (ess-plan-quietly 'log-ran-20-1 :state-type state-type)))
               (when plan-list
@@ -88,8 +87,7 @@
                        log-plan
                        (asdf:system-relative-pathname "shop3" "examples/logistic/domain_strips.pddl")
                        (asdf:system-relative-pathname "shop3" "examples/logistic/log_ran_20_1.pddl")
-                       :shop3-domain (shop3::make-domain '(faux-logistics :type shop3::simple-pddl-domain))
-                       :validator-progname (asdf:system-relative-pathname "shop3" "../jenkins/VAL/validate"))))))
+                       :shop3-domain (shop3::make-domain '(faux-logistics :type shop3::simple-pddl-domain)))))))
 
 (log-test-both log-ran-15-1
   (fiveam:is
