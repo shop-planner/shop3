@@ -222,7 +222,7 @@ fi
 # before we do the following...[2019/04/23:rpg]
 SHOP3DIR="$(cd ../shop3 ; /bin/pwd)"
 THISDIR="$(pwd)"
-PATH=${THISDIR}/VAL:$PATH
+PATH=${THISDIR}/ext/VAL:$PATH
 type -P validate 2>/dev/null
 if [[ $? != 0 ]];
 then
