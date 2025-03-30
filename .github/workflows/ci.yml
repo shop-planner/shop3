@@ -24,8 +24,8 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         cfg:
-          - { container: "containers.common-lisp.net/cl-docker-images/sbcl:latest", lisp: sbcl }
-          - { container: "containers.common-lisp.net/cl-docker-images/ccl:latest", lisp: ccl }
+          - { container: "rpgoldman/sbcl:latest", lisp: sbcl }
+          - { container: "rpgoldman/ccl:latest", lisp: ccl }
 
     steps:
     - name: Get validate deps
@@ -42,18 +42,17 @@ jobs:
       id: cache-validate
       uses: actions/cache@v3
       with:
-        path: jenkins/VAL
+        path: jenkins/ext/VAL
         key: ${{ runner.os }}
-
     - name: compile validate
       if: steps.cache-validate.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        cd jenkins/VAL
+        cd jenkins/ext/VAL
         make
 
     - name: add validate to path
-      run: echo "${GITHUB_WORKSPACE}/jenkins/VAL" >> $GITHUB_PATH
+      run: echo "${GITHUB_WORKSPACE}/jenkins/ext/VAL" >> $GITHUB_PATH
 
     - name: tests
       shell: bash
