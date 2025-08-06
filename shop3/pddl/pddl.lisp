@@ -921,6 +921,10 @@ set of dependencies."
       (parse-pddl-method domain method)
     (index-method-on-domain domain method-id method-obj)))
 
+;;; FIXME: for now ignore the :constants property in PDDL domains
+(defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql :constants)) constant-list)
+  (values))
+
 (defun parse-pddl-method (domain method)
   (let* ((method (uniquify-anonymous-variables method))
          (method-head (second method))
