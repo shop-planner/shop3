@@ -219,6 +219,13 @@ so we can avoid duplicate plans.")
                                              (t (quotify (cadr y)))))))
              (cons type args)))))
 
+(defmacro verify-type (place type)
+  "Like check-type, but without the continue option.
+
+This is nicer on SBCL."
+  `(or (typep ,place ',type)
+       (error 'type-error :datum ,place :expected-type ',type)))
+
 ;;;
 (declaim (inline primitivep))
 (defun primitivep (x)

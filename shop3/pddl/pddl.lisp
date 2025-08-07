@@ -866,17 +866,18 @@ set of dependencies."
                           (shopthpr:find-satisfiers (list fluent-goal) state
                                                     :level (1+ depth)
                                                     :just-one t :domain domain)
-                        (assert unifiers ()
-                                "Unable to find current value for ~s in fluent update"
-                                fluent-function)
+                        (unless unifiers
+                                (error "Unable to find current value for ~s in fluent update"
+                                 fluent-function))
                         (setf new-deps (first deps))
                         (apply-substitution '?value (first unifiers)))))
+        (verify-type old-val number)
         (let* ((update-val (cond ((fluent-expr-p domain new-value-expr)
                                   (multiple-value-bind (unifiers deps)
                                       (shopthpr:find-satisfiers `(f-exp-value ,new-value-expr ?val)
                                                                 state :domain domain
-                                                                      :level (1+ depth)
-                                                                      :just-one t)
+                                                                :level (1+ depth)
+                                                                :just-one t)
                                     (assert unifiers ()
                                             "Unable to find update value ~s in ~s"
                                             new-value-expr effect-expr)
@@ -892,12 +893,14 @@ set of dependencies."
                                  (t (error "Could not evaluate fluent update expression ~s in ~s"
                                            new-value-expr effect-expr))))
                ;; apply the op
-               (new-val (ecase op
+               (new-val
+                 (progn (verify-type update-val number)
+                        (ecase op
                           (assign update-val)
                           (scale-up (* old-val update-val))
                           (scale-down (* old-val update-val))
                           (increase (+ old-val update-val))
-                          (decrease (- old-val update-val)))))
+                          (decrease (- old-val update-val))))))
           (values
            ;; add the new value to the adds
            (list `(fluent-value ,fluent-function ,new-val))
