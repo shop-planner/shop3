@@ -38,7 +38,7 @@
 ;;; MPL, the GPL or the LGPL.
 ;;; ---------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2007
+;;; Smart Information Flow Technologies Copyright 2006-2025
 ;;; Unpublished work
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
@@ -988,6 +988,20 @@
                                                       (problem-state (find-problem 'test-rover-problem))
                                                       :test 'equalp)
             :return-dependencies nil :domain *domain*))))
+
+(fiveam:test (pddl-domain-constant-defs :suite pddl-tests)
+  (let* ((pddl-domain-file (asdf-utilities:system-relative-pathname "shop3" "examples/UMT2/from-archive/UMT.pddl"))
+         (shop-domain (eval `(defdomain (test-umt-domain :type metric-pddl-domain)
+                              ((:include um-translog-2 ,pddl-domain-file)))))
+         (new-state (shop.common:make-initial-state shop-domain :mixed nil)))
+    (fiveam:is (alexandria:set-equal
+                '((vtype regularv) (vtype flatbed) (vtype tanker) (vtype hopper) (vtype auto) (vtype air)
+                  (vptype truck) (vptype airplane) (vptype train)
+                  (rtype road-route) (rtype rail-route) (rtype air-route)
+                  (ptype regularp) (ptype bulky) (ptype liquid) (ptype granular) (ptype cars) (ptype mail)
+                  (ltype airport) (ltype train-station))
+                (state-atoms new-state)
+                :test 'equalp))))
 
 
 (fiveam:def-suite rovers-tests :in pddl-tests)
