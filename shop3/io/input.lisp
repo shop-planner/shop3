@@ -167,7 +167,7 @@ variable *PROBLEM*."
           (setf *problem* problem-name)
           #+allegro
           (let ((excl:*redefinition-warnings* (not redefine-ok)))
-           (excl:record-source-file problem-name :type :shop3-problem))
+            (excl:record-source-file problem-name :type :shop3-problem))
           problem-inst)))))
 
 (defmethod initialize-problem ((problem problem) &key state tasks)
