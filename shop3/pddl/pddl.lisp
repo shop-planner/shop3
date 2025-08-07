@@ -37,7 +37,7 @@
 ;;; or the LGPL.
 ;;; ----------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2007 Unpublished work
+;;; Smart Information Flow Technologies Copyright 2006-2025 Unpublished work
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
 ;;;
@@ -143,9 +143,17 @@ absolute pathname, or a path-relative namestring)."
   ((source-pddl-domain
     :initarg :source-pddl-domain
     :reader source-pddl-domain
+    )
+   (constant-defs
+    :initarg :constant-defs
+    :reader constant-defs
+    :documentation "An ALIST of constant . type elements read from the
+:constants property of a PDDL domain definition. If this is not a
+typing domain, then this will simply be a list of symbols."
     ))
   (:documentation "A new class of SHOP3 domain that permits inclusion of
 PDDL operator definitions.")
+  (:default-initargs :constant-defs nil)
   )
 
 (defgeneric pddl-method-p (domain sexpr)
@@ -219,6 +227,9 @@ PDDL operator definitions.")
 PDDL operator definitions.  Right now, this approximates what happens if you have
 the :adl flag in a PDDL domain file.")
   )
+
+(defclass metric-pddl-domain (fluents-mixin pddl-domain)
+  ())
 
 (defclass adl-domain (simple-pddl-domain adl-mixin)
   ())
@@ -921,6 +932,20 @@ set of dependencies."
       (parse-pddl-method domain method)
     (index-method-on-domain domain method-id method-obj)))
 
+;;; Store the constants on the DOMAIN so that they can later be added to the problem's state
+;;; this is a no-op except for typed domains.
+(defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql :constants)) constant-list)
+  (if (typep domain 'pddl-typing-mixin)
+      ;; if this is not a typed domain, then there's no impact of adding a constant which
+      ;; is not mentioned in any facts
+      (multiple-value-bind (vars types)
+          (parse-typed-list (rest constant-list))
+        (setf (slot-value domain 'constant-defs)
+              (pairlis vars types)))
+      (setf (slot-value domain 'constant-defs)
+            (rest constant-list)))
+  (values))
+
 (defun parse-pddl-method (domain method)
   (let* ((method (uniquify-anonymous-variables method))
          (method-head (second method))
@@ -1008,3 +1033,17 @@ new facts of the form (fluent-value fluent-function value)."
                                (fluent-function-p domain (first (second atom))))
                           (collecting `(fluent-value ,(second atom) ,(third atom)))
                           (collecting atom)))))
+
+;;;---------------------------------------------------------------------------
+;;; Process problem initial state to add constants defined in the domain,
+;;; if any.
+;;;---------------------------------------------------------------------------
+(defmethod make-initial-state :around ((domain pddl-typing-mixin) state-encoding atoms &key)
+  "Take domain constant definitions and add corresponding `(<type> <var>)` to the set of
+atoms of the problem."
+  (let ((new-atoms
+          (alexandria:when-let (constant-defs (constant-defs domain))
+            (iter (for (var . type) in constant-defs)
+              (collecting `(,type ,var))))))
+    (call-next-method domain state-encoding
+                      (append new-atoms atoms))))

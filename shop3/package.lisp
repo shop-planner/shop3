@@ -250,6 +250,7 @@
              #:adl-mixin
              #:adl-domain
              #:fluents-mixin
+             #:pddl-fluents-domain
 
 
              ;; MIXIN
