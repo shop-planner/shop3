@@ -207,6 +207,7 @@
       (is (eq (second                      ; the value
                (first (second expansion))) ;the binding form
               '*domain*)))))
+
 (def-suite* test-new-random :in theorem-prover-tests)
 
 (test random-repeatable

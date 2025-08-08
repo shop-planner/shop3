@@ -160,7 +160,7 @@ minimal affected subtree."
 (defsystem :shop3/theorem-prover
     :serial t
     :pathname "theorem-prover/"
-    :depends-on ("shop3/common" "shop3/unifier" (:version "random-state" "1.0.1"))
+    :depends-on ("shop3/common" "shop3/unifier" "random-state")
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:file "package-thpr")
                  (:file "decls")

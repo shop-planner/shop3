@@ -45,3 +45,9 @@
 [submodule "jenkins/ext/bordeaux-threads"]
 	path = jenkins/ext/bordeaux-threads
 	url = https://github.com/sionescu/bordeaux-threads.git
+[submodule "jenkins/ext/trivial-indent"]
+	path = jenkins/ext/trivial-indent
+	url = https://github.com/Shinmera/trivial-indent.git
+[submodule "jenkins/ext/documentation-utils"]
+	path = jenkins/ext/documentation-utils
+	url = https://github.com/Shinmera/documentation-utils.git
