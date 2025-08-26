@@ -1,4 +1,2 @@
-"3.13.1" ; fix missing handling of :constants in PDDL domains.
-; 3.11 introduces command-line applications and HDDL plan output
-; 3.12 introduces the use of random-state for repeatability
-; 3.13 introduces enhancements needed for the plan repair experiments
+"4.0.0"
+
