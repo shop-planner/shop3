@@ -190,6 +190,15 @@ symbol with the corresponding value (if any) in SUBSTITUTION"
   `(if (null ,substitution) ,target
     (real-apply-substitution ,target ,substitution)))
 
+(define-compiler-macro apply-substitution (&whole form target substitution &environment env)
+  (cond ((and (constantp substitution env) (null substitution))
+         (format t "~&Compiling away null substitution in ~S~%" form)
+         target)
+        ((and (constantp target env) (null target))
+         (format t "~&Compiling away null target in ~S~%" form)
+         '(values nil))
+        (t form)))
+
 ;;; notes:  called by
 ;;;   COMPOSE-SUBSTITUTIONS, :OPERATOR
 ;;;   UNIFY, :OPERATOR

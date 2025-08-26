@@ -186,7 +186,7 @@ objects."
 (declaim
  (ftype
   (function (search-state &key (:repairable t))
-            (values (or t nil) &optional list))
+            (values (member t nil) &optional list))
   test-plan-found))
 
 
@@ -420,7 +420,7 @@ is directed by DOMAIN and WHICH arguments.")
 of PLAN-RETURN objects."
   (if unpack-returns
    (iter (for pr in pr-list)
-     (check-type pr plan-return)
+     (verify-type pr plan-return)
      (with-slots (plan tree lookup-table replay-table world-state) pr
        (collecting plan into plans)
        (collecting tree into trees)
@@ -736,13 +736,13 @@ bound around calls."
 
 (declaim (ftype (function (search-state choice-entry) choice-entry) stack-backjump))
 (defun stack-backjump (state target)
-  (check-type target choice-entry)
+  (verify-type target choice-entry)
   (iter (for entry = (stack-backtrack state))
     (when (eq entry target)
       (return target))))
 
 (defun remove-subtree-from-table (hash-table subtree)
-  (check-type subtree plan-tree:tree-node)
+  (verify-type subtree plan-tree:tree-node)
   (labels ((remove-forest (forest)
                (if (null forest) nil
                    (or (remove-subtree (first forest))
