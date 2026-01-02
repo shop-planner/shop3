@@ -2523,7 +2523,10 @@ PDDL domains with the ADL requirements. Use of this class is
 @code{ADL-DOMAIN} -- @code{SIMPLE-PDDL-DOMAIN} with @code{ADL-MIXIN} (see below).
 
 @item
-Mixin classes for different requirements:
+Mixin classes for different requirements.  Typically, programmers will
+need to create new domain subclasses, combining
+@code{SIMPLE-PDDL-DOMAIN} with the appropriate mixins in order to
+capture relevant PDDL domains.
 
 @itemize
 @item
@@ -2564,12 +2567,19 @@ existential preconditions, since they are typically used together.
 @code{COSTS-MIXIN}
 
 @item
-@tindex ADL-MIXIN
+@tindex ADL-MIXIN: ADL is an abbreviation for conditional effects,
+negative preconditions, disjunctive preconditions, quantified
+preconditions, and equality.
 @code{ADL-MIXIN}
 
 @item
 @tindex FLUENTS-MIXIN
 @code{FLUENTS-MIXIN}
+
+@item
+@tindex DERIVED-PREDICATES-MIXIN
+@code{DERIVED-PREDICATES-MIXIN}
+
 
 @end itemize
 
