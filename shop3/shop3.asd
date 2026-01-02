@@ -74,7 +74,8 @@
                  (:version "shop3/theorem-prover" (:read-file-form "shop-version.lisp-expr"))
                  "trivial-garbage"
                  :alexandria
-                 :iterate)
+                 :iterate
+                 :pddl-utils)
     :version (:read-file-form "shop-version.lisp-expr")
     :in-order-to ((test-op (test-op :shop3/test)))
     :components  (
@@ -254,7 +255,8 @@ minimal affected subtree."
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class "fiveam-asdf:fiveam-tester-system"
-    :test-names ((pddl-tests . :shop3)  ; 145
+    ;; the following test numbers are no longer accurate, AFAICT.
+    :test-names ((pddl-tests . :shop3)  ; 224
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (test-sort-by . :arity-test) ; 7
@@ -281,7 +283,7 @@ minimal affected subtree."
                  (hddl-plan-tests . :shop-hddl-tests) ; 7
                  (new-plan-tree-tests . :new-plan-tree-tests) ; 22
                  )
-    :num-checks 1132
+    :num-checks 1140
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

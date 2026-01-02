@@ -64,6 +64,8 @@
 
 (fiveam:def-suite* short-pddl-tests :in pddl-tests)
 
+(fiveam:def-suite derived-predicates :in pddl-tests)
+
 (fiveam:def-fixture simple-pddl-actions ()
   (let ((action-def '(:action drive
                       :parameters (?v - vehicle
@@ -1891,3 +1893,73 @@
    (with-fixture openstacks-domain (nil)
      (is-true
       (find-domain 'openstacks-sequencedstrips-ADL)))))
+
+(in-package :shop-user)
+
+;;; test derived predicate handling
+(fiveam:test (strip-types :suite shop3::derived-predicates)
+  (let ((arglist (rest '(block-sequenced ?b1 ?b2 - block))))
+    (let ((pddl-utils:*pddl-package* (find-package :shop-user)))
+      (fiveam:is
+       (equalp
+        '(?b1 - block ?b2 - block)
+        (pddl-utils:canonicalize-types arglist))))
+    (multiple-value-bind (vars constraints)
+        (shop3::strip-types arglist)
+      (fiveam:is (alexandria:set-equal '(?b1 ?b2) vars)
+                 (alexandria:set-equal '((block ?b1) (block ?b2))
+                                       constraints)))))
+
+(defclass dp-metric-domain (adl-domain fluents-mixin derived-predicates-mixin)
+  ())
+
+(fiveam:test (translate-dp-head :suite shop3::derived-predicates)
+  (multiple-value-bind (literal constraints)
+   (shop3::translate-atomic-formula-skeleton (make-instance 'dp-metric-domain)
+                                      '(block-sequenced ?b1 ?b2 - block))
+    (fiveam:is (equalp '(block-sequenced ?b1 ?b2) literal))
+    (fiveam:is (alexandria:set-equal '((block ?b1) (block ?b2)) constraints
+                                     :test 'equalp)))
+  (multiple-value-bind (literal constraints)
+   (shop3::translate-atomic-formula-skeleton (make-instance 'dp-metric-domain)
+                                             '(ace2-used))
+    (fiveam:is (equalp '(ace2-used) literal))
+    (fiveam:is (null constraints))))
+
+(fiveam:test (translate-dp-body :suite shop3::derived-predicates)
+  (let* ((def
+         '(:derived (contains-block ?container ?contained - block)
+                   (and
+                    (<=
+                     (addr ?container)
+                     (addr ?contained))
+                    (<= (+ (addr ?contained) (block-size ?contained))
+                        (+ (addr ?container) (block-size ?container))))))
+         (body (third def)))
+    (fiveam:is
+     (equalp
+      (list body)
+      (shop3::translate-antecedents body)))))
+
+(fiveam:test (translate-dp :suite shop3::derived-predicates)
+  (let ((def
+         '(:derived (contains-block ?container ?contained - block)
+                   (and
+                    (<=
+                     (addr ?container)
+                     (addr ?contained))
+                    (<= (+ (addr ?contained) (block-size ?contained))
+                        (+ (addr ?container) (block-size ?container)))))))
+    (fiveam:is
+     (equalp
+      '(:- (contains-block ?container ?contained)
+        ((and
+          (block ?container)
+          (block ?contained)
+          (and
+           (<=
+            (addr ?container)
+            (addr ?contained))
+           (<= (+ (addr ?contained) (block-size ?contained))
+            (+ (addr ?container) (block-size ?container)))))))
+      (shop3::translate-derived-predicate (make-instance 'dp-metric-domain) def)))))

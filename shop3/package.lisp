@@ -251,6 +251,7 @@
              #:adl-domain
              #:fluents-mixin
              #:pddl-fluents-domain
+             #:derived-predicates-mixin
 
 
              ;; MIXIN

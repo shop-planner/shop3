@@ -66,6 +66,20 @@
 (in-package :shop3)
 
 
+;;; FIXME: This function definition, due to Peter Norvig, should
+;;; be moved into a shop-wide location.  Likely shop.common package.
+
+(defun find-all (item sequence &rest keyword-args
+                 &key (test #'eql) test-not &allow-other-keys)
+  "Find all those elements of sequence that match item,
+  according to the keywords.  Doesn't alter sequence."
+  (if test-not
+      (apply #'remove item sequence
+             :test-not (complement test-not) keyword-args)
+      (apply #'remove item sequence
+             :test (complement test) keyword-args)))
+
+
 (defparameter +fluent-updates+
   '(assign increase decrease scale-up scale-down))
 
@@ -218,6 +232,10 @@ PDDL operator definitions.")
 (defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-preconditions-mixin conditional-effects-mixin)
   ())
 
+(defclass derived-predicates-mixin ()
+  ()
+  (:documentation "This MIXIN class adds the ability to translate PDDL derived predicates (axioms) into SHOP axioms"))
+
 (defclass pddl-domain ( conditional-effects-mixin quantified-preconditions-mixin equality-mixin
                        static-predicates-mixin
                        pddl-typing-mixin
@@ -306,22 +324,94 @@ later be compiled into find-satisfiers or something."
     (call-next-method domain `(,@(if types-def (remove types-def items) items)
                                ,@(when types-def (list types-def))))))
 
+;;;---------------------------------------------------------------------------
+;;; Translating derived predicates
+;;;---------------------------------------------------------------------------
+(defmethod parse-domain-items :around ((domain derived-predicates-mixin) items)
+  (let* ((derived-predicates-defs (find-all :derived items :key 'first))
+         (translated-predicates (when derived-predicates-defs
+                                  (translate-derived-predicates domain derived-predicates-defs))))
+    (call-next-method domain `(,@(if derived-predicates-defs
+                                     (set-difference items derived-predicates-defs) items)
+                               ,@translated-predicates))))
+
+(declaim (ftype (function (domain list) (values list &optional list))
+                translate-atomic-formula-skeleton)
+         (ftype (function (domain list) (values list &optional))
+                translate-derived-predicates)
+         (ftype (function (list &optional list) (values list &optional))
+                        translate-antecedents)
+         (ftype (function (symbol symbol symbol) (values symbol list &optional))
+                        strip-types-one))
+
+
+(defun translate-derived-predicates (domain derived-predicate-defs)
+  (mapcar #'(lambda (x) (translate-derived-predicate domain x))
+          derived-predicate-defs))
+
+(defun translate-derived-predicate (domain derived-predicate-def)
+  (destructuring-bind (keyword atomic-formula-skeleton goal-description)
+      derived-predicate-def
+    (assert (eq keyword :derived))
+    (multiple-value-bind (head conjuncts)
+        (translate-atomic-formula-skeleton domain atomic-formula-skeleton)
+      `(:- ,head
+           ,(translate-antecedents goal-description conjuncts)))))
+
+(defun translate-atomic-formula-skeleton (domain atomic-formula-skeleton)
+  (if (typep domain 'pddl-typing-mixin)
+      (destructuring-bind (pred &rest args) atomic-formula-skeleton
+        (multiple-value-bind (vars type-checks)
+            (strip-types args)
+          (values `(,pred ,@vars) type-checks)))
+      (progn
+        (unless (every #'variablep (rest atomic-formula-skeleton))
+          (error "Ill-formed head for derived predicate, ~s. Should this be a typing domain?"
+                 atomic-formula-skeleton))
+        atomic-formula-skeleton)))
+
+;;; FIXME: PDDL-UTILS may already be able to do this. [2026/01/03:rpg]
+(defun strip-types (arg-list)
+  "Remove the type annotations from `arg-list`:
+Return the stripped list, and a list of type constraints."
+  (let ((canonized (let ((pddl-utils:*pddl-package* *package*))
+                     (pddl-utils:canonicalize-types arg-list))))
+    (iter (for (var hyp type) on canonized by 'cdddr)
+      (multiple-value-bind (var constraint)
+          (strip-types-one var hyp type)
+        (collecting var into vars)
+        (collecting constraint into type-constraints))
+      (finally (return (values vars type-constraints))))))
+
+(defun strip-types-one (var hyp type)
+  (unless (eq hyp '-)
+    (error "Ill-formed typed sublist (~s ~s ~s)." var hyp type))
+  (values var `(,type ,var)))
+
+(defun translate-antecedents (goal-description &optional additional-conjuncts)
+  (list                                 ; because the antecedent for a SHOP axiom
+                                        ; is an implicit conjunction
+   (if additional-conjuncts
+       `(and ,@additional-conjuncts
+             ,goal-description)
+       goal-description)))
+
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':action)) item)
-   (let ((op-name (second item)))
-     ;; do some nasty voodoo to give PDDL actions names like SHOP3
-     ;; operators [2006/07/31:rpg]
-     (unless (eql (elt (symbol-name op-name) 0) #\!)
-       (setf op-name (intern (concatenate 'string
-                                          "!" (symbol-name op-name))
-                             (symbol-package op-name)
-                             ))
+  (let ((op-name (second item)))
+    ;; do some nasty voodoo to give PDDL actions names like SHOP3
+    ;; operators [2006/07/31:rpg]
+    (unless (eql (elt (symbol-name op-name) 0) #\!)
+      (setf op-name (intern (concatenate 'string
+                                         "!" (symbol-name op-name))
+                            (symbol-package op-name)
+                            ))
 ;;;      (format t "~&Making new SHOP3 operator name ~S from old name ~S.~%"
 ;;;           op-name (second item))
-       (setf (second item) op-name))
-     (with-slots (operators) domain
-       (when (gethash op-name operators)
-         (error "There is more than one operator named ~s" op-name))
-       (setf (gethash op-name operators) (process-action domain item)))))
+      (setf (second item) op-name))
+    (with-slots (operators) domain
+      (when (gethash op-name operators)
+        (error "There is more than one operator named ~s" op-name))
+      (setf (gethash op-name operators) (process-action domain item)))))
 
 ;;; default method so we don't try to parse constructs inappropriately
 (defmethod parse-domain-item ((domain domain) (item-key (eql :pddl-method)) item)
@@ -353,6 +443,19 @@ later be compiled into find-satisfiers or something."
   (when (typep domain 'pddl-typing-mixin)
     (warn "Haven't yet implemented function type checking."))
   (values))
+
+
+;;;---------------------------------------------------------------------------
+;;; Default methods to help debug
+;;;---------------------------------------------------------------------------
+(defmethod parse-domain-item (domain (item-key (eql ':functions)) item)
+  (declare (ignorable item))
+  (error "Domain of type ~s does not support functions (metric fluents). You need a domain including FLUENTS-MIXIN" (type-of domain)))
+
+(defmethod parse-domain-item (domain (item-key (eql ':derived)) item)
+  (declare (ignorable item))
+  (error "Domain of type ~s does not support derived predicates. You need a domain including DERIVED-PREDICATES-MIXIN" (type-of domain)))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Requirements
