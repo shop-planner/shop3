@@ -1806,12 +1806,13 @@ to be presented in any special order-- @code{:add}, @code{:delete},
 etc. are processed as @emph{keyword} (named) arguments.
 
 @menu
+* Internal Operators::
 * Operators must be deterministic::
 * Protection conditions::
 * Operators Legacy Syntax::
 @end menu
 
-@node  Internal Operators, Operators must be deterministic, Operators, Operators
+@node  Internal Operators, Operators must be deterministic, , Operators
 
 @subsection Internal Operators
 @cindex internal operators
@@ -1838,7 +1839,7 @@ exists in @sysname{} is so that automated systems which use @sysname{} plans as 
 input can easily distinguish between those operators which involve
 action and those which were merely internal to the planning process.
 
-@node Operators must be deterministic, Protection conditions, Operators, Operators
+@node Operators must be deterministic, Protection conditions, Internal Operators, Operators
 @subsection Operators must be deterministic
 @cindex Operators, deterministic
 
