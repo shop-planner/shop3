@@ -499,50 +499,22 @@ Return the stripped list, and a list of type constraints."
                           :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
-;;; Additional generic functions, used to tailor the translation of
-;;; PDDL actions into SHOP3 syntax.  The different PDDL constructs are
-;;; gated by PDDL requirements flags, which are represented as mixins
-;;; in PDDL domains.
+;;; Translate-effect
 ;;;---------------------------------------------------------------------------
-(defgeneric translate-precondition (domain expression)
-  (:documentation
-   "This generic function is used to translate PDDL-style preconditions
+
+
+(defun translate-effect (domain effect)
+  "Translate PDDL-style effects
 into SHOP3-style syntax.  The rewriting is done based on the domain so
-that different syntax features can be turned on and off."))
-
-(defgeneric translate-effect (domain expression)
-  (:documentation
-   "This generic function is used to translate PDDL-style effects
-into SHOP3-style syntax.  The rewriting is done based on the domain so
-that different syntax features can be turned on and off."))
-
-;;;---------------------------------------------------------------------------
-;;; Methods for translate-effect
-;;;---------------------------------------------------------------------------
-
-
-(defmethod translate-effect ((domain simple-pddl-domain) effect)
-  "Basis method for translating a PDDL effect into SHOP3 syntax is
-to just leave it alone."
+that different syntax features can be turned on and off."
+  ;; because of the way translate-metric-updates is written,
+  ;; the fluent rewrites must be done before the conditional effects
+  ;; rewrites
+  (when (typep domain 'fluents-mixin)
+    (setf effect (translate-metric-updates domain effect)))
+  (when (typep domain 'conditional-effects-mixin)
+    (setf effect (translate-pddl-quantifier effect 'forall domain)))
   effect)
-
-(defmethod translate-effect ((domain conditional-effects-mixin) effect)
-  "This method translates any forall expressions in a PDDL effect into the
-slightly-different SHOP3 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  ;;; FIXME: don't we need to translate existential variables, as well?
-  (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
-    (call-next-method domain new-effect)))
-
-;;; this is done as an :around method because it must be done before any
-;;; other translations change processing of the action...
-(defmethod translate-effect :around ((domain fluents-mixin) effect)
-  "This method translates any metric effects into updates using ASSIGN-FLUENT.
-It then invokes the next method, to insure that all the other
-PDDL - SHOP3 constructs are translated."
-  (let ((new-effect (translate-metric-updates domain effect)))
-    (call-next-method domain new-effect)))
 
 (defun translate-metric-updates (domain expression)
   (labels ((iter (expr)
@@ -581,33 +553,20 @@ PDDL - SHOP3 constructs are translated."
     (iter expression)))
 
 ;;;---------------------------------------------------------------------------
-;;; Methods for translate-precondition
+;;; Translate-Precondition
 ;;;---------------------------------------------------------------------------
 
-(defmethod translate-precondition ((domain simple-pddl-domain) expression)
-  "Basis method for translating a PDDL precondition into SHOP3 syntax is
-to just leave it alone."
+(defun translate-precondition (domain expression)
+  "Translate PDDL-style preconditions
+into SHOP3-style syntax.  The rewriting is done based on the domain so
+that different syntax features can be turned on and off."
+  (when (typep domain 'fluents-mixin)
+    (setf expression (translate-fluent-precond domain expression)))
+  (when (typep domain 'existential-preconditions-mixin)
+    (setf expression (translate-pddl-quantifier expression 'exists domain)))
+  (when (typep domain 'universal-preconditions-mixin)
+    (setf expression (translate-pddl-quantifier expression 'forall domain)))
   expression)
-
-(defmethod translate-precondition ((domain universal-preconditions-mixin) expression)
-  "This method translates any forall expressions in a PDDL precondition into the
-slightly-different SHOP3 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'forall domain)))
-    (call-next-method domain new-expr)))
-
-(defmethod translate-precondition ((domain existential-preconditions-mixin) expression)
-  "This method translates any exists expressions in a PDDL precondition into the
-slightly-different SHOP3 EXISTS syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
-    (call-next-method domain new-expr)))
-
-(defmethod translate-precondition :around ((domain fluents-mixin) expression)
-  (let ((new-expr (translate-fluent-precond domain expression)))
-    (call-next-method domain new-expr)))
 
 (defun translate-fluent-precond (domain expression)
   "Find the fluent comparison expressions in EXPRESSION and rewrite them
@@ -625,6 +584,8 @@ the theorem-prover."
                    ((and (listp expr) (symbolp (first expr)))
                     (case (first expr)
                       ((and or not imply) `(,(first expr) ,@(mapcar #'iter (rest expr))))
+                      ;; this *must be invoked* before the rewriting of PDDL quantification into
+                      ;; SHOP quantification.
                       ((exists forall)
                        (destructuring-bind (quant vars body) expr
                          `(,quant ,vars ,(iter body))))
@@ -667,10 +628,13 @@ the theorem-prover."
 ;;; Helper functions
 ;;;---------------------------------------------------------------------------
 
+;;; FIXME: This will not work if this is not a typed-domain...
 (defun translate-pddl-quantifier (expression quantifier &optional (domain *domain*))
   "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation
 into SHOP3 quantifier notation \(and adds some
 \(<type> <var>\) conditions\)."
+  (unless (typep domain 'pddl-typing-mixin)
+    (error "PDDL quantifier translation will not work properly without typing."))
   (labels ((iter (expr)
              (cond ((and (listp expr) (eq (first expr) quantifier))
                     (rewrite-quant expr))
@@ -684,11 +648,11 @@ into SHOP3 quantifier notation \(and adds some
                (multiple-value-bind (vars types)
                    (typed-list-vars typed-list domain)
                  `(,quantifier ,vars
-                          ,(let ((exprs (of-type-exprs vars types)))
-                             (if (= (length exprs) 1)
-                                 (first exprs)
-                                 (cons 'and exprs)))
-                          ,(iter sub-expr))))))
+                               ,(let ((exprs (of-type-exprs vars types)))
+                                  (if (= (length exprs) 1)
+                                      (first exprs)
+                                      (cons 'and exprs)))
+                               ,(iter sub-expr))))))
     (iter expression)))
 
 (defun of-type-exprs (vars types)
