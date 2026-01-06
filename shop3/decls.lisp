@@ -277,10 +277,12 @@ operator definitions.")
   ((methods
     :initarg :methods
     :reader domain-methods
+    :type hash-table
     )
    (operators
     :initarg :operators
     :reader domain-operators
+    :type hash-table
     )
    (methods-to-names
     :initform (make-hash-table :test 'eq)
