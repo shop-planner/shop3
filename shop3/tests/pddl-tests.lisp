@@ -411,8 +411,6 @@
                                 )
                                )))))))
 
-;;; need to put `fluents-mixin` first so that it is correctly more specific than
-;;; the other mixins.  That's gross.
 (defclass dp-metric-domain (fluents-mixin adl-domain derived-predicates-mixin
                             pddl-typing-mixin)
   ())
@@ -2239,7 +2237,41 @@
                                     (block-sequenced block3 block4)
                                     (block-sequenced block4 block5)
                                     )
-                                  '(control-block))))
+                                  '(control-block)))
+           ;; this variant of the problem does not have total
+           ;; numeric fluent representation
+           (partial-problem (make-problem '(test-metric-and-derived-predicates-problem-partial-state
+                                            :redefine-ok t
+                                            :silently t)
+                                          'test-metric-and-derived-predicates
+                                          `(
+                                            ;; translation of type declarations
+                                            (tty-buffer-type tty-buf)
+                                            (inode-block-type inode)
+                                            (attacker-block block1)
+                                            (attacker-block block2)
+                                            (attacker-block block3)
+                                            (attacker-block block4)
+                                            (attacker-block block5)
+                                            (= (heap-pointer) 0)
+                                            ;; (= (real-exploits) 0)
+                                        ; facts about ttys and inodes (basically made-up numbers)
+                                            (= (tty-flags-offset) 4)
+                                            (= (tty-flags-size) 16)
+                                            (= (tty-heap-buffer-bound) 4)
+                                            (= (inode-depth-offset) 0)
+                                            (= (inode-depth-size) 4)
+                                        ; information for particular blocks (also basically made-up numbers)
+                                            (= (block-size tty-buf) 64)
+                                            (= (block-size inode) 64)
+                                        ; initialize the queue of attacker-controlled ranges
+                                            (next-block block1)
+                                            (block-sequenced block1 block2)
+                                            (block-sequenced block2 block3)
+                                            (block-sequenced block3 block4)
+                                            (block-sequenced block4 block5)
+                                            )
+                                          '(control-block))))
        (&body))))
 
 (fiveam:test translated-fluent-metric-domain ()
@@ -2305,10 +2337,60 @@
        (set-difference atoms expected :test 'equalp)
        (set-difference expected atoms :test 'equalp)))))
 
+(fiveam:test expand-fluents-partial-initial-state ()
+  (fiveam:with-fixture metric-items ()
+    (let* ((state (shop3cmn:make-initial-state domain :mixed (shop.common:state-atoms partial-problem)))
+           (atoms (state-atoms state))
+           (expected
+             `((TTY-BUFFER-TYPE TTY-BUF)
+               (INODE-BLOCK-TYPE INODE)
+               ,@(loop :for b :in '(block1 block2 block3 block4 block5)
+                       :appending `((attacker-block ,b)))
+               (shopthpr::fluent-value (HEAP-POINTER) 0)
+               (shopthpr::fluent-value (TTY-FLAGS-OFFSET) 4)
+               (shopthpr::fluent-value (TTY-FLAGS-SIZE) 16)
+               (shopthpr::fluent-value (TTY-HEAP-BUFFER-BOUND) 4)
+               (shopthpr::fluent-value (INODE-DEPTH-OFFSET) 0)
+               (shopthpr::fluent-value (INODE-DEPTH-SIZE) 4)
+               (shopthpr::fluent-value (BLOCK-SIZE TTY-BUF) 64)
+               (shopthpr::fluent-value (BLOCK-SIZE INODE) 64)
+               (NEXT-BLOCK BLOCK1)
+               (BLOCK-SEQUENCED BLOCK1 BLOCK2)
+               (BLOCK-SEQUENCED BLOCK2 BLOCK3)
+               (BLOCK-SEQUENCED BLOCK3 BLOCK4)
+               (BLOCK-SEQUENCED BLOCK4 BLOCK5)
+               ;; imported from domain
+               (int one) (int zero)
+               )))
+      (fiveam:is
+       (alexandria:set-equal
+        expected
+        atoms
+        :test 'equalp)
+       ;; reason-args
+       "Expanded state atoms not as expected:~@[~%~TUnexpected:~{~%~T~T~A~}~%~]
+         ~@[~%~TExpected but not found:~{~%~T~T~A~}~%~]"
+       (set-difference atoms expected :test 'equalp)
+       (set-difference expected atoms :test 'equalp)))))
+
 (fiveam:test test-shop-plan-fluents-and-dps ()
   (fiveam:with-fixture metric-items ()
     (let ((retval (find-plans-stack problem :domain domain)))
-      (pprint retval)
+      (fiveam:is-true retval)
+      (when retval
+        (fiveam:is-true
+         (or
+          (equalp
+           '((!place-memory-block inode)
+             (!ace2 inode block1))
+           (shorter-plan
+            (first retval)))
+          (equalp
+           '((!place-memory-block tty-buf)
+             (!ace2 tty-buf block1))
+           (shorter-plan
+            (first retval)))))))
+    (let ((retval (find-plans-stack partial-problem :domain domain)))
       (fiveam:is-true retval)
       (when retval
         (fiveam:is-true
@@ -2365,3 +2447,58 @@
        "Mismatch between expected effect expression:~%~{~%~T~T~A~}~%
         and actual:~%~{~%~T~T~A~}~%"
        expected actual))))
+
+;;; check to make sure updates happen properly in partially specified problems
+;;; i.e., states that have some undefined metric fluents
+(fiveam:test fluent-metric-updates ()
+  (fiveam:with-fixture metric-items ()
+    ;; this action application should succeed, because it sets a numeric fluent
+    ;; that is undefined, but does not read it.
+    (let ((init-state (shop3cmn:make-initial-state domain :mixed
+                                                   (shop::problem-state partial-problem))))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(!place-memory-block inode)
+                                  (shop::operator domain '!place-memory-block)
+                                  nil 0 nil)))
+        (fiveam:is-false
+         (eq applied 'fail))
+        (fiveam:is-true
+         (query '((shop.theorem-prover::fluent-value (addr inode) 0))
+                init-state ;; destructively modified
+                :just-one t))
+        (fiveam:is-false
+         (query '((shop.theorem-prover::fluent-value (addr tty-buf) ?X))
+                init-state ;; destructively modified
+                :just-one t))))
+    ;; this action application should fail, because it increments (real-exploits),
+    ;; which is undefined.
+    (let ((init-state (shop3cmn:make-initial-state domain :mixed
+                                                   (shop::problem-state partial-problem))))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(!place-memory-block tty-buf)
+                                  (shop::operator domain '!place-memory-block)
+                                  nil 0 nil)))
+        (fiveam:is-false
+         (eq applied 'fail))
+        (fiveam:is-true
+         (query '((memory-mapped tty-buf))
+                init-state ;; destructively modified
+                :just-one t))
+        (fiveam:is-false
+         (query '((shop.theorem-prover::fluent-value (real-exploits) ?X))
+                init-state ;; destructively modified
+                :just-one t)))
+      (shop2.common:add-atom-to-state '(attacker-controls tty-buf) init-state 0 'faux-operator)
+      (fiveam:is-true
+       (query '((attacker-controls tty-buf) (next-block block1))
+                init-state ;; destructively modified
+                :just-one t))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(heap-overflow-tty-buffer tty-buf tty-buf block1)
+                                  (shop::operator domain '!heap-overflow-tty-buffer)
+                                  nil 0 nil)))
+        (fiveam:is
+         (eq 'fail applied))))))

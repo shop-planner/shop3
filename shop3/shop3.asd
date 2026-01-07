@@ -256,7 +256,7 @@ minimal affected subtree."
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
     :class "fiveam-asdf:fiveam-tester-system"
     ;; the following test numbers are no longer accurate, AFAICT.
-    :test-names ((pddl-tests . :shop3)  ; 234
+    :test-names ((pddl-tests . :shop3)  ; 245
                  (protection-test . :protection-test)  ; 16
                  ;; all the following are now subsumed into all-shop3-internal-tests
                  (test-sort-by . :arity-test) ; 7
@@ -283,7 +283,7 @@ minimal affected subtree."
                  (hddl-plan-tests . :shop-hddl-tests) ; 7
                  (new-plan-tree-tests . :new-plan-tree-tests) ; 22
                  )
-    :num-checks 1151
+    :num-checks 1162
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

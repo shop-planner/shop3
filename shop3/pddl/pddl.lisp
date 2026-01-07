@@ -933,11 +933,11 @@ set of dependencies."
                           (shopthpr:find-satisfiers (list fluent-goal) state
                                                     :level (1+ depth)
                                                     :just-one t :domain domain)
-                        (assert unifiers ()
-                                "Unable to find current value for ~s in fluent update"
-                                fluent-function)
-                        (setf new-deps (first deps))
-                        (apply-substitution '?value (first unifiers)))))
+                        (if unifiers
+                            (progn
+                             (setf new-deps (first deps))
+                             (apply-substitution '?value (first unifiers)))
+                            :undef))))
         (let* ((update-val (cond ((fluent-expr-p domain new-value-expr)
                                   (multiple-value-bind (unifiers deps)
                                       (shopthpr:find-satisfiers `(f-exp-value ,new-value-expr ?val)
@@ -968,8 +968,9 @@ set of dependencies."
           (values
            ;; add the new value to the adds
            (list `(fluent-value ,fluent-function ,new-val))
-           ;; delete old value
-           (list `(fluent-value ,fluent-function ,old-val))
+           ;; delete old value if one is defined
+           (unless (eq old-val :undef)
+             (list `(fluent-value ,fluent-function ,old-val)))
            new-deps))))))
 
 
