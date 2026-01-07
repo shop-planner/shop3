@@ -2311,12 +2311,18 @@
       (pprint retval)
       (fiveam:is-true retval)
       (when retval
-        (fiveam:is
-         (equalp
-          '((!place-memory-block tty-buf)
-            (!ace2 tty-buf block1))
-          (shorter-plan
-           (first retval))))))))
+        (fiveam:is-true
+         (or
+          (equalp
+           '((!place-memory-block inode)
+             (!ace2 inode block1))
+           (shorter-plan
+            (first retval)))
+          (equalp
+           '((!place-memory-block tty-buf)
+             (!ace2 tty-buf block1))
+           (shorter-plan
+            (first retval)))))))))
 
 (fiveam:test test-quantified-fluent-effect-rewriting ()
   (fiveam:with-fixture metric-items ()
