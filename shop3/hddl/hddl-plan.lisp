@@ -222,8 +222,6 @@ Classic SHOP plans do not contain all the required information."
 ;;; TASK-INDEX. Returns nothing.
 (defun index-plan-tree (tree if-not-ground)
   (declare (optimize debug))
-  (format t "~&INDEXER: *trace-indexer* is ~a~%"
-          *trace-indexer*)
   (let* ((open (etypecase tree
                  (list
                   ;; tree
