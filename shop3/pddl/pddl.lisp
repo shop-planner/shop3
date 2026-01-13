@@ -66,6 +66,20 @@
 (in-package :shop3)
 
 
+;;; FIXME: This function definition, due to Peter Norvig, should
+;;; be moved into a shop-wide location.  Likely shop.common package.
+
+(defun find-all (item sequence &rest keyword-args
+                 &key (test #'eql) test-not &allow-other-keys)
+  "Find all those elements of sequence that match item,
+  according to the keywords.  Doesn't alter sequence."
+  (if test-not
+      (apply #'remove item sequence
+             :test-not (complement test-not) keyword-args)
+      (apply #'remove item sequence
+             :test (complement test) keyword-args)))
+
+
 (defparameter +fluent-updates+
   '(assign increase decrease scale-up scale-down))
 
@@ -218,6 +232,10 @@ PDDL operator definitions.")
 (defclass adl-mixin (pddl-typing-mixin negative-preconditions-mixin disjunctive-preconditions-mixin equality-mixin quantified-preconditions-mixin conditional-effects-mixin)
   ())
 
+(defclass derived-predicates-mixin ()
+  ()
+  (:documentation "This MIXIN class adds the ability to translate PDDL derived predicates (axioms) into SHOP axioms"))
+
 (defclass pddl-domain ( conditional-effects-mixin quantified-preconditions-mixin equality-mixin
                        static-predicates-mixin
                        pddl-typing-mixin
@@ -306,22 +324,94 @@ later be compiled into find-satisfiers or something."
     (call-next-method domain `(,@(if types-def (remove types-def items) items)
                                ,@(when types-def (list types-def))))))
 
+;;;---------------------------------------------------------------------------
+;;; Translating derived predicates
+;;;---------------------------------------------------------------------------
+(defmethod parse-domain-items :around ((domain derived-predicates-mixin) items)
+  (let* ((derived-predicates-defs (find-all :derived items :key 'first))
+         (translated-predicates (when derived-predicates-defs
+                                  (translate-derived-predicates domain derived-predicates-defs))))
+    (call-next-method domain `(,@(if derived-predicates-defs
+                                     (set-difference items derived-predicates-defs) items)
+                               ,@translated-predicates))))
+
+(declaim (ftype (function (domain list) (values list &optional list))
+                translate-atomic-formula-skeleton)
+         (ftype (function (domain list) (values list &optional))
+                translate-derived-predicates)
+         (ftype (function (list &optional list) (values list &optional))
+                        translate-antecedents)
+         (ftype (function (symbol symbol symbol) (values symbol list &optional))
+                        strip-types-one))
+
+
+(defun translate-derived-predicates (domain derived-predicate-defs)
+  (mapcar #'(lambda (x) (translate-derived-predicate domain x))
+          derived-predicate-defs))
+
+(defun translate-derived-predicate (domain derived-predicate-def)
+  (destructuring-bind (keyword atomic-formula-skeleton goal-description)
+      derived-predicate-def
+    (assert (eq keyword :derived))
+    (multiple-value-bind (head conjuncts)
+        (translate-atomic-formula-skeleton domain atomic-formula-skeleton)
+      `(:- ,head
+           ,(translate-antecedents goal-description conjuncts)))))
+
+(defun translate-atomic-formula-skeleton (domain atomic-formula-skeleton)
+  (if (typep domain 'pddl-typing-mixin)
+      (destructuring-bind (pred &rest args) atomic-formula-skeleton
+        (multiple-value-bind (vars type-checks)
+            (strip-types args)
+          (values `(,pred ,@vars) type-checks)))
+      (progn
+        (unless (every #'variablep (rest atomic-formula-skeleton))
+          (error "Ill-formed head for derived predicate, ~s. Should this be a typing domain?"
+                 atomic-formula-skeleton))
+        atomic-formula-skeleton)))
+
+;;; FIXME: PDDL-UTILS may already be able to do this. [2026/01/03:rpg]
+(defun strip-types (arg-list)
+  "Remove the type annotations from `arg-list`:
+Return the stripped list, and a list of type constraints."
+  (let ((canonized (let ((pddl-utils:*pddl-package* *package*))
+                     (pddl-utils:canonicalize-types arg-list))))
+    (iter (for (var hyp type) on canonized by 'cdddr)
+      (multiple-value-bind (var constraint)
+          (strip-types-one var hyp type)
+        (collecting var into vars)
+        (collecting constraint into type-constraints))
+      (finally (return (values vars type-constraints))))))
+
+(defun strip-types-one (var hyp type)
+  (unless (eq hyp '-)
+    (error "Ill-formed typed sublist (~s ~s ~s)." var hyp type))
+  (values var `(,type ,var)))
+
+(defun translate-antecedents (goal-description &optional additional-conjuncts)
+  (list                                 ; because the antecedent for a SHOP axiom
+                                        ; is an implicit conjunction
+   (if additional-conjuncts
+       `(and ,@additional-conjuncts
+             ,goal-description)
+       goal-description)))
+
 (defmethod parse-domain-item ((domain simple-pddl-domain) (item-key (eql ':action)) item)
-   (let ((op-name (second item)))
-     ;; do some nasty voodoo to give PDDL actions names like SHOP3
-     ;; operators [2006/07/31:rpg]
-     (unless (eql (elt (symbol-name op-name) 0) #\!)
-       (setf op-name (intern (concatenate 'string
-                                          "!" (symbol-name op-name))
-                             (symbol-package op-name)
-                             ))
+  (let ((op-name (second item)))
+    ;; do some nasty voodoo to give PDDL actions names like SHOP3
+    ;; operators [2006/07/31:rpg]
+    (unless (eql (elt (symbol-name op-name) 0) #\!)
+      (setf op-name (intern (concatenate 'string
+                                         "!" (symbol-name op-name))
+                            (symbol-package op-name)
+                            ))
 ;;;      (format t "~&Making new SHOP3 operator name ~S from old name ~S.~%"
 ;;;           op-name (second item))
-       (setf (second item) op-name))
-     (with-slots (operators) domain
-       (when (gethash op-name operators)
-         (error "There is more than one operator named ~s" op-name))
-       (setf (gethash op-name operators) (process-action domain item)))))
+      (setf (second item) op-name))
+    (with-slots (operators) domain
+      (when (gethash op-name operators)
+        (error "There is more than one operator named ~s" op-name))
+      (setf (gethash op-name operators) (process-action domain item)))))
 
 ;;; default method so we don't try to parse constructs inappropriately
 (defmethod parse-domain-item ((domain domain) (item-key (eql :pddl-method)) item)
@@ -353,6 +443,19 @@ later be compiled into find-satisfiers or something."
   (when (typep domain 'pddl-typing-mixin)
     (warn "Haven't yet implemented function type checking."))
   (values))
+
+
+;;;---------------------------------------------------------------------------
+;;; Default methods to help debug
+;;;---------------------------------------------------------------------------
+(defmethod parse-domain-item (domain (item-key (eql ':functions)) item)
+  (declare (ignorable item))
+  (error "Domain of type ~s does not support functions (metric fluents). You need a domain including FLUENTS-MIXIN" (type-of domain)))
+
+(defmethod parse-domain-item (domain (item-key (eql ':derived)) item)
+  (declare (ignorable item))
+  (error "Domain of type ~s does not support derived predicates. You need a domain including DERIVED-PREDICATES-MIXIN" (type-of domain)))
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Requirements
@@ -396,50 +499,22 @@ later be compiled into find-satisfiers or something."
                           :cost-fun cost)))))
 
 ;;;---------------------------------------------------------------------------
-;;; Additional generic functions, used to tailor the translation of
-;;; PDDL actions into SHOP3 syntax.  The different PDDL constructs are
-;;; gated by PDDL requirements flags, which are represented as mixins
-;;; in PDDL domains.
+;;; Translate-effect
 ;;;---------------------------------------------------------------------------
-(defgeneric translate-precondition (domain expression)
-  (:documentation
-   "This generic function is used to translate PDDL-style preconditions
+
+
+(defun translate-effect (domain effect)
+  "Translate PDDL-style effects
 into SHOP3-style syntax.  The rewriting is done based on the domain so
-that different syntax features can be turned on and off."))
-
-(defgeneric translate-effect (domain expression)
-  (:documentation
-   "This generic function is used to translate PDDL-style effects
-into SHOP3-style syntax.  The rewriting is done based on the domain so
-that different syntax features can be turned on and off."))
-
-;;;---------------------------------------------------------------------------
-;;; Methods for translate-effect
-;;;---------------------------------------------------------------------------
-
-
-(defmethod translate-effect ((domain simple-pddl-domain) effect)
-  "Basis method for translating a PDDL effect into SHOP3 syntax is
-to just leave it alone."
+that different syntax features can be turned on and off."
+  ;; because of the way translate-metric-updates is written,
+  ;; the fluent rewrites must be done before the conditional effects
+  ;; rewrites
+  (when (typep domain 'fluents-mixin)
+    (setf effect (translate-metric-updates domain effect)))
+  (when (typep domain 'conditional-effects-mixin)
+    (setf effect (translate-pddl-quantifier effect 'forall domain)))
   effect)
-
-(defmethod translate-effect ((domain conditional-effects-mixin) effect)
-  "This method translates any forall expressions in a PDDL effect into the
-slightly-different SHOP3 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  ;;; FIXME: don't we need to translate existential variables, as well?
-  (let ((new-effect (translate-pddl-quantifier effect 'forall domain)))
-    (call-next-method domain new-effect)))
-
-;;; this is done as an :around method because it must be done before any
-;;; other translations change processing of the action...
-(defmethod translate-effect :around ((domain fluents-mixin) effect)
-  "This method translates any metric effects into updates using ASSIGN-FLUENT.
-It then invokes the next method, to insure that all the other
-PDDL - SHOP3 constructs are translated."
-  (let ((new-effect (translate-metric-updates domain effect)))
-    (call-next-method domain new-effect)))
 
 (defun translate-metric-updates (domain expression)
   (labels ((iter (expr)
@@ -478,33 +553,20 @@ PDDL - SHOP3 constructs are translated."
     (iter expression)))
 
 ;;;---------------------------------------------------------------------------
-;;; Methods for translate-precondition
+;;; Translate-Precondition
 ;;;---------------------------------------------------------------------------
 
-(defmethod translate-precondition ((domain simple-pddl-domain) expression)
-  "Basis method for translating a PDDL precondition into SHOP3 syntax is
-to just leave it alone."
+(defun translate-precondition (domain expression)
+  "Translate PDDL-style preconditions
+into SHOP3-style syntax.  The rewriting is done based on the domain so
+that different syntax features can be turned on and off."
+  (when (typep domain 'fluents-mixin)
+    (setf expression (translate-fluent-precond domain expression)))
+  (when (typep domain 'existential-preconditions-mixin)
+    (setf expression (translate-pddl-quantifier expression 'exists domain)))
+  (when (typep domain 'universal-preconditions-mixin)
+    (setf expression (translate-pddl-quantifier expression 'forall domain)))
   expression)
-
-(defmethod translate-precondition ((domain universal-preconditions-mixin) expression)
-  "This method translates any forall expressions in a PDDL precondition into the
-slightly-different SHOP3 FORALL syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'forall domain)))
-    (call-next-method domain new-expr)))
-
-(defmethod translate-precondition ((domain existential-preconditions-mixin) expression)
-  "This method translates any exists expressions in a PDDL precondition into the
-slightly-different SHOP3 EXISTS syntax.
-It then invokes the next method, to insure that all PDDL - SHOP3 constructs are
-translated."
-  (let ((new-expr (translate-pddl-quantifier expression 'exists domain)))
-    (call-next-method domain new-expr)))
-
-(defmethod translate-precondition :around ((domain fluents-mixin) expression)
-  (let ((new-expr (translate-fluent-precond domain expression)))
-    (call-next-method domain new-expr)))
 
 (defun translate-fluent-precond (domain expression)
   "Find the fluent comparison expressions in EXPRESSION and rewrite them
@@ -522,6 +584,8 @@ the theorem-prover."
                    ((and (listp expr) (symbolp (first expr)))
                     (case (first expr)
                       ((and or not imply) `(,(first expr) ,@(mapcar #'iter (rest expr))))
+                      ;; this *must be invoked* before the rewriting of PDDL quantification into
+                      ;; SHOP quantification.
                       ((exists forall)
                        (destructuring-bind (quant vars body) expr
                          `(,quant ,vars ,(iter body))))
@@ -564,10 +628,13 @@ the theorem-prover."
 ;;; Helper functions
 ;;;---------------------------------------------------------------------------
 
+;;; FIXME: This will not work if this is not a typed-domain...
 (defun translate-pddl-quantifier (expression quantifier &optional (domain *domain*))
   "Translate EXPRESSION from PDDL quantifier \(forall and exists\) notation
 into SHOP3 quantifier notation \(and adds some
 \(<type> <var>\) conditions\)."
+  (unless (typep domain 'pddl-typing-mixin)
+    (error "PDDL quantifier translation will not work properly without typing."))
   (labels ((iter (expr)
              (cond ((and (listp expr) (eq (first expr) quantifier))
                     (rewrite-quant expr))
@@ -581,11 +648,11 @@ into SHOP3 quantifier notation \(and adds some
                (multiple-value-bind (vars types)
                    (typed-list-vars typed-list domain)
                  `(,quantifier ,vars
-                          ,(let ((exprs (of-type-exprs vars types)))
-                             (if (= (length exprs) 1)
-                                 (first exprs)
-                                 (cons 'and exprs)))
-                          ,(iter sub-expr))))))
+                               ,(let ((exprs (of-type-exprs vars types)))
+                                  (if (= (length exprs) 1)
+                                      (first exprs)
+                                      (cons 'and exprs)))
+                               ,(iter sub-expr))))))
     (iter expression)))
 
 (defun of-type-exprs (vars types)
@@ -866,11 +933,11 @@ set of dependencies."
                           (shopthpr:find-satisfiers (list fluent-goal) state
                                                     :level (1+ depth)
                                                     :just-one t :domain domain)
-                        (assert unifiers ()
-                                "Unable to find current value for ~s in fluent update"
-                                fluent-function)
-                        (setf new-deps (first deps))
-                        (apply-substitution '?value (first unifiers)))))
+                        (if unifiers
+                            (progn
+                             (setf new-deps (first deps))
+                             (apply-substitution '?value (first unifiers)))
+                            :undef))))
         (let* ((update-val (cond ((fluent-expr-p domain new-value-expr)
                                   (multiple-value-bind (unifiers deps)
                                       (shopthpr:find-satisfiers `(f-exp-value ,new-value-expr ?val)
@@ -901,8 +968,9 @@ set of dependencies."
           (values
            ;; add the new value to the adds
            (list `(fluent-value ,fluent-function ,new-val))
-           ;; delete old value
-           (list `(fluent-value ,fluent-function ,old-val))
+           ;; delete old value if one is defined
+           (unless (eq old-val :undef)
+             (list `(fluent-value ,fluent-function ,old-val)))
            new-deps))))))
 
 

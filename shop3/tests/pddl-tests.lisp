@@ -64,6 +64,8 @@
 
 (fiveam:def-suite* short-pddl-tests :in pddl-tests)
 
+(fiveam:def-suite derived-predicates :in pddl-tests)
+
 (fiveam:def-fixture simple-pddl-actions ()
   (let ((action-def '(:action drive
                       :parameters (?v - vehicle
@@ -408,6 +410,28 @@
                                   (facing ?a ?d2))
                                 )
                                )))))))
+
+(defclass dp-metric-domain (fluents-mixin adl-domain derived-predicates-mixin
+                            pddl-typing-mixin)
+  ())
+
+(fiveam:test quantified-precondition-translation
+  (let ((domain (make-instance 'dp-metric-domain)))
+    (setf (slot-value domain 'pddl-types)
+          '(inode-block-type tty-buffer-type attacker-block other-block
+                  block int object))
+    (fiveam:is
+     (equalp
+      '(forall (?other-block)
+        (attacker-block ?other-block)
+        (and (not (block-sequenced ?block ?other-block))
+         (not (block-sequenced ?other-block ?block)))
+        )
+      (translate-pddl-quantifier '(forall (?other-block - attacker-block)
+                                   (and (not (block-sequenced ?block ?other-block))
+                                    (not (block-sequenced ?other-block ?block)))
+                                   )
+                                 'forall domain)))))
 
 (fiveam:def-fixture simple-when-fixtures ()
   (progn
@@ -1891,3 +1915,590 @@
    (with-fixture openstacks-domain (nil)
      (is-true
       (find-domain 'openstacks-sequencedstrips-ADL)))))
+
+(in-package :shop-user)
+
+;;; test derived predicate handling
+(fiveam:test (strip-types :suite shop3::derived-predicates)
+  (let ((arglist (rest '(block-sequenced ?b1 ?b2 - block))))
+    (let ((pddl-utils:*pddl-package* (find-package :shop-user)))
+      (fiveam:is
+       (equalp
+        '(?b1 - block ?b2 - block)
+        (pddl-utils:canonicalize-types arglist))))
+    (multiple-value-bind (vars constraints)
+        (shop3::strip-types arglist)
+      (fiveam:is (alexandria:set-equal '(?b1 ?b2) vars)
+                 (alexandria:set-equal '((block ?b1) (block ?b2))
+                                       constraints)))))
+
+;;; need to put `fluents-mixin` first so that it is correctly more specific than
+;;; the other mixins.  That's gross.
+(defclass dp-metric-domain (fluents-mixin adl-domain derived-predicates-mixin
+                            pddl-typing-mixin)
+  ())
+
+(fiveam:test (translate-dp-head :suite shop3::derived-predicates)
+  (multiple-value-bind (literal constraints)
+   (shop3::translate-atomic-formula-skeleton (make-instance 'dp-metric-domain)
+                                      '(block-sequenced ?b1 ?b2 - block))
+    (fiveam:is (equalp '(block-sequenced ?b1 ?b2) literal))
+    (fiveam:is (alexandria:set-equal '((block ?b1) (block ?b2)) constraints
+                                     :test 'equalp)))
+  (multiple-value-bind (literal constraints)
+   (shop3::translate-atomic-formula-skeleton (make-instance 'dp-metric-domain)
+                                             '(ace2-used))
+    (fiveam:is (equalp '(ace2-used) literal))
+    (fiveam:is (null constraints))))
+
+(fiveam:test (translate-dp-body :suite shop3::derived-predicates)
+  (let* ((def
+         '(:derived (contains-block ?container ?contained - block)
+                   (and
+                    (<=
+                     (addr ?container)
+                     (addr ?contained))
+                    (<= (+ (addr ?contained) (block-size ?contained))
+                        (+ (addr ?container) (block-size ?container))))))
+         (body (third def)))
+    (fiveam:is
+     (equalp
+      (list body)
+      (shop3::translate-antecedents body)))))
+
+(fiveam:test (translate-dp :suite shop3::derived-predicates)
+  (let ((def
+         '(:derived (contains-block ?container ?contained - block)
+                   (and
+                    (<=
+                     (addr ?container)
+                     (addr ?contained))
+                    (<= (+ (addr ?contained) (block-size ?contained))
+                        (+ (addr ?container) (block-size ?container)))))))
+    (fiveam:is
+     (equalp
+      '(:- (contains-block ?container ?contained)
+        ((and
+          (block ?container)
+          (block ?contained)
+          (and
+           (<=
+            (addr ?container)
+            (addr ?contained))
+           (<= (+ (addr ?contained) (block-size ?contained))
+            (+ (addr ?container) (block-size ?container)))))))
+      (shop3::translate-derived-predicate (make-instance 'dp-metric-domain) def)))))
+
+(fiveam:def-fixture metric-items ()
+  (progn
+    (let ((*define-silently* t))
+     (defdomain (test-metric-and-derived-predicates :type dp-metric-domain)
+         (
+          (:method (control-block)
+            block-exists
+            ((memory-mapped ?block)
+             (next-block ?next-block))
+            ((!ace2 ?block ?next-block))
+            block-does-not-exist
+            ((block ?block))
+            ((!place-memory-block ?block)
+             (control-block))
+            )
+          (:requirements :adl :fluents :derived-predicates)
+          (:types inode-block-type tty-buffer-type attacker-block other-block - block
+                  block int - object)
+          (:constants  zero one - int)
+          ;; in general, we provide/maintain the starting address/offset and size, and compute the rest as needed
+          (:functions  (addr ?b - block)
+                       (block-size ?b - block)
+                                        ; needed to produce NEW addresses for allocated blocks
+                       (heap-pointer) ; pointer to the address at the top of the heap (grows up)
+                                        ; I'd like the inode depth to be a fluent, but I don't know how to decide how to change it then
+                                        ;(inode-depth ?ib - block) ; data_tree_depth field of inode block
+                       ;; some constant functions for fixed size data elements
+                                        ; offset into an inode block to the data-tree-depth
+                       (inode-depth-offset)
+                                        ; size of the inode data-tree-depth
+                       (inode-depth-size)
+                                        ; offset into a tty block to the flags
+                       (tty-flags-offset)
+                                        ; size of the tty flags
+                       (tty-flags-size)
+                                        ; if you overflow the tty buffer, how far
+                                        ; into adjacent memory can you write?
+                       (tty-heap-buffer-bound)
+                                        ; offset into the fake attack structure to reach its weak point
+                       (weak-point-offset)
+                                        ; size of the weak point
+                       (weak-point-size)
+                                        ; offset off the end of the fake attack structure where it modifies memory
+                       (attack-structure-start-offset)
+                                        ; how far into that region the attacker can use the fake attack structure to modify
+                       (attack-structure-range)
+                       ;; a counter for the number of 'real' exploits performed so we do more than just ace2
+                       ;; a 'real' exploit increases the amount of memory the attacker controls
+                       (real-exploits)
+                       )
+          (:predicates (attacker-controls ?b - block)
+                       (memory-mapped ?b - block)
+                       (ace2-used)
+                       (inode-depth ?ib - inode-block-type ?depth - int)
+                       ;; use a "block-names" queue for naming the locations the attacker controls
+                       ;; since we can't just create new floating variables otherwise
+                       (next-block ?b - block)
+                       (block-sequenced ?b1 ?b2 - block)
+                       ;; if attacker controls ?attacker, then they control
+                       ;; ?defender (because it's the same block or contained).
+                       (control-block ?attacker ?defender - block)
+                       (contains-block ?container ?contained - block)
+                       )
+
+          ;; we assume the inodes, ttys, etc. are pre-allocated with a size
+          ;; this places them in memory at a new address using a naive memory allocator
+          ;; FIXME we may want to be able to allocate at non-sequential addresses
+          (:action place-memory-block
+           :parameters (?block - block)
+           :precondition (and (not (memory-mapped ?block))
+                              ;; (to be) attacker-controlled blocks aren't real blocks
+                              (forall (?other-block - attacker-block)
+                                      (and (not (block-sequenced ?block ?other-block))
+                                           (not (block-sequenced ?other-block ?block)))
+                                      )
+                              )
+           :effect (and (assign (addr ?block) (heap-pointer))
+                        (increase (heap-pointer) (block-size ?block))
+                        (memory-mapped ?block)
+                        )
+           )
+
+          ;; this really should allow us to control arbitrary addresses, but we can't quantify over those
+          ;; so we only allow for control over the bounds of already-allocated blocks of memory
+          (:action ace2
+           :parameters (?block - block
+                               ?new-control-block - attacker-block)
+           :precondition (and (not (ace2-used))
+                              (next-block ?new-control-block)
+                              (memory-mapped ?block))
+           :effect (and (ace2-used)
+                                        ; update the queue
+                        (not (next-block ?new-control-block))
+                        (forall (?later-control-block - attacker-block)
+                                (when (block-sequenced ?new-control-block ?later-control-block)
+                                  (next-block ?later-control-block))
+                                )
+                        (attacker-controls ?new-control-block)
+                        (assign (addr ?new-control-block) (addr ?block))
+                        (assign (block-size ?new-control-block) (block-size ?block))
+                        )
+           )
+
+          (:action heap-overflow-tty-buffer
+           :parameters (?ttybuf - tty-buffer-type
+                                ?control-block ?new-control-block - attacker-block) ;?later-control-block - block
+           :precondition (and (memory-mapped ?ttybuf)
+                              (attacker-controls ?control-block)
+                              ;; access the queue to name the new region the attacker obtains control over
+                              (next-block ?new-control-block)
+                                        ;(block-sequenced ?new-control-block ?later-control-block)
+                              ;; contains ?control-block "?tty-flags"
+                              ;; i.e., cb-start <= tty-flag-start <= tty-flag-end <= cb-end
+                              ;; the inner <= is assumed (and holds as long as tty-flag-size >= 0)
+                              (or (= ?control-block ?ttybuf)
+                                  (and
+                                   (<=
+                                    (addr ?control-block)
+                                    (+ (addr ?ttybuf) (tty-flags-offset))
+                                    )
+                                   (<= (+ (addr ?ttybuf)
+                                          (+ (tty-flags-offset) (tty-flags-size)))
+                                       (+ (addr ?control-block) (block-size ?control-block))
+                                       )))
+                              )
+           :effect (and (not (next-block ?new-control-block))
+                        ;; update the queue
+                        (forall (?later-control-block - attacker-block)
+                                (when (block-sequenced ?new-control-block ?later-control-block)
+                                  (next-block ?later-control-block))
+                                )
+                                        ;(next-block ?later-control-block)
+                        ;; the attacker now controls the region from succ(tty-end) to succ(tty-end) + overflow-length
+                        (assign (addr ?new-control-block)
+                                (+ (addr ?ttybuf)
+                                   (block-size ?ttybuf)))
+                        (assign (block-size ?new-control-block) (tty-heap-buffer-bound))
+                        (attacker-controls ?new-control-block)
+                        ;; since the attacker now controls the overflowed memory region
+                        (increase (real-exploits) 1)
+                        ))
+
+          (:action write-inode-depth
+           :parameters (?inode-block - inode-block-type
+                                     ?control-block - attacker-block
+                                     ?desired-depth - int)
+           ;; IF the process is running, the process has control of a space
+           ;; bounded betweeen ?control-lb and ?control-ub and the inode block's depth field
+           ;; is wholly contained in the controlled area.
+           :precondition (and (memory-mapped ?inode-block)
+                              (attacker-controls ?control-block)
+                              ;; contains ?control-block "?inode-data-tree-depth"
+                              ;; i.e., cb-start <= inode-depth-start <= inode-depth-end <= cb-end
+                              ;; the inner <= is assumed (and holds as long as inode-depth-size >= 0)
+                              (control-block ?control-block ?inode-block))
+           ;; THEN we write the desired depth into the inode block
+           :effect (and
+                    (forall (?depth - int)
+                            (when (inode-depth ?inode-block ?depth)
+                              (not (inode-depth ?inode-block ?depth))))
+                    (inode-depth ?inode-block ?desired-depth)
+                                        ; since the attacker now controls arbitrary memory through the file
+                    (increase (real-exploits) 1)
+                    )
+           )
+
+          (:action fake-attack-memory
+           :parameters (?attack-structure - other-block
+                                          ?control-block ?new-control-block - attacker-block
+                                          )
+           :precondition (and (memory-mapped ?attack-structure)
+                              (attacker-controls ?control-block)
+                              (next-block ?new-control-block)
+                              ;; contains ?control-block "attack-structure-weak-point"
+                              ;; i.e., cb-start <= weak-point-start <= weak-point-end <= cb-end
+                              ;; the inner <= is assumed (and holds as long as weak-point-size >= 0)
+                              (control-block ?control-block ?attack-structure))
+           ;; update the queue
+           :effect (and (not (next-block ?new-control-block))
+                        (forall (?later-control-block - attacker-block)
+                                (when (block-sequenced ?new-control-block ?later-control-block)
+                                  (next-block ?later-control-block))
+                                )
+                                        ;(next-block ?later-control-block)
+                        ;; the attacker now controls a region at distance specified by the attack-structure
+                        (assign (addr ?new-control-block)
+                                (+ (addr ?attack-structure)
+                                   (+ (block-size ?attack-structure)
+                                      (attack-structure-start-offset)
+                                      )))
+                        (assign (block-size ?new-control-block) (attack-structure-range))
+                        (attacker-controls ?new-control-block)
+                        ;; since the attacker now controls the attacked memory region
+                        (increase (real-exploits) 1)
+                        )
+           )
+
+          ;; does ?attacker -- a block controlled by the attacker usually
+          ;; control, by means of enclosure, ?defender
+          (:derived (control-block ?attacker ?defender - block)
+                    (or (= ?attacker ?defender)
+                        (contains-block ?attacker ?defender)))
+
+          (:derived (contains-block ?container ?contained - block)
+                    (and
+                     (<=
+                      (addr ?container)
+                      (addr ?contained))
+                     (<= (+ (addr ?contained) (block-size ?contained))
+                         (+ (addr ?container) (block-size ?container)))))
+
+
+          )))
+     (let ((domain *domain*)
+           (problem (make-problem '(test-metric-and-derived-predicates-problem
+                                    :redefine-ok t
+                                    :silently t)
+                                  'test-metric-and-derived-predicates
+                                  `(
+                                    ;; translation of type declarations
+                                    (tty-buffer-type tty-buf)
+                                    (inode-block-type inode)
+                                    (attacker-block block1)
+                                    (attacker-block block2)
+                                    (attacker-block block3)
+                                    (attacker-block block4)
+                                    (attacker-block block5)
+                                    ,@(loop :for b :in '(block1 block2 block3 block4 block5)
+                                            :appending `((= (block-size ,b) -1)(= (addr ,b) -1)))
+                                    (= (heap-pointer) 0)
+                                    (= (real-exploits) 0)
+                                        ; facts about ttys and inodes (basically made-up numbers)
+                                    (= (addr inode) -1)
+                                    (= (tty-flags-offset) 4)
+                                    (= (tty-flags-size) 16)
+                                    (= (tty-heap-buffer-bound) 4)
+                                    (= (inode-depth-offset) 0)
+                                    (= (inode-depth-size) 4)
+                                        ; information for particular blocks (also basically made-up numbers)
+                                    (= (block-size tty-buf) 64)
+                                    (= (block-size inode) 64)
+                                        ; initialize the queue of attacker-controlled ranges
+                                    (next-block block1)
+                                    (block-sequenced block1 block2)
+                                    (block-sequenced block2 block3)
+                                    (block-sequenced block3 block4)
+                                    (block-sequenced block4 block5)
+                                    )
+                                  '(control-block)))
+           ;; this variant of the problem does not have total
+           ;; numeric fluent representation
+           (partial-problem (make-problem '(test-metric-and-derived-predicates-problem-partial-state
+                                            :redefine-ok t
+                                            :silently t)
+                                          'test-metric-and-derived-predicates
+                                          `(
+                                            ;; translation of type declarations
+                                            (tty-buffer-type tty-buf)
+                                            (inode-block-type inode)
+                                            (attacker-block block1)
+                                            (attacker-block block2)
+                                            (attacker-block block3)
+                                            (attacker-block block4)
+                                            (attacker-block block5)
+                                            (= (heap-pointer) 0)
+                                            ;; (= (real-exploits) 0)
+                                        ; facts about ttys and inodes (basically made-up numbers)
+                                            (= (tty-flags-offset) 4)
+                                            (= (tty-flags-size) 16)
+                                            (= (tty-heap-buffer-bound) 4)
+                                            (= (inode-depth-offset) 0)
+                                            (= (inode-depth-size) 4)
+                                        ; information for particular blocks (also basically made-up numbers)
+                                            (= (block-size tty-buf) 64)
+                                            (= (block-size inode) 64)
+                                        ; initialize the queue of attacker-controlled ranges
+                                            (next-block block1)
+                                            (block-sequenced block1 block2)
+                                            (block-sequenced block2 block3)
+                                            (block-sequenced block3 block4)
+                                            (block-sequenced block4 block5)
+                                            )
+                                          '(control-block))))
+       (&body))))
+
+(fiveam:test translated-fluent-metric-domain ()
+  (fiveam:with-fixture metric-items ()
+    (fiveam:is-true (typep domain 'existential-preconditions-mixin))
+    (fiveam:is-true (typep domain 'universal-preconditions-mixin))
+    (let ((act (shop::operator domain '!place-memory-block)))
+      (fiveam:is-true act)
+      (fiveam:is-true (shop3::pddl-action-p act))
+      ;; no op, the rest of the test doesn't matter...
+      (when act
+        (let ((precond (shop3::pddl-action-precondition act)))
+          (fiveam:is
+           (equalp
+            '(AND (AND (ENFORCE (BLOCK ?BLOCK)
+                        "Parameter ~a unbound or ill-typed. Should be ~a" '?BLOCK
+                        'BLOCK))
+              (AND (NOT (MEMORY-MAPPED ?BLOCK))
+               (FORALL (?OTHER-BLOCK)
+                (ATTACKER-BLOCK ?other-block)
+                (AND (NOT (BLOCK-SEQUENCED ?BLOCK ?OTHER-BLOCK))
+                 (NOT (BLOCK-SEQUENCED ?OTHER-BLOCK ?BLOCK))))))
+            precond))
+          (values))))))
+
+(fiveam:test expand-fluents-initial-state ()
+  (fiveam:with-fixture metric-items ()
+    (let* ((state (shop3cmn:make-initial-state domain :mixed (shop.common:state-atoms problem)))
+           (atoms (state-atoms state))
+           (expected
+             `((TTY-BUFFER-TYPE TTY-BUF)
+               (INODE-BLOCK-TYPE INODE)
+               (shopthpr::fluent-value (ADDR INODE) -1)
+               ,@(loop :for b :in '(block1 block2 block3 block4 block5)
+                       :appending `((shopthpr::fluent-value (addr ,b) -1)
+                                    (shopthpr::fluent-value (block-size ,b) -1)
+                                    (attacker-block ,b)))
+               (shopthpr::fluent-value (HEAP-POINTER) 0)
+               (shopthpr::fluent-value (REAL-EXPLOITS) 0)
+               (shopthpr::fluent-value (TTY-FLAGS-OFFSET) 4)
+               (shopthpr::fluent-value (TTY-FLAGS-SIZE) 16)
+               (shopthpr::fluent-value (TTY-HEAP-BUFFER-BOUND) 4)
+               (shopthpr::fluent-value (INODE-DEPTH-OFFSET) 0)
+               (shopthpr::fluent-value (INODE-DEPTH-SIZE) 4)
+               (shopthpr::fluent-value (BLOCK-SIZE TTY-BUF) 64)
+               (shopthpr::fluent-value (BLOCK-SIZE INODE) 64)
+               (NEXT-BLOCK BLOCK1)
+               (BLOCK-SEQUENCED BLOCK1 BLOCK2)
+               (BLOCK-SEQUENCED BLOCK2 BLOCK3)
+               (BLOCK-SEQUENCED BLOCK3 BLOCK4)
+               (BLOCK-SEQUENCED BLOCK4 BLOCK5)
+               ;; imported from domain
+               (int one) (int zero)
+               )))
+      (fiveam:is
+       (alexandria:set-equal
+        expected
+        atoms
+        :test 'equalp)
+       ;; reason-args
+       "Expanded state atoms not as expected:~@[~%~TUnexpected:~{~%~T~T~A~}~%~]
+         ~@[~%~TExpected but not found:~{~%~T~T~A~}~%~]"
+       (set-difference atoms expected :test 'equalp)
+       (set-difference expected atoms :test 'equalp)))))
+
+(fiveam:test expand-fluents-partial-initial-state ()
+  (fiveam:with-fixture metric-items ()
+    (let* ((state (shop3cmn:make-initial-state domain :mixed (shop.common:state-atoms partial-problem)))
+           (atoms (state-atoms state))
+           (expected
+             `((TTY-BUFFER-TYPE TTY-BUF)
+               (INODE-BLOCK-TYPE INODE)
+               ,@(loop :for b :in '(block1 block2 block3 block4 block5)
+                       :appending `((attacker-block ,b)))
+               (shopthpr::fluent-value (HEAP-POINTER) 0)
+               (shopthpr::fluent-value (TTY-FLAGS-OFFSET) 4)
+               (shopthpr::fluent-value (TTY-FLAGS-SIZE) 16)
+               (shopthpr::fluent-value (TTY-HEAP-BUFFER-BOUND) 4)
+               (shopthpr::fluent-value (INODE-DEPTH-OFFSET) 0)
+               (shopthpr::fluent-value (INODE-DEPTH-SIZE) 4)
+               (shopthpr::fluent-value (BLOCK-SIZE TTY-BUF) 64)
+               (shopthpr::fluent-value (BLOCK-SIZE INODE) 64)
+               (NEXT-BLOCK BLOCK1)
+               (BLOCK-SEQUENCED BLOCK1 BLOCK2)
+               (BLOCK-SEQUENCED BLOCK2 BLOCK3)
+               (BLOCK-SEQUENCED BLOCK3 BLOCK4)
+               (BLOCK-SEQUENCED BLOCK4 BLOCK5)
+               ;; imported from domain
+               (int one) (int zero)
+               )))
+      (fiveam:is
+       (alexandria:set-equal
+        expected
+        atoms
+        :test 'equalp)
+       ;; reason-args
+       "Expanded state atoms not as expected:~@[~%~TUnexpected:~{~%~T~T~A~}~%~]
+         ~@[~%~TExpected but not found:~{~%~T~T~A~}~%~]"
+       (set-difference atoms expected :test 'equalp)
+       (set-difference expected atoms :test 'equalp)))))
+
+(fiveam:test test-shop-plan-fluents-and-dps ()
+  (fiveam:with-fixture metric-items ()
+    (let ((retval (find-plans-stack problem :domain domain)))
+      (fiveam:is-true retval)
+      (when retval
+        (fiveam:is-true
+         (or
+          (equalp
+           '((!place-memory-block inode)
+             (!ace2 inode block1))
+           (shorter-plan
+            (first retval)))
+          (equalp
+           '((!place-memory-block tty-buf)
+             (!ace2 tty-buf block1))
+           (shorter-plan
+            (first retval)))))))
+    (let ((retval (find-plans-stack partial-problem :domain domain)))
+      (fiveam:is-true retval)
+      (when retval
+        (fiveam:is-true
+         (or
+          (equalp
+           '((!place-memory-block inode)
+             (!ace2 inode block1))
+           (shorter-plan
+            (first retval)))
+          (equalp
+           '((!place-memory-block tty-buf)
+             (!ace2 tty-buf block1))
+           (shorter-plan
+            (first retval)))))))))
+
+(fiveam:test test-quantified-fluent-effect-rewriting ()
+  (fiveam:with-fixture metric-items ()
+    (fiveam:is-true (typep domain 'conditional-effects-mixin))
+    (let* ((act-def '(:action ace2
+                      :parameters (?block - block
+                                   ?new-control-block - attacker-block)
+                      :precondition (and (not (ace2-used))
+                                     (next-block ?new-control-block)
+                                     (memory-mapped ?block))
+                      :effect (and (ace2-used)
+                                        ; update the queue
+                               (not (next-block ?new-control-block))
+                               (forall (?later-control-block - attacker-block)
+                                (when (block-sequenced ?new-control-block ?later-control-block)
+                                  (next-block ?later-control-block))
+                                )
+                               (attacker-controls ?new-control-block)
+                               (assign (addr ?new-control-block) (addr ?block))
+                               (assign (block-size ?new-control-block) (block-size ?block))
+                               )
+                      ))
+           (effect-expr (second (member :effect act-def)))
+           (expected
+             '(and (ace2-used)
+               ;; update the queue
+               (not (next-block ?new-control-block))
+               (forall (?later-control-block)
+                (attacker-block ?later-control-block)
+                (when (block-sequenced ?new-control-block ?later-control-block)
+                  (next-block ?later-control-block)))
+               (attacker-controls ?new-control-block)
+               (shop::fluent-update assign (addr ?new-control-block) (addr ?block))
+               (shop::fluent-update assign (block-size ?new-control-block) (block-size ?block))
+
+               ))
+           (actual (shop::translate-effect domain effect-expr)))
+      (fiveam:is
+       (equalp expected actual)
+       "Mismatch between expected effect expression:~%~{~%~T~T~A~}~%
+        and actual:~%~{~%~T~T~A~}~%"
+       expected actual))))
+
+;;; check to make sure updates happen properly in partially specified problems
+;;; i.e., states that have some undefined metric fluents
+(fiveam:test fluent-metric-updates ()
+  (fiveam:with-fixture metric-items ()
+    ;; this action application should succeed, because it sets a numeric fluent
+    ;; that is undefined, but does not read it.
+    (let ((init-state (shop3cmn:make-initial-state domain :mixed
+                                                   (shop::problem-state partial-problem))))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(!place-memory-block inode)
+                                  (shop::operator domain '!place-memory-block)
+                                  nil 0 nil)))
+        (fiveam:is-false
+         (eq applied 'fail))
+        (fiveam:is-true
+         (query '((shop.theorem-prover::fluent-value (addr inode) 0))
+                init-state ;; destructively modified
+                :just-one t))
+        (fiveam:is-false
+         (query '((shop.theorem-prover::fluent-value (addr tty-buf) ?X))
+                init-state ;; destructively modified
+                :just-one t))))
+    ;; this action application should fail, because it increments (real-exploits),
+    ;; which is undefined.
+    (let ((init-state (shop3cmn:make-initial-state domain :mixed
+                                                   (shop::problem-state partial-problem))))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(!place-memory-block tty-buf)
+                                  (shop::operator domain '!place-memory-block)
+                                  nil 0 nil)))
+        (fiveam:is-false
+         (eq applied 'fail))
+        (fiveam:is-true
+         (query '((memory-mapped tty-buf))
+                init-state ;; destructively modified
+                :just-one t))
+        (fiveam:is-false
+         (query '((shop.theorem-prover::fluent-value (real-exploits) ?X))
+                init-state ;; destructively modified
+                :just-one t)))
+      (shop2.common:add-atom-to-state '(attacker-controls tty-buf) init-state 0 'faux-operator)
+      (fiveam:is-true
+       (query '((attacker-controls tty-buf) (next-block block1))
+                init-state ;; destructively modified
+                :just-one t))
+      (let ((applied
+              (shop::apply-action domain init-state
+                                  '(heap-overflow-tty-buffer tty-buf tty-buf block1)
+                                  (shop::operator domain '!heap-overflow-tty-buffer)
+                                  nil 0 nil)))
+        (fiveam:is
+         (eq 'fail applied))))))
