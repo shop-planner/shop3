@@ -62,11 +62,11 @@
 (defvar *domain* nil
   "Default domain to use when planning.")
 
-(defvar *record-dependencies-p* NIL
+(defvar *record-dependencies-p* nil
   "Do we record dependencies when we find literals in the theorem
 prover.  If so, see *LITERALS* and *ESTABLISHERS*.")
 
-(defvar *optimize-first-retrieval* NIL
+(defvar *optimize-first-retrieval* nil
   "In some cases we can optimize solutions to :FIRST to find only
 the first match.")
 
@@ -170,7 +170,7 @@ function!  Instead, please use the def-logical-keyword macro.")
     :reader static-preds
     :initform nil
     ))
-  (:documentation "Add this to domain classes that should have 
+  (:documentation "Add this to domain classes that should have
 static predicates defined."))
 
 
@@ -266,7 +266,7 @@ warnings, errors, etc.")
   (:report (lambda (condition stream)
              (format stream "We do not have correct logic for computing dependencies for expression ~a. Simply return no new dependencies."
                      (expression condition)))))
-    
+
 
 ;;; used for the internals of IF-THEN-ELSE in the theorem-prover
 (define-condition cut-commit (condition)
@@ -300,5 +300,3 @@ using it to build dependency records in the enhanced plan trees."
     nil)
   (:method ((domain static-predicates-mixin))
     t))
-
-
