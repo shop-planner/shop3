@@ -1,6 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -x
+
+# avoid using Apple's BSDische sed
+if command -v gsed >/dev/null 2>&1; then
+    SED=gsed
+else
+    SED=sed
+fi
 
 # do_tests {lisp invocation} {scripts-regex}
 # - read lisp forms one at a time from standard input
@@ -93,9 +100,9 @@ do_tests() {
       echo "Testing: $i" >&2
       if [ $lisp = "lispworks" ]; then
           DO $command $eval "(setf system:*stack-overflow-behaviour* :warn)" $eval "(load \"$i\")" 2>&1 | \
-            sed "s/^/[$i] /" &
+            ${SED} "s/^/[$i] /" &
       else
-          DO $command $eval "(load \"$i\")" 2>&1 | sed "s/^/[$i] /" &
+          DO $command $eval "(load \"$i\")" 2>&1 | ${SED} "s/^/[$i] /" &
       fi
       test_status["$i"]=$!
     done
