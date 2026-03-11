@@ -64,6 +64,7 @@
 (defpackage :shop3.common
     (:nicknames #:shop3cmn #:shop.common #:shop2.common)
     (:import-from #:alexandria #:if-let)
+    (:shadow #:defvar)
     (:use :common-lisp :shop3.unifier :iterate)
     (:export #:shop-fail #:call
 
@@ -97,8 +98,7 @@
              #:tag-for-action
              #:last-establisher
              #:prepare-state-tag-decoder
-             #:delete-state-tag-decoder 
+             #:delete-state-tag-decoder
              #:make-tag-map
              #:delete-tag-map
              ))
-

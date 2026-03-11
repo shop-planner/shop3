@@ -1,5 +1,5 @@
 ;;;---------------------------------------------------------------------------
-;;; Copyright (c) 2022 Smart Information Flow Technologies, d/b/a SIFT, LLC
+;;; Copyright (c) 2022,2026 Smart Information Flow Technologies, d/b/a SIFT, LLC
 ;;; All rights reserved.
 ;;;
 ;;; This code available under the Mozilla Public License.
@@ -23,6 +23,7 @@
 ;;; History/Bugs/Notes:
 ;;;
 ;;;   [2022/11/22:rpg] Created.
+;;;   [2026/03/10:rpg] Fix handling of *state-tag-map*.
 ;;;
 ;;;---------------------------------------------------------------------------
 
@@ -50,13 +51,15 @@
     new-tag))
 
 (defmethod last-establisher ((st tagged-state) literal)
+  (unless (boundp '*state-tag-map*)
+    (error "Cannot identify establishers without preparing ancillary hash tables.  See PREPARE-STATE-TAG-DECODER."))
   (let* ((negative (eq (first literal) 'not))
          (literal (if negative (second literal) literal)))
     (iter outer (for (tag . updates) in (tagged-state-tags-info st))
       (iter (for update in updates)
         (when (equalp (state-update-literal update) literal)
           (when (or (and negative (member (state-update-action update)
-                                      '(delete redundant-delete) :test 'eq))
+                                          '(delete redundant-delete) :test 'eq))
                     (member (state-update-action update) '(add redundant-add) :test 'eq))
             (if (zerop tag)
                 ;; this case seems never to happen -- the zero tag all
@@ -68,9 +71,9 @@
 
 (defun decode-tag (tag)
   (let ((hash-val (gethash tag *state-tag-map*)))
-       (if hash-val
-           (values-list hash-val)            ;task
-           (error "No action/operator instance stored for state update tag ~A" tag))))
+    (if hash-val
+        (values-list hash-val)          ;task
+        (error "No action/operator instance stored for state update tag ~A" tag))))
 
 (defun tag-for-action (action)
   (or (gethash action *action-to-tag-map*)
@@ -81,8 +84,8 @@
   (setf *action-to-tag-map* (make-hash-table :test 'eq)))
 
 (defun delete-state-tag-decoder ()
-  (setf *state-tag-map* nil
-        *action-to-tag-map* nil))
+  (makunbound '*state-tag-map*)
+  (makunbound '*action-to-tag-map*))
 
 (defun make-tag-map (tag task primitive)
   "Record association of TAG with operator/action instance OPERATOR."
@@ -176,7 +179,7 @@
                depth atom operator)
 ;;;  )
   (let ((in-state-p (atom-in-state-p atom st)))
-    (cond ((and in-state-p *state-tag-map*)
+    (cond ((and in-state-p (boundp '*state-tag-map*))
            (include-in-tag 'redundant-add atom st))
           ((not in-state-p)
            (include-in-tag 'add atom st)
@@ -192,7 +195,7 @@
   (cond ((atom-in-state-p atom st)
          (include-in-tag 'delete atom st)
          (remove-atom atom st))
-        (*state-tag-map*
+        ((boundp '*state-tag-map*)
          (include-in-tag 'redundant-delete atom st))))
 
 ;;; TAGS-INFO is the tags-info list of a tagged-state, TAG is the
