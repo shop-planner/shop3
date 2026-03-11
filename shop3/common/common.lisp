@@ -59,6 +59,18 @@
 (in-package :shop2.common)
 
 (defmacro shop-fail () `'fail)
+(defmacro defvar (name &optional (init-value nil init-value-suppliedp) docstring)
+  "Extended DEFVAR macro.  If the initial value is the symbol :UNBOUND,
+then creates the variable without setting it. This makes it easier
+to add documentation strings to DEFVARs.  Otherwise behaves as CL:DEFVAR."
+  (cond ((and init-value-suppliedp (eq init-value :unbound))
+         `(progn
+            (cl:defvar ,name)
+            (setf (documentation ',name 'variable)
+                  ,docstring)))
+        (init-value-suppliedp
+         `(cl:defvar ,name ,init-value ,docstring))
+        (t `(cl:defvar ,name))))
 
 ;;; [mpelican:20090226.1928CST] domain is no longer defined in shop2.common.
 ;;; Look at shop2.theorem-prover:thpr-domain and shop2:domain.
@@ -98,4 +110,3 @@
 (defparameter *external-access* nil)  ; whether to access external data
 
 (defparameter *attribution-list* nil) ; sources of facts from external access
-
