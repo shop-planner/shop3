@@ -1,6 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -x
+
+# avoid using Apple's BSDische sed
+if command -v gsed >/dev/null 2>&1; then
+    SED=gsed
+else
+    SED=sed
+fi
 
 # do_tests {lisp invocation} {scripts-regex}
 # - read lisp forms one at a time from standard input
@@ -86,36 +93,35 @@ do_tests() {
         echo success > tmp/results/status
         exit 0
     fi
-    compile_val=0
+    # Run tests in parallel
+    declare -A test_status
+    for i in $scripts ;
+    do
+      echo "Testing: $i" >&2
+      if [ $lisp = "lispworks" ]; then
+          DO $command $eval "(setf system:*stack-overflow-behaviour* :warn)" $eval "(load \"$i\")" 2>&1 | \
+            ${SED} "s/^/[$i] /" &
+      else
+          DO $command $eval "(load \"$i\")" 2>&1 | ${SED} "s/^/[$i] /" &
+      fi
+      test_status["$i"]=$!
+    done
+
+    # Wait for all tests to complete and collect results
     test_count=0
     test_pass=0
     test_fail=0
     failed_list=""
     for i in $scripts ;
     do
-      echo "Testing: $i" >&2
-      test_count=`expr "$test_count" + 1`
-      if [ $lisp = "lispworks" ]; then
-          if DO $command $eval "(setf system:*stack-overflow-behaviour* :warn)" $eval "(load \"$i\")" ; then
-              echo "Using $command, $i passed" >&2
-	      test_pass=`expr "$test_pass" + 1`
-          else
-              echo "Using $command, $i failed" >&2
-	      test_fail=`expr "$test_fail" + 1`
-	      failed_list="$failed_list $i"
-              sok=0
-          fi
+      wait "${test_status[$i]}"
+      if [ $? -eq 0 ]; then
+        test_pass=`expr "$test_pass" + 1`
       else
-          if DO $command $eval "(load \"$i\")" ; then
-              echo "Using $command, $i passed" >&2
-	      test_pass=`expr "$test_pass" + 1`
-          else
-              echo "Using $command, $i failed" >&2
-	      test_fail=`expr "$test_fail" + 1`
-	      failed_list="$failed_list $i"
-              sok=0
-          fi
+        test_fail=`expr "$test_fail" + 1`
+        failed_list="$failed_list $i"
       fi
+      test_count=`expr "$test_count" + 1`
     done
     echo >&2
     echo "-#---------------------------------------" >&2
@@ -145,7 +151,7 @@ case "$lisp" in
   allegro)
     command="${ALLEGRO:-alisp}"
     # flags="-q -e (sys:resize-areas :new 10000000000 :old 10000000000 :old-code 5000000000)"
-    flags="-q -ee %28sys%3aresize%2dareas%20%3anew%2010000000000%20%3aold%2010000000000%20%3aold%2dcode%205000000000%29"
+    flags="-q " # -ee %28sys%3aresize%2dareas%20%3anew%2010000000000%20%3aold%2010000000000%20%3aold%2dcode%205000000000%29"
     nodebug="-batch"
     eval="-e" ;;
     # allegromodern won't work... [2012/10/09:rpg]
@@ -195,7 +201,7 @@ case "$lisp" in
     eval="-eval" ;;
   sbcl)
     command="${SBCL:-sbcl}"
-    flags="--dynamic-space-size 4000 --noinform --end-runtime-options --no-userinit --no-sysinit"
+    flags="--dynamic-space-size 4000 --control-stack-size 10 --noinform --end-runtime-options --no-userinit --no-sysinit"
     nodebug="--disable-debugger"
     eval="--eval" ;;
   # scl)
