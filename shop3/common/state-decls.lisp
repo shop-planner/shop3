@@ -121,7 +121,11 @@ performed with ATOM \(a literal\) as operand."))
 (defgeneric retract-state-changes (state tag)
   (:documentation "Restore STATE to its contents *before* the
 changes added by TAG.  Side-effecting function:  will undo
-individual changes step-by-step.  Returns nothing of interest."))
+individual changes step-by-step.
+   Returns a list of changes undone (so the state can be
+restored).  This is a list of sublists, whose first element
+is a tag (integer) and whose cdr is a list of update action
+structures."))
 
 ;;; this function is designed this way for backward compatibility.
 ;;; Eventually, instead of doing eql dispatch on the keyword, we

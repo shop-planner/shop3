@@ -79,9 +79,9 @@
   (or (gethash action *action-to-tag-map*)
       (error "No tag instance stored for action ~A" action)))
 
-(defun prepare-state-tag-decoder ()
-  (setf *state-tag-map* (make-hash-table :test 'eq))
-  (setf *action-to-tag-map* (make-hash-table :test 'eq)))
+(defun prepare-state-tag-decoder (&optional state-tag-map action-to-tag-map)
+  (setf *state-tag-map* (or state-tag-map (make-hash-table :test 'eq)))
+  (setf *action-to-tag-map* (or action-to-tag-map (make-hash-table :test 'eq))))
 
 (defun delete-state-tag-decoder ()
   (makunbound '*state-tag-map*)
@@ -109,12 +109,15 @@
         (rest (first (tagged-state-tags-info st)))))
 
 (defmethod retract-state-changes ((st tagged-state) tag)
-  (multiple-value-bind (new-tags-info changes)
+  (multiple-value-bind (new-tags-info undone-tag-info-list)
       (pull-tag-info (tagged-state-tags-info st) tag (tagged-state-block-at st))
     (setf (tagged-state-tags-info st) new-tags-info)
-    (dolist (change changes)
-      (undo-state-update (state-update-action change) change st)))
-  (values))
+    (iter (for (tag . changes) in undone-tag-info-list)
+      (declare (ignore tag))
+      (dolist (change changes)
+        (declare (type state-update change))
+        (undo-state-update (state-update-action change) change st)))
+    undone-tag-info-list))
 
 (defmethod replay-state-changes ((st tagged-state) tags-info-list &optional stop-at)
   (catch 'stop-replay
@@ -201,7 +204,10 @@
 ;;; TAGS-INFO is the tags-info list of a tagged-state, TAG is the
 ;;; state to roll back to, and STOP-AT can be used to record how much
 ;;; of the plan has been executed, because we can't roll back past
-;;; this point.
+;;; this point.  Returns two values:
+;;; current tag and the list of changes that have been undone.
+;;; Each element of the list of changes that have been undone
+;;; will be a (tag . list of changes)
 (defun pull-tag-info (tags-info tag &optional (stop-at 0))
   (iter (for (first-info . rest-info) on tags-info)
     (as this-tag = (first first-info))
@@ -209,6 +215,6 @@
       (error "Attempt to retract to nonexistent tag ~d" tag))
     (until (or (< this-tag tag)
                (= this-tag stop-at)))
-    (appending (rest first-info) into undone)
+    (collecting first-info into undone)
     (finally (return-from pull-tag-info
                (values (cons first-info rest-info) undone)))))
