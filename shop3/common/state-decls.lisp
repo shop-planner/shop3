@@ -141,7 +141,15 @@ Used inside RETRACT-STATE-CHANGES."))
 Chooses how to do this based on state-update-keyword.  Side-effecting.
 Used in plan repair."))
 
-(defgeneric replay-state-changes (state update-list &optional stop-at))
+(defgeneric replay-state-changes (state update-list &optional stop-at)
+  (:documentation
+   "Modify STATE by reapplying UPDATE-LIST, stopping at STOP-AT, if
+reached.
+  UPDATE-LIST is a list of sublists, each of which is a tag (integer)
+followed by
+  Note that the UPDATE-LIST must appear in the order the updates are
+to be applied.  This is *reverse* of what is returned by
+RETRACT-STATE-CHANGES."))
 
 (defgeneric add-atom-to-state (atom state depth operator)
   (:documentation "Destructively modifies STATE by adding ATOM
