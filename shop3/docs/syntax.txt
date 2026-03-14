@@ -1,0 +1,254 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+options: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+options: timestamp:t title:t toc:nil todo:t |:t
+#+title: New SHOP Domain Syntax
+#+date: <2021-12-28 Tue>
+#+author: Robert P. Goldman
+#+email: rpgoldman@sift.net
+#+language: en
+#+select_tags: export
+#+exclude_tags: noexport
+#+creator: Emacs 25.3.50.1 (Org mode 9.5)
+#+cite_export:
+#+latex_class: article
+#+latex_class_options:
+#+latex_header: \usepackage{float}
+#+latex_header_extra: \floatstyle{boxed}
+#+description:
+#+keywords:
+#+subtitle: Design Document
+#+latex_compiler: pdflatex
+#+date: \today
+
+* Introduction and Objectives
+
+The existing syntax for SHOP domain definitions "jes' grew," and it is
+plagued by inconsistencies that make it difficult to author domains.
+There is a lot of backwards compatibility code that is also difficult
+to maintain, because it does a lot of guessing about what the
+programmer intended.  Rather than continuing down this path, we here
+discuss an entirely new syntax that will appear in a new top-level
+construct, so that we do not have to break /any/ old domain
+definitions in order to introduce a more rational syntax.
+
+* Desiderata
+
+** Less ambiguity
+
+The existing syntax has a lot of ambiguity, some of which comes from
+backwards compatibility, and some of which comes from SHOP's
+extraordinary expressive power.  Specific sources of ambiguity
+include:
+
+- SHOP treats conjunctions as optional, allowing expressions such as
+  =((foo ?x)(bar ?y))= to be used as shorthand for =(and (foo ?x)(bar
+  ?y))=
+- SHOP permits meta-programming by putting logical variables in
+  arbitrary positions in domain definitions.  E.g., a task network
+  could be retrieved and bound to the task network of a method.
+- SHOP in at least some cases permits the task network of a method
+  expression to be an executable lisp expression.  We propose to
+  remove this capability: the ability to do metaprogramming with
+  logical variables is sufficient to do anything this can do: it
+  adds an additional layer of complexity for little or no benefit.
+- There are multiple locations where an optional method identifier can
+  go (this is related to the complexity from "What is a method?" see
+  Section [[*Clarify "What is a Method?"]]).
+
+
+** More structure to the syntax
+
+For example, the existing syntax for methods has them as simply a list
+of s-expressions, making it difficult for the reader to distinguish
+between preconditions and task network.  This also contributes to the
+ambiguity of the syntax.  We propose to add syntactic markers to
+make the role of different components clearer.  An example of the
+intent can be seen in the new =:op= syntax added to SHOP3 (before we
+decided on moving to a new syntax without backwards compatibility).
+
+This will have the side-benefit of allowing programmers to omit
+entirely empty components of definitions (again, as with the =:op=
+syntax).
+
+
+** Clarify "What is a Method?"
+
+The current syntax for methods, which supports an =if-then-else=
+semantics obscures the question of what constitutes a method. If the
+methods are all simple, as in Figure [[fig:simpleMethods]], then there is
+no question.  Each method /form/ defines a single method.  But what
+happens if we combine these two methods into a single method
+definition, as in Figure [[fig:compoundMethod]]?  Is this a single method
+form that defines two methods, or a single method of a special nature?
+
+This question may seem like a pedantic one, but the confusion has
+practical consequences.  For one thing, when we are discussing
+methods, if we adopt the term "method" for the compound method (Figure
+[[fig:compoundMethod]]), then how do we refer to the precondition-task
+network pairs that it contains?  Those can't also be methods, but what
+are they? This causes confusion in discussions that can affect our
+understanding of SHOP's search space.
+
+#+ATTR_LATEX: :float t
+#+name: fig:simpleMethods
+#+label: fig:simpleMethods
+#+caption: Two simple method expressions for a single task.
+#+begin_src lisp
+(:method (foo ?x)
+  (call oddp ?x)
+  (handle-odd ?x))
+
+(:method (foo ?x)
+  (call evenp ?x)
+  (handle-even ?x))
+#+end_src
+
+One possible solution would be to replace the =:method= keyword used
+here with something like =:in-order-to=, which would clearly signify
+the relationship between a task and a method.  Then the compound
+definition could be a single /expression/ that is an abbreviation for
+two /methods/.
+
+#+label: fig:compoundMethod
+#+name: fig:compoundMethod
+#+caption: A single method expression that defines two different ways of handling a single task.
+#+begin_src lisp
+    (:method (foo ?x)
+      (call oddp ?x)
+      (handle-odd ?x)
+      ()
+      (handle-even ?x))
+#+end_src
+
+** Notational Consistency
+
+One thing that is both aesthetically unpleasing, and confusing to the
+reader, is the inconsistency in SHOP's use of common lisp (CL) keyword and non-keyword
+symbols in its syntax.
+For example, we use =:forall= (CL keyword), but we use =not= (exported
+symbol from the =COMMON-LISP= package).
+We should articulate a principle for deciding
+whether a given syntactic keyword should be a keyword symbol,
+a normal, presumably exported, symbol in the =SHOP= CL package, or as
+in the case of common boolean operators like =and= and =or=, a symbol
+in the =COMMON-LISP= package.
+
+** Identify Static Properties of Domain
+
+PDDL, partly because of its limited expressive power, makes it
+relatively easy to detect domain invariants, particularly in terms of
+elements of the state.  The current SHOP language makes this
+essentially impossible.  We would like to keep the expressive power,
+while adding some notations that make it possible to compute domain invariants.
+
+** Drop the items sublist
+
+This is a small consideration, but it's always bothered me that SHOP's
+=defdomain= did not have the items as an =&rest= argument. Not a big
+deal, but it rankled.
+
+* Proposed Syntax
+
+#+ATTR_LATEX: :float nil
+#+BEGIN_SRC bnf
+  <def> ::= (domain <name-and-options> <item>*)
+
+  <name-and-options> ::= <name> | (name &key class &allow-other-keys)
+
+  <item> ::= <method-definition> |
+             <operator-definition> |
+             <action-definition> |
+             <axiom-definition> |
+             <include-spec> |
+             <other>
+
+  <method-definition> ::= (:in-order-to <task> <mdef>+ [<final-mdef>])
+
+  <operator-definition> ::= (:operator <task>
+                                       [:precond <precond>]
+                                       [:add <literal>+]
+                                       [:delete <literal>+]
+                                       [:cost <cost-expr>]) ; [[order-independence]]
+
+  <action-definition> ::= <PDDL action definition>
+
+  <axiom-definition> ::= (:- <literal>
+                             [:if] [<name>] <logical-expression> ; [[optional-if]]
+                             [:else [<name>] <logical-expression>]*) ; [[name-position]]
+
+  <mdef> ::= [<name>] :if <logical-precondition> :do <task-net> ; [[elif]] [[name-position]]
+
+  <final-mdef> ::= [<name>] :else <task-net> ; [[name-position]]
+
+  <task-net> ::= (:ordered <task-net>+) |
+                 (:unordered <task-net>+) |
+                 <task> |
+                 (:immediate <task>) |
+                 <logical-variable>
+
+  <task> ::= (<task-name> <term>*)
+
+  <task-name> ::= symbol
+
+  <term> ::= <logical-variable> |
+             (<logical-function> <term>*) |
+             <lisp-object>
+
+  <logical-variable> ::= Symbol prefixed with "?"
+
+  <logical-precondition> ::= (:first <logical-expression>) |
+                             (:sort-by <logical-variable> <logical-expression>
+                                       :test <binary-function> :key <unary-function>) |
+                             <logical-expression>
+
+
+  <logical-expression> ::= (and <logical-expression>+) |
+                           (or <logical-expression>+) |
+                           (imply <logical-expression> <logical-expression>) |
+                           (not <logical-expression>) |
+                           (forall <varlist> <logical-expression> <logical-expression>) |
+                           (exists <varlist> <logical-expression> <logical-expression>) |
+                           (assign <logical-variable> <lisp-expression>) |
+                           (assign* <logical-variable> <lisp-expression>) |
+                           (eval <lisp-expression>) |
+                           (call <lisp-function> <lisp-expression>*) |
+                           (enforce <lisp-expression> &rest error-args) |
+                           (setof <term> <logical-expression> <logical-variable>) |
+                           (bagof <term> <logical-expression> <logical-variable>) |
+
+#+END_SRC
+
+Notes:
+
+- The set of options for domain definitions is marked as
+  =&allow-other-keys= in order to permit new domain classes to add
+  initialization arguments.  This comes at a minor cost of making it
+  harder to detect when an initialization argument is misspelled.
+- Similarly, we permit "other" in the set of items to allow new domain
+  classes to extend the set of admissible constructs.
+- The above proposal replaces =:method= with =:in-order-to= in method
+  definition syntax. This is intended to address the issue of Section
+  [[*Clarify "What is a Method?"]]
+- <<order-independence>> BNF does not allow us to encode order-independent constructs
+  (constructs that may appear in any order, as in CL keyword
+  arguments).  The keyword arguments (all except the task
+  argument) to an =operator-definition= are order-independent.
+- <<optional-if>> Currently, the =:if= in =axiom-definition= is optional, because it
+  seems superfluous. But, on the other hand, having an =:else= without
+  an =:if= seems odd. Note that multiple else's are permissible.
+- <<elif>> There was some discussion about using "elif" or "elsif" or
+  something for later branches in a method definition, but since the
+  different branches aren't processed differently, it seems reasonable
+  to just use =:if= for all of them.
+- <<name-position>> The position of the optional =name= constituent is
+  not consistent between =method-definition= and =axiom-definition=,
+  which is not pleasing.
+- We have eliminated the optional =:task= keyword.
+- We have eliminated all uses of implicit conjunction.
+
+
+# Local Variables:
+# mode: org
+# End:
