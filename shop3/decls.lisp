@@ -731,7 +731,7 @@ which should be the default)."))
 
 ;;; ERRORP defaults to NIL only for backwards compatibility.  It might be better
 ;;; to make T be the default. [2015/01/01:rpg]
-(defun find-problem (name-or-problem &optional (errorp NIL))
+(defun find-problem (name-or-problem &optional (errorp nil))
   (if (typep name-or-problem 'problem)
       ;; make FIND-PROBLEM idempotent...
       name-or-problem
