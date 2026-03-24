@@ -629,34 +629,27 @@ using MAKE-INITIAL-STATE.")
     H2))
 
 (defun prop-sorter (p1 p2)
-  "Function that can be used inside CL:SORT to sort SHOP literals alphabetically
-for easier human inspection."
-  (flet ((elem< (p1 p2)
-           (cond ((numberp p1)
-                  (if (numberp p2)
-                      (< p1 p2)
-                      t))
-                 ((numberp p2)          ;only p2 is a number
-                  nil)
-                 ((symbolp p1)
-                  (if (symbolp p2)
-                      (cond 
-                        ((string-lessp p1 p2) t)
-                        ((string-lessp p2 p1) (values nil t))
-                        (t (values nil nil)))
-                      ;; p1 is a symbol and p2 is something weird; put p2 first
-                      nil))
-                 ;; arbitrary
-                 (t t))))
-    (cond ((and p1 p2)
-           (multiple-value-bind (lessp known)
-               (elem< (first p1) (first p2))
-             (cond (lessp t)
-                   (known nil)
-                   (t
-                    (prop-sorter (rest p1) (rest p2))))))
-          (p1 nil)
-          (t t))))
+  "Function that can be used inside CL:SORT to sort lists of symbols and
+   numbers deterministically.  Compares lists element by element.
+Shorter lists are considered smaller if one is a prefix of the other."
+  (flet ((elem< (x y)
+           "Compare two elements deterministically: numbers first, then symbols."
+           (cond ((and (numberp x) (numberp y))         ; Compare numbers
+                  (< x y)) 
+                 ((numberp x) t)                        ; Numbers come before non-numbers
+                 ((numberp y) nil)                      ; Non-numbers come after numbers
+                 ((and (symbolp x) (symbolp y))         ; Compare symbols lexicographically
+                  (string-lessp (symbol-name x) (symbol-name y)))
+                 ((symbolp x) t)                        ; Symbols come before other types
+                 ((symbolp y) nil)                      ; Other types come after symbols
+                 (t nil))))                             ; Default: treat as equal
+    (iter (for e1 in p1)
+          (for e2 in p2)
+      (cond
+        ((elem< e1 e2) (return t))   ; p1 is less than p2
+        ((elem< e2 e1) (return nil))) ; p1 is greater than p2
+      (finally
+        (return (< (length p1) (length p2))))))) ; shorter list comes first
 
 (defmethod state-trajectory ((st tagged-state) &key sorted)
   (let ((state (copy-state st)))
