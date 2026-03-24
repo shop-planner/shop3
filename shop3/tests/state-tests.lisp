@@ -106,7 +106,7 @@
    (iter (for encoding in '(:list :hash :mixed :doubly-hashed :bit))
      (as state-type in state-types)
      (as state = (make-initial-state domain encoding facts))
-     (let ((new-state 
+     (let ((new-state
              (copy-state state)))
        (is-true (typep state state-type))
        (is-true (typep new-state state-type) "State of type ~a is copied to the wrong class: ~a" encoding (class-of new-state))
@@ -160,3 +160,15 @@
                              "Getting facts for location 3 gives unexpected results ~s for encoding ~s" candidates encoding)
                          (is (set-equal volume-load-facts candidates :test 'equalp)
                              "Getting facts for location 3 gives unexpected results ~s for encoding ~s" candidates encoding)))))))
+
+(def-suite* prop-sorter-suite)
+
+(test prop-sorter-test
+  "Test that prop-sorter sorts propositions correctly."
+  (is (equal '((1 2) (1 3) (1 4))
+             (sort (copy-list '((1 4) (1 2) (1 3))) 'prop-sorter))))
+
+(test prop-sorter-length-preference
+  "Test that shorter lists are sorted before longer lists when they share a prefix."
+  (is (equal '((1) (1 2) (1 2 3) (1 3))
+             (sort (copy-list '((1 2 3) (1) (1 3) (1 2))) 'prop-sorter))))
