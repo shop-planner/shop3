@@ -635,21 +635,41 @@ Shorter lists are considered smaller if one is a prefix of the other."
   (flet ((elem< (x y)
            "Compare two elements deterministically: numbers first, then symbols."
            (cond ((and (numberp x) (numberp y))         ; Compare numbers
+                  (cond ((< x y) t)
+                        ((> x y) nil)
+                        ;; integers before other types
+                        ((integerp x) t)
+                        ((integerp y) nil)
+                        ;; rationals before floats
+                        ((rationalp x) t)
+                        ((rationalp y) nil)
+                        ;; floats before complex
+                        ((floatp x) t)
+                        ((and (complexp x) (complexp y))
+                         ;; suggested by ChatGPT
+                         (or (< (realpart x) (realpart y))
+                             (and (= (realpart x) (realpart y))
+                                  (< (imagpart x) (imagpart y)))))
+                        (t nil)))
+                 ((and (numberp x) (numberp y))         ; Compare numbers
                   (< x y))
                  ((numberp x) t)                        ; Numbers come before non-numbers
                  ((numberp y) nil)                      ; Non-numbers come after numbers
-                 ((and (symbolp x) (symbolp y))         ; Compare symbols lexicographically
+                 ((and (stringp x) (stringp y))
+                  (string< x y))
+                 ((and (symbolp x) (symbolp y)) ; Compare symbols lexicographically
                   (string-lessp x y))
                  ((symbolp x) t)                        ; Symbols come before other types
                  ((symbolp y) nil)                      ; Other types come after symbols
-                 (t nil))))                             ; Default: treat as equal
+                 (t (string< (format nil "~S" x)
+                             (format nil "~S" y)))))) ; Default: take printrep and sort as string
     (iter (for e1 in p1)
-          (for e2 in p2)
+      (for e2 in p2)
       (cond
         ((elem< e1 e2) (return t))   ; p1 is less than p2
         ((elem< e2 e1) (return nil))) ; p1 is greater than p2
       (finally
-        (return (< (length p1) (length p2))))))) ; shorter list comes first
+       (return (< (length p1) (length p2))))))) ; shorter list comes first
 
 (defmethod state-trajectory ((st tagged-state) &key sorted)
   (let ((state (copy-state st)))

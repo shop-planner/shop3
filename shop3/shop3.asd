@@ -278,7 +278,7 @@ minimal affected subtree."
                  (enhanced-plan-tree . :shop3-user) ; 2
                  (theorem-prover-tests . :shop-theorem-prover-tests)  ; 26
                  (test-plan-repair . :shop-replan-tests) ; 3
-                 (test-shop-states . :test-states) ; 112
+                 (test-shop-states . :test-states) ; 114
                  (analogical-replay-tests . :analogical-replay-tests) ; 24
                  (plan-tree-tests . :plan-tree-tests)  ; 40
                  (search-tests . :search-tests) ; 9
@@ -286,7 +286,7 @@ minimal affected subtree."
                  (hddl-plan-tests . :shop-hddl-tests) ; 7
                  (new-plan-tree-tests . :new-plan-tree-tests) ; 22
                  )
-    :num-checks 1164
+    :num-checks 1166
     :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                  "shop3/openstacks"
                  "shop3/pddl-helpers"

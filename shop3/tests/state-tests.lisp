@@ -172,3 +172,15 @@
   "Test that shorter lists are sorted before longer lists when they share a prefix."
   (is (equal '((1) (1 2) (1 2 3) (1 3))
              (sort (copy-list '((1 2 3) (1) (1 3) (1 2))) 'prop-sorter))))
+
+(test prop-sorter-type-mismatch
+  "Test that PROP-SORTER is deterministic even under conditions of type
+mismatch."
+  (is (equal (sort `((1 2 3) (1 #(0 1 2)) (1 A) (1 ,(make-array '(2 2)))) 'prop-sorter)
+             (sort `((1 2 3) (1 ,(make-array '(2 2))) (1 #(0 1 2)) (1 A)) 'prop-sorter))))
+
+(test prop-sorter-numerical-subtypes
+  "Test that PROP-SORTER handles equal numbers of unequal types."
+  (let ((sorted '((1 1/2) (1 0.5) (1 1) (1 1.0) (1 2) (1 2.0) (1 #C (2.0 0)))))
+    (is (equal sorted
+               (sort (reverse sorted) 'prop-sorter)))))
