@@ -1,6 +1,9 @@
 
 name: test
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -34,13 +37,13 @@ jobs:
         apt-get update
         apt-get install -y cmake make g++ flex bison
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
     - name: cache validate
       id: cache-validate
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         path: jenkins/ext/VAL
         key: ${{ runner.os }}
