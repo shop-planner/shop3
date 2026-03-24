@@ -631,10 +631,10 @@ using MAKE-INITIAL-STATE.")
 (defun prop-sorter (p1 p2)
   "Function that can be used inside CL:SORT to sort lists of symbols and
    numbers deterministically.  Compares lists element by element.
-Shorter lists are considered smaller if one is a prefix of the other."
+   Shorter lists are considered smaller if one is a prefix of the other."
   (flet ((elem< (x y)
            "Compare two elements deterministically: numbers first, then symbols."
-           (cond ((and (numberp x) (numberp y))         ; Compare numbers
+           (cond ((and (realp x) (realp y))         ; Compare real numbers
                   (cond ((< x y) t)
                         ((> x y) nil)
                         ;; integers before other types
@@ -643,18 +643,11 @@ Shorter lists are considered smaller if one is a prefix of the other."
                         ;; rationals before floats
                         ((rationalp x) t)
                         ((rationalp y) nil)
-                        ;; floats before complex
+                        ;; floats before other reals (if any such exist!)
                         ((floatp x) t)
-                        ((and (complexp x) (complexp y))
-                         ;; suggested by ChatGPT
-                         (or (< (realpart x) (realpart y))
-                             (and (= (realpart x) (realpart y))
-                                  (< (imagpart x) (imagpart y)))))
                         (t nil)))
-                 ((and (numberp x) (numberp y))         ; Compare numbers
-                  (< x y))
-                 ((numberp x) t)                        ; Numbers come before non-numbers
-                 ((numberp y) nil)                      ; Non-numbers come after numbers
+                 ((realp x) t)                        ; Real numbers come before non-numbers (and complex numbers)
+                 ((realp y) nil)                      ; Non-numbers come after real numbers
                  ((and (stringp x) (stringp y))
                   (string< x y))
                  ((and (symbolp x) (symbolp y)) ; Compare symbols lexicographically
