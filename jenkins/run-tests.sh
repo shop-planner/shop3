@@ -202,7 +202,7 @@ case "$lisp" in
     eval="-eval" ;;
   sbcl)
     command="${SBCL:-sbcl}"
-    flags="--dynamic-space-size 4000 --control-stack-size 01 --noinform --end-runtime-options --no-userinit --no-sysinit"
+    flags="--dynamic-space-size 4000 --control-stack-size 40 --noinform --end-runtime-options --no-userinit --no-sysinit"
     nodebug="--disable-debugger"
     eval="--eval" ;;
   # scl)
