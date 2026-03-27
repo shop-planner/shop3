@@ -288,7 +288,8 @@ minimal affected subtree."
                  "shop3/openstacks"
                  "shop3/pddl-helpers"
                  "shop3/rovers"         ; for new plan tree tests
-                 "pddl-utils")
+                 ;; need fix to PDDL pretty-printing
+                 (:version "pddl-utils" "3.6.1"))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
                           :pathname "tests/"
