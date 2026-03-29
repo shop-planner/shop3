@@ -53,15 +53,18 @@
 
 ;;; Robert P. Goldman
 
+;;; Robert P. Goldman and Smart Information Flow Technologies
+;;; Copyright 2026
+
 (defpackage :shop-asd
-    (:use :common-lisp :asdf)
-    (:nicknames :shop2-asd :shop3-asd)
-    #+(or allegro sbcl ccl clisp abcl lispworks ecl mkcl)
-    (:import-from #+allegro aclmop     #+sbcl sb-mop
-                  #+ccl ccl #+clisp clos #+cmucl pcl
-                  #+abcl mop #+(or ecl mkcl) clos
-                  #+lispworks hcl
-                  #:class-direct-superclasses))
+  (:use :common-lisp :asdf)
+  (:nicknames :shop2-asd :shop3-asd)
+  #+(or allegro sbcl ccl clisp abcl lispworks ecl mkcl)
+  (:import-from #+allegro aclmop     #+sbcl sb-mop
+                #+ccl ccl #+clisp clos #+cmucl pcl
+                #+abcl mop #+(or ecl mkcl) clos
+                #+lispworks hcl
+                #:class-direct-superclasses))
 (in-package :shop3-asd)
 
 ;;;
@@ -289,7 +292,7 @@ minimal affected subtree."
                  "shop3/pddl-helpers"
                  "shop3/rovers"         ; for new plan tree tests
                  ;; need fix to PDDL pretty-printing
-                 (:version "pddl-utils" "3.6.1"))
+                 (:version "pddl-utils" "3.6.2"))
     :version (:read-file-form "shop-version.lisp-expr")
     :components ((:module "shop-test-helper"
                           :pathname "tests/"
