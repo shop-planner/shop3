@@ -27,7 +27,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         cfg:
-          # - { container: "rpgoldman/sbcl:latest", lisp: sbcl }
+          - { container: "rpgoldman/sbcl:latest", lisp: sbcl }
           - { container: "rpgoldman/ccl:latest", lisp: ccl }
 
     steps:
