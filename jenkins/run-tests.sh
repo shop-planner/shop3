@@ -93,6 +93,7 @@ do_tests() {
         echo success > tmp/results/status
         exit 0
     fi
+    set -o pipefail             # need this or the call to sed clobbers the exit status!
     # Run tests in parallel
     declare -A test_status
     for i in $scripts ;
@@ -201,7 +202,7 @@ case "$lisp" in
     eval="-eval" ;;
   sbcl)
     command="${SBCL:-sbcl}"
-    flags="--dynamic-space-size 4000 --control-stack-size 10 --noinform --end-runtime-options --no-userinit --no-sysinit"
+    flags="--dynamic-space-size 4000 --control-stack-size 256 --noinform --end-runtime-options --no-userinit --no-sysinit"
     nodebug="--disable-debugger"
     eval="--eval" ;;
   # scl)

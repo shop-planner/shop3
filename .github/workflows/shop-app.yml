@@ -1,6 +1,9 @@
 
 name: buildapp
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 # Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -28,7 +31,7 @@ jobs:
           - { container: "rpgoldman/ccl:latest", lisp: ccl }
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
 
