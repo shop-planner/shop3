@@ -56,6 +56,9 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
+
+;;; Smart Information Flow Technologies and Robert P. Goldman Copyright (c) 2026
+
 (in-package :common-lisp-user)
 
 (defpackage %shop3-common-private%
