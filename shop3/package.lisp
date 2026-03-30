@@ -181,6 +181,10 @@
              #:delete-domain
              #:*defdomain-verbose*
 
+             ;; types
+             #:operator
+             #:pddl-action
+
              ;; default planner search setting --- should be replaced
              ;; by subclassing a planner object later.
              #:*which*

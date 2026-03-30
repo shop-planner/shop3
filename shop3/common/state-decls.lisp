@@ -1,4 +1,23 @@
 (in-package :shop3.common)
+;;;---------------------------------------------------------------------------
+;;; Copyright (c) 2019,2020,2022,2026 Smart Information Flow Technologies, d/b/a SIFT, LLC
+;;; All rights reserved.
+;;;
+;;; This code available under the Mozilla Public License.
+;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
+;;;
+;;; The contents of this file are subject to the Mozilla Public License
+;;; Version 1.1 (the "License"); you may not use this file except in
+;;; compliance with the License. You may obtain a copy of the License at
+;;; http://www.mozilla.org/MPL/
+;;;
+;;; Software distributed under the License is distributed on an "AS IS"
+;;; basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+;;; License for the specific language governing rights and limitations under
+;;; the License.
+;;;---------------------------------------------------------------------------
+;;; Original SHOP2 code Copyright (C) 2002  University of Maryland.
+
 
 ;;;---------------------------------------------------------------------------
 ;;; Elnatan wrote the following:
@@ -102,7 +121,11 @@ performed with ATOM \(a literal\) as operand."))
 (defgeneric retract-state-changes (state tag)
   (:documentation "Restore STATE to its contents *before* the
 changes added by TAG.  Side-effecting function:  will undo
-individual changes step-by-step.  Returns nothing of interest."))
+individual changes step-by-step.
+   Returns a list of changes undone (so the state can be
+restored).  This is a list of sublists, whose first element
+is a tag (integer) and whose cdr is a list of update action
+structures."))
 
 ;;; this function is designed this way for backward compatibility.
 ;;; Eventually, instead of doing eql dispatch on the keyword, we
@@ -118,7 +141,15 @@ Used inside RETRACT-STATE-CHANGES."))
 Chooses how to do this based on state-update-keyword.  Side-effecting.
 Used in plan repair."))
 
-(defgeneric replay-state-changes (state update-list &optional stop-at))
+(defgeneric replay-state-changes (state update-list &optional stop-at)
+  (:documentation
+   "Modify STATE by reapplying UPDATE-LIST, stopping at STOP-AT, if
+reached.
+  UPDATE-LIST is a list of sublists, each of which is a tag (integer)
+followed by
+  Note that the UPDATE-LIST must appear in the order the updates are
+to be applied.  This is *reverse* of what is returned by
+RETRACT-STATE-CHANGES."))
 
 (defgeneric add-atom-to-state (atom state depth operator)
   (:documentation "Destructively modifies STATE by adding ATOM
@@ -141,10 +172,11 @@ the sequence of states, starting from the initial state, and terminating at
 this state.  This function returns a trajectory leading to STATE.")
   )
 
-(defvar *state-tag-map* nil
+(declaim (type hash-table *state-tag-map* *action-to-tag-map*))
+(defvar *state-tag-map* :unbound
   "Will be bound to a hash table to look up an operator/action instance
 from a tag.")
-(defvar *action-to-tag-map* nil
+(defvar *action-to-tag-map* :unbound
   "Will be bound to a hash table to look up a numerical tag from an operator/action
 instance.")
 

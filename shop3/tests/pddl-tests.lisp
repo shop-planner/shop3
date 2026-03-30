@@ -58,6 +58,8 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
+
+;;; Smart Information Flow Technologies and Robert P. Goldman Copyright 2026
 (in-package :shop3)
 
 (fiveam:def-suite* pddl-tests)
@@ -487,58 +489,63 @@
 
 (fiveam:test simple-when-with-deps
   (fiveam:with-fixture simple-when-fixtures ()
-    (let ((*state-encoding* :list) (*record-dependencies-p* t))
-      (declare (special *state-encoding*))
-      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
-        (multiple-value-bind (op tag protections cost unifier deps)
-            (apply-action *domain* state
-                          '(!walk new-jersey new-york)
-                          (operator *domain* '!walk)
-                          nil 0 nil)
-          (declare (ignore op tag protections cost unifier))
-          (fiveam:is
-           (equal
-            (sort
-             (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
-             'prop-sorter)
-            (sort
-             (state-atoms state)
-             'prop-sorter)))
-          (fiveam:is
-           (equal
-            (sort
-             (copy-list '((at robot new-jersey) (loc new-jersey) (loc new-york)))
-             'prop-sorter)
-            (sort
-             (mapcar #'shop3.theorem-prover::rd-prop deps)
-             'prop-sorter))))))
-
-    (let ((*state-encoding* :list)(*record-dependencies-p* t))
-      (declare (special *state-encoding*))
-      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
-                                                                   (loc new-jersey) (loc new-york)
-                                                                   (carrying cargo))))
-            )
-        (multiple-value-bind (op tag protections cost unifier deps)
-            (apply-action *domain* state
-                          '(!walk new-jersey new-york)
-                          (operator *domain* '!walk)
-                          nil 0 nil)
-          (declare (ignore op tag protections cost unifier))
-          (fiveam:is
-           (equal
-            '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
-              (CARRYING CARGO) (loc new-jersey) (loc new-york))
-            (sort (state-atoms state)
-                  'prop-sorter)))
-          (fiveam:is
-           (equal
-            (sort
-             (copy-list '((at robot new-jersey) (carrying cargo) (loc new-jersey) (loc new-york)))
-             'prop-sorter)
-            (sort
-             (mapcar #'shop3.theorem-prover::rd-prop deps)
-             'prop-sorter))))))))
+    (shop.common:prepare-state-tag-decoder)
+    (unwind-protect
+     (let ((*state-encoding* :list) (*record-dependencies-p* t))
+       (declare (special *state-encoding*))
+       (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey) (loc new-jersey) (loc new-york)))))
+         (multiple-value-bind (op tag protections cost unifier deps)
+             (apply-action *domain* state
+                           '(!walk new-jersey new-york)
+                           (operator *domain* '!walk)
+                           nil 0 nil)
+           (declare (ignore op tag protections cost unifier))
+           (fiveam:is
+            (equal
+             (sort
+              (copy-list '((AT ROBOT NEW-YORK) (loc new-jersey) (loc new-york)))
+              'prop-sorter)
+             (sort
+              (state-atoms state)
+              'prop-sorter)))
+           (fiveam:is
+            (equal
+             (sort
+              (copy-list '((at robot new-jersey) (loc new-jersey) (loc new-york)))
+              'prop-sorter)
+             (sort
+              (mapcar #'shop3.theorem-prover::rd-prop deps)
+              'prop-sorter))))))
+      (shop.common:delete-state-tag-decoder))
+    (shop.common:prepare-state-tag-decoder)
+    (unwind-protect
+     (let ((*state-encoding* :list)(*record-dependencies-p* t))
+       (declare (special *state-encoding*))
+       (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                    (loc new-jersey) (loc new-york)
+                                                                    (carrying cargo))))
+             )
+         (multiple-value-bind (op tag protections cost unifier deps)
+             (apply-action *domain* state
+                           '(!walk new-jersey new-york)
+                           (operator *domain* '!walk)
+                           nil 0 nil)
+           (declare (ignore op tag protections cost unifier))
+           (fiveam:is
+            (equal
+             '((AT CARGO NEW-YORK) (AT ROBOT NEW-YORK)
+               (CARRYING CARGO) (loc new-jersey) (loc new-york))
+             (sort (state-atoms state)
+                   'prop-sorter)))
+           (fiveam:is
+            (equal
+             (sort
+              (copy-list '((at robot new-jersey) (carrying cargo) (loc new-jersey) (loc new-york)))
+              'prop-sorter)
+             (sort
+              (mapcar #'shop3.theorem-prover::rd-prop deps)
+              'prop-sorter))))))
+      (shop.common:delete-state-tag-decoder))))
 
 (fiveam:def-fixture quantified-when-fixtures ()
   (progn
@@ -664,76 +671,82 @@
 
 (fiveam:test quantified-when-with-deps
   (fiveam:with-fixture quantified-when-fixtures ()
+    (shop.common:prepare-state-tag-decoder)
     (let ((*state-encoding* :list)
           (*record-dependencies-p* t))
-      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
-                                                                   (at bag1 new-jersey)
-                                                                   (at bag2 new-jersey)
-                                                                   (at bag3 new-jersey)
-                                                                   (loc new-jersey) (loc new-york)
-                                                                   (luggage bag1)
-                                                                   (luggage bag2)
-                                                                   (luggage bag3)))))
-        (multiple-value-bind (op state-tag protections cost unifier deps)
-            (apply-action *domain* state
-                          '(!walk new-jersey new-york)
-                          (operator *domain* '!walk)
-                          nil 0 nil)
-          (declare (ignore unifier state-tag op))
-          (fiveam:is
-           (equal
-            '((at bag1 new-jersey)
-              (at bag2 new-jersey)
-              (at bag3 new-jersey)
-              (at robot new-york)
-              (loc new-jersey)
-              (loc new-york)
-              (luggage bag1)
-              (luggage bag2)
-              (luggage bag3))
-            (sort (state-atoms state) 'prop-sorter)))
-          (fiveam:is-false protections)
-          (fiveam:is
-           (eql 1.0 cost))
-          (fiveam:is
-           (equalp
-            '((at robot new-jersey) (loc new-jersey) (loc new-york))
-            (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter)))))
-      (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
-                                                                   (at bag1 new-jersey)
-                                                                   (at bag2 new-jersey)
-                                                                   (at bag3 new-jersey)
-                                                                   (loc new-jersey) (loc new-york)
-                                                                   (carrying robot bag1)
-                                                                   (luggage bag1)
-                                                                   (luggage bag2)
-                                                                   (luggage bag3)))))
-        (multiple-value-bind (op state-tag protections cost unifier deps)
-            (apply-action *domain* state
-                          '(!walk new-jersey new-york)
-                          (operator *domain* '!walk)
-                          nil 0 nil)
-          (declare (ignore unifier state-tag op))
-          (fiveam:is
-           (equal
-            '((at bag1 new-york)
-              (at bag2 new-jersey)
-              (at bag3 new-jersey)
-              (at robot new-york)
-              (carrying robot bag1)
-              (loc new-jersey)
-              (loc new-york)
-              (luggage bag1)
-              (luggage bag2)
-              (luggage bag3))
-            (sort (state-atoms state) 'prop-sorter)))
-          (fiveam:is-false protections)
-          (fiveam:is
-           (eql 1.0 cost))
-          (fiveam:is
-           (equalp
-            '((at robot new-jersey) (carrying robot bag1) (loc new-jersey) (loc new-york))
-            (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter))))))))
+      (unwind-protect
+           (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                        (at bag1 new-jersey)
+                                                                        (at bag2 new-jersey)
+                                                                        (at bag3 new-jersey)
+                                                                        (loc new-jersey) (loc new-york)
+                                                                        (luggage bag1)
+                                                                        (luggage bag2)
+                                                                        (luggage bag3)))))
+             (multiple-value-bind (op state-tag protections cost unifier deps)
+                 (apply-action *domain* state
+                               '(!walk new-jersey new-york)
+                               (operator *domain* '!walk)
+                               nil 0 nil)
+               (declare (ignore unifier state-tag op))
+               (fiveam:is
+                (equal
+                 '((at bag1 new-jersey)
+                   (at bag2 new-jersey)
+                   (at bag3 new-jersey)
+                   (at robot new-york)
+                   (loc new-jersey)
+                   (loc new-york)
+                   (luggage bag1)
+                   (luggage bag2)
+                   (luggage bag3))
+                 (sort (state-atoms state) 'prop-sorter)))
+               (fiveam:is-false protections)
+               (fiveam:is
+                (eql 1.0 cost))
+               (fiveam:is
+                (equalp
+                 '((at robot new-jersey) (loc new-jersey) (loc new-york))
+                 (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter)))))
+        (shop.common:delete-state-tag-decoder))
+      (shop.common:prepare-state-tag-decoder)
+      (unwind-protect
+           (let ((state (make-initial-state *domain* *state-encoding* '((at robot new-jersey)
+                                                                        (at bag1 new-jersey)
+                                                                        (at bag2 new-jersey)
+                                                                        (at bag3 new-jersey)
+                                                                        (loc new-jersey) (loc new-york)
+                                                                        (carrying robot bag1)
+                                                                        (luggage bag1)
+                                                                        (luggage bag2)
+                                                                        (luggage bag3)))))
+             (multiple-value-bind (op state-tag protections cost unifier deps)
+                 (apply-action *domain* state
+                               '(!walk new-jersey new-york)
+                               (operator *domain* '!walk)
+                               nil 0 nil)
+               (declare (ignore unifier state-tag op))
+               (fiveam:is
+                (equal
+                 '((at bag1 new-york)
+                   (at bag2 new-jersey)
+                   (at bag3 new-jersey)
+                   (at robot new-york)
+                   (carrying robot bag1)
+                   (loc new-jersey)
+                   (loc new-york)
+                   (luggage bag1)
+                   (luggage bag2)
+                   (luggage bag3))
+                 (sort (state-atoms state) 'prop-sorter)))
+               (fiveam:is-false protections)
+               (fiveam:is
+                (eql 1.0 cost))
+               (fiveam:is
+                (equalp
+                 '((at robot new-jersey) (carrying robot bag1) (loc new-jersey) (loc new-york))
+                 (sort (mapcar #'shop3.theorem-prover::rd-prop deps) 'prop-sorter)))))
+        (shop.common:delete-state-tag-decoder)))))
 
 (in-package :shop3-openstacks)
 (fiveam:def-suite* plan-openstacks :in shop3::pddl-tests)

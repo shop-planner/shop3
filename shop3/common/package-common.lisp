@@ -56,6 +56,9 @@
 ;;; expiration date shown above. Any reproduction of the software or
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
+
+;;; Smart Information Flow Technologies and Robert P. Goldman Copyright (c) 2026
+
 (in-package :common-lisp-user)
 
 (defpackage %shop3-common-private%
@@ -64,6 +67,7 @@
 (defpackage :shop3.common
     (:nicknames #:shop3cmn #:shop.common #:shop2.common)
     (:import-from #:alexandria #:if-let)
+    (:shadow #:defvar)
     (:use :common-lisp :shop3.unifier :iterate)
     (:export #:shop-fail #:call
 
@@ -97,8 +101,7 @@
              #:tag-for-action
              #:last-establisher
              #:prepare-state-tag-decoder
-             #:delete-state-tag-decoder 
+             #:delete-state-tag-decoder
              #:make-tag-map
              #:delete-tag-map
              ))
-
