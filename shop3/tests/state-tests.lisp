@@ -176,8 +176,8 @@
 (test prop-sorter-type-mismatch
   "Test that PROP-SORTER is deterministic even under conditions of type
 mismatch."
-  (is (equal (sort `((1 2 3) (1 #(0 1 2)) (1 A) (1 ,(make-array '(2 2)))) 'prop-sorter)
-             (sort `((1 2 3) (1 ,(make-array '(2 2))) (1 #(0 1 2)) (1 A)) 'prop-sorter))))
+  (is (equalp (sort `((1 2 3) (1 #(0 1 2)) (1 A) (1 ,(make-array '(2 2)))) 'prop-sorter)
+              (sort `((1 2 3) (1 ,(make-array '(2 2))) (1 #(0 1 2)) (1 A)) 'prop-sorter))))
 
 (test prop-sorter-numerical-subtypes
   "Test that PROP-SORTER handles equal numbers of unequal types."

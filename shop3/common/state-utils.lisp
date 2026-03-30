@@ -634,9 +634,12 @@ using MAKE-INITIAL-STATE.")
    Shorter lists are considered smaller if one is a prefix of the other."
   (flet ((elem< (x y)
            "Compare two elements deterministically: numbers first, then symbols."
-           (cond ((and (realp x) (realp y))         ; Compare real numbers
+           (cond ((and (realp x) (realp y))         ; Compare reals
                   (cond ((< x y) t)
                         ((> x y) nil)
+                        ;; x and y are numerically equal, distinguish types:
+                        ((eq (type-of x) (type-of y)) ;; same type, move to next element.
+                         nil)
                         ;; integers before other types
                         ((integerp x) t)
                         ((integerp y) nil)
@@ -645,9 +648,11 @@ using MAKE-INITIAL-STATE.")
                         ((rationalp y) nil)
                         ;; floats before other reals (if any such exist!)
                         ((floatp x) t)
+                        ((floatp y) nil)
                         (t nil)))
-                 ((realp x) t)                        ; Real numbers come before non-numbers (and complex numbers)
-                 ((realp y) nil)                      ; Non-numbers come after real numbers
+                 ;; reals before symbols, strings and other things, eg complex numbers, arrays, objects
+                 ((realp x) t)
+                 ((realp y) nil)
                  ((and (stringp x) (stringp y))
                   (string< x y))
                  ((and (symbolp x) (symbolp y)) ; Compare symbols lexicographically
