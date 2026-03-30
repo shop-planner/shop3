@@ -161,7 +161,7 @@
                          (is (set-equal volume-load-facts candidates :test 'equalp)
                              "Getting facts for location 3 gives unexpected results ~s for encoding ~s" candidates encoding)))))))
 
-(def-suite* prop-sorter-suite)
+(def-suite* prop-sorter-suite :in test-shop-states)
 
 (test prop-sorter-test
   "Test that prop-sorter sorts propositions correctly."
