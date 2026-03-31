@@ -5,7 +5,9 @@
 
 This repository contains the open source version of the SHOP3 Hierarchical Task Network (HTN) AI planner.
 
-## Version 4.1 Release (forthcoming)
+## Version 4.2 Release (31 March 2026)
+
+Version 4.2 supersedes the planned 4.1 release, which was never finalized.
 
 Add the ability to use PDDL axioms (`:derived-predicates`), with an appropriate PDDL requirement mixin.
 
@@ -14,6 +16,12 @@ Related to adding this support, identified a number of issues with translation o
 Fixed treatment of numeric fluents that do not having initial values specified in the planning problem.  These are explicitly permitted by the PDDL specification, but would previously cause SHOP to raise errors.
 
 Incorporated [PDDL-UTILS](https://github.com/rpgoldman/pddl-tools) as a dependency.  Previously, all PDDL wrangling was done in SHOP-specific code, which was duplicative.  Did not replace existing code, but will not continue to add duplicate code when library code is available.
+
+Improved the `prop-sorter` function that can be used to dump sets of state facts.
+
+Fix code for computing `last-establishers` for facts.  This is useful in plan repair and in evaluating plans.
+
+Also a number of small bug fixes and improvements.
 
 Updated manual.
 
