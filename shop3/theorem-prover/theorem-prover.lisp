@@ -517,7 +517,7 @@ in the goal, so we ignore the extra reference."
       ;; the negation is falsified
       nil)
     (t
-     (trace-print :goals (car arguments) state
+     (trace-print :goals (caar arguments) state
                   "~2%Level ~s, NOT goal ~s succeeded (positive goal unsatisfied)" newlevel arguments)
      (let (newdep)
        ;; FIXME: this really only works if we convert the preconditions to negation normal form.

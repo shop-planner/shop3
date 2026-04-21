@@ -103,10 +103,10 @@ Otherwise it returns FAIL."
     ;; non-local exit
     (when (eq operator-unifier 'fail)
       (trace-print :operators (first head) state
-                       "~2%Depth ~d, inapplicable operator ~s~%     task ~s.~%     Unification of task and operator failed.~%"
+                       "~2%Depth ~d, inapplicable operator ~s with head ~s~%     task ~s.~%     Unification of task and operator failed.~%"
                        depth
-                       (first head)
-                       (apply-substitution task-body operator-unifier))
+                       (first head) head
+                       (apply-substitution task-body in-unifier))
       (return-from apply-operator 'fail))
 
     (setf operator-unifier
