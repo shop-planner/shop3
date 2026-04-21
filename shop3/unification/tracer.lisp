@@ -65,7 +65,10 @@
 (defgeneric trigger-trace (keyword item-name)
   (:documentation "Allow extensible methods of matching to trigger printing.")
   (:method (keyword item-name)
-    (declare (ignorable keyword item-name))
+    (declare (ignorable item-name))
+    (cerror "Continue, skipping the trace."
+            "Used unsupported trace keyword ~S in ~S"
+            keyword (list keyword item-name))
     nil))
 
 (defmacro trace-print (type item state &rest formats)

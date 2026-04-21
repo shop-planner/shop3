@@ -849,7 +849,7 @@ Otherwise it returns FAIL."
                     (add-protection protections (second a)
                                     depth (first head) state))))
 
-          (trace-print :operators action state "~&PDDL action ~A successfully applied." head-subbed)
+          (trace-print :operators (first head) state "~&PDDL action ~A successfully applied." head-subbed)
 
           (values head-subbed statetag
                   protections cost-number
