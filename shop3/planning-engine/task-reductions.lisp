@@ -311,9 +311,12 @@ Otherwise it returns FAIL."
                      task-body)
 
         ;; find all matches to the current state
-        (multiple-value-setq (state-unifiers dependencies)
-          (shopthpr:find-satisfiers pre state
-                                    :domain domain))
+        (let ((*shop-trace* (if (member method-name *traced-methods*)
+                               (cons :goals *shop-trace*)
+                               *shop-trace*)))
+          (multiple-value-setq (state-unifiers dependencies)
+            (shopthpr:find-satisfiers pre state
+                                      :domain domain)))
         (if state-unifiers
             (let* ((answers-with-duplicates
                      (if *record-dependencies-p*
