@@ -91,15 +91,17 @@ currently being traced.
       :GOALS, :EFFECTS, or :PROTECTIONS, in which case SHOP will
       trace all items of that type (:GOALS, :EFFECTS, and :PROTECTIONS
       refer to three different ways predicates can occur: as goals to
-      be satisfied, and as effects or protections in operators);
-    - a pair of the form (:TASK <taskname>), (:METHOD <methodname>).  SHOP will
-      break when attempting to expand the task, or apply the method, respectively.
-- the keyword :STATES, in which case SHOP will include the current
-       state whenever it prints out a tracing message
-     - the keyword :EFFECTS, in which case SHOP will trace the effects
-       of operators being applied
-     - the keyword :ALL in which case SHOP will print out all the tracing
-       information it knows how to.
+      be satisfied, as effects in operators, or as protections in operators);
+    - a pair of the form (:TASK <taskname>), (:METHOD <methodname>),
+       (:GOAL <goalname>), (:AXIOM <axiomname>), or (:OPERATOR <operatorname>).
+       SHOP will break when attempting to expand the task, apply the method, or
+       trace the goal/axiom/operator.
+    - the keyword :STATES, in which case SHOP will include the current
+        state whenever it prints out a tracing message
+    - the keyword :EFFECTS, in which case SHOP will trace the effects
+        of operators being applied
+    - the keyword :ALL in which case SHOP will print out all the tracing
+        information it knows how to.
 
  - (SHOP-TRACE ITEM1 ITEM2 ...) will do the same for a list of items"
   (let* ((items `,items)
@@ -154,6 +156,10 @@ currently being traced.
 
 (defmethod trigger-trace ((keyword (eql :operators)) (item symbol))
   (member item *traced-operators* :test 'eq))
+
+(defmethod trigger-trace ((keyword (eql :plans)) item)
+  (declare (ignorable keyword item))
+  nil)
 
 
 (defun shop-trace-info ()
