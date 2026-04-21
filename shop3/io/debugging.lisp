@@ -57,7 +57,7 @@
 ;;; portions thereof marked with this legend must also reproduce the
 ;;; markings.
 
-(in-package :shop2)
+(in-package :shop)
 
 (defvar *start-run-time*)
 (defvar *start-real-time*)
@@ -70,6 +70,7 @@
                                         ; expand one of these.
 (defvar *traced-axioms* nil)
 (defvar *traced-goals* nil)
+(defvar *traced-effects* nil)
 
 
 (defconstant +shop-trace-items+
@@ -93,10 +94,12 @@ currently being traced.
       be satisfied, and as effects or protections in operators);
     - a pair of the form (:TASK <taskname>), (:METHOD <methodname>).  SHOP will
       break when attempting to expand the task, or apply the method, respectively.
-    - the keyword :STATES, in which case SHOP will include the current
-      state whenever it prints out a tracing message
-    - the keyword :ALL in which case SHOP will print out all the tracing
-      information it knows how to.
+- the keyword :STATES, in which case SHOP will include the current
+       state whenever it prints out a tracing message
+     - the keyword :EFFECTS, in which case SHOP will trace the effects
+       of operators being applied
+     - the keyword :ALL in which case SHOP will print out all the tracing
+       information it knows how to.
 
  - (SHOP-TRACE ITEM1 ITEM2 ...) will do the same for a list of items"
   (let* ((items `,items)
@@ -117,15 +120,18 @@ currently being traced.
              (pushnew item *shop-trace*))
             ((listp item)
              (macrolet ((trace-item (variable)
-                          `(pushnew (second item) ,variable)))
+                          `(progn
+                             (pushnew item *shop-trace* :test 'equalp)
+                             (pushnew (second item) ,variable))))
                (case (car item)
                  (:task (trace-item *traced-tasks*))
                  (:method (trace-item *traced-methods*))
-		 (:operator (trace-item *traced-operators*))
+                 (:operator (trace-item *traced-operators*))
                  (:goal (trace-item *traced-goals*))
+                 (:effects (trace-item *traced-effects*))
                  (:axiom (trace-item *traced-axioms*))
                  (otherwise
-                  (warn "Ignoring invalid shop-trace argument ~S" item)))))
+                  (warn "Ignoring invalid shop-trace keyword ~s from argument ~S" (car item) item)))))
             (t
              (warn "Ignoring invalid shop-trace argument ~S" item)))))
   (shop-trace-info))
@@ -139,29 +145,38 @@ currently being traced.
 (defmethod trigger-trace ((keyword (eql :goals)) (item symbol))
   (member item *traced-goals* :test 'eq))
 
+(defmethod trigger-trace ((keyword (eql :effects)) (item symbol))
+  (member item *traced-effects* :test 'eq))
+
+
 (defmethod trigger-trace ((keyword (eql :tasks)) (item symbol))
   (member item *traced-tasks* :test 'eq))
+
+(defmethod trigger-trace ((keyword (eql :operators)) (item symbol))
+  (member item *traced-operators* :test 'eq))
 
 
 (defun shop-trace-info ()
   "Information about the traced aspects of shop3."
-  (append
-   *shop-trace*
-   (mapcar #'(lambda (taskname)
-               `(:task ,taskname))
-           *traced-tasks*)
-   (mapcar #'(lambda (methname)
-               `(:method ,methname))
-           *traced-methods*)
-   (mapcar #'(lambda (opname)
-               `(:operator ,opname))
-           *traced-operators*)
-   (mapcar #'(lambda (goalname)
-               `(:goal ,goalname))
-           *traced-goals*)
-   (mapcar #'(lambda (axiomname)
-               `(:axiom ,axiomname))
-           *traced-axioms*)))
+  (remove-duplicates
+   (append
+    *shop-trace*
+    (mapcar #'(lambda (taskname)
+                `(:task ,taskname))
+            *traced-tasks*)
+    (mapcar #'(lambda (methname)
+                `(:method ,methname))
+            *traced-methods*)
+    (mapcar #'(lambda (opname)
+                `(:operator ,opname))
+            *traced-operators*)
+    (mapcar #'(lambda (goalname)
+                `(:goal ,goalname))
+            *traced-goals*)
+    (mapcar #'(lambda (axiomname)
+                `(:axiom ,axiomname))
+            *traced-axioms*))
+   :test 'equalp))
 
 
 (defmacro shop-untrace (&rest items)
@@ -172,11 +187,12 @@ currently being traced.
 
 (defun shop-untrace-all ()
   (setf *shop-trace* nil
-       *traced-tasks* nil
-       *traced-operators* nil
-       *traced-methods* nil
-       *traced-goals* nil
-       *traced-axioms* nil))
+        *traced-tasks* nil
+        *traced-operators* nil
+        *traced-methods* nil
+        *traced-goals* nil
+        *traced-effects* nil
+        *traced-axioms* nil))
 
 
 (defun shop-untrace-1 (items)
@@ -186,13 +202,19 @@ currently being traced.
            (shop-untrace-all))
           ((symbolp item)
            (setq *shop-trace* (delete item *shop-trace*)))
-         ((eq (car item) :task)
-          (setf *traced-tasks* (delete (second item) *traced-tasks*)))
-         ((eq (car item) :method)
-          (setf *traced-methods* (delete (second item) *traced-methods*)))
-         (t
-          (warn "don't know how to delete ~S from shop-trace items: ignoring."
-                item)))))
+          ((eq (car item) :task)
+           (setf *traced-tasks* (delete (second item) *traced-tasks*)))
+          ((eq (car item) :method)
+           (setf *traced-methods* (delete (second item) *traced-methods*)))
+          ((eq (car item) :goal)
+           (setf *traced-goals* (delete (second item) *traced-goals*)))
+          ((eq (car item) :effects)
+           (setf *traced-effects* (delete (second item) *traced-effects*)))
+          ((eq (car item) :axiom)
+           (setf *traced-axioms* (delete (second item) *traced-axioms*)))
+          (t
+           (warn "don't know how to delete ~S from shop-trace items: ignoring."
+                 item)))))
 
 (defun print-methods (&optional name (domain *domain*))
   (if name
