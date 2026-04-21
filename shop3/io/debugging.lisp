@@ -85,7 +85,7 @@ currently being traced.
  - (SHOP-TRACE ITEM) will turn on tracing for ITEM.
 
  ITEM may be any of the following:
- 
+
     - the name of a method, axiom, operator, task, or predicate;
     - one of the keywords :METHODS, :AXIOMS, :OPERATORS, :TASKS,
       :GOALS, :EFFECTS, or :PROTECTIONS, in which case SHOP will
@@ -118,8 +118,7 @@ currently being traced.
              (pushnew item *shop-trace*))
             ((listp item)
              (macrolet ((trace-item (variable)
-                          `(progn (pushnew (second item) ,variable)
-                                  (pushnew item *shop-trace*))))
+                          `(pushnew (second item) ,variable)))
                (case (car item)
                  (:task (trace-item *traced-tasks*))
                  (:method (trace-item *traced-methods*))
@@ -180,14 +179,14 @@ currently being traced.
 (defun shop-untrace-1 (items)
   ;; it's OK to use destructive deletion here
   (dolist (item items)
-    (cond ((symbolp item)
-          (setq *shop-trace* (delete item *shop-trace*)))
+    (cond ((eq item :all)
+           (shop-untrace-all))
+          ((symbolp item)
+           (setq *shop-trace* (delete item *shop-trace*)))
          ((eq (car item) :task)
           (setf *traced-tasks* (delete (second item) *traced-tasks*)))
          ((eq (car item) :method)
           (setf *traced-methods* (delete (second item) *traced-methods*)))
-         ((eq (car item) :all)
-          (shop-untrace-all))
          (t
           (warn "don't know how to delete ~S from shop-trace items: ignoring."
                 item)))))
