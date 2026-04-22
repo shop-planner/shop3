@@ -1132,9 +1132,10 @@ problem."
         (facts (pddl-utils:pddlify-tree (pddl-utils:problem-state problem-sexp)
                                         shop-package)))
     (make-problem
-     (uiop:intern* (if name name
-                       (pddl-utils:problem-name problem-sexp))
-                   shop-package)
+     `(,(uiop:intern* (if name name
+                          (pddl-utils:problem-name problem-sexp))
+                      shop-package)
+       :redefine-ok t :silently t)
      (sort
       (copy-list
        (append facts
