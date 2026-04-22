@@ -38,7 +38,7 @@
 ;;; MPL, the GPL or the LGPL.
 ;;; ---------------------------------------------------------------------
 
-;;; Smart Information Flow Technologies Copyright 2006-2025
+;;; Smart Information Flow Technologies Copyright 2006-2026
 ;;; Unpublished work
 ;;;
 ;;; GOVERNMENT PURPOSE RIGHTS
@@ -2515,3 +2515,126 @@
                                   nil 0 nil)))
         (fiveam:is
          (eq 'fail applied))))))
+
+(fiveam:def-suite translate-pddl-problem-tests :in shop3::pddl-tests)
+
+(fiveam:in-suite translate-pddl-problem-tests)
+
+(fiveam:def-fixture rovers-problem-for-translation ()
+  (let ((shop3::*define-silently* t))
+    (load (asdf:system-relative-pathname "shop3" "examples/rovers/strips/domain.lisp")))
+  (let ((rovers-pddl-problem
+          (pddl-utils:read-pddl-file (asdf:system-relative-pathname "shop3" "examples/rovers/strips/p01.pddl"))))
+    (&body)))
+
+
+;;; 4 pass
+(fiveam:test (translate-pddl-problem-basic :suite translate-pddl-problem-tests)
+  "Test basic translation of a PDDL problem with state preservation"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem)))
+      (fiveam:is (typep shop-problem 'shop:problem))
+      (let ((package (symbol-package (shop::problem-name shop-problem))))
+        (fiveam:is (equal (uiop:intern* (pddl-utils:problem-name rovers-pddl-problem)
+                                  package)
+                          (shop::problem-name shop-problem))))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is-true state-atoms)
+        (fiveam:is-true (member '(at rover0 waypoint3) state-atoms :test 'equalp))))))
+
+;;; 155 checks
+(fiveam:test (translate-pddl-problem-package :suite translate-pddl-problem-tests)
+  "Test that symbols are interned in the correct package when shop-package is specified"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let* ((shop-package (find-package :shop-user))
+           (shop-problem (shop:translate-pddl-problem rovers-pddl-problem :shop-package shop-package)))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (dolist (atom state-atoms)
+          (dolist (sym atom)
+            (when (symbolp sym)
+              (fiveam:is-true (eq (symbol-package sym) shop-package)
+                              (format nil "Symbol ~A should be in package ~A" sym shop-package)))))))))
+
+;;; 1
+(fiveam:test (translate-pddl-problem-custom-name :suite translate-pddl-problem-tests)
+  "Test that the name keyword overrides the problem name"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem :name 'my-custom-problem)))
+      (fiveam:is (equal 'my-custom-problem (shop::problem-name shop-problem))))))
+
+;;; 1 check
+(fiveam:test (translate-pddl-problem-with-goal :suite translate-pddl-problem-tests)
+  "Test that include-goal adds the goal to the state"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem :include-goal t)))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is-true (member
+                         '(:goal (AND (COMMUNICATED_SOIL_DATA WAYPOINT2)
+                            (COMMUNICATED_ROCK_DATA WAYPOINT3)
+                            (COMMUNICATED_IMAGE_DATA OBJECTIVE1 HIGH_RES)))
+                         state-atoms :test 'equalp)
+                        "Goal not present in:~%~{~S~%~}"
+                        (sort (copy-list state-atoms) #'shop::prop-sorter))))))
+
+;;; 1 check
+(fiveam:test (translate-pddl-problem-no-goal :suite translate-pddl-problem-tests)
+  "Test that include-goal nil does not add the goal to the state"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem :include-goal nil)))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is-false (member '(:goal (and (at rover1 mars) (at rover2 mars))) state-atoms :test 'equalp))))))
+
+;; 1 check
+(fiveam:test (translate-pddl-problem-with-task-net :suite translate-pddl-problem-tests)
+  "Test that task-net is correctly set when provided"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem :task-net '((achieve-goals)))))
+      (fiveam:is (equalp '(:ordered (:task achieve-goals)) (shop::problem-tasks shop-problem))))))
+
+;;; 1 check
+(fiveam:test (translate-pddl-problem-no-task-net :suite translate-pddl-problem-tests)
+  "Test that no task network is created when task-net is nil"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem (shop:translate-pddl-problem rovers-pddl-problem :task-net nil)))
+      (fiveam:is (equalp '(:ordered (:task shop::!!INOP)) (shop::problem-tasks shop-problem))))))
+
+;;; 2 checks
+(fiveam:test (translate-pddl-problem-state-sorting :suite translate-pddl-problem-tests)
+  "Test that state atoms are sorted"
+  (fiveam:with-fixture rovers-problem-for-translation ()
+    (let ((shop-problem
+            (shop:translate-pddl-problem rovers-pddl-problem)))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is-true (consp state-atoms))
+        (let ((sorted-p t))
+          (dotimes (i (1- (length state-atoms)))
+            (when (not (shop::prop-sorter (nth i state-atoms) (nth (1+ i) state-atoms)))
+              (setf sorted-p nil)))
+          (fiveam:is-true sorted-p))))))
+
+;;; 2 checks
+(fiveam:test (translate-pddl-problem-empty-state :suite translate-pddl-problem-tests)
+  "Test translation of a problem with empty state"
+  (let ((empty-problem-sexp
+          (pddl-utils:make-problem 'empty-problem :domain'test-domain
+                                   :objects '(a - object b - object)
+                                   :init '() :goal '(p a))))
+    (let ((shop-problem (shop:translate-pddl-problem empty-problem-sexp)))
+      (fiveam:is (typep shop-problem 'shop:problem))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is (listp state-atoms))))))
+
+;;; 3 checks
+(fiveam:test (translate-pddl-problem-objects-typing :suite translate-pddl-problem-tests)
+  "Test that objects are properly typed in the state"
+  (let ((problem-sexp
+          (pddl-utils:make-problem 'typed-problem
+                                   :domain 'test-domain
+                                   :objects '(a - block b - block c - location)
+                                   :init '() :goal '(p a)))
+        (shop-package (find-package :shop-user)))
+    (let ((shop-problem (shop:translate-pddl-problem problem-sexp :shop-package shop-package)))
+      (let ((state-atoms (shop::state-atoms shop-problem)))
+        (fiveam:is-true (member '(block a) state-atoms :test 'equalp))
+        (fiveam:is-true (member '(block b) state-atoms :test 'equalp))
+        (fiveam:is-true (member '(location c) state-atoms :test 'equalp))))))
