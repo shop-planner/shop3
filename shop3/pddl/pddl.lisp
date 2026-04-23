@@ -1115,3 +1115,35 @@ atoms of the problem."
               (collecting `(,type ,var))))))
     (call-next-method domain state-encoding
                       (append new-atoms atoms))))
+
+(defun translate-pddl-problem (problem-sexp &key task-net (shop-package *package*)
+                                            name
+                                              include-goal)
+  "Translate PROBLEM-SEXP, which should be a parsed (by PDDL-UTILS) PDDL problem,
+into a SHOP problem object.  If task-net is supplied, that should be the initial
+task network in the SHOP problem.  Otherwise, there will be no task network, and the
+programmer will have to add one.  If SHOP-PACKAGE is supplied, the names in the PDDL
+problem will be translated to that package.  If no value is supplied, names will be
+translated into the current package, *PACKAGE*.  If INCLUDE-GOAL is true, then add
+the goal as a statement of the form `(:GOAL <goal>)` to the initial state of the
+problem."
+  (assert (typep problem-sexp 'pddl-utils:problem))
+  (let ((objects (pddl-utils:canonicalize-types (pddl-utils:problem-objects problem-sexp)))
+        (facts (pddl-utils:pddlify-tree (pddl-utils:problem-state problem-sexp)
+                                        shop-package)))
+    (make-problem
+     `(,(uiop:intern* (if name name
+                          (pddl-utils:problem-name problem-sexp))
+                      shop-package)
+       :redefine-ok t :silently t)
+     (sort
+      (copy-list
+       (append facts
+               (when include-goal `((:goal ,(pddl-utils:pddlify-tree (pddl-utils:problem-goal problem-sexp)
+                                                                     shop-package))))
+               (iter (for (obj hyphen type . nil) on objects by #'cdddr)
+                 (assert (eq hyphen '-))
+                 (collecting `(,(uiop:intern* type shop-package)
+                               ,(uiop:intern* obj shop-package))))))
+      #'prop-sorter)
+     (pddl-utils:pddlify-tree task-net shop-package))))
