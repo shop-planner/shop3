@@ -103,10 +103,10 @@ Otherwise it returns FAIL."
     ;; non-local exit
     (when (eq operator-unifier 'fail)
       (trace-print :operators (first head) state
-                       "~2%Depth ~d, inapplicable operator ~s~%     task ~s.~%     Unification of task and operator failed.~%"
+                       "~2%Depth ~d, inapplicable operator ~s with head ~s~%     task ~s.~%     Unification of task and operator failed.~%"
                        depth
-                       (first head)
-                       (apply-substitution task-body operator-unifier))
+                       (first head) head
+                       (apply-substitution task-body in-unifier))
       (return-from apply-operator 'fail))
 
     (setf operator-unifier
@@ -196,7 +196,7 @@ Otherwise it returns FAIL."
                 (add-protection protections (second a)
                                 depth (first head) state))))
 
-      (trace-print :operators operator state "~&Operator successfully applied.")
+      (trace-print :operators (operator-name operator) state "~&Operator successfully applied.")
 
       (values head-subbed statetag
               protections cost-number
@@ -311,9 +311,12 @@ Otherwise it returns FAIL."
                      task-body)
 
         ;; find all matches to the current state
-        (multiple-value-setq (state-unifiers dependencies)
-          (shopthpr:find-satisfiers pre state
-                                    :domain domain))
+        (let ((*shop-trace* (if (member method-name *traced-methods*)
+                               (cons :goals *shop-trace*)
+                               *shop-trace*)))
+          (multiple-value-setq (state-unifiers dependencies)
+            (shopthpr:find-satisfiers pre state
+                                      :domain domain)))
         (if state-unifiers
             (let* ((answers-with-duplicates
                      (if *record-dependencies-p*

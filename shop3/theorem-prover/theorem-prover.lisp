@@ -511,21 +511,23 @@ in the goal, so we ignore the extra reference."
       (cerror "Simply return no new dependencies." 'incomplete-dependency-error :logical-op "negation (NOT)" :expression arguments)
       ))
   ;; we just want to see if (CDR GOAL1) is satisfiable, so last arg is T
-  (cond
-    ((let ((*record-dependencies-p* nil))
-       (seek-satisfiers arguments state nil newlevel t :domain domain))
-     ;; the negation is falsified
-     nil)
-   (t
-    (let (newdep)
-      ;; FIXME: this really only works if we convert the preconditions to negation normal form.
-      (when (and *record-dependencies-p* (groundp (first arguments)))
-        (setf newdep
-              (make-raw-depend
-               :est
-               (dependency-for-negation (first arguments) state)
-               :prop `(not ,(first arguments)))))
-      (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in))))))
+(cond
+     ((let ((*record-dependencies-p* nil))
+        (seek-satisfiers arguments state nil newlevel t :domain domain))
+      ;; the negation is falsified
+      nil)
+    (t
+     (trace-print :goals (caar arguments) state
+                  "~2%Level ~s, NOT goal ~s succeeded (positive goal unsatisfied)" newlevel arguments)
+     (let (newdep)
+       ;; FIXME: this really only works if we convert the preconditions to negation normal form.
+       (when (and *record-dependencies-p* (groundp (first arguments)))
+         (setf newdep
+               (make-raw-depend
+                :est
+                (dependency-for-negation (first arguments) state)
+                :prop `(not ,(first arguments)))))
+       (seek-satisfiers other-goals state bindings newlevel just1 :domain domain :dependencies (if newdep (cons newdep dependencies-in) dependencies-in))))))
 
 (defun dependency-for-negation (positive-literal state)
   ;; FIXME: we should check that positive-literal is, in fact, a
