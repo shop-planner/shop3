@@ -196,7 +196,7 @@ Otherwise it returns FAIL."
                 (add-protection protections (second a)
                                 depth (first head) state))))
 
-      (trace-print :operators operator state "~&Operator successfully applied.")
+      (trace-print :operators (operator-name operator) state "~&Operator successfully applied.")
 
       (values head-subbed statetag
               protections cost-number
