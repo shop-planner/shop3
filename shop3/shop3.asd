@@ -214,6 +214,35 @@ minimal affected subtree."
   :components ((:file "package")
                (:file "domain")))
 
+(defsystem shop3/depots
+    :depends-on (:shop3)
+  :serial t
+  :pathname "examples/depots/"
+  :components ((:file "depots")
+               (:file "pfile01")
+               (:file "pfile02")
+               (:file "pfile03")
+               (:file "pfile04")
+               (:file "pfile05")
+               (:file "pfile06")
+               (:file "pfile07")
+               (:file "pfile08")
+               (:file "pfile09")
+               (:file "pfile10")
+               (:file "pfile11")
+               (:file "pfile12")
+               (:file "pfile13")
+               (:file "pfile14")
+               (:file "pfile15")
+               (:file "pfile16")
+               (:file "pfile17")
+               (:file "pfile18")
+               (:file "pfile19")
+               (:file "pfile20")
+               (:file "pfile21")
+               (:file "pfile22")))
+
+
 (defsystem shop3/rovers
     :depends-on (:shop3)
   :serial t
@@ -257,154 +286,132 @@ minimal affected subtree."
 
 (defsystem shop3/test
     :defsystem-depends-on ((:version "fiveam-asdf" "2"))
-    :class "fiveam-asdf:fiveam-tester-system"
-    ;; the following test numbers are no longer accurate, AFAICT.
-    :test-names ((pddl-tests . :shop3)  ; 245 + 171 = 416
-                 (protection-test . :protection-test)  ; 16
-                 ;; all the following are now subsumed into all-shop3-internal-tests
-                 (test-sort-by . :arity-test) ; 7
-                 (arity-test . :arity-test) ; 6
-                 (io-tests . :arity-test) ; 40
-                 ;; end of internal tests
-                 (umt-domain-tests . :shop3-user) ; 8
-                 (blocks-tests . :shop3-user) ; 8
-                 (blocks-plan-validation . :shop3-user) ; 6
-                 (depot-tests . :shop3-user) ; 44
-                 (logistics-tests . :shop3-user) ; 208
-                 (logistics-tests-dh . :shop3-user) ; 200
-                 (singleton-tests . :shop3-user) ; 44
-                 (misc-tests . :shop3-user) ; 10
-                 (minimal-subtree-tests . :shop3-user) ; 12
-                 (enhanced-plan-tree . :shop3-user) ; 2
-                 (theorem-prover-tests . :shop-theorem-prover-tests)  ; 26
-                 (test-plan-repair . :shop-replan-tests) ; 3
-                 (test-shop-states . :test-states) ; 114
-                 (analogical-replay-tests . :analogical-replay-tests) ; 24
-                 (plan-tree-tests . :plan-tree-tests)  ; 40
-                 (search-tests . :search-tests) ; 9
-                 (plan-num-limit-tests . :plan-num-limit-tests) ; 25
-                 (hddl-plan-tests . :shop-hddl-tests) ; 7
-                 (new-plan-tree-tests . :new-plan-tree-tests) ; 22
-                 )
-    :num-checks 1337
-    :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
-                 "shop3/openstacks"
-                 "shop3/pddl-helpers"
-                 "shop3/rovers"         ; for new plan tree tests
-                 ;; need fix to PDDL pretty-printing
-                 (:version "pddl-utils" "3.6.2"))
-    :version (:read-file-form "shop-version.lisp-expr")
-    :components ((:module "shop-test-helper"
-                          :pathname "tests/"
-                          :components ((:file "common")
-                                       (:file "warns-check")))
+  :class "fiveam-asdf:fiveam-tester-system"
+  ;; the following test numbers are no longer accurate, AFAICT.
+  :test-names ((pddl-tests . :shop3)  ; 245 + 171 = 416
+               (protection-test . :protection-test)  ; 16
+               ;; all the following are now subsumed into all-shop3-internal-tests
+               (test-sort-by . :arity-test) ; 7
+               (arity-test . :arity-test) ; 6
+               (io-tests . :arity-test) ; 40
+               ;; end of internal tests
+               (umt-domain-tests . :shop3-user) ; 8
+               (blocks-tests . :shop3-user) ; 8
+               (blocks-plan-validation . :shop3-user) ; 6
+               (depot-tests . :shop3-user) ; 44
+               (logistics-tests . :shop3-user) ; 208
+               (logistics-tests-dh . :shop3-user) ; 200
+               (singleton-tests . :shop3-user) ; 44
+               (misc-tests . :shop3-user) ; 10
+               (minimal-subtree-tests . :shop3-user) ; 12
+               (enhanced-plan-tree . :shop3-user) ; 2
+               (theorem-prover-tests . :shop-theorem-prover-tests)  ; 26
+               (test-plan-repair . :shop-replan-tests) ; 3
+               (test-shop-states . :test-states) ; 114
+               (analogical-replay-tests . :analogical-replay-tests) ; 24
+               (plan-tree-tests . :plan-tree-tests)  ; 40
+               (search-tests . :search-tests) ; 9
+               (plan-num-limit-tests . :plan-num-limit-tests) ; 25
+               (hddl-plan-tests . :shop-hddl-tests) ; 7
+               (new-plan-tree-tests . :new-plan-tree-tests) ; 22
+               )
+  :num-checks 1337
+  :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
+               "shop3/openstacks"
+               "shop3/depots"
+               "shop3/pddl-helpers"
+               "shop3/rovers"         ; for new plan tree tests
+               ;; need fix to PDDL pretty-printing
+               (:version "pddl-utils" "3.6.2"))
+  :version (:read-file-form "shop-version.lisp-expr")
+  :components ((:module "shop-test-helper"
+                :pathname "tests/"
+                :components ((:file "common")
+                             (:file "warns-check")))
 
-                 (:file "theorem-prover-tests"
-                        :pathname "tests/theorem-prover-tests")
-                 (:module "shop-pddl-tests"
-                          :depends-on ("shop-test-helper")
-                          :pathname "tests/"
-                          :components ((:file "pddl-tests")))
-                 (:module "shop-protection-tests"
-                          :pathname "examples/"
-                          :serial t
-                          :components ((:file "protection-test-package")
-                                       (:file "protection-test")))
-                 (:module "shop-internal-tests"
-                  :depends-on ("shop-logistic" "shop-test-helper")
-                  :pathname "tests/"
-                  :components ((:file "at-package")
-                               (:file "shop-internal-test-suite")
-                               (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
-                               (:module "umt-domain"
-                                :components
-                                ((:file "umt2-domain")
-                                 (:file "pfile1")
-                                 (:static-file "axioms.lisp")
-                                 (:static-file "operators.lisp")))
-                               (:file "io-tests" :depends-on ("at-package" "umt-domain"))
-                               (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
-                               (:file "state-tests" :depends-on ("at-package" "umt-domain"))
-                               (:file "misc" :depends-on ("at-package" "umt-domain"))
-                               (:file "analogical-replay")
-                               (:file "minimal-subtree-tests")
-                               (:file "sort-by-tests") ; 7 checks
-                               (:file "plan-tree-tests")                  ; 43 checks
-                               (:file "search-tests") ; 9 checks
-                               (:file "plan-num-limit-tests") ; 21 checks
-                               ))
+               (:file "theorem-prover-tests"
+                :pathname "tests/theorem-prover-tests")
+               (:module "shop-pddl-tests"
+                :depends-on ("shop-test-helper")
+                :pathname "tests/"
+                :components ((:file "pddl-tests")))
+               (:module "shop-protection-tests"
+                :pathname "examples/"
+                :serial t
+                :components ((:file "protection-test-package")
+                             (:file "protection-test")))
+               (:module "shop-internal-tests"
+                :depends-on ("shop-logistic" "shop-test-helper")
+                :pathname "tests/"
+                :components ((:file "at-package")
+                             (:file "shop-internal-test-suite")
+                             (:file "arity-tests" :depends-on ("at-package" "shop-internal-test-suite"))
+                             (:module "umt-domain"
+                              :components
+                              ((:file "umt2-domain")
+                               (:file "pfile1")
+                               (:static-file "axioms.lisp")
+                               (:static-file "operators.lisp")))
+                             (:file "io-tests" :depends-on ("at-package" "umt-domain"))
+                             (:file "singleton-tests" :depends-on ("at-package" "umt-domain"))
+                             (:file "state-tests" :depends-on ("at-package" "umt-domain"))
+                             (:file "misc" :depends-on ("at-package" "umt-domain"))
+                             (:file "analogical-replay")
+                             (:file "minimal-subtree-tests")
+                             (:file "sort-by-tests") ; 7 checks
+                             (:file "plan-tree-tests")                  ; 43 checks
+                             (:file "search-tests") ; 9 checks
+                             (:file "plan-num-limit-tests") ; 21 checks
+                             ))
                  ;;; FIXME: put these tests in a separate package, instead of in SHOP3-USER [2012/09/05:rpg]
-                 (:module "shop-umt"
-                          :pathname "examples/UMT2/"
-                          :components ((:file "UMT2")
-                                       (:file "pfile1")
-                                       (:file "pfile2")
-                                       ;; FIXME: interestingly, pfile3 does not seem solvable.
-                                       ;; Haven't checked to see why [2006/05/10:rpg]
-                                       (:file "pfile3")
-                                       (:file "umt-tests" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
-                 (:module "shop-blocks"
-                          :pathname "examples/blocks"
-                          :components ((:file "block2")
-                                       (:file "problem100")
-                                       (:file "problem200")
-                                       (:file "problem300")
-                                       (:file "tests"
-                                              :depends-on ("problem100" "problem200" "problem300"))
-                                       (:file "validate-tests")))
-                 (:module "shop-depots"
-                          :pathname "examples/depots/"
-                          :components ((:file "depots")
-                                       (:file "pfile1")
-                                       (:file "pfile2")
-                                       (:file "pfile3")
-                                       (:file "pfile4")
-                                       (:file "pfile5")
-                                       (:file "pfile6")
-                                       (:file "pfile7")
-                                       (:file "pfile8")
-                                       (:file "pfile9")
-                                       (:file "pfile10")
-                                       (:file "pfile11")
-                                       (:file "pfile12")
-                                       (:file "pfile13")
-                                       (:file "pfile14")
-                                       (:file "pfile15")
-                                       (:file "pfile16")
-                                       (:file "pfile17")
-                                       (:file "pfile18")
-                                       (:file "pfile19")
-                                       (:file "pfile20")
-                                       (:file "pfile21")
-                                       (:file "pfile22")
-                                       (:file "tests")))
-                 (:module "shop-logistic"
-                          :pathname "examples/logistic/"
-                          :components ((:file "logistic")
-                                       (:file "Log_ran_problems_15" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_20" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_25" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_30" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_35" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_40" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_45" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_50" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_55" :depends-on ("logistic"))
-                                       (:file "Log_ran_problems_60" :depends-on ("logistic"))
-                                       (:file "tests" :depends-on ("Log_ran_problems_15"
-                                                                   "Log_ran_problems_20"
-                                                                   "Log_ran_problems_25"
-                                                                   "Log_ran_problems_30"
-                                                                   "Log_ran_problems_35"
-                                                                   "Log_ran_problems_40"
-                                                                   "Log_ran_problems_45"
-                                                                   "Log_ran_problems_50"
-                                                                   "Log_ran_problems_55"
-                                                                   "Log_ran_problems_60"))))
-                 (:file "replan-tests" :pathname "tests/replan-tests")
-                 (:file "hddl-tests" :pathname "tests/hddl-tests")
-                 (:file "new-plan-tree-tests" :pathname "tests/new-plan-tree-tests")
-                 ))
+               (:module "shop-umt"
+                :pathname "examples/UMT2/"
+                :components ((:file "UMT2")
+                             (:file "pfile1")
+                             (:file "pfile2")
+                             ;; FIXME: interestingly, pfile3 does not seem solvable.
+                             ;; Haven't checked to see why [2006/05/10:rpg]
+                             (:file "pfile3")
+                             (:file "umt-tests" :depends-on ("UMT2" "pfile1" "pfile2" "pfile3"))))
+               (:module "shop-blocks"
+                :pathname "examples/blocks"
+                :components ((:file "block2")
+                             (:file "problem100")
+                             (:file "problem200")
+                             (:file "problem300")
+                             (:file "tests"
+                              :depends-on ("problem100" "problem200" "problem300"))
+                             (:file "validate-tests")))
+               (:module "shop-depots"
+                :pathname "examples/depots/"
+                :components ((:file "tests")))
+               (:module "shop-logistic"
+                :pathname "examples/logistic/"
+                :components ((:file "logistic")
+                             (:file "Log_ran_problems_15" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_20" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_25" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_30" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_35" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_40" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_45" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_50" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_55" :depends-on ("logistic"))
+                             (:file "Log_ran_problems_60" :depends-on ("logistic"))
+                             (:file "tests" :depends-on ("Log_ran_problems_15"
+                                                         "Log_ran_problems_20"
+                                                         "Log_ran_problems_25"
+                                                         "Log_ran_problems_30"
+                                                         "Log_ran_problems_35"
+                                                         "Log_ran_problems_40"
+                                                         "Log_ran_problems_45"
+                                                         "Log_ran_problems_50"
+                                                         "Log_ran_problems_55"
+                                                         "Log_ran_problems_60"))))
+               (:file "replan-tests" :pathname "tests/replan-tests")
+               (:file "hddl-tests" :pathname "tests/hddl-tests")
+               (:file "new-plan-tree-tests" :pathname "tests/new-plan-tree-tests")
+               ))
 
 
 (defsystem shop3/test-satellite
