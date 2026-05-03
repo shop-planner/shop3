@@ -2,32 +2,32 @@
 
 (load "./depots.lisp")
 
-(load "./pfile1.lisp")
-(find-plans 'pfile1 :verbose :stats)
+(load "./pfile01.lisp")
+(find-plans 'pfile01 :verbose :stats)
 
-(load "./pfile2.lisp")
-(find-plans 'pfile2 :verbose :stats)
+(load "./pfile02.lisp")
+(find-plans 'pfile02 :verbose :stats)
 
-(load "./pfile3.lisp")
-(find-plans 'pfile3 :verbose :stats)
+(load "./pfile03.lisp")
+(find-plans 'pfile03 :verbose :stats)
 
-(load "./pfile4.lisp")
-(find-plans 'pfile4 :verbose :stats)
+(load "./pfile04.lisp")
+(find-plans 'pfile04 :verbose :stats)
 
-(load "./pfile5.lisp")
-(find-plans 'pfile5 :verbose :stats)
+(load "./pfile05.lisp")
+(find-plans 'pfile05 :verbose :stats)
 
-(load "./pfile6.lisp")
-(find-plans 'pfile6 :verbose :stats)
+(load "./pfile06.lisp")
+(find-plans 'pfile06 :verbose :stats)
 
-(load "./pfile7.lisp")
-(find-plans 'pfile7 :verbose :stats)
+(load "./pfile07.lisp")
+(find-plans 'pfile07 :verbose :stats)
 
-(load "./pfile8.lisp")
-(find-plans 'pfile8 :verbose :stats)
+(load "./pfile08.lisp")
+(find-plans 'pfile08 :verbose :stats)
 
-(load "./pfile9.lisp")
-(find-plans 'pfile9 :verbose :stats)
+(load "./pfile09.lisp")
+(find-plans 'pfile09 :verbose :stats)
 
 (load "./pfile10.lisp")
 (find-plans 'pfile10 :verbose :stats)

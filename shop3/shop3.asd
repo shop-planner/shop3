@@ -351,36 +351,13 @@ minimal affected subtree."
                                        (:file "problem300")
                                        (:file "tests"
                                               :depends-on ("problem100" "problem200" "problem300"))
-                                       (:file "validate-tests")))
-                 (:module "shop-depots"
-                          :pathname "examples/depots/"
-                          :components ((:file "depots")
-                                       (:file "pfile1")
-                                       (:file "pfile2")
-                                       (:file "pfile3")
-                                       (:file "pfile4")
-                                       (:file "pfile5")
-                                       (:file "pfile6")
-                                       (:file "pfile7")
-                                       (:file "pfile8")
-                                       (:file "pfile9")
-                                       (:file "pfile10")
-                                       (:file "pfile11")
-                                       (:file "pfile12")
-                                       (:file "pfile13")
-                                       (:file "pfile14")
-                                       (:file "pfile15")
-                                       (:file "pfile16")
-                                       (:file "pfile17")
-                                       (:file "pfile18")
-                                       (:file "pfile19")
-                                       (:file "pfile20")
-                                       (:file "pfile21")
-                                       (:file "pfile22")
-                                       (:file "tests")))
-                 (:module "shop-logistic"
-                          :pathname "examples/logistic/"
-                          :components ((:file "logistic")
+                             (:file "validate-tests")))
+               (:module "shop-depots"
+                :pathname "examples/depots/"
+                :components ((:file "tests")))
+               (:module "shop-logistic"
+                :pathname "examples/logistic/"
+                :components ((:file "logistic")
                                        (:file "Log_ran_problems_15" :depends-on ("logistic"))
                                        (:file "Log_ran_problems_20" :depends-on ("logistic"))
                                        (:file "Log_ran_problems_25" :depends-on ("logistic"))
