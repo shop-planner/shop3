@@ -134,9 +134,11 @@ hash tables. Done for side-effects: returns nothing."
 
 (defun translate-dependency-links (new-root tree-translation-table)
   (flet ((translate-node (node)
-           (declare (type tree-node node))
-           (or (gethash node tree-translation-table)
-               (error "Tree translation table has no translation for node ~s" node))))
+           (declare (type (or tree-node (eql :init)) node))
+           (cond ((eq node :init) :init)
+                 ((gethash node tree-translation-table))
+                 (t
+                  (error "Tree translation table has no translation for node ~s" node)))))
     (declare (ftype (function (tree-node) (values tree-node &optional))
                     translate-node))
     (flet ((translate-dependency (d)
