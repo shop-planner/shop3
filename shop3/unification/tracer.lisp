@@ -92,4 +92,4 @@
               (when (fboundp s-a)
                 `(when (member :states *shop-trace*)
                    (format *shop-trace-stream* "~%     state ~s"
-                           (sort (,s-a ,state) ',pred)))))))))))
+                           (sort (,s-a ,state) ',pred))))))))))
