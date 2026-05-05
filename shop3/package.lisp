@@ -368,6 +368,9 @@
            #:find-tree-node-if
            #:find-all-tree-nodes-if
 
+           ;; warning! this collides with shop3:all-primitive-nodes
+           #:all-primitive-nodes
+
            #:copy-plan-tree
            #:plan-tree->sexp
            ))
