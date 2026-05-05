@@ -776,25 +776,37 @@ will turn on tracing for @var{item}, which may be any
 of the following:
 @itemize
 @item
-a method, axiom, operator, task, or goal;
+the name of a method, axiom, operator, task, or predicate;
 @item
 one of the keywords @code{:methods}, @code{:axioms},
-@code{:operators}, @code{:tasks}, @code{:goals}, or
+@code{:operators}, @code{:tasks}, @code{:goals}, @code{:effects}, or
 @code{:protections} in which case @sysname{} will trace @emph{all}
-items of that type (@code{:goals} refers to predicates that are goals
-for the theorem-prover, and @code{:protections} refers to predicates
-used as arguments of @code{:protection} in operators);
+items of that type (@code{:goals}, @code{:effects}, and @code{:protections}
+refer to three different ways predicates can occur: as goals to
+be satisfied, as effects in operators, or as protections in operators);
+@item
+a pair of the form @code{(:task <taskname>)}, @code{(:method <methodname>)},
+@code{(:goal <goalname>)}, @code{(:axiom <axiomname>)}, or
+@code{(:operator <operatorname>)}.  @sysname{} will print trace outputs
+when attempting to expand the task, apply the method or operator,
+try to prove the goal, or use the axiom in the theorem-prover (e.g. when
+checking preconditions.
+
+Note that method and axiom names may not be what you expect!  Method
+names refer to the names of particular ways a task can be expanded,
+@emph{not} all the different decompositions in a single @code{:method}
+form, nor the task that the method expands.  For example, @code{(:method
+spoon-method)} (@pxref{Methods}).  Similarly, axiom names are
+@emph{branch names}, for example @code{(:axiom good)} (@pxref{Axioms}).
 @item
 the keyword @code{:states}, in which case @sysname{} will include the current state
 whenever it prints out a tracing message
 @item
-the keyword @code{:plans} in which case @sysname{} will print diagnostic information
-whenever it has found a plan (and may be considering whether or not to
-keep the plan, depending on the @code{:which} and @code{:optimize} arguments of
-@code{seek-plans}).
+the keyword @code{:effects}, in which case @sysname{} will trace the effects
+of operators being applied
 @item
-The keyword @code{:all}, which will trace all available items, currently
-methods, axioms, operators, tasks, goals and protections.
+the keyword @code{:all}, which will trace all available items, currently
+methods, axioms, operators, tasks, goals, effects, and protections.
 @end itemize
 
 @item
@@ -2005,8 +2017,10 @@ considered (through backtracking). Consequently, the following code:
 
 @lisp
 (:method (eat ?food)
+    fork-method
     (have-fork ?fork)
     ((!eat-with-fork ?food ?fork))
+    spoon-method
     (have-spoon ?spoon)
     ((!eat-with-spoon ?food ?spoon))
 @end lisp

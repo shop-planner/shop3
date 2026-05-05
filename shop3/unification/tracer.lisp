@@ -65,11 +65,16 @@
 (defgeneric trigger-trace (keyword item-name)
   (:documentation "Allow extensible methods of matching to trigger printing.")
   (:method (keyword item-name)
-    (declare (ignorable keyword item-name))
+    (declare (ignorable item-name))
+    (cerror "Continue, skipping the trace."
+            "Used unsupported trace keyword ~S in ~S"
+            keyword (list keyword item-name))
     nil))
 
 (defmacro trace-print (type item state &rest formats)
-  `(when *shop-trace*
+  `(progn
+     (unless (symbolp ,item)
+       (error 'type-error :expected-type 'symbol :datum ,item))
      (when (or (member ,type *shop-trace*) (member ,item *shop-trace*)
                (trigger-trace ,type ,item))
        ,(let ((cpack (find-package :shop2.common)))
@@ -87,4 +92,4 @@
               (when (fboundp s-a)
                 `(when (member :states *shop-trace*)
                    (format *shop-trace-stream* "~%     state ~s"
-                     (sort (,s-a ,state) ',pred))))))))))
+                           (sort (,s-a ,state) ',pred))))))))))
