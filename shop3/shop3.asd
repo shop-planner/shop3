@@ -313,9 +313,9 @@ minimal affected subtree."
                (search-tests . :search-tests) ; 9
                (plan-num-limit-tests . :plan-num-limit-tests) ; 25
                (hddl-plan-tests . :shop-hddl-tests) ; 7
-               (new-plan-tree-tests . :new-plan-tree-tests) ; 22
+               (new-plan-tree-tests . :new-plan-tree-tests) ; 722
                )
-  :num-checks 1337
+  :num-checks 2037
   :depends-on ((:version "shop3" (:read-file-form "shop-version.lisp-expr"))
                "shop3/openstacks"
                "shop3/depots"
