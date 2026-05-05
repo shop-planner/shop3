@@ -316,6 +316,7 @@ List of analogical-replay tables -- optional
                (when success
                  (setf plan-return
                        (make-plan-return domain which
+                                         :plan-num-limit plan-num-limit
                                          :plan plan
                                          :state state
                                          :repairable repairable
@@ -359,13 +360,13 @@ the tasks in the original PLAN into the copy.
 equality, so when the plan is rewritten, any plan tree must be rewritten,
 as well."
   (iter (with lookup-table = (make-hash-table :test #'eq))
-               (declare (ignorable rest))
-               (for (task num . rest) on plan by 'cddr)
-               (as copied-task = (copy-tree task))
-               (collecting copied-task into plan-copy)
-               (collecting num into plan-copy)
-               (setf (gethash task lookup-table) copied-task)
-               (finally (return (values plan-copy lookup-table)))))
+    (declare (ignorable rest))
+    (for (task num . rest) on plan by 'cddr)
+    (as copied-task = (copy-tree task))
+    (collecting copied-task into plan-copy)
+    (collecting num into plan-copy)
+    (setf (gethash task lookup-table) copied-task)
+    (finally (return (values plan-copy lookup-table)))))
 
 ;;; Internal function, just a helper for `make-plan-return`.
 (declaim (inline populate-plan-return))
@@ -375,14 +376,19 @@ as well."
 #-sbcl                                  ; SBCL doesn't like FTYPE declaration for a generic function.
 (declaim
  (ftype
-  (function (domain symbol &key (:state t) (:repairable t) (:plan list) (:replay-table (or null hash-table)) &allow-other-keys)
+  (function (domain symbol &key (:state t)
+                    (:repairable t)
+                    (:plan list)
+                    (:replay-table (or null hash-table))
+                    (plan-num-limit (or null integer)) &allow-other-keys)
             (values plan-return &optional))
   make-plan-return))
 
-(defgeneric make-plan-return (domain which &key state plan replay-table repairable &allow-other-keys)
+(defgeneric make-plan-return (domain which &key state plan replay-table repairable plan-num-limit &allow-other-keys)
   (:documentation "Make and return a PLAN-RETURN structure.  How return values are collected
-is directed by DOMAIN and WHICH arguments.")
-  (:method ((domain domain) (which (eql :all)) &key state plan replay-table repairable)
+ is directed by DOMAIN and WHICH arguments.")
+  (:method ((domain domain) (which (eql :all)) &key state plan replay-table repairable plan-num-limit)
+    (declare (ignore plan-num-limit))
     (assert (not repairable))
     ;; if there are going to be multiple return values, we must make
     ;; sure that further search does not clobber them.
@@ -392,7 +398,7 @@ is directed by DOMAIN and WHICH arguments.")
         (multiple-value-bind (new-plan new-tree)
             (prv:prepare-return-values plan :bindings (unifier state)
                                             :plan-tree (when (slot-boundp state 'plan-tree)
-                                                    (plan-tree state)))
+                                                         (plan-tree state)))
           (populate-plan-return
            :plan new-plan
            :tree new-tree
@@ -401,18 +407,22 @@ is directed by DOMAIN and WHICH arguments.")
            :world-state (copy-state (world-state state))
            :replay-table (when replay-table
                            (alexandria:copy-hash-table replay-table))))))
-  (:method ((domain domain) (which (eql :first)) &key plan state replay-table repairable)
-    (populate-plan-return
-     :plan plan
-     :tree (when *enhanced-plan-tree*
-             (apply-substitution-to-tree (unifier state) (plan-tree state))
-             (plan-tree state))
-     :lookup-table (when *enhanced-plan-tree*
-                     (plan-tree-lookup state))
-     :search-state (when repairable state)
-     :world-state (world-state state)
-     :replay-table (when replay-table
-                     (alexandria:copy-hash-table replay-table)))))
+  (:method ((domain domain) (which (eql :first)) &key plan state replay-table repairable plan-num-limit)
+    (if (> plan-num-limit 1)
+        ;; if we are looking for more than a single plan, then we must build the plan return in the same
+        ;; way as if we were finding all plans.
+        (make-plan-return domain :all :plan plan :state state :replay-table replay-table :repairable repairable)
+        (populate-plan-return
+         :plan plan
+         :tree (when *enhanced-plan-tree*
+                 (apply-substitution-to-tree (unifier state) (plan-tree state))
+                 (plan-tree state))
+         :lookup-table (when *enhanced-plan-tree*
+                         (plan-tree-lookup state))
+         :search-state (when repairable state)
+         :world-state (world-state state)
+         :replay-table (when replay-table
+                         (alexandria:copy-hash-table replay-table))))))
 
 
 (defun plan-returns (pr-list &optional (unpack-returns t))
