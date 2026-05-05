@@ -72,7 +72,7 @@
     nil))
 
 (defmacro trace-print (type item state &rest formats)
-  `(when *shop-trace*
+  `(progn
      (unless (symbolp ,item)
        (error 'type-error :expected-type 'symbol :datum ,item))
      (when (or (member ,type *shop-trace*) (member ,item *shop-trace*)
@@ -92,4 +92,4 @@
               (when (fboundp s-a)
                 `(when (member :states *shop-trace*)
                    (format *shop-trace-stream* "~%     state ~s"
-                           (sort (,s-a ,state) ',pred))))))))))
+                           (sort (,s-a ,state) ',pred)))))))))))
