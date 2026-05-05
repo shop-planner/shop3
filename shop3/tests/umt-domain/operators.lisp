@@ -628,5 +628,10 @@
                    ()
                    ((connect-loc ?road ?type ?l1 ?l2))
                    ())
+
+        (:operator (!!do-nothing)
+                   ()
+                   ()
+                   ())
         
    ))
