@@ -73,7 +73,8 @@
 
 (defmacro trace-print (type item state &rest formats)
   `(when *shop-trace*
-     (when (or (member ,type *shop-trace*) (member ,item *shop-trace*)
+     (when (or (member ,type *shop-trace*)
+               (member ,item *shop-trace*)
                (trigger-trace ,type ,item))
        ,(let ((cpack (find-package :shop2.common)))
           (when cpack
