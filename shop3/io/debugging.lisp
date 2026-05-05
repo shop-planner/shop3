@@ -1,4 +1,4 @@
-;;;
+;;
 ;;; Version: MPL 1.1/GPL 2.0/LGPL 2.1
 ;;;
 ;;; The contents of this file are subject to the Mozilla Public License
@@ -158,6 +158,10 @@ currently being traced.
   (member item *traced-operators* :test 'eq))
 
 (defmethod trigger-trace ((keyword (eql :plans)) item)
+  (declare (ignorable keyword item))
+  nil)
+
+(defmethod trigger-trace ((keyword (eql :protections)) item)
   (declare (ignorable keyword item))
   nil)
 
