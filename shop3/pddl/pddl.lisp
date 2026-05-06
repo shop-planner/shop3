@@ -226,6 +226,8 @@ PDDL operator definitions.")
     :initarg :%pddl-types              ; don't use the initform -- it's for testing.
    )))
 
+
+
 (defclass costs-mixin ()
   ())
 
@@ -321,8 +323,11 @@ later be compiled into find-satisfiers or something."
   (let ((types-def (find :types items :key 'first)))
     ;; if there's no type definition, add a trivial one.
     (unless types-def (setf (pddl-types domain) '(object)))
-    (call-next-method domain `(,@(if types-def (remove types-def items) items)
-                               ,@(when types-def (list types-def))))))
+    ;; OBJECT is the built-in top type in PDDL.
+    (prog1
+        (call-next-method domain `(,@(if types-def (remove types-def items) items)
+                                   ,@(when types-def (list types-def))))
+      (pushnew 'object (pddl-types domain)))))
 
 ;;;---------------------------------------------------------------------------
 ;;; Translating derived predicates

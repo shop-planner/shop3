@@ -48,33 +48,40 @@ copies of the originals, with the BINDINGS applied."
                             :size size))
          new-root)
     (iter (with open = (list plan-tree))
-      (while open)
-      (for node = (pop open))
-      (as new-node = (copy-plan-tree-node node))
-      ;; make a new node and index the copy against the original node
-      (setf (gethash node tree-translation-table) new-node)
-      (when (typep new-node 'top-node)
-        (unless (null new-root) (error "Apparently two root nodes in tree."))
-        (setf new-root
-              new-node
-              (top-node-lookup-table new-node)
-              new-lookup-table))
-      (if (typep node 'primitive-tree-node)
-          (progn
-            ;; FIXME: the second disjunct here should not be necessary
-            ;; -- need to revisit how primitive tree nodes are set. [2023/05/02:rpg]
-            (assert (or (null (tree-node-expanded-task node))
-                        (equalp (tree-node-expanded-task node)
-                                (tree-node-task node))))
-           (setf (tree-node-task new-node)
-                 (when-let (tsk (tree-node-task node))
-                   (gethash tsk translation-table))))
-          (setf (tree-node-task new-node)
-                (apply-substitution (copy-tree (tree-node-task node)) bindings)
-                (tree-node-expanded-task new-node)
-                (copy-tree (tree-node-expanded-task node))))
-      (unless (typep node 'primitive-tree-node)
-        (setf open (append (complex-tree-node-children node) open))))
+          (while open)
+          (for node = (pop open))
+          (as new-node = (copy-plan-tree-node node))
+          ;; make a new node and index the copy against the original node
+          (setf (gethash node tree-translation-table) new-node)
+          (when (typep new-node 'top-node)
+            (unless (null new-root) (error "Apparently two root nodes in tree."))
+            (setf new-root
+                  new-node
+                  (top-node-lookup-table new-node)
+                  new-lookup-table))
+          (if (typep node 'primitive-tree-node)
+              (progn
+                ;; FIXME: the second disjunct here should not be necessary
+                ;; -- need to revisit how primitive tree nodes are set. [2023/05/02:rpg]
+                (assert (or (null (tree-node-expanded-task node))
+                            (equalp (tree-node-expanded-task node)
+                                    (tree-node-task node))))
+                (let ((tsk (tree-node-task node)))
+                  (setf (tree-node-task new-node)
+                        (when tsk (gethash tsk translation-table))))
+                (when-let ((tsk (tree-node-expanded-task node)))
+                  (setf (tree-node-expanded-task new-node)
+                        (cond ((gethash tsk translation-table)) ; already an entry
+                              ;; we don't have a translation table entry for this, so we need to make one
+                              (t
+                               (setf (gethash tsk translation-table)
+                                     (copy-tree tsk)))))))
+              (setf (tree-node-task new-node)
+                    (apply-substitution (copy-tree (tree-node-task node)) bindings)
+                    (tree-node-expanded-task new-node)
+                    (copy-tree (tree-node-expanded-task node))))
+          (unless (typep node 'primitive-tree-node)
+            (setf open (append (complex-tree-node-children node) open))))
     (values new-root tree-translation-table)))
 
 
@@ -134,10 +141,13 @@ hash tables. Done for side-effects: returns nothing."
 
 (defun translate-dependency-links (new-root tree-translation-table)
   (flet ((translate-node (node)
-           (declare (type tree-node node))
-           (or (gethash node tree-translation-table)
-               (error "Tree translation table has no translation for node ~s" node))))
-    (declare (ftype (function (tree-node) (values tree-node &optional))
+           (declare (type (or tree-node (eql :init)) node))
+           (cond ((eq node :init) :init)
+                 ((gethash node tree-translation-table))
+                 (t
+                  (error "Tree translation table has no translation for node ~s" node)))))
+    (declare (ftype (function ((or tree-node (eql :init)))
+                              (values (or tree-node (eql :init)) &optional))
                     translate-node))
     (flet ((translate-dependency (d)
              (make-dependency
